@@ -220,6 +220,27 @@ export function validateAdminBrief(r: unknown): string | null {
 
 // ─── Prompt builder ────────────────────────────────────────────────────────────
 
+// ─── Role context for prompt injection ────────────────────────────────────────
+
+export interface RolePromptContext {
+  /** Role key, e.g. "minister" */
+  roleKey: string;
+  /** Arabic role title */
+  titleAr: string;
+  /** English role title */
+  titleEn: string;
+  /** Competence ceiling key */
+  competenceCeiling: string;
+  /** Nature of involvement sentence (from getRoleInvolvementContext) */
+  involvementAr: string;
+  /** Legal basis grounding this role's authority */
+  legalBasisAr: string;
+  /** Whether this role is challenging/appealing (shifts analysis to rights-focused) */
+  isChallenging: boolean;
+  /** Whether this role is judicially reviewing (shifts analysis to JR readiness) */
+  isJudicialReview: boolean;
+}
+
 export function buildEvaluatorPrompt(params: {
   role: string;
   roleAr: string;
@@ -230,8 +251,10 @@ export function buildEvaluatorPrompt(params: {
   applicableLaws: Array<{ lawAr: string; referenceNumber: string; articles?: string[] }>;
   answers: Record<string, string>;
   ragContext: string;
+  /** Phase 2: optional role context block for role-specific analysis framing */
+  roleContext?: RolePromptContext;
 }): { systemPrompt: string; userPrompt: string } {
-  const { role, roleAr, decisionTypeAr, decisionTypeEn, jurisdiction, inherentRiskLevel, applicableLaws, answers, ragContext } = params;
+  const { role, roleAr, decisionTypeAr, decisionTypeEn, jurisdiction, inherentRiskLevel, applicableLaws, answers, ragContext, roleContext } = params;
 
   const lawsList = applicableLaws
     .map((l) => `• ${l.lawAr} (${l.referenceNumber})` + (l.articles?.length ? `\n  المواد: ${l.articles.join("، ")}` : ""))
@@ -241,9 +264,41 @@ export function buildEvaluatorPrompt(params: {
     .map(([k, v]) => `- ${k}: ${v}`)
     .join("\n");
 
+  // ── Role-specific analysis framing block ───────────────────────────────────
+  let roleFramingBlock = "";
+  if (roleContext) {
+    const { titleAr, titleEn, involvementAr, legalBasisAr, isChallenging, isJudicialReview } = roleContext;
+
+    roleFramingBlock = `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+سياق الدور — Role Context
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+الدور: ${titleAr} (${titleEn})
+طبيعة التعامل مع القرار: ${involvementAr}
+الأساس القانوني لصلاحية الدور: ${legalBasisAr}
+${isChallenging ? `
+⚠️ تنبيه تحليلي — Citizen/Challenge Mode:
+المستخدم متأثر بالقرار ويسعى للتظلم أو الطعن فيه. ركّز التحليل على:
+• حقوق المتأثر بالقرار وضمانات الإجراءات الواجبة (due process)
+• مشروعية الإشعار والتسبيب (بُعدا الشكل والاختصاص)
+• مسارات الطعن المتاحة وآجالها (بُعد الجاهزية للمراجعة القضائية)
+• إمكانية إلغاء القرار أو التعويض عنه
+• يجب أن يعكس canIssueToday مدى قانونية القرار من منظور المتأثر، لا منظور المُصدِر
+` : ""}${isJudicialReview ? `
+⚖️ تنبيه تحليلي — Judicial Review Mode:
+المحكمة تراجع هذا القرار للبت في مشروعيته. ركّز التحليل على:
+• الاختصاص القضائي والاختصاص الولائي
+• استنفاد طرق الطعن الإدارية قبل اللجوء للقضاء
+• صحة الإجراءات الشكلية (التسبيب، التبليغ، الآجال)
+• إمكانية إلغاء القرار أو تعليق تنفيذه
+• canIssueToday = "conditional" إذا كان القرار قابلاً للتصحيح، و"no" إذا كان معيباً عيباً جوهرياً
+` : ""}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+  }
+
   const systemPrompt = `أنت خبير قانوني متخصص في القانون الإداري الإماراتي ونظرية الشمسي للقرارات الإدارية.
 مهمتك: تقييم القرار الإداري المعروض عبر اثني عشر بُعداً قانونياً وفق نظرية الشمسي، وإصدار تقرير موضوعي ودقيق.
-
+${roleFramingBlock}
 الأبعاد الاثنا عشر لنظرية الشمسي:
 1. الاختصاص (Jurisdiction / Competence) — هل الجهة المُصدِرة تملك الصلاحية القانونية؟
 2. الشكل (Form) — هل القرار مستوفٍ للشكل القانوني المطلوب (كتابة، توقيع، تسبيب، تبليغ)؟
@@ -268,10 +323,11 @@ ${ragContext ? `السياق القانوني من قاعدة البيانات:\
 - اجعل التحليل موضوعياً مبنياً على المعطيات المُقدَّمة
 - استشهد بالقوانين الإماراتية بدقة
 - اكتب الحقول الثنائية بالعربية والإنجليزية
+- عدِّل إطار التحليل وفق الدور المُحدَّد في "سياق الدور" أعلاه
 
 الهيكل الإلزامي للإجابة:
 <think>
-[تفكير موجز: أبرز نقاط القوة والضعف القانونية في هذا القرار]
+[تفكير موجز: أبرز نقاط القوة والضعف القانونية في هذا القرار من منظور دور المستخدم]
 </think>
 {
   "jurisdiction": {
@@ -347,7 +403,7 @@ ${ragContext ? `السياق القانوني من قاعدة البيانات:\
 إجابات الاستبيان:
 ${answersText}
 
-قدّم التقييم الإداري الشامل وفق نظرية الشمسي الاثني عشر أبعاداً.`;
+قدّم التقييم الإداري الشامل وفق نظرية الشمسي الاثني عشر أبعاداً${roleContext?.isChallenging ? " من منظور حقوق المتأثر بالقرار" : roleContext?.isJudicialReview ? " من منظور الرقابة القضائية" : ""}.`;
 
   return { systemPrompt, userPrompt };
 }

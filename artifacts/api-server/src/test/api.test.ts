@@ -307,6 +307,186 @@ describe("AI provider abstraction — security invariants", () => {
   });
 });
 
+describe("Admin Decision OS — Phase 2 Role Engine", () => {
+  it("GET /api/admin-os/roles returns all 7 roles", async () => {
+    const { status, body } = await req("GET", "/api/admin-os/roles", undefined, {
+      "x-user-role": "viewer",
+      "x-user-id": "1",
+    });
+    assert.equal(status, 200);
+    const roles = (body as Record<string, unknown>).roles as Array<Record<string, unknown>>;
+    assert.ok(Array.isArray(roles), "roles must be an array");
+    assert.equal(roles.length, 7, "must have exactly 7 roles");
+    const roleKeys = roles.map((r) => r.roleKey);
+    assert.ok(roleKeys.includes("minister"), "must include minister");
+    assert.ok(roleKeys.includes("citizen"), "must include citizen");
+    assert.ok(roleKeys.includes("administrative_court"), "must include administrative_court");
+  });
+
+  it("GET /api/admin-os/roles/:roleKey returns role detail with interviewModifiers", async () => {
+    const { status, body } = await req("GET", "/api/admin-os/roles/citizen", undefined, {
+      "x-user-role": "viewer",
+      "x-user-id": "1",
+    });
+    assert.equal(status, 200);
+    const role = (body as Record<string, unknown>).role as Record<string, unknown>;
+    assert.equal(role.roleKey, "citizen");
+    assert.equal(role.competenceCeiling, "challenge_only");
+    assert.ok(role.interviewModifiers, "interviewModifiers must be present");
+    const mods = role.interviewModifiers as Record<string, unknown>;
+    assert.ok(Array.isArray(mods.prependQuestions), "prependQuestions must be array");
+    assert.ok((mods.prependQuestions as unknown[]).length > 0, "citizen must have prepend questions");
+  });
+
+  it("GET /api/admin-os/roles/:roleKey returns 404 for unknown role", async () => {
+    const { status } = await req("GET", "/api/admin-os/roles/superhero", undefined, {
+      "x-user-role": "viewer",
+      "x-user-id": "1",
+    });
+    assert.equal(status, 404);
+  });
+
+  it("GET /api/admin-os/roles each role has required fields", async () => {
+    const { status, body } = await req("GET", "/api/admin-os/roles", undefined, {
+      "x-user-role": "viewer",
+      "x-user-id": "1",
+    });
+    assert.equal(status, 200);
+    const roles = (body as Record<string, unknown>).roles as Array<Record<string, unknown>>;
+    for (const role of roles) {
+      assert.ok(typeof role.roleKey === "string", `roleKey must be string on ${role.roleKey}`);
+      assert.ok(typeof role.titleAr === "string", `titleAr must be string on ${role.roleKey}`);
+      assert.ok(typeof role.titleEn === "string", `titleEn must be string on ${role.roleKey}`);
+      assert.ok(typeof role.competenceCeiling === "string", `competenceCeiling must be string on ${role.roleKey}`);
+      assert.ok(Array.isArray(role.permittedDomains), `permittedDomains must be array on ${role.roleKey}`);
+      const caps = role.actionCapabilities as Record<string, unknown>;
+      assert.ok(typeof caps.canIssue === "boolean", `canIssue must be boolean on ${role.roleKey}`);
+      assert.ok(typeof caps.canReview === "boolean", `canReview must be boolean on ${role.roleKey}`);
+      assert.ok(typeof caps.canChallenge === "boolean", `canChallenge must be boolean on ${role.roleKey}`);
+    }
+  });
+
+  it("GET /api/admin-os/decision-types?role=minister annotates with roleRelationship", async () => {
+    const { status, body } = await req("GET", "/api/admin-os/decision-types?jurisdiction=uae&role=minister", undefined, {
+      "x-user-role": "viewer",
+      "x-user-id": "1",
+    });
+    assert.equal(status, 200);
+    const b = body as Record<string, unknown>;
+    const types = b.decisionTypes as Array<Record<string, unknown>>;
+    assert.ok(types.length > 0, "must have types");
+    assert.ok(types.every((t) => typeof t.roleRelationship === "string"), "all types must have roleRelationship");
+    const validRelationships = new Set(["can_issue", "can_review", "can_challenge", "none"]);
+    assert.ok(types.every((t) => validRelationships.has(t.roleRelationship as string)), "all roleRelationships must be valid");
+    // Minister can issue many decision types
+    assert.ok(types.some((t) => t.roleRelationship === "can_issue"), "minister must have can_issue on some types");
+    // role metadata returned
+    const roleInfo = b.role as Record<string, unknown>;
+    assert.equal(roleInfo.roleKey, "minister");
+  });
+
+  it("GET /api/admin-os/decision-types?role=citizen has only can_challenge relationships", async () => {
+    const { status, body } = await req("GET", "/api/admin-os/decision-types?jurisdiction=uae&role=citizen", undefined, {
+      "x-user-role": "viewer",
+      "x-user-id": "1",
+    });
+    assert.equal(status, 200);
+    const types = (body as Record<string, unknown>).decisionTypes as Array<Record<string, unknown>>;
+    assert.ok(
+      types.every((t) => t.roleRelationship === "can_challenge" || t.roleRelationship === "none"),
+      "citizen must only have can_challenge or none relationships",
+    );
+  });
+
+  it("GET /api/admin-os/decision-types?role=administrative_court has only can_review relationships", async () => {
+    const { status, body } = await req("GET", "/api/admin-os/decision-types?jurisdiction=uae&role=administrative_court", undefined, {
+      "x-user-role": "viewer",
+      "x-user-id": "1",
+    });
+    assert.equal(status, 200);
+    const types = (body as Record<string, unknown>).decisionTypes as Array<Record<string, unknown>>;
+    assert.ok(
+      types.every((t) => t.roleRelationship === "can_review"),
+      "administrative_court must only have can_review relationships",
+    );
+  });
+
+  it("GET /api/admin-os/decision-types?role=hr has can_issue only on personnel domain", async () => {
+    const { status, body } = await req("GET", "/api/admin-os/decision-types?jurisdiction=uae&role=hr", undefined, {
+      "x-user-role": "viewer",
+      "x-user-id": "1",
+    });
+    assert.equal(status, 200);
+    const types = (body as Record<string, unknown>).decisionTypes as Array<Record<string, unknown>>;
+    // HR can issue only personnel decisions
+    const nonPersonnelCanIssue = types.filter(
+      (t) => t.domain !== "personnel" && t.roleRelationship === "can_issue",
+    );
+    assert.equal(nonPersonnelCanIssue.length, 0, "HR must not have can_issue on non-personnel domains");
+    // Personnel decisions should be can_issue for HR
+    const personnelCanIssue = types.filter(
+      (t) => t.domain === "personnel" && t.roleRelationship === "can_issue",
+    );
+    assert.ok(personnelCanIssue.length > 0, "HR must have can_issue on some personnel decisions");
+  });
+
+  it("GET /api/admin-os/interview-template/:id returns base template without role", async () => {
+    // Get a decision type ID first
+    const listRes = await req("GET", "/api/admin-os/decision-types?jurisdiction=uae", undefined, {
+      "x-user-role": "viewer",
+      "x-user-id": "1",
+    });
+    const firstId = ((listRes.body as Record<string, unknown>).decisionTypes as Array<Record<string, unknown>>)[0].id as number;
+
+    const { status, body } = await req("GET", `/api/admin-os/interview-template/${firstId}`, undefined, {
+      "x-user-role": "viewer",
+      "x-user-id": "1",
+    });
+    assert.equal(status, 200);
+    const b = body as Record<string, unknown>;
+    assert.ok(Array.isArray(b.questions), "questions must be array");
+    assert.ok((b.questionCount as number) > 0, "must have questions");
+    assert.equal(b.role, null, "role must be null when no role param");
+  });
+
+  it("GET /api/admin-os/interview-template/:id?role=citizen prepends citizen questions", async () => {
+    const listRes = await req("GET", "/api/admin-os/decision-types?jurisdiction=uae", undefined, {
+      "x-user-role": "viewer",
+      "x-user-id": "1",
+    });
+    const firstId = ((listRes.body as Record<string, unknown>).decisionTypes as Array<Record<string, unknown>>)[0].id as number;
+
+    const baseRes = await req("GET", `/api/admin-os/interview-template/${firstId}`, undefined, {
+      "x-user-role": "viewer",
+      "x-user-id": "1",
+    });
+    const baseCount = (baseRes.body as Record<string, unknown>).questionCount as number;
+
+    const { status, body } = await req(
+      "GET",
+      `/api/admin-os/interview-template/${firstId}?role=citizen`,
+      undefined,
+      { "x-user-role": "viewer", "x-user-id": "1" },
+    );
+    assert.equal(status, 200);
+    const b = body as Record<string, unknown>;
+    assert.ok((b.questionCount as number) > baseCount, "citizen must add prepend questions, increasing count");
+    const roleInfo = b.role as Record<string, unknown>;
+    assert.equal(roleInfo.roleKey, "citizen", "role info must be returned");
+    // First question should be citizen-specific
+    const questions = b.questions as Array<Record<string, unknown>>;
+    assert.equal(questions[0].id, "citizen_decision_received", "first question must be citizen_decision_received");
+  });
+
+  it("GET /api/admin-os/interview-template/999999 returns 404", async () => {
+    const { status } = await req("GET", "/api/admin-os/interview-template/999999", undefined, {
+      "x-user-role": "viewer",
+      "x-user-id": "1",
+    });
+    assert.equal(status, 404);
+  });
+});
+
 describe("Admin Decision OS — Al-Shamsi endpoints", () => {
   it("GET /api/admin-os/decision-types returns seeded UAE catalog", async () => {
     const { status, body } = await req("GET", "/api/admin-os/decision-types?jurisdiction=uae", undefined, {

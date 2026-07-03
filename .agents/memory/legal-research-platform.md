@@ -185,12 +185,40 @@ Seed data lives in `artifacts/api-server/src/data/admin-os-seed.ts`. Idempotent 
 - `VALID_ROLES` set — 7 allowed roles enforced server-side in POST /assess
 
 ### API endpoints
-- `GET /api/admin-os/decision-types?jurisdiction=uae&domain=&risk_level=` — returns flat list + grouped by domain
+- `GET /api/admin-os/decision-types?jurisdiction=uae&domain=&risk_level=&role=` — returns flat list + grouped by domain; `role=` param annotates each type with `roleRelationship` (can_issue/can_review/can_challenge/none)
+- `GET /api/admin-os/roles` — all 7 role definitions (list view, no interviewModifiers)
+- `GET /api/admin-os/roles/:roleKey` — single role detail including interviewModifiers
+- `GET /api/admin-os/interview-template/:decisionTypeId?role=` — merged interview template (base + role modifiers); returns `questionCount`, `questions[]`, `role` metadata
 - `GET /api/admin-os/sessions` — user-scoped history (userId from x-user-id header)
 - `GET /api/admin-os/sessions/:id` — single session with full brief
 - `DELETE /api/admin-os/sessions/:id` — cascade-deletes linked brief row
-- `POST /api/admin-os/assess` — runs Al-Shamsi eval, saves session + brief, returns {session, brief, citations}
+- `POST /api/admin-os/assess` — runs Al-Shamsi eval, saves session + brief, returns {session, brief, citations, roleContext}
 - `POST /api/admin-os/followup` — chat on saved session
+
+## Admin Decision OS — Phase 2 Role Engine
+
+### DB table: admin_decision_roles
+Seed: `cd artifacts/api-server && tsx src/scripts/seed-admin-os-roles.ts`. 7 roles, idempotent upsert.
+Data: `artifacts/api-server/src/data/admin-os-roles-seed.ts`.
+
+### Role competence model
+`getRoleRelationship()` in `admin-os-interview.ts` uses a TWO-GATE model:
+1. Special ceilings bypass both gates: `review_only`/`judicial_review` → `can_review` globally; `challenge_only` → `can_challenge` globally (citizen/court have jurisdiction-wide mandate in UAE law).
+2. For issuance roles: domain must be in `permittedDomains` AND `COMPETENCE_HIERARCHY[ceiling] >= COMPETENCE_HIERARCHY[requiredCompetenceLevel]`.
+COMPETENCE_HIERARCHY: ministerial(5) > director_general(4) > department_head(3) > hr_officer(2) > any(1).
+
+**Why:** An earlier version removed the hierarchy check entirely, which let HR issue director_general-level decisions. The fix was to downgrade three personnel decisions (Employee Transfer, Granting Study Leave, Acceptance of Resignation) to `hr_officer` level — matching UAE civil service reality where HR processes those without DG sign-off.
+
+**Decision type competence levels to remember:** Employee Appointment=director_general, Promotion=department_head, Termination=director_general, Transfer=hr_officer, Suspension=director_general, Disciplinary=director_general, Study Leave=hr_officer, Resignation Acceptance=hr_officer.
+
+### Interview template merging
+`buildInterviewTemplate(base, modifiers)` in `admin-os-interview.ts`. Merge order: prepend → remove → override → append. All operations are non-destructive if modifier arrays are empty.
+
+### Role context in evaluator
+`buildEvaluatorPrompt()` accepts optional `roleContext: RolePromptContext`. Citizen mode → rights/appeal framing; judicial_review ceiling → JR-readiness framing. If role not in DB, `roleContext` is undefined and prompt falls back to generic framing (no hard-fail).
+
+### government_official modifiers
+`government_official` now has prepend questions: delegation authority check + org-scope check. Plus an append question for supervisor clearance on medium/high risk decisions.
 
 ### Auth note
 Header-based identity (x-user-id / x-user-role) is a pre-existing platform pattern, not introduced here. For production: replace getUserId() with JWT/session verification in roleAuth.ts.

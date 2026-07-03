@@ -13,3 +13,5 @@ export * from "./legal-os-sessions";
 export * from "./admin-decision-types";
 export * from "./admin-decision-sessions";
 export * from "./admin-decision-briefs";
+// Phase 2 — Role definitions
+export * from "./admin-decision-roles";

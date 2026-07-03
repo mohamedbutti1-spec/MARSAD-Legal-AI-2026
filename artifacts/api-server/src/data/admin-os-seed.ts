@@ -450,7 +450,7 @@ export const SEED_DECISION_TYPES: SeedDecisionType[] = [
     decisionTypeAr: "نقل موظف",
     decisionTypeEn: "Employee Transfer",
     descriptionAr: "قرار إداري بنقل موظف من وحدة تنظيمية أو موقع جغرافي إلى آخر",
-    requiredCompetenceLevel: "department_head",
+    requiredCompetenceLevel: "hr_officer",
     inherentRiskLevel: "low",
     applicableLaws: [UAE_CIVIL_SERVICE, UAE_ADMIN_PROCEDURES],
     interviewTemplate: fullTemplate([
@@ -554,7 +554,7 @@ export const SEED_DECISION_TYPES: SeedDecisionType[] = [
     decisionTypeAr: "منح إجازة دراسية",
     decisionTypeEn: "Granting Study Leave",
     descriptionAr: "قرار إداري بمنح موظف إجازة دراسية مدفوعة أو غير مدفوعة",
-    requiredCompetenceLevel: "department_head",
+    requiredCompetenceLevel: "hr_officer",
     inherentRiskLevel: "low",
     applicableLaws: [UAE_CIVIL_SERVICE, UAE_ADMIN_PROCEDURES],
     interviewTemplate: fullTemplate([
@@ -575,7 +575,7 @@ export const SEED_DECISION_TYPES: SeedDecisionType[] = [
     decisionTypeAr: "قبول الاستقالة",
     decisionTypeEn: "Acceptance of Resignation",
     descriptionAr: "قرار إداري بقبول طلب استقالة موظف حكومي",
-    requiredCompetenceLevel: "director_general",
+    requiredCompetenceLevel: "hr_officer",
     inherentRiskLevel: "low",
     applicableLaws: [UAE_CIVIL_SERVICE, UAE_ADMIN_PROCEDURES],
     interviewTemplate: fullTemplate([
