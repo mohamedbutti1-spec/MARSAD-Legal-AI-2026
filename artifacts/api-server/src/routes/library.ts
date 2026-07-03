@@ -7,8 +7,29 @@
  */
 import { Router, type IRouter } from "express";
 import { eq, and } from "drizzle-orm";
+import { z } from "zod";
 import { db, libraryItemsTable, documentsTable, legalSourcesTable } from "@workspace/db";
 import { requireAnyRole } from "../middlewares/roleAuth";
+
+// ─── Zod schemas ─────────────────────────────────────────────────────────────
+
+const LibrarySaveBody = z.object({
+  sourceType: z.enum(["document", "legal_source"], {
+    errorMap: () => ({ message: "sourceType must be 'document' or 'legal_source'" }),
+  }),
+  documentId:    z.number().int().positive().optional(),
+  legalSourceId: z.number().int().positive().optional(),
+  tags:  z.array(z.string()).optional().default([]),
+  notes: z.string().max(2000).optional(),
+}).refine(
+  (d) => (d.sourceType === "document" ? d.documentId != null : d.legalSourceId != null),
+  { message: "documentId required for 'document', legalSourceId required for 'legal_source'" },
+);
+
+const LibraryPatchBody = z.object({
+  tags:  z.array(z.string()).optional(),
+  notes: z.string().max(2000).optional(),
+});
 
 const router: IRouter = Router();
 
@@ -44,16 +65,27 @@ router.get("/library", requireAnyRole, async (req, res): Promise<void> => {
 
 router.post("/library", requireAnyRole, async (req, res): Promise<void> => {
   const uid = getUserId(req);
-  const { sourceType, documentId, legalSourceId, tags, notes } = req.body;
+  const parsed = LibrarySaveBody.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.errors[0]?.message ?? "Invalid body" }); return; }
 
-  if (!sourceType) { res.status(400).json({ error: "sourceType required" }); return; }
+  const { sourceType, documentId, legalSourceId, tags, notes } = parsed.data;
+
+  // Verify the referenced entity exists before saving
+  if (sourceType === "document" && documentId != null) {
+    const [doc] = await db.select({ id: documentsTable.id }).from(documentsTable).where(eq(documentsTable.id, documentId));
+    if (!doc) { res.status(404).json({ error: "Document not found" }); return; }
+  }
+  if (sourceType === "legal_source" && legalSourceId != null) {
+    const [src] = await db.select({ id: legalSourcesTable.id }).from(legalSourcesTable).where(eq(legalSourcesTable.id, legalSourceId));
+    if (!src) { res.status(404).json({ error: "Legal source not found" }); return; }
+  }
 
   const [created] = await db.insert(libraryItemsTable).values({
     userId: uid,
     sourceType,
-    documentId: documentId ? parseInt(documentId) : undefined,
-    legalSourceId: legalSourceId ? parseInt(legalSourceId) : undefined,
-    tags: tags ? JSON.stringify(tags) : "[]",
+    documentId: documentId ?? undefined,
+    legalSourceId: legalSourceId ?? undefined,
+    tags: JSON.stringify(tags ?? []),
     notes,
   }).returning();
 
@@ -65,7 +97,10 @@ router.patch("/library/:id", requireAnyRole, async (req, res): Promise<void> => 
   const uid = getUserId(req);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
 
-  const { tags, notes } = req.body;
+  const parsed = LibraryPatchBody.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.errors[0]?.message ?? "Invalid body" }); return; }
+
+  const { tags, notes } = parsed.data;
   const updateData: Record<string, unknown> = {};
   if (tags !== undefined) updateData.tags = JSON.stringify(tags);
   if (notes !== undefined) updateData.notes = notes;
