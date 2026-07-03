@@ -7,7 +7,9 @@
  */
 
 export interface LiteratureReviewInput {
-  documentIds: number[];
+  documentIds?: number[];
+  /** IDs from the legal_sources table to include alongside uploaded documents */
+  legalSourceIds?: number[];
   topic: string;
   language?: string;
 }

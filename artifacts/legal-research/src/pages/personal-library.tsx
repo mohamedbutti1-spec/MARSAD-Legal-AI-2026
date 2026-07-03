@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { apiFetch } from '@/lib/api-fetch';
 import { useT, useUserContext } from '@/lib/user-context';
-import { Library, FileText, BookOpen, Bookmark, Trash2, Tag, StickyNote, Upload, Search } from 'lucide-react';
+import { Library, FileText, BookOpen, Bookmark, Trash2, Tag, StickyNote, Upload, Search, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useListDocuments } from '@workspace/api-client-react';
@@ -102,12 +102,37 @@ export default function PersonalLibrary() {
               <p className="text-sm text-muted-foreground">{t('وثائقك المرفوعة والمصادر القانونية المحفوظة في مكان واحد.', 'Your uploaded documents and saved legal sources in one place.')}</p>
             </div>
           </div>
-          {canUpload && (
-            <Button size="sm" className="gap-1.5 shrink-0" onClick={() => navigate('/upload')}>
-              <Upload className="w-4 h-4" />
-              {t('رفع وثيقة', 'Upload')}
-            </Button>
-          )}
+          <div className="flex items-center gap-2 shrink-0">
+            {items.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={async () => {
+                  const r = await apiFetch('/api/library/export');
+                  if (r.ok) {
+                    const blob = await r.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `marsad-library-${new Date().toISOString().split('T')[0]}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    toast({ title: t('تم تصدير المكتبة', 'Library exported') });
+                  }
+                }}
+              >
+                <Download className="w-4 h-4" />
+                {t('تصدير الكل', 'Export All')}
+              </Button>
+            )}
+            {canUpload && (
+              <Button size="sm" className="gap-1.5" onClick={() => navigate('/upload')}>
+                <Upload className="w-4 h-4" />
+                {t('رفع وثيقة', 'Upload')}
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Stats + Tabs */}

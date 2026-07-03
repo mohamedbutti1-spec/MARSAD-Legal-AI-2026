@@ -15,6 +15,7 @@ import legalSourcesRouter from "./legal-sources";
 import assistantRouter    from "./assistant";
 import researchRouter     from "./research";
 import libraryRouter      from "./library";
+import dashboardRouter    from "./dashboard";
 
 const router: IRouter = Router();
 
@@ -34,5 +35,6 @@ router.use(legalSourcesRouter);
 router.use(assistantRouter);
 router.use(researchRouter);
 router.use(libraryRouter);
+router.use(dashboardRouter);
 
 export default router;

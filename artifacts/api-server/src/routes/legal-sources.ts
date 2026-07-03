@@ -148,4 +148,63 @@ router.post("/legal-sources/:id/summarise", requireSupervisorOrOwner, async (req
   }
 });
 
+// ─── AI Analyse (key-findings | relevance-uae) ────────────────────────────────
+// Unlike /summarise, this endpoint does NOT persist results — it returns an
+// ad-hoc analysis and caches it in-memory only for the session.
+router.post("/legal-sources/:id/analyse", requireSupervisorOrOwner, async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id as string);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const analysisType = (req.query.type as string) ?? "key-findings";
+  if (!["key-findings", "relevance-uae"].includes(analysisType)) {
+    res.status(400).json({ error: "type must be key-findings or relevance-uae" }); return;
+  }
+
+  const [source] = await db.select().from(legalSourcesTable).where(eq(legalSourcesTable.id, id));
+  if (!source) { res.status(404).json({ error: "Not found" }); return; }
+
+  const cacheKey = `ls-analysis:${id}:${analysisType}`;
+  const cached = cache.get<unknown>(cacheKey);
+  if (cached) { res.json(cached); return; }
+
+  let provider;
+  try {
+    provider = await aiRouter.routeFor(TaskType.DOCUMENT_SEARCH);
+  } catch (err: unknown) {
+    res.status(503).json({ error: (err as Error).message }); return;
+  }
+
+  const prompt = analysisType === "key-findings"
+    ? `أنت خبير قانوني متخصص في تحليل الأحكام القضائية. بناءً على نص الحكم التالي، حدّد:
+1. المبدأ القانوني الأساسي (Ratio Decidendi)
+2. الوقائع الجوهرية
+3. الحكم والتعليل القانوني
+
+الحكم: ${source.title}
+${source.content.slice(0, 5000)}
+
+قدّم التحليل في 3-4 فقرات بالعربية، مع تمييز واضح بين كل عنصر.`
+    : `You are a legal expert specialising in comparative law between the European Union and the UAE (United Arab Emirates). Analyse the following EU legal instrument and assess:
+1. Its direct relevance to UAE commercial, regulatory, or judicial practice
+2. Whether there is a UAE equivalent law or regulation
+3. Key differences and similarities
+4. Practical implications for entities operating in both jurisdictions
+
+Source: ${source.title}
+${source.content.slice(0, 5000)}
+
+Provide a concise 3-paragraph analysis in English with an Arabic summary at the end.`;
+
+  try {
+    const aiResult = await provider.complete({ taskType: TaskType.DOCUMENT_SEARCH, prompt });
+    const payload = { analysis: aiResult.text, analysisType, _meta: { provider: aiResult.provider, model: aiResult.model } };
+    cache.set(cacheKey, payload, TTL.MED);
+    await logAudit(req, `ai.legal-source-${analysisType}`, { entityType: "legal_source", entityId: id });
+    res.json(payload);
+  } catch (err) {
+    req.log.error({ err }, "Analyse failed");
+    res.status(500).json({ error: "AI analysis failed. Please try again." });
+  }
+});
+
 export default router;

@@ -18,6 +18,7 @@ export default function EuLaw() {
         { value: 'judgment',    labelAr: 'حكم',             labelEn: 'Judgment' },
       ]}
       yearMin={1958}
+      showRelevanceToUae
     />
   );
 }

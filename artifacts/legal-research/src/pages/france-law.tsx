@@ -19,6 +19,7 @@ export default function FranceLaw() {
         { value: 'regulation',  labelAr: 'لائحة',          labelEn: 'Regulation' },
       ]}
       yearMin={1804}
+      showCompareWithUae
     />
   );
 }

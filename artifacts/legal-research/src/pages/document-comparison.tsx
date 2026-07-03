@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { apiFetch } from '@/lib/api-fetch';
 import { useT, useUserContext } from '@/lib/user-context';
@@ -21,13 +21,39 @@ export default function DocumentComparison() {
 
   const [sideA, setSideA] = useState({ type: 'document' as PickerType, id: '', label: '' });
   const [sideB, setSideB] = useState({ type: 'document' as PickerType, id: '', label: '' });
+
   const [topic, setTopic] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<CompareResult | null>(null);
   const [manualRows, setManualRows] = useState<CompareRow[]>([
     { aspect: '', sourceA: '', sourceB: '' },
   ]);
+  // Default to AI mode; prefill from URL will switch to manual if needed
   const [mode, setMode] = useState<'ai' | 'manual'>('ai');
+
+  // Prefill from URL params when navigated from a legal source browser
+  // e.g. /comparison?sourceTitle=Code+civil&sourceType=french
+  // The AI compare endpoint only accepts integer document IDs, so we switch to
+  // manual mode when arriving via a legal-source title — giving the user a
+  // ready-made manual comparison form they can fill in and save.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sourceTitle = params.get('sourceTitle');
+    const sourceType  = params.get('sourceType');
+    if (sourceTitle) {
+      setMode('manual');
+      setSideA((prev) => ({ ...prev, label: sourceTitle }));
+      if (sourceType === 'french') {
+        setSideB((prev) => ({ ...prev, label: t('المقابل الإماراتي', 'UAE equivalent') }));
+      }
+      toast({
+        title: t('تم استيراد المصدر الفرنسي', 'French source loaded'),
+        description: t('أكمل بيانات المقارنة اليدوية وأضف النظير الإماراتي.', 'Complete the manual comparison and add the UAE equivalent.'),
+      });
+    }
+  // Run only on mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleAiCompare(e: React.FormEvent) {
     e.preventDefault();

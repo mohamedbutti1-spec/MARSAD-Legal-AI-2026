@@ -41,6 +41,8 @@ export default function LegalResearch() {
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<SearchResponse | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [yearFrom, setYearFrom] = useState('');
+  const [yearTo, setYearTo] = useState('');
 
   // Pick up quick search from dashboard
   useEffect(() => {
@@ -59,7 +61,14 @@ export default function LegalResearch() {
       const r = await apiFetch('/api/research/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, sourceTypes, jurisdiction: jurisdiction || undefined, limit: 8 }),
+        body: JSON.stringify({
+          query,
+          sourceTypes,
+          jurisdiction: jurisdiction || undefined,
+          yearFrom: yearFrom ? parseInt(yearFrom) : undefined,
+          yearTo: yearTo ? parseInt(yearTo) : undefined,
+          limit: 8,
+        }),
       });
       if (r.ok) { setResults(await r.json()); }
       else      { const d = await r.json().catch(() => ({})); setError(d.error ?? t('فشل البحث', 'Search failed')); }
@@ -134,6 +143,30 @@ export default function LegalResearch() {
                       <option key={o.value} value={o.value}>{t(o.labelAr, o.labelEn)}</option>
                     ))}
                   </select>
+
+                  {/* Date range */}
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs text-muted-foreground shrink-0">{t('من سنة', 'From year')}</label>
+                    <input
+                      type="number"
+                      min="1900"
+                      max={new Date().getFullYear()}
+                      placeholder={t('مثلاً 2010', 'e.g. 2010')}
+                      value={yearFrom}
+                      onChange={e => setYearFrom(e.target.value)}
+                      className="w-24 border border-border rounded-lg px-2 py-1.5 text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                    <label className="text-xs text-muted-foreground shrink-0">{t('إلى', 'to')}</label>
+                    <input
+                      type="number"
+                      min="1900"
+                      max={new Date().getFullYear()}
+                      placeholder={t('مثلاً 2024', 'e.g. 2024')}
+                      value={yearTo}
+                      onChange={e => setYearTo(e.target.value)}
+                      className="w-24 border border-border rounded-lg px-2 py-1.5 text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>

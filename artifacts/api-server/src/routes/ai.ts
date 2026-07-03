@@ -3,7 +3,7 @@
  * No direct imports of Anthropic, Perplexity, or any other provider SDK here.
  */
 import { Router, type IRouter } from "express";
-import { db, documentsTable } from "@workspace/db";
+import { db, documentsTable, legalSourcesTable } from "@workspace/db";
 import {
   AiSearchBody,
   GenerateLiteratureReviewBody,
@@ -153,6 +153,10 @@ router.post("/ai/literature-review", requireSupervisorOrOwner, async (req, res):
   }
 
   const { documentIds, topic, language = "Arabic" } = parsed.data;
+  // legalSourceIds is not in the generated Zod schema; accept it from raw body
+  const legalSourceIds: number[] = Array.isArray((req.body as Record<string, unknown>).legalSourceIds)
+    ? ((req.body as Record<string, unknown>).legalSourceIds as number[]).map(Number).filter(Boolean)
+    : [];
 
   try {
     const docs = await db
@@ -160,16 +164,42 @@ router.post("/ai/literature-review", requireSupervisorOrOwner, async (req, res):
       .from(documentsTable)
       .then((all) => all.filter((d) => documentIds.includes(d.id)));
 
-    if (docs.length === 0) {
-      res.status(400).json({ error: "No valid documents found for the selected IDs." }); return;
+    // Build legal source context blocks
+    const legalSources = legalSourceIds.length > 0
+      ? await db.select({
+          id: legalSourcesTable.id,
+          title: legalSourcesTable.title,
+          titleAr: legalSourcesTable.titleAr,
+          content: legalSourcesTable.content,
+          summaryAr: legalSourcesTable.summaryAr,
+          summary: legalSourcesTable.summary,
+          referenceNumber: legalSourcesTable.referenceNumber,
+          year: legalSourcesTable.year,
+        })
+          .from(legalSourcesTable)
+          .then((all) => all.filter((s) => legalSourceIds.includes(s.id)))
+      : [];
+
+    if (docs.length === 0 && legalSources.length === 0) {
+      res.status(400).json({ error: "No valid documents or legal sources found for the selected IDs." }); return;
     }
 
-    const ragContext = buildRagContext(docs, 3000);
+    const ragContext = docs.length > 0 ? buildRagContext(docs, 2000) : "";
+
+    // Append legal source context
+    const legalSourceContext = legalSources.length > 0
+      ? "\n\n" + legalSources.map((s) => {
+          const text = s.summaryAr ?? s.summary ?? s.content;
+          return `[SRC-${s.id}] ${s.titleAr ?? s.title}${s.referenceNumber ? ` (${s.referenceNumber})` : ""}${s.year ? `, ${s.year}` : ""}\n${text.slice(0, 600)}`;
+        }).join("\n\n---\n\n")
+      : "";
+
+    const combinedContext = ragContext + legalSourceContext;
 
     const prompt = `You are an expert academic researcher specialising in comparative legal studies (UAE and French law). Generate a comprehensive, scholarly literature review in ${language} on: "${topic}"
 
-Base your review EXCLUSIVELY on these source documents:
-${ragContext}
+Base your review EXCLUSIVELY on these source documents and legal sources:
+${combinedContext}
 
 Write a structured literature review with:
 1. Introduction (مقدمة)
@@ -202,12 +232,16 @@ Return ONLY valid JSON — no markdown fences.`;
       wordCount: number;
     }>(aiResult.text);
 
-    const review   = parsedJson.ok ? (parsedJson.data.review   ?? aiResult.text) : aiResult.text;
-    const sources  = parsedJson.ok ? (parsedJson.data.sources  ?? docs.map((d) => ({ name: d.originalName, relevance: "Primary source" }))) : [];
+    const review    = parsedJson.ok ? (parsedJson.data.review   ?? aiResult.text) : aiResult.text;
     const wordCount = parsedJson.ok ? (parsedJson.data.wordCount ?? 0) : 0;
+    const fallbackSources = [
+      ...docs.map((d) => ({ name: d.originalName, relevance: "Primary source" })),
+      ...legalSources.map((s) => ({ name: s.titleAr ?? s.title, relevance: "Legal source" })),
+    ];
+    const sources   = parsedJson.ok ? (parsedJson.data.sources ?? fallbackSources) : fallbackSources;
 
-    logAudit(req, "ai.literature-review", { details: { topic: topic.slice(0, 100), docCount: docs.length, provider: aiResult.provider } });
-    req.log.info({ topic, docCount: docs.length, provider: aiResult.provider, model: aiResult.model }, "Literature review generated");
+    logAudit(req, "ai.literature-review", { details: { topic: topic.slice(0, 100), docCount: docs.length + legalSources.length, provider: aiResult.provider } });
+    req.log.info({ topic, docCount: docs.length, legalSourceCount: legalSources.length, provider: aiResult.provider, model: aiResult.model }, "Literature review generated");
     res.json({ topic, review, sources, wordCount, generatedAt: new Date().toISOString(), _meta: { provider: aiResult.provider, model: aiResult.model } });
   } catch (err) {
     req.log.error({ err }, "Literature review failed");

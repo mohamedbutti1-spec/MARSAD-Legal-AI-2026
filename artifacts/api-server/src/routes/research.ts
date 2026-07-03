@@ -23,10 +23,12 @@ function chunkText(text: string): string[] {
 }
 
 router.post("/research/search", requireSupervisorOrOwner, async (req, res): Promise<void> => {
-  const { query, sourceTypes = ["documents", "legal_sources"], jurisdiction, limit = 5 } = req.body as {
+  const { query, sourceTypes = ["documents", "legal_sources"], jurisdiction, yearFrom, yearTo, limit = 5 } = req.body as {
     query: string;
     sourceTypes?: string[];
     jurisdiction?: string;
+    yearFrom?: number;
+    yearTo?: number;
     limit?: number;
   };
 
@@ -52,8 +54,13 @@ router.post("/research/search", requireSupervisorOrOwner, async (req, res): Prom
   }
 
   if (sourceTypes.includes("legal_sources")) {
-    const srcs = await db.select().from(legalSourcesTable).limit(20);
-    const filtered = jurisdiction ? srcs.filter((s) => s.jurisdiction === jurisdiction) : srcs;
+    const srcs = await db.select().from(legalSourcesTable).limit(40);
+    const filtered = srcs.filter((s) => {
+      if (jurisdiction && s.jurisdiction !== jurisdiction) return false;
+      if (yearFrom && s.year && s.year < yearFrom) return false;
+      if (yearTo   && s.year && s.year > yearTo)   return false;
+      return true;
+    });
     filtered.forEach((s) => {
       const text = s.summaryAr ?? s.summary ?? s.content;
       if (!text) return;

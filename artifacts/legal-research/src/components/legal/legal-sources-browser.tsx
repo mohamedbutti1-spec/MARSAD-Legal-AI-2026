@@ -1,12 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { apiFetch } from '@/lib/api-fetch';
 import { useT, useUserContext } from '@/lib/user-context';
 import { useLocation } from 'wouter';
-import { Search, Filter, BookOpen, Bookmark, BookmarkCheck, Loader2, ChevronRight, ChevronLeft, Sparkles, Scale, ExternalLink } from 'lucide-react';
+import {
+  Search, BookOpen, Bookmark, BookmarkCheck, Loader2, ChevronLeft,
+  Sparkles, Scale, Copy, Check, FileSearch, Globe2,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { StatusBadge } from '@/components/ui/status-badge';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingGrid } from '@/components/ui/loading-card';
 
@@ -37,6 +39,12 @@ interface Props {
   docTypeOptions: Array<{ value: string; labelAr: string; labelEn: string }>;
   yearMin?: number;
   yearMax?: number;
+  /** Show "Compare with UAE equivalent" button (French Law) */
+  showCompareWithUae?: boolean;
+  /** Show "Relevance to UAE" AI analysis button (EU Law) */
+  showRelevanceToUae?: boolean;
+  /** Show "Key Findings / Ratio Decidendi" AI panel (UAE Case Law) */
+  showKeyFindings?: boolean;
 }
 
 const DOC_TYPE_COLORS: Record<string, string> = {
@@ -46,13 +54,19 @@ const DOC_TYPE_COLORS: Record<string, string> = {
   code:       'bg-emerald-50 text-emerald-700 border-emerald-200',
   directive:  'bg-rose-50 text-rose-700 border-rose-200',
   judgment:   'bg-orange-50 text-orange-700 border-orange-200',
+  decision:   'bg-sky-50 text-sky-700 border-sky-200',
+  ruling:     'bg-teal-50 text-teal-700 border-teal-200',
+  circular:   'bg-gray-50 text-gray-700 border-gray-200',
+  resolution: 'bg-violet-50 text-violet-700 border-violet-200',
 };
 
 export function LegalSourcesBrowser({
-  jurisdiction, pageTitle, pageTitleAr, pageSubtitleAr, pageSubtitleEn, icon, docTypeOptions, yearMin = 1971, yearMax = new Date().getFullYear(),
+  jurisdiction, pageTitle, pageTitleAr, pageSubtitleAr, pageSubtitleEn,
+  icon, docTypeOptions, yearMin = 1971, yearMax = new Date().getFullYear(),
+  showCompareWithUae, showRelevanceToUae, showKeyFindings,
 }: Props) {
   const t = useT();
-  const { canUseAi, canManageSettings } = useUserContext();
+  const { canUseAi } = useUserContext();
   const { toast } = useToast();
   const [, navigate] = useLocation();
 
@@ -68,10 +82,23 @@ export function LegalSourcesBrowser({
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<LegalSource | null>(null);
-  const [summarising, setSummarising] = useState(false);
 
-  // Library state
+  // AI panel state
+  const [summarising, setSummarising] = useState(false);
+  const [analysing, setAnalysing] = useState(false);
+  const [analysis, setAnalysis] = useState<string | null>(null);
+  const [analysisMeta, setAnalysisMeta] = useState<{ provider: string; model: string } | null>(null);
+
+  // Library
   const [savedIds, setSavedIds] = useState<Set<number>>(new Set());
+
+  // Copy-citation
+  const [citationCopied, setCitationCopied] = useState(false);
+
+  // Stale-response guard: stores the source id that the in-flight analysis request
+  // was fired for. Cleared to null when the document selection changes.
+  // A response is only applied when its source id still matches this ref.
+  const activeAnalyseSourceId = useRef<number | null>(null);
 
   const fetchSources = useCallback(async () => {
     setLoading(true);
@@ -92,10 +119,17 @@ export function LegalSourcesBrowser({
   }, [jurisdiction, query, docType, year, page]);
 
   useEffect(() => { fetchSources(); }, [fetchSources]);
-
-  // Reset page on filter change
   useEffect(() => { setPage(0); }, [query, docType, year]);
 
+  // Reset analysis panel and invalidate any in-flight request when doc changes
+  useEffect(() => {
+    setAnalysis(null);
+    setAnalysisMeta(null);
+    setAnalysing(false);
+    activeAnalyseSourceId.current = null;
+  }, [selected?.id]);
+
+  // ── AI: Summarise ────────────────────────────────────────────────────────────
   async function handleSummarise(src: LegalSource) {
     setSummarising(true);
     try {
@@ -115,6 +149,37 @@ export function LegalSourcesBrowser({
     }
   }
 
+  // ── AI: Key Findings / Relevance to UAE ─────────────────────────────────────
+  async function handleAnalyse(src: LegalSource, type: 'key-findings' | 'relevance-uae') {
+    // Register this source id as the owner of the current analysis slot.
+    // If the user switches documents before the response arrives, the useEffect
+    // above sets activeAnalyseSourceId.current = null, so the late response
+    // is silently discarded rather than applied to the wrong document's panel.
+    activeAnalyseSourceId.current = src.id;
+    setAnalysing(true);
+    setAnalysis(null);
+    try {
+      const r = await apiFetch(`/api/legal-sources/${src.id}/analyse?type=${type}`, { method: 'POST' });
+      // Guard: discard if the user moved to a different document while awaiting
+      if (activeAnalyseSourceId.current !== src.id) return;
+      if (r.ok) {
+        const data = await r.json();
+        // Second guard after the await on .json()
+        if (activeAnalyseSourceId.current !== src.id) return;
+        setAnalysis(data.analysis ?? '');
+        setAnalysisMeta(data._meta ?? null);
+      } else {
+        toast({ title: t('فشل التحليل', 'Analysis failed'), variant: 'destructive' });
+      }
+    } finally {
+      // Only clear the loading spinner if we are still the active request
+      if (activeAnalyseSourceId.current === src.id) {
+        setAnalysing(false);
+      }
+    }
+  }
+
+  // ── Library: Save ────────────────────────────────────────────────────────────
   async function handleSaveToLibrary(src: LegalSource) {
     if (savedIds.has(src.id)) return;
     const r = await apiFetch('/api/library', {
@@ -126,6 +191,34 @@ export function LegalSourcesBrowser({
       setSavedIds((prev) => new Set([...prev, src.id]));
       toast({ title: t('تمت الإضافة إلى المكتبة', 'Saved to library') });
     }
+  }
+
+  // ── Copy Citation ────────────────────────────────────────────────────────────
+  function handleCopyCitation(src: LegalSource) {
+    const yr = src.year ?? new Date().getFullYear();
+    const lang = t('ar', 'en');
+    let citation: string;
+    if (lang === 'ar') {
+      const title = src.titleAr ?? src.title;
+      const ref = src.referenceNumber ? ` رقم ${src.referenceNumber}،` : '';
+      citation = `${title}،${ref} ${yr}.`;
+    } else {
+      const title = src.title ?? src.titleAr ?? '';
+      const ref = src.referenceNumber ? ` No. ${src.referenceNumber},` : '';
+      citation = `${title},${ref} ${yr}.`;
+    }
+    navigator.clipboard.writeText(citation).then(() => {
+      setCitationCopied(true);
+      toast({ title: t('تم نسخ الاستشهاد', 'Citation copied') });
+      setTimeout(() => setCitationCopied(false), 2500);
+    });
+  }
+
+  // ── Compare with UAE ─────────────────────────────────────────────────────────
+  function handleCompareWithUae(src: LegalSource) {
+    const title = encodeURIComponent(t(src.titleAr ?? src.title, src.title));
+    navigate(`/comparison?sourceTitle=${title}&sourceType=french`);
+    toast({ title: t('انتقل إلى مقارنة الوثائق وأضف المصدر الإماراتي المقابل', 'Navigate to Document Comparison and add the UAE equivalent') });
   }
 
   const displaySummary = selected
@@ -150,7 +243,6 @@ export function LegalSourcesBrowser({
         <Card className="border-border">
           <CardContent className="p-4">
             <div className="flex flex-wrap items-center gap-3">
-              {/* Search */}
               <div className="relative flex-1 min-w-52">
                 <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden />
                 <input
@@ -162,7 +254,6 @@ export function LegalSourcesBrowser({
                 />
               </div>
 
-              {/* Doc Type */}
               {docTypeOptions.length > 0 && (
                 <select
                   className="border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary"
@@ -176,7 +267,6 @@ export function LegalSourcesBrowser({
                 </select>
               )}
 
-              {/* Year */}
               <select
                 className="border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary"
                 value={year}
@@ -200,7 +290,7 @@ export function LegalSourcesBrowser({
         {/* Results + Viewer */}
         <div className="flex gap-4">
           {/* Results list */}
-          <div className={`flex-1 space-y-2 ${selected ? 'lg:max-w-sm' : ''}`}>
+          <div className={`flex-1 space-y-2 min-w-0 ${selected ? 'lg:max-w-sm xl:max-w-md' : ''}`}>
             {loading ? (
               <LoadingGrid count={4} />
             ) : sources.length === 0 ? (
@@ -212,7 +302,7 @@ export function LegalSourcesBrowser({
               </div>
             ) : (
               sources.map((src) => {
-                const docTypeColor = DOC_TYPE_COLORS[src.docType] ?? 'bg-muted text-muted-foreground border-border';
+                const color = DOC_TYPE_COLORS[src.docType] ?? 'bg-muted text-muted-foreground border-border';
                 const isSelected = selected?.id === src.id;
                 return (
                   <button
@@ -224,7 +314,7 @@ export function LegalSourcesBrowser({
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border uppercase ${docTypeColor}`}>
+                          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border uppercase ${color}`}>
                             {t(
                               docTypeOptions.find(o => o.value === src.docType)?.labelAr ?? src.docType,
                               docTypeOptions.find(o => o.value === src.docType)?.labelEn ?? src.docType,
@@ -244,7 +334,7 @@ export function LegalSourcesBrowser({
                           </p>
                         )}
                         {src.courtLevel && (
-                          <p className="text-xs text-muted-foreground mt-0.5">{src.courtLevel}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5 font-medium">{src.courtLevel}</p>
                         )}
                       </div>
                       <ChevronLeft className={`w-4 h-4 shrink-0 text-muted-foreground transition-transform ${isSelected ? 'rotate-180' : ''}`} aria-hidden />
@@ -261,7 +351,10 @@ export function LegalSourcesBrowser({
                   {t('السابق', 'Previous')}
                 </Button>
                 <span className="text-xs text-muted-foreground">
-                  {t(`${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, total)} من ${total}`, `${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, total)} of ${total}`)}
+                  {t(
+                    `${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, total)} من ${total}`,
+                    `${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, total)} of ${total}`,
+                  )}
                 </span>
                 <Button variant="outline" size="sm" disabled={(page + 1) * PAGE_SIZE >= total} onClick={() => setPage(p => p + 1)}>
                   {t('التالي', 'Next')}
@@ -270,9 +363,9 @@ export function LegalSourcesBrowser({
             )}
           </div>
 
-          {/* Viewer panel */}
+          {/* ── Document viewer panel ──────────────────────────────────────────── */}
           {selected && (
-            <Card className="flex-1 border-border sticky top-4 self-start max-h-[calc(100vh-8rem)] overflow-y-auto">
+            <Card className="flex-1 border-border sticky top-4 self-start max-h-[calc(100vh-7rem)] overflow-y-auto">
               <CardHeader className="px-5 pt-5 pb-3 border-b border-border/50">
                 <div className="flex items-start justify-between gap-2">
                   <CardTitle className="text-base leading-snug">
@@ -280,19 +373,27 @@ export function LegalSourcesBrowser({
                   </CardTitle>
                   <button
                     type="button"
-                    className="text-muted-foreground hover:text-foreground shrink-0"
+                    className="text-muted-foreground hover:text-foreground shrink-0 text-lg leading-none"
                     onClick={() => setSelected(null)}
                     aria-label={t('إغلاق', 'Close')}
                   >
                     ✕
                   </button>
                 </div>
+
+                {/* Metadata */}
                 <div className="flex items-center gap-2 flex-wrap mt-1">
+                  {selected.courtLevel && (
+                    <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                      {selected.courtLevel}
+                    </span>
+                  )}
                   {selected.year && <span className="text-xs text-muted-foreground">{selected.year}</span>}
                   {selected.referenceNumber && <span className="text-xs font-mono text-muted-foreground">{selected.referenceNumber}</span>}
                 </div>
-                {/* Actions */}
-                <div className="flex gap-2 mt-3">
+
+                {/* Primary action row */}
+                <div className="flex flex-wrap gap-2 mt-3">
                   <Button
                     size="sm"
                     variant="outline"
@@ -304,6 +405,20 @@ export function LegalSourcesBrowser({
                       ? <><BookmarkCheck className="w-3.5 h-3.5" />{t('محفوظ', 'Saved')}</>
                       : <><Bookmark className="w-3.5 h-3.5" />{t('حفظ', 'Save')}</>}
                   </Button>
+
+                  {/* Copy-citation button */}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5"
+                    onClick={() => handleCopyCitation(selected)}
+                  >
+                    {citationCopied
+                      ? <><Check className="w-3.5 h-3.5 text-green-600" />{t('تم النسخ', 'Copied')}</>
+                      : <><Copy className="w-3.5 h-3.5" />{t('نسخ الاستشهاد', 'Copy citation')}</>}
+                  </Button>
+
+                  {/* AI Summary */}
                   {canUseAi && !displaySummary && (
                     <Button
                       size="sm"
@@ -318,9 +433,62 @@ export function LegalSourcesBrowser({
                     </Button>
                   )}
                 </div>
+
+                {/* Jurisdiction-specific actions */}
+                {canUseAi && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {showKeyFindings && !analysis && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1.5 border-amber-300 text-amber-700 hover:bg-amber-50"
+                        onClick={() => handleAnalyse(selected, 'key-findings')}
+                        disabled={analysing}
+                      >
+                        {analysing
+                          ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />{t('يُحلَّل...', 'Analysing...')}</>
+                          : <><FileSearch className="w-3.5 h-3.5" />{t('المبادئ القانونية', 'Key Findings')}</>}
+                      </Button>
+                    )}
+
+                    {showRelevanceToUae && !analysis && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1.5 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                        onClick={() => handleAnalyse(selected, 'relevance-uae')}
+                        disabled={analysing}
+                      >
+                        {analysing
+                          ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />{t('يُحلَّل...', 'Analysing...')}</>
+                          : <><Globe2 className="w-3.5 h-3.5" />{t('صلته بالقانون الإماراتي', 'Relevance to UAE')}</>}
+                      </Button>
+                    )}
+
+                    {showCompareWithUae && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1.5 border-blue-300 text-blue-700 hover:bg-blue-50"
+                        onClick={() => handleCompareWithUae(selected)}
+                      >
+                        <Scale className="w-3.5 h-3.5" />
+                        {t('مقارنة بالإماراتي', 'Compare with UAE')}
+                      </Button>
+                    )}
+
+                    {/* Dismiss analysis */}
+                    {analysis && (
+                      <Button size="sm" variant="ghost" onClick={() => { setAnalysis(null); setAnalysisMeta(null); }}>
+                        {t('إخفاء التحليل', 'Hide analysis')}
+                      </Button>
+                    )}
+                  </div>
+                )}
               </CardHeader>
+
               <CardContent className="px-5 pb-5 pt-4 space-y-4">
-                {/* AI Summary */}
+                {/* AI Summary panel */}
                 {displaySummary && (
                   <div className="p-3 rounded-lg bg-primary/5 border border-primary/15">
                     <div className="flex items-center gap-1.5 mb-2">
@@ -330,17 +498,49 @@ export function LegalSourcesBrowser({
                     <p className="text-sm text-foreground leading-relaxed">{displaySummary}</p>
                   </div>
                 )}
-                {/* Content */}
+
+                {/* Key findings / Relevance to UAE AI analysis panel */}
+                {analysing && !analysis && (
+                  <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin text-amber-600" />
+                    <span className="text-xs text-amber-700">
+                      {showKeyFindings ? t('استخراج المبادئ القانونية...', 'Extracting key legal principles...') : t('تحليل الصلة بالقانون الإماراتي...', 'Analysing UAE relevance...')}
+                    </span>
+                  </div>
+                )}
+
+                {analysis && (
+                  <div className={`p-3 rounded-lg border ${showKeyFindings ? 'bg-amber-50 border-amber-200' : 'bg-emerald-50 border-emerald-200'}`}>
+                    <div className="flex items-center gap-1.5 mb-2">
+                      {showKeyFindings
+                        ? <FileSearch className="w-3.5 h-3.5 text-amber-600" aria-hidden />
+                        : <Globe2 className="w-3.5 h-3.5 text-emerald-600" aria-hidden />}
+                      <span className={`text-xs font-semibold ${showKeyFindings ? 'text-amber-700' : 'text-emerald-700'}`}>
+                        {showKeyFindings ? t('المبادئ والاجتهادات القانونية', 'Key Legal Principles') : t('الصلة بالقانون الإماراتي', 'Relevance to UAE Law')}
+                      </span>
+                      {analysisMeta && (
+                        <span className="ms-auto text-[10px] text-muted-foreground">{analysisMeta.model}</span>
+                      )}
+                    </div>
+                    <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{analysis}</p>
+                  </div>
+                )}
+
+                {/* Full text */}
                 <div>
                   <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                     {t('النص الكامل', 'Full Text')}
                   </h4>
-                  <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{selected.content || t('(لا يوجد نص)', '(No text available)')}</p>
+                  <div className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+                    {selected.content || t('(لا يوجد نص)', '(No text available)')}
+                  </div>
                 </div>
+
+                {/* Secondary navigation */}
                 {canUseAi && (
-                  <Button size="sm" className="w-full gap-1.5" onClick={() => navigate('/research')}>
+                  <Button size="sm" variant="outline" className="w-full gap-1.5" onClick={() => navigate('/research')}>
                     <Scale className="w-3.5 h-3.5" />
-                    {t('بحث مرتبط', 'Related Research')}
+                    {t('بحث مرتبط في قاعدة المعرفة', 'Related Research')}
                   </Button>
                 )}
               </CardContent>

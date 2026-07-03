@@ -610,12 +610,19 @@ components:
 
     LiteratureReviewInput:
       type: object
-      required: [documentIds, topic]
+      required: [topic]
       properties:
         documentIds:
           type: array
           items:
             type: integer
+          default: []
+        legalSourceIds:
+          type: array
+          items:
+            type: integer
+          default: []
+          description: IDs from the legal_sources table to include alongside uploaded documents
         topic:
           type: string
         language:

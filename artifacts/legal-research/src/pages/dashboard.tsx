@@ -52,6 +52,7 @@ export default function Dashboard() {
   const [, navigate] = useLocation();
   const [quickQuery, setQuickQuery] = useState('');
   const [recentActivity, setRecentActivity] = useState<AuditEntry[]>([]);
+  const [dashStats, setDashStats] = useState<{ legalSourcesCount: number; aiQueriesThisMonth: number; activeUsers: number; totalUsers: number } | null>(null);
 
   useEffect(() => {
     if (!canViewAudit) return;
@@ -60,6 +61,13 @@ export default function Dashboard() {
       .then((data) => { if (data?.logs) setRecentActivity(data.logs); })
       .catch(() => {});
   }, [canViewAudit]);
+
+  useEffect(() => {
+    apiFetch('/api/dashboard/stats')
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data) setDashStats(data); })
+      .catch(() => {});
+  }, []);
 
   const uploadTrendData = React.useMemo(() => {
     const s = stats as (typeof stats & { uploadsByDay?: Record<string, number> }) | undefined;
@@ -129,73 +137,121 @@ export default function Dashboard() {
         ) : error ? (
           <ErrorMessage message={t('تعذّر تحميل الإحصائيات', 'Failed to load statistics')} />
         ) : stats ? (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <button
-              type="button"
-              className="text-start moj-card p-5 hover:shadow-md transition-all hover:-translate-y-0.5 group cursor-pointer"
-              onClick={() => navigate('/library')}
-            >
-              <div className="flex items-center justify-between pb-2">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  {t('إجمالي الوثائق', 'Total Documents')}
-                </span>
-                <div className="w-8 h-8 rounded-lg bg-primary/8 flex items-center justify-center group-hover:bg-primary/12 transition-colors">
-                  <Library className="w-4 h-4 text-primary" />
+          <>
+            {/* Row 1 — Document KPIs */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <button
+                type="button"
+                className="text-start moj-card p-5 hover:shadow-md transition-all hover:-translate-y-0.5 group cursor-pointer"
+                onClick={() => navigate('/library')}
+              >
+                <div className="flex items-center justify-between pb-2">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    {t('إجمالي الوثائق', 'Total Documents')}
+                  </span>
+                  <div className="w-8 h-8 rounded-lg bg-primary/8 flex items-center justify-center group-hover:bg-primary/12 transition-colors">
+                    <Library className="w-4 h-4 text-primary" />
+                  </div>
                 </div>
-              </div>
-              <div className="text-3xl font-bold text-foreground mt-1">{stats.total}</div>
-              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                {t('وثيقة في المكتبة', 'documents in library')}
-                <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-              </p>
-            </button>
+                <div className="text-3xl font-bold text-foreground mt-1">{stats.total}</div>
+                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                  {t('وثيقة في المكتبة', 'documents in library')}
+                  <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </p>
+              </button>
 
-            <div className="moj-card p-5">
-              <div className="flex items-center justify-between pb-2">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  {t('حجم التخزين', 'Storage Used')}
-                </span>
-                <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
-                  <FileText className="w-4 h-4 text-amber-600" />
+              {/* Legal sources indexed */}
+              <button
+                type="button"
+                className="text-start moj-card p-5 hover:shadow-md transition-all hover:-translate-y-0.5 group cursor-pointer"
+                onClick={() => navigate('/legislation/uae')}
+              >
+                <div className="flex items-center justify-between pb-2">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    {t('المصادر القانونية', 'Legal Sources')}
+                  </span>
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
+                    <Scale className="w-4 h-4 text-amber-600" />
+                  </div>
                 </div>
+                <div className="text-3xl font-bold text-foreground mt-1">
+                  {dashStats?.legalSourcesCount ?? <span className="text-muted-foreground text-base">—</span>}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                  {t('مصدر مفهرس', 'indexed sources')}
+                  <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </p>
+              </button>
+
+              {/* AI queries this month */}
+              <div className="moj-card p-5">
+                <div className="flex items-center justify-between pb-2">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    {t('استعلامات الذكاء الاصطناعي', 'AI Queries')}
+                  </span>
+                  <div className="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center">
+                    <BrainCircuit className="w-4 h-4 text-violet-600" />
+                  </div>
+                </div>
+                <div className="text-3xl font-bold text-foreground mt-1">
+                  {dashStats?.aiQueriesThisMonth ?? <span className="text-muted-foreground text-base">—</span>}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">{t('هذا الشهر', 'this month')}</p>
               </div>
-              <div className="text-3xl font-bold text-foreground mt-1">
-                {(stats.totalSize / 1024 / 1024).toFixed(1)}
-                <span className="text-base text-muted-foreground ms-1">MB</span>
+
+              {/* Active users */}
+              <div className="moj-card p-5">
+                <div className="flex items-center justify-between pb-2">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    {t('المستخدمون النشطون', 'Active Users')}
+                  </span>
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                    <UploadCloud className="w-4 h-4 text-emerald-600" />
+                  </div>
+                </div>
+                <div className="text-3xl font-bold text-foreground mt-1">
+                  {dashStats?.activeUsers ?? <span className="text-muted-foreground text-base">—</span>}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {dashStats
+                    ? t(`من أصل ${dashStats.totalUsers}`, `of ${dashStats.totalUsers} total`)
+                    : t('جارٍ التحميل…', 'loading…')}
+                </p>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">{t('مساحة مستخدمة', 'space used')}</p>
             </div>
 
-            <div className="moj-card p-5">
-              <div className="flex items-center justify-between pb-2">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  {t('رفع حديث', 'Recent Uploads')}
-                </span>
-                <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
-                  <UploadCloud className="w-4 h-4 text-emerald-600" />
+            {/* Row 2 — Storage + Recent uploads */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="moj-card p-5">
+                <div className="flex items-center justify-between pb-2">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    {t('حجم التخزين', 'Storage Used')}
+                  </span>
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
+                    <FileText className="w-4 h-4 text-amber-600" />
+                  </div>
                 </div>
+                <div className="text-3xl font-bold text-foreground mt-1">
+                  {(stats.totalSize / 1024 / 1024).toFixed(1)}
+                  <span className="text-base text-muted-foreground ms-1">MB</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">{t('مساحة مستخدمة', 'space used')}</p>
               </div>
-              <div className="text-3xl font-bold text-foreground mt-1">{stats.recentUploads}</div>
-              <p className="text-xs text-muted-foreground mt-1">{t('في آخر 7 أيام', 'in last 7 days')}</p>
-            </div>
 
-            <div className="moj-card p-5">
-              <div className="flex items-center justify-between pb-2">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  {t('الذكاء الاصطناعي', 'AI Access')}
-                </span>
-                <div className="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center">
-                  <BrainCircuit className="w-4 h-4 text-violet-600" />
+              <div className="moj-card p-5">
+                <div className="flex items-center justify-between pb-2">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    {t('رفع حديث', 'Recent Uploads')}
+                  </span>
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                    <UploadCloud className="w-4 h-4 text-emerald-600" />
+                  </div>
                 </div>
+                <div className="text-3xl font-bold text-foreground mt-1">{stats.recentUploads}</div>
+                <p className="text-xs text-muted-foreground mt-1">{t('في آخر 7 أيام', 'in last 7 days')}</p>
               </div>
-              <div className="mt-1">
-                <StatusBadge variant={canUseAi ? 'active' : 'inactive'} dot>
-                  {canUseAi ? t('متاح', 'Available') : t('مقيّد', 'Restricted')}
-                </StatusBadge>
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">Claude Opus 4</p>
             </div>
-          </div>
+          </>
         ) : null}
 
         {/* ─── Charts + Activity ────────────────────────────────────────────── */}

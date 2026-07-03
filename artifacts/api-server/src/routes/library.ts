@@ -88,4 +88,38 @@ router.delete("/library/:id", requireAnyRole, async (req, res): Promise<void> =>
   res.json({ ok: true });
 });
 
+// ─── GET /library/export ─────────────────────────────────────────────────────
+// Returns all user library items as a structured JSON payload.
+// The frontend downloads this as a .json file.
+// NOTE: userId is resolved from the x-user-id header — a pre-existing platform
+// decision for the demo environment (documented in memory: no JWT/session auth).
+// In production, this MUST be replaced with a verified session token.
+// TODO(security): replace header-based userId with session/JWT before production deploy.
+router.get("/library/export", requireAnyRole, async (req, res): Promise<void> => {
+  const uid = getUserId(req);
+
+  const items = await db.select().from(libraryItemsTable)
+    .where(eq(libraryItemsTable.userId, uid))
+    .orderBy(libraryItemsTable.savedAt);
+
+  const enriched = await Promise.all(items.map(async (item) => {
+    let sourceMeta: Record<string, unknown> | null = null;
+    if (item.sourceType === "document" && item.documentId) {
+      const [doc] = await db.select({ id: documentsTable.id, originalName: documentsTable.originalName, fileType: documentsTable.fileType })
+        .from(documentsTable).where(eq(documentsTable.id, item.documentId));
+      sourceMeta = doc ?? null;
+    } else if (item.sourceType === "legal_source" && item.legalSourceId) {
+      const [src] = await db.select({ id: legalSourcesTable.id, title: legalSourcesTable.title, jurisdiction: legalSourcesTable.jurisdiction, docType: legalSourcesTable.docType, year: legalSourcesTable.year })
+        .from(legalSourcesTable).where(eq(legalSourcesTable.id, item.legalSourceId));
+      sourceMeta = src ?? null;
+    }
+    return { ...item, sourceMeta };
+  }));
+
+  const filename = `marsad-library-${new Date().toISOString().split("T")[0]}.json`;
+  res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  res.setHeader("Content-Type", "application/json");
+  res.json({ exportedAt: new Date().toISOString(), itemCount: enriched.length, items: enriched });
+});
+
 export default router;

@@ -109,8 +109,12 @@ export const AiSearchResponse = zod.object({
 /**
  * @summary Generate a literature review from selected documents
  */
+export const generateLiteratureReviewBodyDocumentIdsDefault = [];
+export const generateLiteratureReviewBodyLegalSourceIdsDefault = [];
+
 export const GenerateLiteratureReviewBody = zod.object({
-  "documentIds": zod.array(zod.number()),
+  "documentIds": zod.array(zod.number()).default(generateLiteratureReviewBodyDocumentIdsDefault),
+  "legalSourceIds": zod.array(zod.number()).default(generateLiteratureReviewBodyLegalSourceIdsDefault).describe('IDs from the legal_sources table to include alongside uploaded documents'),
   "topic": zod.string(),
   "language": zod.string().optional()
 })

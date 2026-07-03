@@ -17,6 +17,7 @@ export default function UaeCaseLaw() {
         { value: 'circular',  labelAr: 'منشور',        labelEn: 'Circular' },
       ]}
       yearMin={1971}
+      showKeyFindings
     />
   );
 }
