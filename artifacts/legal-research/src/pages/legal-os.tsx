@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { exportBriefToPdf } from '@/lib/export-brief-pdf';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -253,8 +254,28 @@ function DecisionBriefView({ brief, scenario, role, sessionId, citations, onRese
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportMsg, setExportMsg] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  async function handleExportPdf() {
+    if (exporting) return;
+    setExporting(true);
+    setExportMsg('جارٍ تحضير مستند PDF...');
+    try {
+      await exportBriefToPdf(
+        brief,
+        scenario.titleAr,
+        role.titleAr,
+        (msg) => setExportMsg(msg),
+      );
+    } catch (err) {
+      toast({ title: 'فشل تصدير PDF', description: String(err), variant: 'destructive' });
+    } finally {
+      setTimeout(() => { setExporting(false); setExportMsg(''); }, 1500);
+    }
+  }
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -326,10 +347,25 @@ function DecisionBriefView({ brief, scenario, role, sessionId, citations, onRese
             </p>
             <h1 className="text-xl font-black text-foreground">التقييم القانوني</h1>
           </div>
-          <Button variant="outline" size="sm" onClick={onReset} className="gap-1.5 shrink-0">
-            <RotateCcw className="w-3.5 h-3.5" />
-            {t('تقييم جديد', 'New Assessment')}
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportPdf}
+              disabled={exporting}
+              className="gap-1.5"
+              title="تصدير كـ PDF"
+            >
+              {exporting
+                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                : <Download className="w-3.5 h-3.5" />}
+              {exporting ? (exportMsg || 'جارٍ التصدير...') : t('تصدير PDF', 'Export PDF')}
+            </Button>
+            <Button variant="outline" size="sm" onClick={onReset} className="gap-1.5">
+              <RotateCcw className="w-3.5 h-3.5" />
+              {t('تقييم جديد', 'New Assessment')}
+            </Button>
+          </div>
         </div>
 
         {/* Risk + Can Issue */}
