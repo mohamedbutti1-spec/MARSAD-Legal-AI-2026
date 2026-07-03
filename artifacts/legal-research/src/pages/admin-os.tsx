@@ -130,6 +130,42 @@ interface Citation {
 
 interface FollowupMessage { role: 'user' | 'assistant'; text: string; citations: Citation[]; }
 
+// Phase 4 — Jurisdiction types
+
+interface JurisdictionInfo {
+  id: number;
+  jurisdictionKey: string;
+  nameAr: string;
+  nameEn: string;
+  legalSystem: string;
+  active: boolean;
+}
+
+interface ComparisonDimension {
+  key: string;
+  labelAr: string;
+  originalScore: number;
+  originalStatus: string;
+  targetScore: number;
+  targetStatus: string;
+  scoreDelta: number;
+  differenceAr: string;
+}
+
+interface CompareResult {
+  originalJurisdiction: string;
+  targetJurisdiction: string;
+  originalJurisdictionNameAr: string;
+  targetJurisdictionNameAr: string;
+  originalLegalityScore: number;
+  targetLegalityScore: number;
+  stricterJurisdiction: string;
+  diff: Record<string, ComparisonDimension>;
+  overallCompatibilityAr: string;
+  keyDifferencesAr: string[];
+  commonPrinciplesAr: string[];
+}
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const DIMENSION_ORDER = [
@@ -404,15 +440,21 @@ function RoleSelectionScreen({ roles, loading, onSelect }: {
 
 // ─── Decision Type Catalog Screen ─────────────────────────────────────────────
 
-function CatalogScreen({ role, decisionTypes, loading, onSelect, onBack }: {
+function CatalogScreen({ role, decisionTypes, loading, onSelect, onBack, jurisdiction, availableJurisdictions, onJurisdictionChange }: {
   role: AdminRole;
   decisionTypes: AdminDecisionType[];
   loading: boolean;
   onSelect: (dt: AdminDecisionType) => void;
   onBack: () => void;
+  jurisdiction: string;
+  availableJurisdictions: JurisdictionInfo[];
+  onJurisdictionChange: (key: string) => void;
 }) {
   const [search, setSearch] = useState('');
   const [activeDomain, setActiveDomain] = useState<string>('all');
+
+  // Reset domain filter when jurisdiction changes
+  React.useEffect(() => { setActiveDomain('all'); }, [jurisdiction]);
 
   const domains = ['all', ...Array.from(new Set(decisionTypes.map(dt => dt.domain)))];
 
@@ -441,6 +483,24 @@ function CatalogScreen({ role, decisionTypes, loading, onSelect, onBack }: {
           </div>
           <span className="text-xs text-muted-foreground shrink-0">{filtered.length} قرار</span>
         </div>
+
+        {/* Jurisdiction selector — shown when more than one active jurisdiction */}
+        {availableJurisdictions.length > 1 && (
+          <div className="flex gap-1.5">
+            {availableJurisdictions.map(j => (
+              <button key={j.jurisdictionKey} type="button"
+                onClick={() => onJurisdictionChange(j.jurisdictionKey)}
+                className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border font-semibold transition-all ${
+                  jurisdiction === j.jurisdictionKey
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-card text-muted-foreground border-border hover:border-primary/40 hover:text-foreground'
+                }`}>
+                <Globe className="w-3 h-3" />
+                {j.jurisdictionKey === 'uae' ? 'الإمارات 🇦🇪' : j.jurisdictionKey === 'france' ? 'فرنسا 🇫🇷' : j.nameAr}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Search */}
         <div className="relative">
@@ -949,7 +1009,7 @@ function VerdictBanner({ canIssue, rationale }: { canIssue: CanIssue; rationale:
 
 // ─── Administrative Decision Brief Screen ─────────────────────────────────────
 
-function BriefScreen({ brief, role, decisionType, sessionId, citations, onReset, t }: {
+function BriefScreen({ brief, role, decisionType, sessionId, citations, onReset, t, jurisdiction, onCompare, comparing, compareResult, canUseAi }: {
   brief: AdminBrief;
   role: AdminRole;
   decisionType: AdminDecisionType;
@@ -957,6 +1017,11 @@ function BriefScreen({ brief, role, decisionType, sessionId, citations, onReset,
   citations: Citation[];
   onReset: () => void;
   t: (ar: string, en: string) => string;
+  jurisdiction: string;
+  onCompare: () => void;
+  comparing: boolean;
+  compareResult: CompareResult | null;
+  canUseAi: boolean;
 }) {
   const [followups, setFollowups] = useState<FollowupMessage[]>([]);
   const [input, setInput] = useState('');
@@ -1038,6 +1103,14 @@ function BriefScreen({ brief, role, decisionType, sessionId, citations, onReset,
           <ScoreRing score={brief.legalityScore ?? 0} label="درجة المشروعية القانونية" />
           <div className="w-px h-16 bg-border" />
           <ScoreRing score={brief.riskScore ?? 0} label="درجة الخطورة القانونية" />
+          {canUseAi && (jurisdiction === 'uae' || jurisdiction === 'france') && (
+            <div className="hidden sm:flex flex-col justify-center me-auto pe-4 border-r border-border/0 items-end gap-1 flex-1">
+              <Button onClick={onCompare} disabled={comparing} variant="outline" size="sm" className="gap-2 text-xs shrink-0 ms-auto">
+                {comparing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <GitBranch className="w-3.5 h-3.5 text-primary" />}
+                {jurisdiction === 'uae' ? 'مقارنة مع القانون الفرنسي 🇫🇷' : 'مقارنة مع القانون الإماراتي 🇦🇪'}
+              </Button>
+            </div>
+          )}
           <div className="hidden sm:flex flex-1 flex-col gap-1 text-xs text-muted-foreground ps-4">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-emerald-500 shrink-0" />
@@ -1053,6 +1126,19 @@ function BriefScreen({ brief, role, decisionType, sessionId, citations, onReset,
             </div>
           </div>
         </div>
+
+        {/* Mobile compare button */}
+        {canUseAi && (jurisdiction === 'uae' || jurisdiction === 'france') && (
+          <div className="sm:hidden">
+            <Button onClick={onCompare} disabled={comparing} variant="outline" size="sm" className="w-full gap-2 text-xs">
+              {comparing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <GitBranch className="w-3.5 h-3.5 text-primary" />}
+              {jurisdiction === 'uae' ? 'مقارنة مع القانون الفرنسي 🇫🇷' : 'مقارنة مع القانون الإماراتي 🇦🇪'}
+            </Button>
+          </div>
+        )}
+
+        {/* Comparison panel — Phase 4 */}
+        {compareResult && <ComparisonPanel result={compareResult} />}
 
         {/* ═══ 12-Dimension Grid ═══ */}
         <BriefSection title="التحليل الشامل — 12 أبعاد نظرية الشمسي" icon={<Activity className="w-4 h-4" />}>
@@ -1366,6 +1452,152 @@ function HistoryDrawer({ open, sessions, onSelect, onDelete, onClose, t }: {
   );
 }
 
+// ─── Phase 4: Cross-Jurisdiction Comparison Panel ─────────────────────────────
+
+const STATUS_CHIP: Record<string, { bg: string; icon: React.ReactNode }> = {
+  compliant:     { bg: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: <CheckCircle2 className="w-3 h-3" /> },
+  partial:       { bg: 'bg-amber-50 text-amber-700 border-amber-200',      icon: <AlertTriangle className="w-3 h-3" /> },
+  'non-compliant': { bg: 'bg-red-50 text-red-700 border-red-200',          icon: <XCircle className="w-3 h-3" /> },
+  unknown:       { bg: 'bg-muted text-muted-foreground border-border',      icon: <HelpCircle className="w-3 h-3" /> },
+};
+
+function StatusChip({ status }: { status: string }) {
+  const cfg = STATUS_CHIP[status] ?? STATUS_CHIP.unknown;
+  return (
+    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${cfg.bg}`}>
+      {cfg.icon}
+    </span>
+  );
+}
+
+function ComparisonPanel({ result }: { result: CompareResult }) {
+  const [expanded, setExpanded] = useState(false);
+  const DIMENSION_ORDER_COMPARE = [
+    'jurisdiction', 'cause', 'form', 'subjectMatter', 'purpose',
+    'humanWill', 'digitalWillFormation', 'algorithmicWeight',
+    'algorithmicBias', 'explainability', 'humanOversight', 'judicialReviewReadiness',
+  ];
+
+  const overallDelta = result.targetLegalityScore - result.originalLegalityScore;
+
+  return (
+    <div className="rounded-xl border border-primary/30 bg-primary/5 overflow-hidden">
+      {/* Header */}
+      <div className="px-4 py-3 border-b border-primary/20 flex items-center gap-3">
+        <GitBranch className="w-4 h-4 text-primary shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-bold text-foreground">التحليل القانوني المقارن</p>
+          <p className="text-[11px] text-muted-foreground">
+            {result.originalJurisdictionNameAr} ↔ {result.targetJurisdictionNameAr}
+          </p>
+        </div>
+        <button type="button" onClick={() => setExpanded(!expanded)}
+          className="text-xs text-primary hover:underline shrink-0">
+          {expanded ? 'إخفاء' : 'عرض التفاصيل'}
+        </button>
+      </div>
+
+      {/* Score summary */}
+      <div className="px-4 py-3 flex items-center gap-4">
+        <div className="flex-1 text-center">
+          <p className="text-[10px] text-muted-foreground mb-0.5">{result.originalJurisdictionNameAr}</p>
+          <p className={`text-xl font-black ${result.originalLegalityScore >= 80 ? 'text-emerald-600' : result.originalLegalityScore >= 60 ? 'text-amber-600' : 'text-red-600'}`}>
+            {result.originalLegalityScore}
+          </p>
+          <p className="text-[9px] text-muted-foreground">/100 مشروعية</p>
+        </div>
+        <div className="flex flex-col items-center gap-1">
+          <ArrowRight className="w-4 h-4 text-muted-foreground" />
+          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${overallDelta >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
+            {overallDelta >= 0 ? '+' : ''}{overallDelta}
+          </span>
+        </div>
+        <div className="flex-1 text-center">
+          <p className="text-[10px] text-muted-foreground mb-0.5">{result.targetJurisdictionNameAr}</p>
+          <p className={`text-xl font-black ${result.targetLegalityScore >= 80 ? 'text-emerald-600' : result.targetLegalityScore >= 60 ? 'text-amber-600' : 'text-red-600'}`}>
+            {result.targetLegalityScore}
+          </p>
+          <p className="text-[9px] text-muted-foreground">/100 مشروعية</p>
+        </div>
+      </div>
+
+      {/* Overall compatibility */}
+      <div className="px-4 pb-3">
+        <p className="text-xs text-muted-foreground leading-relaxed">{result.overallCompatibilityAr}</p>
+      </div>
+
+      {/* Detailed dimension table */}
+      {expanded && (
+        <div className="border-t border-primary/20">
+          {/* Dimension rows */}
+          <div className="divide-y divide-border/50">
+            {DIMENSION_ORDER_COMPARE.map(key => {
+              const dim = result.diff[key];
+              if (!dim) return null;
+              const delta = dim.scoreDelta;
+              return (
+                <div key={key} className="px-4 py-2.5 flex items-center gap-3 text-xs">
+                  <p className="w-28 sm:w-36 shrink-0 text-foreground font-medium truncate">{dim.labelAr}</p>
+                  <div className="flex items-center gap-1.5">
+                    <StatusChip status={dim.originalStatus} />
+                    <span className="text-muted-foreground font-mono">{dim.originalScore}</span>
+                  </div>
+                  <span className="text-muted-foreground">→</span>
+                  <div className="flex items-center gap-1.5">
+                    <StatusChip status={dim.targetStatus} />
+                    <span className="text-muted-foreground font-mono">{dim.targetScore}</span>
+                  </div>
+                  <span className={`ms-auto shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                    delta >= 5 ? 'bg-emerald-50 text-emerald-700' : delta <= -5 ? 'bg-red-50 text-red-700' : 'bg-muted text-muted-foreground'
+                  }`}>
+                    {delta >= 0 ? '+' : ''}{delta}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Key differences */}
+          {result.keyDifferencesAr.length > 0 && (
+            <div className="px-4 py-3 border-t border-primary/20">
+              <p className="text-xs font-bold text-foreground mb-2 flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                أبرز الفجوات القانونية
+              </p>
+              <ul className="space-y-1">
+                {result.keyDifferencesAr.map((d, i) => (
+                  <li key={i} className="text-xs text-muted-foreground flex gap-2">
+                    <span className="text-amber-500 shrink-0">•</span>
+                    <span>{d}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Common principles */}
+          {result.commonPrinciplesAr.length > 0 && (
+            <div className="px-4 py-3 border-t border-primary/20">
+              <p className="text-xs font-bold text-foreground mb-2 flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                مبادئ مشتركة في كلا النظامين
+              </p>
+              <ul className="space-y-1">
+                {result.commonPrinciplesAr.map((p, i) => (
+                  <li key={i} className="text-xs text-muted-foreground flex gap-2">
+                    <span className="text-emerald-500 shrink-0">•</span>
+                    <span>{p}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Page Component ──────────────────────────────────────────────────────
 
 export default function AdminOs() {
@@ -1392,6 +1624,12 @@ export default function AdminOs() {
   const [currentSessionId, setCurrentSessionId] = useState<number | null>(null);
   const [showHistoryDrawer, setShowHistoryDrawer] = useState(false);
 
+  // Phase 4: jurisdiction selection + comparison
+  const [jurisdiction, setJurisdiction] = useState<string>('uae');
+  const [availableJurisdictions, setAvailableJurisdictions] = useState<JurisdictionInfo[]>([]);
+  const [compareResult, setCompareResult] = useState<CompareResult | null>(null);
+  const [comparing, setComparing] = useState(false);
+
   // Load roles on mount
   useEffect(() => {
     apiFetch('/api/admin-os/roles')
@@ -1408,6 +1646,14 @@ export default function AdminOs() {
   }, []);
 
   useEffect(() => { fetchHistory(); }, [fetchHistory]);
+
+  // Load available jurisdictions
+  useEffect(() => {
+    apiFetch('/api/admin-os/jurisdictions')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.jurisdictions) setAvailableJurisdictions(d.jurisdictions); })
+      .catch(() => {});
+  }, []);
 
   // Loading animation — dims light up one by one
   useEffect(() => {
@@ -1436,7 +1682,7 @@ export default function AdminOs() {
     setDtLoading(true);
     setScreen('catalog');
     try {
-      const r = await apiFetch(`/api/admin-os/decision-types?jurisdiction=uae&role=${role.roleKey}`);
+      const r = await apiFetch(`/api/admin-os/decision-types?jurisdiction=${jurisdiction}&role=${role.roleKey}`);
       if (r.ok) {
         const d = await r.json();
         setDecisionTypes(d.decisionTypes ?? []);
@@ -1482,7 +1728,7 @@ export default function AdminOs() {
         body: JSON.stringify({
           role: selectedRole.roleKey,
           decisionTypeId: selectedType.id,
-          jurisdiction: 'uae',
+          jurisdiction,
           answers,
         }),
       });
@@ -1540,6 +1786,9 @@ export default function AdminOs() {
         sessionId: session.id,
       });
       setCurrentSessionId(session.id);
+      setJurisdiction(session.jurisdiction ?? 'uae');
+      setCompareResult(null);
+      setComparing(false);
       setScreen('brief');
     } catch {
       toast({ title: 'تعذّر تحميل التقييم', variant: 'destructive' });
@@ -1550,6 +1799,36 @@ export default function AdminOs() {
     await apiFetch(`/api/admin-os/sessions/${id}`, { method: 'DELETE' });
     setHistory(prev => prev.filter(s => s.id !== id));
     if (currentSessionId === id) { resetAll(); }
+  }
+
+  async function handleJurisdictionChange(key: string) {
+    setJurisdiction(key);
+    setCompareResult(null);
+    if (selectedRole && screen === 'catalog') {
+      setDtLoading(true);
+      setDecisionTypes([]);
+      try {
+        const r = await apiFetch(`/api/admin-os/decision-types?jurisdiction=${key}&role=${selectedRole.roleKey}`);
+        if (r.ok) { const d = await r.json(); setDecisionTypes(d.decisionTypes ?? []); }
+      } catch { /* ignore */ } finally { setDtLoading(false); }
+    }
+  }
+
+  async function runComparison() {
+    if (!assessResult?.sessionId || !canUseAi) return;
+    const targetJurisdiction = jurisdiction === 'uae' ? 'france' : 'uae';
+    setComparing(true);
+    setCompareResult(null);
+    try {
+      const r = await apiFetch('/api/admin-os/compare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: assessResult.sessionId, targetJurisdiction }),
+      });
+      if (r.ok) { setCompareResult(await r.json()); }
+      else { toast({ title: 'فشل التحليل المقارن', description: 'تحقق من الاتصال وأعد المحاولة.', variant: 'destructive' }); }
+    } catch { toast({ title: 'خطأ في الاتصال', variant: 'destructive' }); }
+    finally { setComparing(false); }
   }
 
   function resetAll() {
@@ -1563,6 +1842,8 @@ export default function AdminOs() {
     setCurrentSessionId(null);
     setAssessing(false);
     setQuestionsLoading(false);
+    setCompareResult(null);
+    setComparing(false);
   }
 
   function handleBack() {
@@ -1618,7 +1899,10 @@ export default function AdminOs() {
             )}
             {screen === 'catalog' && selectedRole && (
               <CatalogScreen role={selectedRole} decisionTypes={decisionTypes} loading={dtLoading}
-                onSelect={selectDecisionType} onBack={handleBack} />
+                onSelect={selectDecisionType} onBack={handleBack}
+                jurisdiction={jurisdiction}
+                availableJurisdictions={availableJurisdictions}
+                onJurisdictionChange={handleJurisdictionChange} />
             )}
             {screen === 'interview' && selectedRole && selectedType && (
               <InterviewScreen
@@ -1642,6 +1926,11 @@ export default function AdminOs() {
                 citations={assessResult.citations}
                 onReset={resetAll}
                 t={t}
+                jurisdiction={jurisdiction}
+                onCompare={runComparison}
+                comparing={comparing}
+                compareResult={compareResult}
+                canUseAi={canUseAi}
               />
             )}
           </div>

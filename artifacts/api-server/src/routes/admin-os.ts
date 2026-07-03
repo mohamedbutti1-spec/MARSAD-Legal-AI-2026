@@ -23,6 +23,7 @@ import {
   adminDecisionSessionsTable,
   adminDecisionBriefsTable,
   adminDecisionRolesTable,
+  adminJurisdictionsTable,
 } from "@workspace/db";
 import { requireAnyRole, requireSupervisorOrOwner } from "../middlewares/roleAuth";
 import { logAudit } from "../middlewares/auditLog";
@@ -35,6 +36,7 @@ import {
   computeRiskScore,
   buildEvaluatorPrompt,
   VALID_ROLES,
+  DIMENSION_KEYS,
   type AdminDecisionBriefData,
   type DimensionResult,
   type RolePromptContext,
@@ -46,6 +48,7 @@ import {
   ROLE_LABELS_AR,
   ROLE_LABELS_EN,
 } from "../utils/admin-os-interview";
+import { getJurisdictionPlugin } from "../ai/jurisdictions";
 import type { InterviewModifiers } from "@workspace/db";
 
 const router: IRouter = Router();
@@ -55,6 +58,28 @@ function getUserId(req: import("express").Request): number {
   if (!h) return 1;
   return parseInt(Array.isArray(h) ? h[0] : h, 10);
 }
+
+// ─── GET /admin-os/jurisdictions ──────────────────────────────────────────────
+/**
+ * Returns all active jurisdictions available in the frontend selector.
+ * Inactive GCC stubs are excluded (active = false).
+ */
+router.get("/admin-os/jurisdictions", requireAnyRole, async (_req, res): Promise<void> => {
+  const jurisdictions = await db
+    .select({
+      id: adminJurisdictionsTable.id,
+      jurisdictionKey: adminJurisdictionsTable.jurisdictionKey,
+      nameAr: adminJurisdictionsTable.nameAr,
+      nameEn: adminJurisdictionsTable.nameEn,
+      legalSystem: adminJurisdictionsTable.legalSystem,
+      active: adminJurisdictionsTable.active,
+    })
+    .from(adminJurisdictionsTable)
+    .where(eq(adminJurisdictionsTable.active, true))
+    .orderBy(adminJurisdictionsTable.id);
+
+  res.json({ jurisdictions });
+});
 
 // ─── GET /admin-os/roles ───────────────────────────────────────────────────────
 /**
@@ -378,6 +403,19 @@ router.post("/admin-os/assess", requireSupervisorOrOwner, async (req, res): Prom
 
   const { context: ragContext, sourceIndex } = await buildContext(semanticQuery, uid, [], []);
 
+  // Phase 4: Build jurisdiction context from the registered plugin
+  const jurisdictionPlugin = getJurisdictionPlugin(jurisdiction);
+  const jurisdictionContext = jurisdictionPlugin?.active
+    ? jurisdictionPlugin.buildJurisdictionContext({
+        decisionTypeAr: decisionType.decisionTypeAr,
+        decisionTypeEn: decisionType.decisionTypeEn,
+        domain: decisionType.domain,
+        role,
+        answers,
+        applicableLaws: (decisionType.applicableLaws ?? []) as Array<{ lawAr: string; referenceNumber: string; articles?: string[] }>,
+      })
+    : undefined;
+
   const { systemPrompt, userPrompt } = buildEvaluatorPrompt({
     role,
     roleAr,
@@ -389,6 +427,7 @@ router.post("/admin-os/assess", requireSupervisorOrOwner, async (req, res): Prom
     answers,
     ragContext,
     roleContext,
+    jurisdictionContext,
   });
 
   let brief: AdminDecisionBriefData;
@@ -557,6 +596,219 @@ ${ragContext ? `السياق القانوني المتاح:\n${ragContext}` : ""
     req.log.error({ err }, "Admin OS followup failed");
     res.status(500).json({ error: "AI response failed. Please try again." });
   }
+});
+
+// ─── POST /admin-os/compare ────────────────────────────────────────────────────
+/**
+ * Cross-jurisdiction comparison: takes an existing session brief (evaluated under
+ * one jurisdiction) and produces a second brief under a target jurisdiction,
+ * then returns a per-dimension diff with an overall compatibility summary.
+ *
+ * Uses the existing stored brief to provide context to the AI — no answers
+ * need to be re-submitted.
+ */
+router.post("/admin-os/compare", requireSupervisorOrOwner, async (req, res): Promise<void> => {
+  const { sessionId, targetJurisdiction } = req.body;
+  const uid = getUserId(req);
+
+  if (!sessionId || !targetJurisdiction) {
+    res.status(400).json({ error: "sessionId and targetJurisdiction are required" });
+    return;
+  }
+
+  const [session] = await db
+    .select()
+    .from(adminDecisionSessionsTable)
+    .where(and(eq(adminDecisionSessionsTable.id, sessionId), eq(adminDecisionSessionsTable.userId, uid)));
+
+  if (!session) { res.status(404).json({ error: "Session not found" }); return; }
+
+  const originalBrief = session.brief as unknown as AdminDecisionBriefData;
+  if (!originalBrief) { res.status(400).json({ error: "Session has no brief to compare" }); return; }
+
+  const targetPlugin = getJurisdictionPlugin(targetJurisdiction);
+  if (!targetPlugin?.active) {
+    res.status(400).json({ error: `Jurisdiction '${targetJurisdiction}' is not active` });
+    return;
+  }
+
+  // Load decision type for domain context (needed for jurisdiction plugin)
+  let domainCtx = "general";
+  let lawsCtx: Array<{ lawAr: string; referenceNumber: string; articles?: string[] }> = [];
+  if (session.decisionTypeId) {
+    const [dt] = await db
+      .select({ domain: adminDecisionTypesTable.domain, applicableLaws: adminDecisionTypesTable.applicableLaws })
+      .from(adminDecisionTypesTable)
+      .where(eq(adminDecisionTypesTable.id, session.decisionTypeId));
+    if (dt) {
+      domainCtx = dt.domain;
+      lawsCtx = (dt.applicableLaws ?? []) as Array<{ lawAr: string; referenceNumber: string; articles?: string[] }>;
+    }
+  }
+
+  const jurisdictionContext = targetPlugin.buildJurisdictionContext({
+    decisionTypeAr: session.decisionTypeAr ?? "",
+    decisionTypeEn: session.decisionTypeEn ?? "",
+    domain: domainCtx,
+    role: session.role ?? "",
+    answers: {},
+    applicableLaws: lawsCtx,
+  });
+
+  // Summarise the original brief for the comparison prompt
+  const originalAsRecord = originalBrief as unknown as Record<string, DimensionResult>;
+  const originalDimsSummary = DIMENSION_KEYS.map((key) => {
+    const dim = originalAsRecord[key];
+    if (!dim) return `• ${key}: غير متاح`;
+    return `• ${key}: ${dim.status} (${dim.score}/100) — ${(dim.explanationAr ?? "").slice(0, 120)}`;
+  }).join("\n");
+
+  const systemPrompt = `أنت خبير قانوني متخصص في القانون الإداري المقارن ونظرية الشمسي للقرارات الإدارية.
+مهمتك: بالاستناد إلى ملخص تقييم قانوني في نظام قانوني أول، تحليل نفس القرار الإداري وإنتاج تقييم كامل اثني عشر بُعداً وفق نظام قانوني ثانٍ.
+
+${jurisdictionContext}
+
+قواعد الإجابة:
+- أجب حصراً بـJSON دقيق ومكتمل وفق هيكل التقرير الإداري القياسي
+- اربط كل بُعد بنص قانوني دقيق من نظام النطاق القضائي المطلوب
+- لا تنسخ التقييم الأصلي — أعد التحليل وفق الإطار القانوني الجديد بالكامل`;
+
+  const roleAr = ROLE_LABELS_AR[session.role ?? ""] ?? session.role ?? "";
+  const userPrompt = `القرار الإداري: ${session.decisionTypeAr} (${session.decisionTypeEn})
+دور المستخدم: ${roleAr}
+النطاق القضائي الجديد للتقييم: ${targetPlugin.nameAr} (${targetPlugin.nameEn})
+
+ملخص التقييم الأصلي (${session.jurisdiction ?? "uae"}):
+${originalDimsSummary}
+
+قيّم هذا القرار الإداري وفق ${targetPlugin.nameAr} وأنتج تقرير اثني عشر بُعداً بنفس هيكل JSON القياسي المُحدَّد للتقارير الإدارية.`;
+
+  let provider;
+  try {
+    provider = await aiRouter.routeFor(TaskType.RAG);
+  } catch (err: unknown) {
+    res.status(503).json({ error: (err as Error).message });
+    return;
+  }
+
+  let aiResult;
+  try {
+    aiResult = await provider.complete({
+      taskType: TaskType.RAG,
+      prompt: userPrompt,
+      systemPrompt,
+      maxTokens: 6000,
+    });
+  } catch (err) {
+    req.log.error({ err }, "Admin OS compare AI call failed");
+    res.status(500).json({ error: "AI comparison failed. Please try again." });
+    return;
+  }
+
+  // Strip <think> block before parsing (same as /assess endpoint)
+  const cleanedCompare = aiResult.text.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+
+  const compareParseResult = parseModelJson<Record<string, unknown>>(cleanedCompare);
+  if (!compareParseResult.ok) {
+    req.log.error({ raw: compareParseResult.raw.slice(0, 500) }, "Compare: failed to parse AI JSON");
+    res.status(500).json({ error: "Failed to parse comparison response. Please try again." });
+    return;
+  }
+
+  const compareValidationError = validateAdminBrief(compareParseResult.data);
+  if (compareValidationError) {
+    req.log.warn({ compareValidationError }, "Compare brief failed validation");
+    res.status(422).json({
+      error: "Comparison AI response is missing required sections. Please try again.",
+      detail: compareValidationError,
+    });
+    return;
+  }
+
+  const parsed = compareParseResult.data as unknown as AdminDecisionBriefData;
+
+  // ── Compute per-dimension diff ────────────────────────────────────────────────
+  const DIMENSION_LABELS_AR: Record<string, string> = {
+    jurisdiction: "الاختصاص",
+    form: "الشكل",
+    cause: "السبب",
+    subjectMatter: "المحل",
+    purpose: "الغاية",
+    humanWill: "الإرادة البشرية",
+    digitalWillFormation: "تكوين الإرادة الرقمية",
+    algorithmicWeight: "الوزن الخوارزمي",
+    algorithmicBias: "التحيز الخوارزمي",
+    explainability: "قابلية التفسير",
+    humanOversight: "الرقابة البشرية",
+    judicialReviewReadiness: "الجاهزية للمراجعة القضائية",
+  };
+
+  const parsedAsRecord = parsed as unknown as Record<string, DimensionResult>;
+
+  const diff: Record<string, {
+    key: string; labelAr: string;
+    originalScore: number; originalStatus: string;
+    targetScore: number; targetStatus: string;
+    scoreDelta: number; differenceAr: string;
+  }> = {};
+
+  for (const key of DIMENSION_KEYS) {
+    const orig = originalAsRecord[key];
+    const tgt = parsedAsRecord[key];
+    const originalScore = orig?.score ?? 0;
+    const targetScore = tgt?.score ?? 0;
+    const delta = targetScore - originalScore;
+
+    let differenceAr = "متسقان بشكل عام";
+    if (delta >= 15) differenceAr = `أقل تقييداً في ${targetPlugin.nameAr}`;
+    else if (delta <= -15) differenceAr = `أكثر صرامة في ${targetPlugin.nameAr}`;
+    else if (Math.abs(delta) >= 8) {
+      differenceAr = `فارق طفيف لصالح ${delta > 0 ? targetPlugin.nameAr : (session.jurisdiction === "france" ? "الجمهورية الفرنسية" : "الإمارات")}`;
+    }
+
+    diff[key] = {
+      key,
+      labelAr: DIMENSION_LABELS_AR[key] ?? key,
+      originalScore,
+      originalStatus: orig?.status ?? "unknown",
+      targetScore,
+      targetStatus: tgt?.status ?? "unknown",
+      scoreDelta: delta,
+      differenceAr,
+    };
+  }
+
+  const originalLegalityScore = computeLegalityScore(originalAsRecord);
+  const targetLegalityScore = computeLegalityScore(parsedAsRecord);
+  const stricterJurisdiction = targetLegalityScore < originalLegalityScore ? targetJurisdiction : (session.jurisdiction ?? "uae");
+
+  const keyDifferencesAr = DIMENSION_KEYS
+    .filter((k) => Math.abs(diff[k]?.scoreDelta ?? 0) >= 15)
+    .map((k) => `${diff[k].labelAr}: ${diff[k].differenceAr} (${diff[k].originalScore} → ${diff[k].targetScore})`);
+
+  const commonPrinciplesAr = DIMENSION_KEYS
+    .filter((k) => diff[k]?.originalStatus === "compliant" && diff[k]?.targetStatus === "compliant")
+    .map((k) => `${diff[k].labelAr} — مستوفٍ في كلا النظامين`);
+
+  const scoreDiff = Math.abs(targetLegalityScore - originalLegalityScore);
+  const overallCompatibilityAr =
+    keyDifferencesAr.length === 0
+      ? "القرار متوافق بشكل عالٍ مع كلا النظامين القانونيين. لا توجد فجوات جوهرية في درجات الامتثال."
+      : `القرار يُسجّل فارقاً في درجة الشرعية الكلية بمقدار ${scoreDiff} نقطة. النظام الأكثر صرامة هو ${stricterJurisdiction === targetJurisdiction ? targetPlugin.nameAr : (session.jurisdiction === "france" ? "الجمهورية الفرنسية" : "الإمارات")}. أبرز الفجوات في: ${keyDifferencesAr.slice(0, 3).join("؛ ")}.`;
+
+  res.json({
+    originalJurisdiction: session.jurisdiction ?? "uae",
+    targetJurisdiction,
+    originalJurisdictionNameAr: session.jurisdiction === "france" ? "الجمهورية الفرنسية" : "الإمارات العربية المتحدة",
+    targetJurisdictionNameAr: targetPlugin.nameAr,
+    originalLegalityScore,
+    targetLegalityScore,
+    stricterJurisdiction,
+    diff,
+    overallCompatibilityAr,
+    keyDifferencesAr,
+    commonPrinciplesAr,
+  });
 });
 
 export default router;

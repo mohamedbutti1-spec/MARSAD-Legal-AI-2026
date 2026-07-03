@@ -15,3 +15,5 @@ export * from "./admin-decision-sessions";
 export * from "./admin-decision-briefs";
 // Phase 2 — Role definitions
 export * from "./admin-decision-roles";
+// Phase 4 — Jurisdiction registry
+export * from "./admin-jurisdictions";

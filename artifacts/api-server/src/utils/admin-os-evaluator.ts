@@ -115,7 +115,7 @@ const DIMENSION_WEIGHTS: Record<string, number> = {
   judicialReviewReadiness: 4,
 };
 
-const DIMENSION_KEYS = Object.keys(DIMENSION_WEIGHTS) as Array<keyof typeof DIMENSION_WEIGHTS>;
+export const DIMENSION_KEYS = Object.keys(DIMENSION_WEIGHTS) as Array<keyof typeof DIMENSION_WEIGHTS>;
 
 // ─── Score computation ─────────────────────────────────────────────────────────
 
@@ -253,8 +253,11 @@ export function buildEvaluatorPrompt(params: {
   ragContext: string;
   /** Phase 2: optional role context block for role-specific analysis framing */
   roleContext?: RolePromptContext;
+  /** Phase 4: jurisdiction-specific legal framework context from the jurisdiction plugin.
+   *  When provided, replaces the default UAE legal framework section. */
+  jurisdictionContext?: string;
 }): { systemPrompt: string; userPrompt: string } {
-  const { role, roleAr, decisionTypeAr, decisionTypeEn, jurisdiction, inherentRiskLevel, applicableLaws, answers, ragContext, roleContext } = params;
+  const { role, roleAr, decisionTypeAr, decisionTypeEn, jurisdiction, inherentRiskLevel, applicableLaws, answers, ragContext, roleContext, jurisdictionContext } = params;
 
   const lawsList = applicableLaws
     .map((l) => `• ${l.lawAr} (${l.referenceNumber})` + (l.articles?.length ? `\n  المواد: ${l.articles.join("، ")}` : ""))
@@ -296,8 +299,13 @@ ${isChallenging ? `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
   }
 
-  const systemPrompt = `أنت خبير قانوني متخصص في القانون الإداري الإماراتي ونظرية الشمسي للقرارات الإدارية.
-مهمتك: تقييم القرار الإداري المعروض عبر اثني عشر بُعداً قانونياً وفق نظرية الشمسي، وإصدار تقرير موضوعي ودقيق.
+  const expertIntro = jurisdictionContext
+    ? `أنت خبير قانوني متخصص في القانون الإداري المقارن ونظرية الشمسي للقرارات الإدارية.
+مهمتك: تقييم القرار الإداري المعروض عبر اثني عشر بُعداً قانونياً وفق نظرية الشمسي، مع تطبيق الإطار القانوني الخاص بالنظام القانوني المحدد في سياق النظام القانوني أدناه.`
+    : `أنت خبير قانوني متخصص في القانون الإداري الإماراتي ونظرية الشمسي للقرارات الإدارية.
+مهمتك: تقييم القرار الإداري المعروض عبر اثني عشر بُعداً قانونياً وفق نظرية الشمسي، وإصدار تقرير موضوعي ودقيق.`;
+
+  const systemPrompt = `${expertIntro}
 ${roleFramingBlock}
 الأبعاد الاثنا عشر لنظرية الشمسي:
 1. الاختصاص (Jurisdiction / Competence) — هل الجهة المُصدِرة تملك الصلاحية القانونية؟
@@ -313,8 +321,9 @@ ${roleFramingBlock}
 11. الإشراف البشري (Human Oversight) — هل ثمة رقابة بشرية كافية على تنفيذ القرار؟
 12. الجاهزية للمراجعة القضائية (Judicial Review Readiness) — هل القرار قادر على الصمود أمام الرقابة القضائية؟
 
-القوانين الإماراتية المرجعية لهذا القرار:
-${lawsList}
+${jurisdictionContext
+  ? `${jurisdictionContext}\n\nالمراجع القانونية الخاصة بهذا القرار:\n${lawsList}`
+  : `القوانين الإماراتية المرجعية لهذا القرار:\n${lawsList}`}
 
 ${ragContext ? `السياق القانوني من قاعدة البيانات:\n${ragContext}` : "لا توجد مصادر إضافية في قاعدة البيانات."}
 
