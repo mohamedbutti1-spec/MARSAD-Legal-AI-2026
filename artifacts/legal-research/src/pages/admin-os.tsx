@@ -1009,7 +1009,7 @@ function VerdictBanner({ canIssue, rationale }: { canIssue: CanIssue; rationale:
 
 // ─── Administrative Decision Brief Screen ─────────────────────────────────────
 
-function BriefScreen({ brief, role, decisionType, sessionId, citations, onReset, t, jurisdiction, onCompare, comparing, compareResult, canUseAi }: {
+function BriefScreen({ brief, role, decisionType, sessionId, citations, onReset, t, jurisdiction, onCompare, comparing, compareResult, canUseAi, briefHash }: {
   brief: AdminBrief;
   role: AdminRole;
   decisionType: AdminDecisionType;
@@ -1022,11 +1022,41 @@ function BriefScreen({ brief, role, decisionType, sessionId, citations, onReset,
   comparing: boolean;
   compareResult: CompareResult | null;
   canUseAi: boolean;
+  briefHash?: string;
 }) {
   const [followups, setFollowups] = useState<FollowupMessage[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [copied, setCopiedHash] = useState(false);
+
+  async function downloadPdf() {
+    if (!sessionId) return;
+    setExporting(true);
+    try {
+      const r = await apiFetch(`/api/admin-os/sessions/${sessionId}/export.pdf`);
+      if (r.ok) {
+        const blob = await r.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `decision-brief-${sessionId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } else {
+        toast({ title: 'تعذّر التصدير', description: 'قد يستغرق توليد PDF وقتاً أطول في أول استخدام. أعد المحاولة.', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'خطأ في الاتصال', variant: 'destructive' });
+    } finally { setExporting(false); }
+  }
+
+  function copyAuditRef() {
+    const ref = `الجلسة #${sessionId}${briefHash ? ` | ${briefHash.slice(-8)}` : ''}`;
+    navigator.clipboard.writeText(ref).then(() => { setCopiedHash(true); setTimeout(() => setCopiedHash(false), 2000); });
+  }
   const bottomRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -1080,11 +1110,18 @@ function BriefScreen({ brief, role, decisionType, sessionId, citations, onReset,
           <div>
             <p className="text-xs text-muted-foreground">{role.titleAr} · {decisionType.decisionTypeAr}</p>
             <h1 className="text-xl font-black text-foreground">التقرير القانوني الإداري</h1>
+            {briefHash && (
+              <button type="button" onClick={copyAuditRef}
+                className="flex items-center gap-1 mt-0.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors">
+                {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                <span className="font-mono">#{sessionId} · {briefHash.slice(-8)}</span>
+              </button>
+            )}
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <Button variant="outline" size="sm"
-              onClick={() => { setExporting(true); toast({ title: 'تصدير PDF', description: 'سيتوفر هذا في المرحلة الخامسة من نظام القرارات الإدارية.' }); setTimeout(() => setExporting(false), 1500); }}
-              disabled={exporting} className="gap-1.5 text-xs">
+              onClick={downloadPdf}
+              disabled={exporting || !sessionId} className="gap-1.5 text-xs">
               {exporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
               {t('تصدير PDF', 'Export PDF')}
             </Button>
@@ -1615,7 +1652,7 @@ export default function AdminOs() {
   const [selectedType, setSelectedType] = useState<AdminDecisionType | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [assessResult, setAssessResult] = useState<{
-    brief: AdminBrief; citations: Citation[]; sessionId: number;
+    brief: AdminBrief; citations: Citation[]; sessionId: number; briefHash?: string;
   } | null>(null);
   const [assessing, setAssessing] = useState(false);
   const [questionsLoading, setQuestionsLoading] = useState(false);
@@ -1740,6 +1777,7 @@ export default function AdminOs() {
           brief: { ...data.brief, legalityScore: data.brief.legalityScore ?? data.session?.legalityScore ?? 0, riskScore: data.brief.riskScore ?? data.session?.riskScore ?? 0 },
           citations: data.citations ?? [],
           sessionId: data.session?.id ?? 0,
+          briefHash: data.briefHash as string | undefined,
         });
         fetchHistory();
         // Screen transition happens in useEffect when animation + result are both ready
@@ -1931,6 +1969,7 @@ export default function AdminOs() {
                 comparing={comparing}
                 compareResult={compareResult}
                 canUseAi={canUseAi}
+                briefHash={assessResult.briefHash}
               />
             )}
           </div>

@@ -19,6 +19,7 @@ import {
   X,
   Scale,
   ChevronDown,
+  BarChart3,
 } from 'lucide-react';
 import { useUserContext } from '@/lib/user-context';
 
@@ -100,6 +101,13 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           icon: <Scale className="w-4.5 h-4.5" />,
           show: canUseAi,
           badge: 'جديد',
+        },
+        {
+          href: '/admin-os/compliance',
+          labelAr: 'لوحة الامتثال القانوني',
+          labelEn: 'Compliance Dashboard',
+          icon: <BarChart3 className="w-4.5 h-4.5" />,
+          show: canUseAi,
         },
         {
           href: '/literature-review',

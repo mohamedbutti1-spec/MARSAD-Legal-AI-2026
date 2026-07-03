@@ -16,7 +16,8 @@
  */
 
 import { Router, type IRouter } from "express";
-import { eq, desc, and } from "drizzle-orm";
+import { createHash } from "crypto";
+import { eq, desc, and, sql, inArray } from "drizzle-orm";
 import {
   db,
   adminDecisionTypesTable,
@@ -24,7 +25,9 @@ import {
   adminDecisionBriefsTable,
   adminDecisionRolesTable,
   adminJurisdictionsTable,
+  auditLogsTable,
 } from "@workspace/db";
+import { generateAdminBriefPdf } from "../utils/admin-brief-pdf";
 import { requireAnyRole, requireSupervisorOrOwner } from "../middlewares/roleAuth";
 import { logAudit } from "../middlewares/auditLog";
 import { aiRouter, TaskType } from "../ai";
@@ -513,14 +516,26 @@ router.post("/admin-os/assess", requireSupervisorOrOwner, async (req, res): Prom
     briefData: { ...brief, legalityScore, riskScore, citations } as unknown as Record<string, unknown>,
   });
 
-  await logAudit(req, "admin-os.assess", {
+  // Phase 5 — compute tamper-detection hash before logging
+  const briefHash = createHash("sha256").update(JSON.stringify(brief)).digest("hex");
+
+  logAudit(req, "admin-os.assess", {
     entityType: "admin_decision_session",
     entityId: savedSession.id,
+    details: {
+      briefHash,
+      legalityScore,
+      riskScore,
+      canIssueToday: brief.canIssueToday,
+      jurisdiction,
+      role,
+    },
   });
 
   res.json({
     session: savedSession,
     brief: { ...brief, legalityScore, riskScore },
+    briefHash,
     citations,
     roleContext: roleContext ? {
       roleKey: roleContext.roleKey,
@@ -591,6 +606,12 @@ ${ragContext ? `السياق القانوني المتاح:\n${ragContext}` : ""
     const rawTokens = extractCitationTokens(aiResult.text);
     const citations = await resolveCitations(rawTokens, sourceIndex, uid);
 
+    // Phase 5 — audit followup for per-session trail
+    logAudit(req, "admin-os.followup", {
+      entityType: "admin_decision_session",
+      entityId: sessionId,
+      details: { preview: message.slice(0, 120) },
+    });
     res.json({ text: aiResult.text, citations });
   } catch (err) {
     req.log.error({ err }, "Admin OS followup failed");
@@ -809,6 +830,187 @@ ${originalDimsSummary}
     keyDifferencesAr,
     commonPrinciplesAr,
   });
+});
+
+// ─── GET /admin-os/sessions/:id/audit ─────────────────────────────────────────
+/**
+ * Phase 5 — Returns the full audit trail for an administrative decision session.
+ * Includes: initial assessment, follow-up messages, and PDF exports.
+ */
+router.get("/admin-os/sessions/:id/audit", requireSupervisorOrOwner, async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id as string, 10);
+  const uid = getUserId(req);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const [session] = await db
+    .select({ id: adminDecisionSessionsTable.id })
+    .from(adminDecisionSessionsTable)
+    .where(and(eq(adminDecisionSessionsTable.id, id), eq(adminDecisionSessionsTable.userId, uid)));
+
+  if (!session) { res.status(404).json({ error: "Session not found" }); return; }
+
+  const logs = await db.select()
+    .from(auditLogsTable)
+    .where(
+      sql`(${auditLogsTable.entityType} = 'admin_decision_session' AND ${auditLogsTable.entityId} = ${id})
+          OR (${auditLogsTable.action} IN ('admin-os.followup', 'admin-os.pdf-export') AND ${auditLogsTable.entityId} = ${id})`
+    )
+    .orderBy(auditLogsTable.createdAt);
+
+  res.json({ sessionId: id, auditEntries: logs });
+});
+
+// ─── GET /admin-os/stats ──────────────────────────────────────────────────────
+/**
+ * Phase 5 — Aggregate compliance statistics for the legal compliance dashboard.
+ * Owners see all sessions; supervisors see their own.
+ */
+router.get("/admin-os/stats", requireSupervisorOrOwner, async (req, res): Promise<void> => {
+  const uid = getUserId(req);
+  const userRole = String(req.headers["x-user-role"] || "viewer");
+  const isOwner = userRole === "owner";
+
+  const sessions = isOwner
+    ? await db.select().from(adminDecisionSessionsTable)
+    : await db.select().from(adminDecisionSessionsTable).where(eq(adminDecisionSessionsTable.userId, uid));
+
+  const totalSessions = sessions.length;
+  const avgLegalityScore = totalSessions > 0
+    ? Math.round(sessions.reduce((a, s) => a + (s.legalityScore ?? 0), 0) / totalSessions)
+    : 0;
+
+  // canIssueToday breakdown
+  const issueCounts: Record<string, number> = {};
+  for (const s of sessions) { const k = s.canIssueToday ?? "unknown"; issueCounts[k] = (issueCounts[k] ?? 0) + 1; }
+  const issueLabels: Record<string, string> = { yes: "يمكن الإصدار", no: "لا يمكن الإصدار", conditional: "مشروط" };
+  const canIssueTodayBreakdown = Object.entries(issueCounts)
+    .filter(([, c]) => c > 0)
+    .map(([value, count]) => ({ value, labelAr: issueLabels[value] ?? value, count }));
+
+  // Average legality score by day (last 30 days)
+  const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const byDay: Record<string, { total: number; count: number }> = {};
+  for (const s of sessions) {
+    if (new Date(s.createdAt) < cutoff) continue;
+    const dk = new Date(s.createdAt).toISOString().slice(0, 10);
+    if (!byDay[dk]) byDay[dk] = { total: 0, count: 0 };
+    byDay[dk].total += s.legalityScore ?? 0;
+    byDay[dk].count += 1;
+  }
+  const avgLegalityByDay = Object.entries(byDay)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, { total, count }]) => ({ date, avgScore: Math.round(total / count), count }));
+
+  // Non-compliant dimension counts (from stored brief JSON)
+  const DIMS = ["jurisdiction","cause","form","subjectMatter","purpose","humanWill","digitalWillFormation","algorithmicWeight","algorithmicBias","explainability","humanOversight","judicialReviewReadiness"];
+  const DIMS_AR: Record<string, string> = { jurisdiction:"الاختصاص", cause:"السبب", form:"الشكل", subjectMatter:"المحل", purpose:"الغاية", humanWill:"الإرادة البشرية", digitalWillFormation:"تكوين الإرادة الرقمية", algorithmicWeight:"الوزن الخوارزمي", algorithmicBias:"التحيز الخوارزمي", explainability:"قابلية التفسير", humanOversight:"الرقابة البشرية", judicialReviewReadiness:"الجاهزية القضائية" };
+  const dimCounts: Record<string, number> = {};
+  for (const s of sessions) {
+    if (!s.brief) continue;
+    const b = s.brief as Record<string, { status?: string }>;
+    for (const key of DIMS) { if (b[key]?.status === "non-compliant") dimCounts[key] = (dimCounts[key] ?? 0) + 1; }
+  }
+  const mostNonCompliantDimensions = Object.entries(dimCounts)
+    .sort(([, a], [, b]) => b - a).slice(0, 7)
+    .map(([key, nonCompliantCount]) => ({ key, labelAr: DIMS_AR[key] ?? key, nonCompliantCount }));
+
+  // High-risk decision types
+  const byType: Record<string, { total: number; count: number }> = {};
+  for (const s of sessions) {
+    const k = s.decisionTypeAr ?? "غير محدد";
+    if (!byType[k]) byType[k] = { total: 0, count: 0 };
+    byType[k].total += s.riskScore ?? 0;
+    byType[k].count += 1;
+  }
+  const highRiskDecisionTypes = Object.entries(byType)
+    .map(([decisionTypeAr, { total, count }]) => ({ decisionTypeAr, avgRiskScore: Math.round(total / count), sessionCount: count }))
+    .sort((a, b) => b.avgRiskScore - a.avgRiskScore).slice(0, 10);
+
+  // PDF export count and recent exports — scoped to user's sessions for non-owners
+  const ownedSessionIds = sessions.map((s) => s.id);
+  const pdfExportWhere = isOwner
+    ? eq(auditLogsTable.action, "admin-os.pdf-export")
+    : ownedSessionIds.length > 0
+      ? and(
+          eq(auditLogsTable.action, "admin-os.pdf-export"),
+          inArray(auditLogsTable.entityId, ownedSessionIds),
+        )
+      : sql`false`;
+
+  const [totalPdfExportsRow] = await db.select({ count: sql<number>`count(*)::int` })
+    .from(auditLogsTable).where(pdfExportWhere);
+  const totalPdfExports = totalPdfExportsRow?.count ?? 0;
+
+  const exportLogs = await db.select({ entityId: auditLogsTable.entityId, createdAt: auditLogsTable.createdAt })
+    .from(auditLogsTable).where(pdfExportWhere)
+    .orderBy(desc(auditLogsTable.createdAt)).limit(10);
+
+  const recentPdfExports = (await Promise.all(exportLogs.map(async (log) => {
+    if (!log.entityId) return null;
+    const [s] = await db.select({ decisionTypeAr: adminDecisionSessionsTable.decisionTypeAr })
+      .from(adminDecisionSessionsTable).where(eq(adminDecisionSessionsTable.id, log.entityId));
+    return { sessionId: log.entityId, decisionTypeAr: s?.decisionTypeAr ?? "غير محدد", exportedAt: log.createdAt.toISOString() };
+  }))).filter(Boolean);
+
+  res.json({ totalSessions, avgLegalityScore, totalPdfExports, canIssueTodayBreakdown, avgLegalityByDay, mostNonCompliantDimensions, highRiskDecisionTypes, recentPdfExports });
+});
+
+// ─── GET /admin-os/sessions/:id/export.pdf ────────────────────────────────────
+/**
+ * Phase 5 — Generates and streams a court-grade bilingual PDF brief.
+ * Requires Puppeteer/Chromium (auto-downloaded on first use).
+ */
+router.get("/admin-os/sessions/:id/export.pdf", requireSupervisorOrOwner, async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id as string, 10);
+  const uid = getUserId(req);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const [session] = await db.select()
+    .from(adminDecisionSessionsTable)
+    .where(and(eq(adminDecisionSessionsTable.id, id), eq(adminDecisionSessionsTable.userId, uid)));
+
+  if (!session) { res.status(404).json({ error: "Session not found" }); return; }
+  if (!session.brief) { res.status(400).json({ error: "No brief found for this session" }); return; }
+
+  const brief = session.brief as unknown as AdminDecisionBriefData;
+
+  // Phase 5 — use the *original* briefHash from the assess audit entry, not a recomputed one.
+  // This guarantees the hash in the PDF footer matches the audit reference shown to the user.
+  const [assessAudit] = await db
+    .select({ details: auditLogsTable.details })
+    .from(auditLogsTable)
+    .where(and(eq(auditLogsTable.action, "admin-os.assess"), eq(auditLogsTable.entityId, id)))
+    .orderBy(auditLogsTable.createdAt)
+    .limit(1);
+
+  let briefHash: string;
+  try {
+    const parsedDetails = assessAudit?.details
+      ? (JSON.parse(assessAudit.details) as { briefHash?: string })
+      : {};
+    briefHash = parsedDetails.briefHash ?? createHash("sha256").update(JSON.stringify(brief)).digest("hex");
+  } catch {
+    briefHash = createHash("sha256").update(JSON.stringify(brief)).digest("hex");
+  }
+
+  try {
+    const pdfBuffer = await generateAdminBriefPdf(session, brief, briefHash);
+
+    logAudit(req, "admin-os.pdf-export", {
+      entityType: "admin_decision_session",
+      entityId: id,
+      details: { hashSuffix: briefHash.slice(-8) },
+    });
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="decision-brief-${id}.pdf"`);
+    res.setHeader("Content-Length", pdfBuffer.length);
+    res.send(pdfBuffer);
+  } catch (err: unknown) {
+    req.log.error({ err }, "PDF generation failed");
+    const msg = err instanceof Error ? err.message : "Unknown error";
+    res.status(500).json({ error: `PDF generation failed: ${msg}` });
+  }
 });
 
 export default router;

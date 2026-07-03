@@ -17,6 +17,7 @@ import AiAssistant        from '@/pages/ai-assistant';
 import LiteratureReview   from '@/pages/literature-review';
 import LegalOs            from '@/pages/legal-os';
 import AdminOs            from '@/pages/admin-os';
+import AdminOsCompliance  from '@/pages/admin-os-compliance';
 
 // Legal Sources
 import UaeLegislation     from '@/pages/uae-legislation';
@@ -80,6 +81,11 @@ function Router() {
         <Route path="/literature-review">
           <RouteGuard allow={canUseAi}>
             <LiteratureReview />
+          </RouteGuard>
+        </Route>
+        <Route path="/admin-os/compliance">
+          <RouteGuard allow={canUseAi}>
+            <AdminOsCompliance />
           </RouteGuard>
         </Route>
         <Route path="/admin-os">
