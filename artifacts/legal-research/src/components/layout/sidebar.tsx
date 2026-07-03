@@ -94,9 +94,9 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           show: canUseAi,
         },
         {
-          href: '/legal-os',
-          labelAr: 'المكتب القانوني',
-          labelEn: 'Legal OS',
+          href: '/admin-os',
+          labelAr: 'نظام القرارات الإدارية',
+          labelEn: 'Admin Decision OS',
           icon: <Scale className="w-4.5 h-4.5" />,
           show: canUseAi,
           badge: 'جديد',
