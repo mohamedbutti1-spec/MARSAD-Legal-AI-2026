@@ -364,7 +364,7 @@ function RoleSelectionScreen({ roles, loading, onSelect }: {
             <p className="text-base text-muted-foreground font-medium mt-0.5">Al-Shamsi Administrative Decision OS</p>
           </div>
           <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            تقييم قانوني شامل لأي قرار إداري عبر 12 بُعداً من أبعاد نظرية الشمسي — قبل إصداره أو الطعن فيه.
+            تقييم قانوني شامل لأي قرار إداري عبر 12 بُعداً من أبعاد نظرية الشامسي — قبل إصداره أو الطعن فيه.
           </p>
         </div>
 
@@ -374,14 +374,14 @@ function RoleSelectionScreen({ roles, loading, onSelect }: {
             className="w-full flex items-center justify-between px-4 py-3 bg-primary/5 hover:bg-primary/10 transition-colors text-start">
             <div className="flex items-center gap-2">
               <Info className="w-4 h-4 text-primary" />
-              <span className="text-sm font-bold text-primary">ما هي نظرية الشمسي؟</span>
+              <span className="text-sm font-bold text-primary">ما هي نظرية الشامسي؟</span>
             </div>
             {infoOpen ? <ChevronUp className="w-4 h-4 text-primary" /> : <ChevronDown className="w-4 h-4 text-primary" />}
           </button>
           {infoOpen && (
             <div className="px-4 py-4 text-sm text-muted-foreground leading-relaxed space-y-3">
               <p>
-                نظرية الشمسي هي إطار قانوني متكامل لتقييم مشروعية القرارات الإدارية في دولة الإمارات العربية المتحدة.
+                نظرية الشامسي هي إطار قانوني متكامل لتقييم مشروعية القرارات الإدارية في دولة الإمارات العربية المتحدة.
                 تُحلّل كل قرار إداري عبر <strong className="text-foreground">12 بُعداً قانونياً</strong> متكاملاً تغطي الجوانب الكلاسيكية للقانون الإداري
                 وتُضيف إليها أبعاداً متخصصة في القرارات الرقمية والخوارزمية.
               </p>
@@ -838,7 +838,7 @@ function LoadingScreen({ activeDims }: { activeDims: string[] }) {
             <Scale className="w-8 h-8 text-primary animate-pulse" />
           </div>
           <h2 className="text-xl font-black text-foreground">جارٍ تقييم القرار الإداري</h2>
-          <p className="text-sm text-muted-foreground">يحلّل النظام قرارك عبر 12 بُعداً من أبعاد نظرية الشمسي</p>
+          <p className="text-sm text-muted-foreground">يحلّل النظام قرارك عبر 12 بُعداً من أبعاد نظرية الشامسي</p>
         </div>
 
         {/* Dimension animation list */}
@@ -1178,7 +1178,7 @@ function BriefScreen({ brief, role, decisionType, sessionId, citations, onReset,
         {compareResult && <ComparisonPanel result={compareResult} />}
 
         {/* ═══ 12-Dimension Grid ═══ */}
-        <BriefSection title="التحليل الشامل — 12 أبعاد نظرية الشمسي" icon={<Activity className="w-4 h-4" />}>
+        <BriefSection title="التحليل الشامل — 12 أبعاد نظرية الشامسي" icon={<Activity className="w-4 h-4" />}>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             {DIMENSION_ORDER.map((key, i) => {
               const result = brief[key as keyof AdminBrief] as DimensionResult | undefined;

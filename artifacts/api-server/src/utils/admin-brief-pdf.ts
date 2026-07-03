@@ -299,7 +299,7 @@ tr:nth-child(even) td { background:#f9fafb; }
 
 <!-- ═══ SECTIONS 2-13: 12 DIMENSIONS ═══ -->
 <div class="section page-break">
-  <h2>2–13. التحليل الشامل — 12 أبعاد نظرية الشمسي</h2>
+  <h2>2–13. التحليل الشامل — 12 أبعاد نظرية الشامسي</h2>
   ${dimensionSections}
 </div>
 

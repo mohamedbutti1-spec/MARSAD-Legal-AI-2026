@@ -585,7 +585,7 @@ router.post("/admin-os/followup", requireSupervisorOrOwner, async (req, res): Pr
 
   // Include role context in follow-up prompt
   const roleLabel = ROLE_LABELS_AR[session.role ?? ""] ?? session.role ?? "";
-  const systemPrompt = `أنت خبير قانوني متخصص في القانون الإداري الإماراتي ونظرية الشمسي.
+  const systemPrompt = `أنت خبير قانوني متخصص في القانون الإداري الإماراتي ونظرية الشامسي.
 تُجيب على أسئلة متابعة بعد تقييم قرار إداري اكتمل.
 دور المستخدم: ${roleLabel}
 
@@ -684,7 +684,7 @@ router.post("/admin-os/compare", requireSupervisorOrOwner, async (req, res): Pro
     return `• ${key}: ${dim.status} (${dim.score}/100) — ${(dim.explanationAr ?? "").slice(0, 120)}`;
   }).join("\n");
 
-  const systemPrompt = `أنت خبير قانوني متخصص في القانون الإداري المقارن ونظرية الشمسي للقرارات الإدارية.
+  const systemPrompt = `أنت خبير قانوني متخصص في القانون الإداري المقارن ونظرية الشامسي للقرارات الإدارية.
 مهمتك: بالاستناد إلى ملخص تقييم قانوني في نظام قانوني أول، تحليل نفس القرار الإداري وإنتاج تقييم كامل اثني عشر بُعداً وفق نظام قانوني ثانٍ.
 
 ${jurisdictionContext}
