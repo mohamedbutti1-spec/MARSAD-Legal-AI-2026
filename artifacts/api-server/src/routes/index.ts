@@ -8,6 +8,8 @@ import commentsRouter from "./comments";
 import usersRouter from "./users";
 import settingsRouter from "./settings";
 import exportRouter from "./export";
+import auditRouter from "./audit";
+import backupRouter from "./backup";
 
 const router: IRouter = Router();
 
@@ -20,5 +22,7 @@ router.use(commentsRouter);
 router.use(usersRouter);
 router.use(settingsRouter);
 router.use(exportRouter);
+router.use(auditRouter);
+router.use(backupRouter);
 
 export default router;

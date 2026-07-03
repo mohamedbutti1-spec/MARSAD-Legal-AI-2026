@@ -12,7 +12,10 @@ export function DocumentComments({ documentId, documentName }: { documentId: num
   const [content, setContent] = useState('');
   
   const queryClient = useQueryClient();
-  const { data: comments, isLoading } = useListComments({ documentId }, { query: { enabled: isOpen } });
+  const { data: comments, isLoading } = useListComments(
+    { documentId },
+    { query: { enabled: isOpen, queryKey: getListCommentsQueryKey({ documentId }) } },
+  );
   
   const createMutation = useCreateComment();
   const deleteMutation = useDeleteComment();

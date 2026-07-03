@@ -8,7 +8,8 @@ import {
   UpdateUserBody,
   DeleteUserParams,
 } from "@workspace/api-zod";
-import { requireOwner, requireAnyRole } from "../middlewares/roleAuth";
+import { requireOwner } from "../middlewares/roleAuth";
+import { logAudit } from "../middlewares/auditLog";
 
 const router: IRouter = Router();
 
@@ -25,17 +26,13 @@ router.post("/users", requireOwner, async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  // Check for duplicate email
-  const [existing] = await db
-    .select()
-    .from(usersTable)
-    .where(eq(usersTable.email, parsed.data.email));
-  if (existing) {
-    res.status(400).json({ error: "A user with this email already exists" });
+  const existing = await db.select().from(usersTable).where(eq(usersTable.email, parsed.data.email));
+  if (existing.length > 0) {
+    res.status(409).json({ error: "A user with this email already exists." });
     return;
   }
   const [user] = await db.insert(usersTable).values(parsed.data).returning();
-  req.log.info({ userId: user.id, role: user.role }, "User created");
+  logAudit(req, "user.create", { entityType: "user", entityId: user.id, details: { email: user.email, role: user.role } });
   res.status(201).json(user);
 });
 
@@ -46,39 +43,24 @@ router.get("/users/:id", requireOwner, async (req, res): Promise<void> => {
     res.status(400).json({ error: params.error.message });
     return;
   }
-  const [user] = await db
-    .select()
-    .from(usersTable)
-    .where(eq(usersTable.id, params.data.id));
-  if (!user) {
-    res.status(404).json({ error: "User not found" });
-    return;
-  }
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, params.data.id));
+  if (!user) { res.status(404).json({ error: "User not found" }); return; }
   res.json(user);
 });
 
 // PATCH /users/:id
 router.patch("/users/:id", requireOwner, async (req, res): Promise<void> => {
   const params = UpdateUserParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
-  const parsed = UpdateUserBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
-  }
+  const body = UpdateUserBody.safeParse(req.body);
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+  if (!body.success) { res.status(400).json({ error: body.error.message }); return; }
   const [user] = await db
     .update(usersTable)
-    .set(parsed.data)
+    .set(body.data)
     .where(eq(usersTable.id, params.data.id))
     .returning();
-  if (!user) {
-    res.status(404).json({ error: "User not found" });
-    return;
-  }
-  req.log.info({ userId: user.id, role: user.role }, "User updated");
+  if (!user) { res.status(404).json({ error: "User not found" }); return; }
+  logAudit(req, "user.update", { entityType: "user", entityId: user.id });
   res.json(user);
 });
 
@@ -93,10 +75,8 @@ router.delete("/users/:id", requireOwner, async (req, res): Promise<void> => {
     .delete(usersTable)
     .where(eq(usersTable.id, params.data.id))
     .returning();
-  if (!user) {
-    res.status(404).json({ error: "User not found" });
-    return;
-  }
+  if (!user) { res.status(404).json({ error: "User not found" }); return; }
+  logAudit(req, "user.delete", { entityType: "user", entityId: params.data.id, details: { email: user.email } });
   res.sendStatus(204);
 });
 

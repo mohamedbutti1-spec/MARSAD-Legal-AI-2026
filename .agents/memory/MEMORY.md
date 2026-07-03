@@ -1,1 +1,1 @@
-- [Legal Research Platform Architecture](legal-research-platform.md) — full-stack Anthropic-powered platform; key decisions on auth, codegen, and file upload patterns
+- [Legal Research Platform Architecture](legal-research-platform.md) — auth headers, RAG chunks, audit log, caching, PDF import, uploadsByDay cast, health route path

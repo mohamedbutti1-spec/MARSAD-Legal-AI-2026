@@ -6,7 +6,6 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { UserProvider } from '@/lib/user-context';
 import NotFound from '@/pages/not-found';
 import Dashboard from '@/pages/dashboard';
-
 import Documents from '@/pages/documents';
 import UploadPage from '@/pages/upload';
 import AiSearch from '@/pages/ai-search';
@@ -16,8 +15,17 @@ import Comparisons from '@/pages/comparisons';
 import Citations from '@/pages/citations';
 import Users from '@/pages/users';
 import Settings from '@/pages/settings';
+import Analytics from '@/pages/analytics';
+import AuditLog from '@/pages/audit-log';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      retry: 1,
+    },
+  },
+});
 
 function Router() {
   return (
@@ -30,6 +38,8 @@ function Router() {
       <Route path="/uae-france" component={UaeFrance} />
       <Route path="/comparisons" component={Comparisons} />
       <Route path="/citations" component={Citations} />
+      <Route path="/analytics" component={Analytics} />
+      <Route path="/audit" component={AuditLog} />
       <Route path="/users" component={Users} />
       <Route path="/settings" component={Settings} />
       <Route component={NotFound} />

@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useUserContext } from '@/lib/user-context';
+import { apiFetch } from '@/lib/api-fetch';
 import { Upload, X, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -72,9 +73,11 @@ export default function UploadPage() {
         setProgress(p => Math.min(p + 15, 90));
       }, 500);
 
-      const res = await fetch('/api/documents/upload', {
+      const res = await apiFetch('/api/documents/upload', {
         method: 'POST',
         body: formData,
+        // ⚠️ No Content-Type header here — browser sets it automatically
+        //    with the multipart boundary when body is FormData.
       });
 
       clearInterval(interval);

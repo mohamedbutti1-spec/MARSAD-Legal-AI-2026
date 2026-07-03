@@ -2,11 +2,12 @@ import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
 import { db, documentsTable } from "@workspace/db";
 import { GenerateCitationBody } from "@workspace/api-zod";
+import { requireAnyRole } from "../middlewares/roleAuth";
 
 const router: IRouter = Router();
 
 // POST /citations
-router.post("/citations", async (req, res): Promise<void> => {
+router.post("/citations", requireAnyRole, async (req, res): Promise<void> => {
   const parsed = GenerateCitationBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });

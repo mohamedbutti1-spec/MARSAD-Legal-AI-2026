@@ -17,6 +17,8 @@ const DEFAULT_JSON_ACCEPT = "application/json, application/problem+json";
 
 let _baseUrl: string | null = null;
 let _authTokenGetter: AuthTokenGetter | null = null;
+let _roleGetter: (() => string | null) | null = null;
+let _userIdGetter: (() => string | null) | null = null;
 
 /**
  * Set a base URL that is prepended to every relative request URL
@@ -27,6 +29,22 @@ let _authTokenGetter: AuthTokenGetter | null = null;
  */
 export function setBaseUrl(url: string | null): void {
   _baseUrl = url ? url.replace(/\/+$/, "") : null;
+}
+
+/**
+ * Register a getter that supplies the current user role string.
+ * When set, an `X-User-Role` header is attached to every request.
+ */
+export function setRoleGetter(getter: (() => string | null) | null): void {
+  _roleGetter = getter;
+}
+
+/**
+ * Register a getter that supplies the current user ID string.
+ * When set, an `X-User-Id` header is attached to every request.
+ */
+export function setUserIdGetter(getter: (() => string | null) | null): void {
+  _userIdGetter = getter;
 }
 
 /**
@@ -356,6 +374,18 @@ export async function customFetch<T = unknown>(
     if (token) {
       headers.set("authorization", `Bearer ${token}`);
     }
+  }
+
+  // Attach user role header for role-based access control.
+  if (_roleGetter && !headers.has("x-user-role")) {
+    const role = _roleGetter();
+    if (role) headers.set("x-user-role", role);
+  }
+
+  // Attach user ID header.
+  if (_userIdGetter && !headers.has("x-user-id")) {
+    const uid = _userIdGetter();
+    if (uid) headers.set("x-user-id", uid);
   }
 
   const requestInfo = { method, url: resolveUrl(input) };

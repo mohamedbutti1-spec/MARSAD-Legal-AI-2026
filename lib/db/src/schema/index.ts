@@ -3,3 +3,4 @@ export * from "./users";
 export * from "./comparisons";
 export * from "./comments";
 export * from "./settings";
+export * from "./audit-logs";
