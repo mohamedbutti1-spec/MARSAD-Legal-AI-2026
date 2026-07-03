@@ -50,6 +50,12 @@ export interface AIProvider {
    *  - Re-throwing with a descriptive error on API failure
    */
   complete(ctx: AITaskContext): Promise<AIProviderResult>;
+  /**
+   * Optional: stream raw text deltas as they arrive from the model.
+   * Yields individual text chunks so callers can process output incrementally.
+   * Providers that don't support streaming may omit this method.
+   */
+  streamChunks?(ctx: AITaskContext): AsyncGenerator<string>;
 }
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────

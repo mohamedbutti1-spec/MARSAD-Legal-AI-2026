@@ -53,4 +53,34 @@ export class ClaudeProvider implements AIProvider {
       },
     };
   }
+
+  /**
+   * Stream raw text deltas from Claude as they arrive.
+   * Yields individual text chunks so callers can process output in real time
+   * without waiting for the full generation to finish.
+   */
+  async *streamChunks(ctx: AITaskContext): AsyncGenerator<string> {
+    if (!this.isAvailable) {
+      throw new Error(
+        "Claude provider is not available: ANTHROPIC_API_KEY is not set.",
+      );
+    }
+
+    const stream = this.client.messages.stream({
+      model: this.model,
+      max_tokens: ctx.maxTokens ?? 4096,
+      ...(ctx.systemPrompt ? { system: ctx.systemPrompt } : {}),
+      messages: [{ role: "user", content: ctx.prompt }],
+    });
+
+    for await (const event of stream) {
+      if (
+        event.type === "content_block_delta" &&
+        event.delta.type === "text_delta" &&
+        event.delta.text
+      ) {
+        yield event.delta.text;
+      }
+    }
+  }
 }

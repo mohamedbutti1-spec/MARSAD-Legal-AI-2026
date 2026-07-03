@@ -97,6 +97,76 @@ router.delete("/legal-os/sessions/:id", requireSupervisorOrOwner, async (req, re
   res.json({ ok: true });
 });
 
+/** Write a single NDJSON event to the response. */
+function writeEvent(res: import("express").Response, section: string, data: unknown): void {
+  res.write(JSON.stringify({ section, data }) + "\n");
+}
+
+// ─── Shared prompt preamble (context, classification rules, citation rules) ───
+function buildPromptPreamble(roleTitleAr: string, ragContext: string): string {
+  return `أنت مستشار قانوني أول ومتخصص في القانون الإماراتي والفرنسي والأوروبي والقانون المقارن، تعمل كمكتب قانوني رقمي شامل.
+
+دورك: تقديم تقييم قانوني نهائي ومفصّل يساعد ${roleTitleAr} على اتخاذ قرار قانوني سليم ومُحاط بضمانات كافية.
+
+قواعد التصنيف لكل بند في إجابتك:
+- "mandatory": متطلب قانوني إلزامي — نص صريح في القانون أو اللوائح، لا خيار فيه
+- "opinion": رأي قانوني — تفسير أو اجتهاد في حالة يكتنفها الغموض القانوني
+- "best_practice": ممارسة مثلى — ما يوصي به الفقه والممارسة القانونية الرشيدة دون أن يكون ملزماً
+- "optional": اختياري — إجراء مفيد لكنه متروك لتقدير الشخص
+
+قواعد الاستشهاد:
+- إذا وجدت مصدراً في قاعدة البيانات مناسباً، استخدم الرمز [SRC:N] في حقل token لمصادر قانونية أو [DOC:N] للوثائق
+- إذا لم تجد مصدراً مرتبطاً، اجعل token يساوي null واذكر نص المادة القانونية في articleAr
+
+${ragContext ? `المصادر القانونية المتاحة:\n${ragContext}` : "لا توجد مصادر في قاعدة البيانات. استند إلى معرفتك القانونية العامة."}`;
+}
+
+// ─── NDJSON system prompt: one JSON object per line per section ───────────────
+// Claude outputs each section as a separate line so we can emit it the moment
+// the newline arrives, without waiting for the full response to complete.
+function buildNdjsonSystemPrompt(roleTitleAr: string, ragContext: string): string {
+  return `${buildPromptPreamble(roleTitleAr, ragContext)}
+
+أجب حصراً بـ NDJSON — سطر واحد لكل حقل، بالترتيب الدقيق أدناه. كل سطر هو كائن JSON يحتوي مفتاحاً واحداً فقط. لا تُضف أي نص أو شرح خارج هذه الأسطر. ابدأ مباشرةً بالسطر الأول:
+{"riskLevel":"low|medium|high|critical"}
+{"riskRationale":"شرح في 2-3 جمل"}
+{"canIssueToday":"yes|no|conditional"}
+{"canIssueTodayExplanation":"إجابة مباشرة لا تتجاوز 3 جمل"}
+{"canIssueTodayConditions":["شرط أول","شرط ثانٍ"]}
+{"finalRecommendation":[{"textAr":"نص التوصية","category":"mandatory|opinion|best_practice|optional"}]}
+{"missingRequirements":[{"textAr":"المتطلب الناقص","category":"mandatory|opinion|best_practice|optional"}]}
+{"requiredDocuments":[{"nameAr":"اسم الوثيقة","descriptionAr":"وصف موجز","where":"من أين تُستخرج","processingTime":"المدة"}]}
+{"governmentAuthority":{"nameAr":"اسم الجهة","nameEn":"Authority Name","department":"القسم","website":"https://... أو null","phone":"رقم أو null","whatToBring":"الوثائق المطلوبة"}}
+{"legalTimeline":[{"step":1,"titleAr":"وصف الخطوة","duration":"المدة","actor":"user|lawyer|court|authority"}]}
+{"draftLetter":{"subjectAr":"موضوع الخطاب","bodyAr":"النص الكامل..."}}
+{"applicableLegislation":[{"token":"[SRC:N] أو null","articleAr":"المادة القانونية","relevanceAr":"وجه الانطباق"}]}
+{"courtPrecedents":null}
+{"practicalNextSteps":[{"step":1,"actionAr":"الإجراء المطلوب","actor":"المستخدم","timeframe":"الإطار الزمني","category":"mandatory|opinion|best_practice|optional"}]}`;
+}
+
+// ─── Non-streaming (JSON blob) system prompt ─────────────────────────────────
+function buildJsonSystemPrompt(roleTitleAr: string, ragContext: string): string {
+  return `${buildPromptPreamble(roleTitleAr, ragContext)}
+
+أجب حصراً بـ JSON دقيق ومكتمل وفق الهيكل الآتي — لا تضف أي نص خارجه:
+{
+  "riskLevel": "low|medium|high|critical",
+  "riskRationale": "شرح في 2-3 جمل لمستوى الخطر القانوني المقدَّر",
+  "canIssueToday": "yes|no|conditional",
+  "canIssueTodayExplanation": "إجابة مباشرة وواضحة لا تتجاوز 3 جمل",
+  "canIssueTodayConditions": ["شرط أول يجب استيفاؤه", "شرط ثانٍ..."],
+  "finalRecommendation": [{ "textAr": "نص التوصية القانونية", "category": "mandatory|opinion|best_practice|optional" }],
+  "missingRequirements": [{ "textAr": "المتطلب الناقص", "category": "mandatory|opinion|best_practice|optional" }],
+  "requiredDocuments": [{ "nameAr": "اسم الوثيقة", "descriptionAr": "وصف موجز", "where": "من أين تُستخرج", "processingTime": "المدة" }],
+  "governmentAuthority": { "nameAr": "اسم الجهة", "nameEn": "Authority name in English", "department": "القسم المختص", "website": "https://... أو null", "phone": "رقم الهاتف أو null", "whatToBring": "الوثائق المطلوبة" },
+  "legalTimeline": [{ "step": 1, "titleAr": "وصف الخطوة", "duration": "المدة الزمنية", "actor": "user|lawyer|court|authority" }],
+  "draftLetter": { "subjectAr": "موضوع الخطاب", "bodyAr": "النص الكامل للخطاب..." },
+  "applicableLegislation": [{ "token": "[SRC:N] أو null", "articleAr": "المادة القانونية", "relevanceAr": "وجه الانطباق" }],
+  "courtPrecedents": null,
+  "practicalNextSteps": [{ "step": 1, "actionAr": "الإجراء المحدد", "actor": "المستخدم", "timeframe": "الإطار الزمني", "category": "mandatory|opinion|best_practice|optional" }]
+}`;
+}
+
 // ─── POST /legal-os/assess ─────────────────────────────────────────────────────
 router.post("/legal-os/assess", requireSupervisorOrOwner, async (req, res): Promise<void> => {
   const uid = getUserId(req);
@@ -130,77 +200,6 @@ router.post("/legal-os/assess", requireSupervisorOrOwner, async (req, res): Prom
   // Fetch legal context
   const { context: ragContext, sourceIndex } = await buildContext(semanticQuery, uid, [], []);
 
-  const systemPrompt = `أنت مستشار قانوني أول ومتخصص في القانون الإماراتي والفرنسي والأوروبي والقانون المقارن، تعمل كمكتب قانوني رقمي شامل.
-
-دورك: تقديم تقييم قانوني نهائي ومفصّل يساعد ${role.titleAr} على اتخاذ قرار قانوني سليم ومُحاط بضمانات كافية.
-
-قواعد التصنيف لكل بند في إجابتك:
-- "mandatory": متطلب قانوني إلزامي — نص صريح في القانون أو اللوائح، لا خيار فيه
-- "opinion": رأي قانوني — تفسير أو اجتهاد في حالة يكتنفها الغموض القانوني
-- "best_practice": ممارسة مثلى — ما يوصي به الفقه والممارسة القانونية الرشيدة دون أن يكون ملزماً
-- "optional": اختياري — إجراء مفيد لكنه متروك لتقدير الشخص
-
-قواعد الاستشهاد:
-- إذا وجدت مصدراً في قاعدة البيانات مناسباً، استخدم الرمز [SRC:N] في حقل token لمصادر قانونية أو [DOC:N] للوثائق
-- إذا لم تجد مصدراً مرتبطاً، اجعل token يساوي null واذكر نص المادة القانونية في articleAr
-
-${ragContext ? `المصادر القانونية المتاحة:\n${ragContext}` : "لا توجد مصادر في قاعدة البيانات. استند إلى معرفتك القانونية العامة."}
-
-أجب حصراً بـ JSON دقيق ومكتمل وفق الهيكل الآتي — لا تضف أي نص خارجه:
-{
-  "riskLevel": "low|medium|high|critical",
-  "riskRationale": "شرح في 2-3 جمل لمستوى الخطر القانوني المقدَّر",
-  "canIssueToday": "yes|no|conditional",
-  "canIssueTodayExplanation": "إجابة مباشرة وواضحة لا تتجاوز 3 جمل",
-  "canIssueTodayConditions": ["شرط أول يجب استيفاؤه", "شرط ثانٍ..."],
-  "finalRecommendation": [
-    { "textAr": "نص التوصية القانونية", "category": "mandatory|opinion|best_practice|optional" }
-  ],
-  "missingRequirements": [
-    { "textAr": "المتطلب الناقص أو الإجراء غير المستوفى", "category": "mandatory|opinion|best_practice|optional" }
-  ],
-  "requiredDocuments": [
-    {
-      "nameAr": "اسم الوثيقة أو المستند",
-      "descriptionAr": "وصف موجز لمحتوى الوثيقة وأهميتها",
-      "where": "من أين تُستخرج أو كيف تُعَدّ",
-      "processingTime": "المدة الزمنية المتوقعة للحصول عليها"
-    }
-  ],
-  "governmentAuthority": {
-    "nameAr": "اسم الجهة الحكومية أو القضائية بالعربية",
-    "nameEn": "Authority name in English",
-    "department": "القسم أو الإدارة المختصة",
-    "website": "https://... أو null إن لم يُعرف",
-    "phone": "رقم الهاتف أو null",
-    "whatToBring": "الوثائق المطلوبة عند زيارة الجهة"
-  },
-  "legalTimeline": [
-    { "step": 1, "titleAr": "وصف الخطوة بإيجاز", "duration": "المدة الزمنية", "actor": "user|lawyer|court|authority" }
-  ],
-  "draftLetter": {
-    "subjectAr": "موضوع الخطاب أو الطلب",
-    "bodyAr": "النص الكامل للخطاب بالعربية الفصحى مع تمييز الحقول القابلة للتعبئة بأقواس مربعة مثل [اسم المرسل]، [التاريخ]، [رقم العقد]..."
-  },
-  "applicableLegislation": [
-    {
-      "token": "[SRC:N] أو null",
-      "articleAr": "نص المادة القانونية أو الإشارة إليها مثل: المادة 42 من قانون العمل الاتحادي رقم 33 لسنة 2021",
-      "relevanceAr": "وجه انطباق هذه المادة على الحالة المعروضة"
-    }
-  ],
-  "courtPrecedents": null,
-  "practicalNextSteps": [
-    {
-      "step": 1,
-      "actionAr": "الإجراء المحدد المطلوب اتخاذه",
-      "actor": "المستخدم | المحامي | المحكمة | الجهة الحكومية",
-      "timeframe": "الإطار الزمني المقترح",
-      "category": "mandatory|opinion|best_practice|optional"
-    }
-  ]
-}`;
-
   const userPrompt = `دور المستخدم: ${role.titleAr} (${role.titleEn})
 السيناريو: ${scenario.titleAr} (${scenario.titleEn})
 
@@ -209,11 +208,99 @@ ${answersText}
 
 قدّم التقييم القانوني الشامل وفق الهيكل المحدد.`;
 
+  // ── Determine whether the client wants a streaming NDJSON response ──────────
+  const wantsStream = req.headers["accept"]?.includes("application/x-ndjson");
+
+  if (wantsStream && typeof provider.streamChunks === "function") {
+    // ── True streaming path: emit each section as its NDJSON line arrives ────
+    // Claude is instructed to output one {"key": value} per line. We consume
+    // token deltas in real time, buffer them until a newline is seen, then
+    // parse and forward each completed section immediately.
+    res.setHeader("Content-Type", "application/x-ndjson; charset=utf-8");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("X-Accel-Buffering", "no"); // disable nginx/proxy buffering
+    res.flushHeaders();
+
+    const collectedSections: Record<string, unknown> = {};
+    let lineBuffer = "";
+
+    /** Parse a completed NDJSON line from the model and emit it if valid. */
+    function processLine(line: string): void {
+      const trimmed = line.trim();
+      if (!trimmed) return;
+      try {
+        const parsed = JSON.parse(trimmed) as Record<string, unknown>;
+        const entries = Object.entries(parsed);
+        if (entries.length !== 1) return; // unexpected shape — skip
+        const [key, value] = entries[0];
+        collectedSections[key] = value;
+        writeEvent(res, key, value);
+      } catch {
+        // Malformed line from the model — skip silently
+      }
+    }
+
+    try {
+      for await (const chunk of provider.streamChunks({
+        taskType: TaskType.RAG,
+        prompt: userPrompt,
+        systemPrompt: buildNdjsonSystemPrompt(role.titleAr, ragContext),
+        maxTokens: 6000,
+      })) {
+        lineBuffer += chunk;
+        // Flush every complete line immediately
+        let newlineIdx: number;
+        while ((newlineIdx = lineBuffer.indexOf("\n")) !== -1) {
+          processLine(lineBuffer.slice(0, newlineIdx));
+          lineBuffer = lineBuffer.slice(newlineIdx + 1);
+        }
+      }
+      // Handle any trailing content without a final newline
+      if (lineBuffer.trim()) processLine(lineBuffer);
+
+      // Validate the assembled brief
+      const validationError = validateBrief(collectedSections);
+      if (validationError) {
+        req.log.warn({ validationError }, "Legal OS NDJSON response failed validation");
+        writeEvent(res, "error", "AI response is missing required sections. Please try again.");
+        res.end(); return;
+      }
+
+      // Resolve citations then emit
+      const allText = JSON.stringify(collectedSections);
+      const rawTokens = extractCitationTokens(allText);
+      const citations = await resolveCitations(rawTokens, sourceIndex, uid);
+      writeEvent(res, "citations", citations);
+
+      // Persist session
+      const [saved] = await db.insert(legalOsSessionsTable).values({
+        userId: uid,
+        role: roleId,
+        scenarioId,
+        scenarioTitleAr: scenario.titleAr,
+        scenarioTitleEn: scenario.titleEn,
+        answers: answers as unknown as Record<string, unknown>,
+        report: { ...collectedSections, citations } as unknown as Record<string, unknown>,
+        updatedAt: new Date(),
+      }).returning();
+
+      await logAudit(req, "legal-os.assess", { entityType: "legal_os_session", entityId: saved.id });
+
+      writeEvent(res, "done", { sessionId: saved.id });
+      res.end();
+    } catch (err) {
+      req.log.error({ err }, "Legal OS streaming assessment failed");
+      try { writeEvent(res, "error", "AI assessment failed. Please try again."); res.end(); } catch {}
+    }
+    return;
+  }
+
+  // ── Non-streaming (fallback) path — also used when provider lacks streamChunks ─
   try {
     const aiResult = await provider.complete({
       taskType: TaskType.RAG,
       prompt: userPrompt,
-      systemPrompt,
+      systemPrompt: buildJsonSystemPrompt(role.titleAr, ragContext),
       maxTokens: 6000,
     });
 

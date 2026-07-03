@@ -245,9 +245,10 @@ function ActorBadge({ actor }: { actor: ActorType | string }) {
 
 // ─── Decision Brief renderer ──────────────────────────────────────────────────
 
-function DecisionBriefView({ brief, scenario, role, sessionId, citations, onReset, t }: {
-  brief: DecisionBrief; scenario: Scenario; role: Role;
+function DecisionBriefView({ brief, scenario, role, sessionId, citations, isStreaming, onReset, t }: {
+  brief: Partial<DecisionBrief>; scenario: Scenario; role: Role;
   sessionId: number | null; citations: Citation[];
+  isStreaming?: boolean;
   onReset: () => void; t: (ar: string, en: string) => string;
 }) {
   const [followups, setFollowups] = useState<FollowupMessage[]>([]);
@@ -265,7 +266,7 @@ function DecisionBriefView({ brief, scenario, role, sessionId, citations, onRese
     setExportMsg('جارٍ تحضير مستند PDF...');
     try {
       await exportBriefToPdf(
-        brief,
+        brief as DecisionBrief,
         scenario.titleAr,
         role.titleAr,
         (msg) => setExportMsg(msg),
@@ -283,7 +284,7 @@ function DecisionBriefView({ brief, scenario, role, sessionId, citations, onRese
 
   async function sendFollowup() {
     const text = input.trim();
-    if (!text || !sessionId || sending) return;
+    if (!text || !sessionId || sending || isStreaming) return;
     setInput('');
     setSending(true);
     setFollowups((prev) => [...prev, { role: 'user', text, citations: [] }]);
@@ -307,12 +308,16 @@ function DecisionBriefView({ brief, scenario, role, sessionId, citations, onRese
   }
 
   function copyDraft() {
-    navigator.clipboard.writeText(`${brief.draftLetter.subjectAr}\n\n${brief.draftLetter.bodyAr}`)
+    const letter = brief.draftLetter;
+    if (!letter) return;
+    navigator.clipboard.writeText(`${letter.subjectAr}\n\n${letter.bodyAr}`)
       .then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
   }
 
   function downloadDraft() {
-    const blob = new Blob([`${brief.draftLetter.subjectAr}\n\n${brief.draftLetter.bodyAr}`], { type: 'text/plain;charset=utf-8' });
+    const letter = brief.draftLetter;
+    if (!letter) return;
+    const blob = new Blob([`${letter.subjectAr}\n\n${letter.bodyAr}`], { type: 'text/plain;charset=utf-8' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = `مسودة-${scenario.titleAr}.txt`;
@@ -345,23 +350,31 @@ function DecisionBriefView({ brief, scenario, role, sessionId, citations, onRese
             <p className="text-xs text-muted-foreground mb-1">
               {role.titleAr} · {scenario.titleAr}
             </p>
-            <h1 className="text-xl font-black text-foreground">التقييم القانوني</h1>
+            <h1 className="text-xl font-black text-foreground">
+              التقييم القانوني
+              {isStreaming && (
+                <span className="inline-flex items-center gap-1.5 ms-2 text-sm font-medium text-primary align-middle">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  جارٍ البناء...
+                </span>
+              )}
+            </h1>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <Button
               variant="outline"
               size="sm"
               onClick={handleExportPdf}
-              disabled={exporting}
+              disabled={exporting || isStreaming}
               className="gap-1.5"
-              title="تصدير كـ PDF"
+              title={isStreaming ? 'انتظر اكتمال التقييم' : 'تصدير كـ PDF'}
             >
               {exporting
                 ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 : <Download className="w-3.5 h-3.5" />}
               {exporting ? (exportMsg || 'جارٍ التصدير...') : t('تصدير PDF', 'Export PDF')}
             </Button>
-            <Button variant="outline" size="sm" onClick={onReset} className="gap-1.5">
+            <Button variant="outline" size="sm" onClick={onReset} disabled={isStreaming} className="gap-1.5">
               <RotateCcw className="w-3.5 h-3.5" />
               {t('تقييم جديد', 'New Assessment')}
             </Button>
@@ -369,20 +382,32 @@ function DecisionBriefView({ brief, scenario, role, sessionId, citations, onRese
         </div>
 
         {/* Risk + Can Issue */}
-        <div className="flex flex-wrap gap-2 items-center">
-          <RiskBadge level={brief.riskLevel} />
-          {brief.riskRationale && (
-            <p className="text-xs text-muted-foreground flex-1 min-w-0">{brief.riskRationale}</p>
-          )}
-        </div>
-        <CanIssueBanner
-          decision={brief.canIssueToday}
-          explanation={brief.canIssueTodayExplanation}
-          conditions={brief.canIssueTodayConditions ?? []}
-        />
+        {brief.riskLevel ? (
+          <div className="flex flex-wrap gap-2 items-center">
+            <RiskBadge level={brief.riskLevel} />
+            {brief.riskRationale && (
+              <p className="text-xs text-muted-foreground flex-1 min-w-0">{brief.riskRationale}</p>
+            )}
+          </div>
+        ) : isStreaming ? (
+          <div className="flex items-center gap-2 animate-pulse">
+            <div className="h-7 w-32 bg-muted rounded-full" />
+            <div className="h-3 flex-1 bg-muted/60 rounded" />
+          </div>
+        ) : null}
+
+        {brief.canIssueToday ? (
+          <CanIssueBanner
+            decision={brief.canIssueToday}
+            explanation={brief.canIssueTodayExplanation ?? ''}
+            conditions={brief.canIssueTodayConditions ?? []}
+          />
+        ) : isStreaming ? (
+          <div className="h-20 rounded-2xl border-2 border-muted bg-muted/20 animate-pulse" />
+        ) : null}
 
         {/* 1. Final Recommendation */}
-        {brief.finalRecommendation?.length > 0 && (
+        {brief.finalRecommendation && brief.finalRecommendation.length > 0 ? (
           <BriefSection title="التوصية القانونية النهائية" icon={<Star className="w-4 h-4" />} count={brief.finalRecommendation.length}>
             <ul className="space-y-3">
               {brief.finalRecommendation.map((item, i) => (
@@ -393,10 +418,10 @@ function DecisionBriefView({ brief, scenario, role, sessionId, citations, onRese
               ))}
             </ul>
           </BriefSection>
-        )}
+        ) : isStreaming && brief.riskLevel ? <SectionSkeleton lines={4} /> : null}
 
         {/* 2. Missing Requirements */}
-        {brief.missingRequirements?.length > 0 && (
+        {brief.missingRequirements && brief.missingRequirements.length > 0 ? (
           <BriefSection title="المتطلبات الناقصة" icon={<ShieldAlert className="w-4 h-4" />} count={brief.missingRequirements.length}>
             <ul className="space-y-3">
               {brief.missingRequirements.map((item, i) => (
@@ -407,10 +432,10 @@ function DecisionBriefView({ brief, scenario, role, sessionId, citations, onRese
               ))}
             </ul>
           </BriefSection>
-        )}
+        ) : isStreaming && brief.finalRecommendation ? <SectionSkeleton lines={3} /> : null}
 
         {/* 3. Required Documents */}
-        {brief.requiredDocuments?.length > 0 && (
+        {brief.requiredDocuments && brief.requiredDocuments.length > 0 ? (
           <BriefSection title="الوثائق المطلوبة" icon={<FileText className="w-4 h-4" />} count={brief.requiredDocuments.length}>
             <div className="space-y-3">
               {brief.requiredDocuments.map((doc, i) => (
@@ -433,10 +458,10 @@ function DecisionBriefView({ brief, scenario, role, sessionId, citations, onRese
               ))}
             </div>
           </BriefSection>
-        )}
+        ) : isStreaming && brief.missingRequirements !== undefined ? <SectionSkeleton lines={3} /> : null}
 
         {/* 4. Government Authority */}
-        {brief.governmentAuthority?.nameAr && (
+        {brief.governmentAuthority?.nameAr ? (
           <BriefSection title="الجهة الحكومية المختصة" icon={<Building2 className="w-4 h-4" />}>
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
               <p className="font-bold text-blue-900 text-base">{brief.governmentAuthority.nameAr}</p>
@@ -460,10 +485,10 @@ function DecisionBriefView({ brief, scenario, role, sessionId, citations, onRese
               )}
             </div>
           </BriefSection>
-        )}
+        ) : isStreaming && brief.requiredDocuments !== undefined ? <SectionSkeleton lines={4} /> : null}
 
         {/* 5. Legal Timeline */}
-        {brief.legalTimeline?.length > 0 && (
+        {brief.legalTimeline && brief.legalTimeline.length > 0 ? (
           <BriefSection title="الجدول الزمني القانوني" icon={<Timer className="w-4 h-4" />} count={brief.legalTimeline.length}>
             <div className="space-y-0">
               {brief.legalTimeline.map((step, i) => (
@@ -472,11 +497,11 @@ function DecisionBriefView({ brief, scenario, role, sessionId, citations, onRese
                     <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold shrink-0">
                       {step.step}
                     </div>
-                    {i < brief.legalTimeline.length - 1 && (
+                    {i < (brief.legalTimeline?.length ?? 0) - 1 && (
                       <div className="w-0.5 bg-border flex-1 mt-1 mb-1 min-h-[1.5rem]" />
                     )}
                   </div>
-                  <div className={`flex-1 pb-4 ${i === brief.legalTimeline.length - 1 ? 'pb-0' : ''}`}>
+                  <div className={`flex-1 pb-4 ${i === (brief.legalTimeline?.length ?? 0) - 1 ? 'pb-0' : ''}`}>
                     <div className="flex flex-wrap items-center gap-2 mb-0.5">
                       <p className="text-sm font-semibold text-foreground">{step.titleAr}</p>
                       <ActorBadge actor={step.actor} />
@@ -491,10 +516,10 @@ function DecisionBriefView({ brief, scenario, role, sessionId, citations, onRese
               ))}
             </div>
           </BriefSection>
-        )}
+        ) : isStreaming && brief.governmentAuthority !== undefined ? <SectionSkeleton lines={5} /> : null}
 
         {/* 6. Draft Letter */}
-        {brief.draftLetter?.bodyAr && (
+        {brief.draftLetter?.bodyAr ? (
           <BriefSection title="مسودة الخطاب / الطلب / الشكوى" icon={<PenLine className="w-4 h-4" />}>
             {brief.draftLetter.subjectAr && (
               <p className="font-bold text-sm text-foreground mb-3">الموضوع: {brief.draftLetter.subjectAr}</p>
@@ -513,10 +538,10 @@ function DecisionBriefView({ brief, scenario, role, sessionId, citations, onRese
               </Button>
             </div>
           </BriefSection>
-        )}
+        ) : isStreaming && brief.legalTimeline !== undefined ? <SectionSkeleton lines={6} /> : null}
 
         {/* 7. Applicable Legislation */}
-        {brief.applicableLegislation?.length > 0 && (
+        {brief.applicableLegislation && brief.applicableLegislation.length > 0 ? (
           <BriefSection title="التشريعات المنطبقة" icon={<BookOpen className="w-4 h-4" />} count={brief.applicableLegislation.length}>
             <div className="space-y-4">
               {brief.applicableLegislation.map((item, i) => (
@@ -538,7 +563,7 @@ function DecisionBriefView({ brief, scenario, role, sessionId, citations, onRese
               ))}
             </div>
           </BriefSection>
-        )}
+        ) : isStreaming && brief.draftLetter !== undefined ? <SectionSkeleton lines={4} /> : null}
 
         {/* 8. Court Precedents */}
         {brief.courtPrecedents && brief.courtPrecedents.length > 0 && (
@@ -555,7 +580,7 @@ function DecisionBriefView({ brief, scenario, role, sessionId, citations, onRese
         )}
 
         {/* 9. Practical Next Steps */}
-        {brief.practicalNextSteps?.length > 0 && (
+        {brief.practicalNextSteps && brief.practicalNextSteps.length > 0 ? (
           <BriefSection title="الخطوات العملية الفورية" icon={<ListChecks className="w-4 h-4" />} count={brief.practicalNextSteps.length}>
             <div className="space-y-3">
               {brief.practicalNextSteps.map((step, i) => (
@@ -579,7 +604,7 @@ function DecisionBriefView({ brief, scenario, role, sessionId, citations, onRese
               ))}
             </div>
           </BriefSection>
-        )}
+        ) : isStreaming && brief.applicableLegislation !== undefined ? <SectionSkeleton lines={4} /> : null}
 
         {/* Follow-up chat */}
         <div className="border border-border rounded-xl overflow-hidden" dir="rtl">
@@ -878,7 +903,25 @@ function InterviewScreen({ scenario, answers, currentIndex, onAnswer, onBack, on
   );
 }
 
-// ─── Loading screen ───────────────────────────────────────────────────────────
+// ─── Section skeleton (shown while streaming) ─────────────────────────────────
+
+function SectionSkeleton({ lines = 3 }: { lines?: number }) {
+  return (
+    <div className="border border-border rounded-xl overflow-hidden animate-pulse" dir="rtl">
+      <div className="px-4 py-3 bg-muted/30 h-11 flex items-center gap-2.5">
+        <div className="w-4 h-4 bg-muted/60 rounded shrink-0" />
+        <div className="h-3.5 bg-muted/60 rounded w-36" />
+      </div>
+      <div className="p-4 space-y-2.5">
+        {Array.from({ length: lines }).map((_, i) => (
+          <div key={i} className={`h-3 bg-muted/50 rounded ${i === lines - 1 ? 'w-3/5' : 'w-full'}`} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Loading screen (fallback when streaming not supported) ───────────────────
 
 const LOADING_MSGS = [
   'جارٍ تحليل السياق القانوني...',
@@ -1019,7 +1062,8 @@ export default function LegalOs() {
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [assessing, setAssessing] = useState(false);
-  const [brief, setBrief] = useState<DecisionBrief | null>(null);
+  const [brief, setBrief] = useState<Partial<DecisionBrief> | null>(null);
+  const [isStreaming, setIsStreaming] = useState(false);
   const [briefCitations, setBriefCitations] = useState<Citation[]>([]);
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [history, setHistory] = useState<SavedSession[]>([]);
@@ -1068,18 +1112,28 @@ export default function LegalOs() {
       if (currentQ === 0) { setScreen('scenarios'); }
       else { setCurrentQ((i) => i - 1); }
     }
-    else if (screen === 'brief') { setScreen('roles'); setBrief(null); setSelectedRole(null); setSelectedScenario(null); }
+    else if (screen === 'brief' && !isStreaming) {
+      setScreen('roles'); setBrief(null); setSelectedRole(null); setSelectedScenario(null);
+    }
   }
 
   async function runAssessment() {
     if (!selectedRole || !selectedScenario || !canUseAi) return;
+
     setAssessing(true);
-    setScreen('loading');
+    setIsStreaming(true);
+    setBrief({});
+    setBriefCitations([]);
+    setSessionId(null);
+    setScreen('brief');
 
     try {
       const r = await apiFetch('/api/legal-os/assess', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/x-ndjson',
+        },
         body: JSON.stringify({
           roleId: selectedRole.id,
           scenarioId: selectedScenario.id,
@@ -1087,19 +1141,69 @@ export default function LegalOs() {
         }),
       });
 
+      // ── Streaming path ────────────────────────────────────────────────────
+      if (r.ok && r.body && r.headers.get('content-type')?.includes('ndjson')) {
+        const reader = r.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() ?? '';
+
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed) continue;
+              try {
+                const event = JSON.parse(trimmed) as { section: string; data: unknown };
+                if (event.section === 'error') {
+                  toast({ title: 'فشل التقييم', description: String(event.data), variant: 'destructive' });
+                  setScreen('interview');
+                  setBrief(null);
+                  return;
+                } else if (event.section === 'done') {
+                  const { sessionId: sid } = event.data as { sessionId: number };
+                  setSessionId(sid);
+                  fetchHistory();
+                } else if (event.section === 'citations') {
+                  setBriefCitations(event.data as Citation[]);
+                } else {
+                  setBrief((prev) => ({ ...prev, [event.section]: event.data }));
+                }
+              } catch {
+                // malformed line — skip
+              }
+            }
+          }
+        } finally {
+          reader.releaseLock();
+        }
+        return;
+      }
+
+      // ── Non-streaming fallback ────────────────────────────────────────────
       if (r.ok) {
         const data = await r.json();
         setBrief(data.report);
         setBriefCitations(data.citations ?? []);
         setSessionId(data.session?.id ?? null);
-        setScreen('brief');
         fetchHistory();
       } else {
         const err = await r.json().catch(() => ({}));
         toast({ title: 'فشل التقييم', description: (err as { error?: string }).error, variant: 'destructive' });
         setScreen('interview');
+        setBrief(null);
       }
+    } catch (err) {
+      toast({ title: 'فشل التقييم', description: String(err), variant: 'destructive' });
+      setScreen('interview');
+      setBrief(null);
     } finally {
+      setIsStreaming(false);
       setAssessing(false);
     }
   }
@@ -1114,9 +1218,10 @@ export default function LegalOs() {
     };
     setSelectedRole(role ?? null);
     setSelectedScenario(scenario as Scenario);
-    setBrief(s.report);
+    setBrief(s.report as Partial<DecisionBrief>);
     setBriefCitations((s.report as DecisionBrief & { citations?: Citation[] }).citations ?? []);
     setSessionId(s.id);
+    setIsStreaming(false);
     setScreen('brief');
   }
 
@@ -1127,11 +1232,13 @@ export default function LegalOs() {
   }
 
   function resetAll() {
+    if (isStreaming) return; // prevent reset during active stream
     setScreen('roles');
     setSelectedRole(null);
     setSelectedScenario(null);
     setAnswers({});
     setBrief(null);
+    setIsStreaming(false);
     setBriefCitations([]);
     setSessionId(null);
     setCurrentQ(0);
@@ -1196,14 +1303,15 @@ export default function LegalOs() {
                 assessing={assessing}
               />
             )}
-            {screen === 'loading'   && <LoadingScreen />}
-            {screen === 'brief' && brief && selectedRole && selectedScenario && (
+            {screen === 'loading' && <LoadingScreen />}
+            {screen === 'brief' && brief !== null && selectedRole && selectedScenario && (
               <DecisionBriefView
                 brief={brief}
                 scenario={selectedScenario}
                 role={selectedRole}
                 sessionId={sessionId}
                 citations={briefCitations}
+                isStreaming={isStreaming}
                 onReset={resetAll}
                 t={t}
               />
