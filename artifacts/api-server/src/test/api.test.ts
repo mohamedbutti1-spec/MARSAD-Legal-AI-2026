@@ -306,3 +306,88 @@ describe("AI provider abstraction — security invariants", () => {
     assert.equal(meta.provider, "claude", "DOCUMENT_SEARCH must route to claude");
   });
 });
+
+describe("Admin Decision OS — Al-Shamsi endpoints", () => {
+  it("GET /api/admin-os/decision-types returns seeded UAE catalog", async () => {
+    const { status, body } = await req("GET", "/api/admin-os/decision-types?jurisdiction=uae", undefined, {
+      "x-user-role": "viewer",
+      "x-user-id": "1",
+    });
+    assert.equal(status, 200);
+    const b = body as Record<string, unknown>;
+    assert.ok(Array.isArray(b.decisionTypes), "decisionTypes must be an array");
+    assert.ok((b.decisionTypes as unknown[]).length >= 30, "must have at least 30 seeded decision types");
+    assert.ok(typeof b.grouped === "object" && b.grouped !== null, "grouped must be an object");
+    const domains = Object.keys(b.grouped as object);
+    assert.ok(domains.includes("personnel"), "must have personnel domain");
+    assert.ok(domains.includes("regulatory"), "must have regulatory domain");
+    assert.ok(domains.includes("digital"), "must have digital domain");
+  });
+
+  it("GET /api/admin-os/decision-types filters by domain", async () => {
+    const { status, body } = await req("GET", "/api/admin-os/decision-types?jurisdiction=uae&domain=procurement", undefined, {
+      "x-user-role": "viewer",
+      "x-user-id": "1",
+    });
+    assert.equal(status, 200);
+    const types = (body as Record<string, unknown>).decisionTypes as Array<Record<string, unknown>>;
+    assert.ok(types.length > 0, "procurement domain must have entries");
+    assert.ok(types.every((t) => t.domain === "procurement"), "all returned types must be procurement");
+  });
+
+  it("GET /api/admin-os/sessions returns empty array for new user", async () => {
+    const { status, body } = await req("GET", "/api/admin-os/sessions", undefined, {
+      "x-user-role": "viewer",
+      "x-user-id": "99999",
+    });
+    assert.equal(status, 200);
+    assert.ok(Array.isArray((body as Record<string, unknown>).sessions), "sessions must be an array");
+  });
+
+  it("POST /api/admin-os/assess rejects missing required fields", async () => {
+    const { status, body } = await req("POST", "/api/admin-os/assess", {});
+    assert.equal(status, 400);
+    assert.ok(typeof (body as Record<string, unknown>).error === "string");
+  });
+
+  it("POST /api/admin-os/assess rejects invalid role", async () => {
+    const { status, body } = await req("POST", "/api/admin-os/assess", {
+      role: "superadmin",
+      decisionTypeId: 1,
+      answers: {},
+    });
+    assert.equal(status, 400);
+    const error = (body as Record<string, unknown>).error as string;
+    assert.ok(error.includes("Invalid role"), `expected invalid role error, got: ${error}`);
+  });
+
+  it("POST /api/admin-os/assess rejects non-existent decisionTypeId", async () => {
+    const { status } = await req("POST", "/api/admin-os/assess", {
+      role: "minister",
+      decisionTypeId: 999999,
+      answers: { authority_source: "قانون اتحادي رقم 11" },
+    });
+    assert.equal(status, 404);
+  });
+
+  it("DELETE /api/admin-os/sessions/999999 returns 404", async () => {
+    const { status } = await req("DELETE", "/api/admin-os/sessions/999999");
+    assert.equal(status, 404);
+  });
+
+  it("GET /api/admin-os/decision-types each type has required fields", async () => {
+    const { status, body } = await req("GET", "/api/admin-os/decision-types?jurisdiction=uae", undefined, {
+      "x-user-role": "viewer",
+      "x-user-id": "1",
+    });
+    assert.equal(status, 200);
+    const types = (body as Record<string, unknown>).decisionTypes as Array<Record<string, unknown>>;
+    for (const t of types.slice(0, 5)) {
+      assert.ok(typeof t.id === "number", "id must be number");
+      assert.ok(typeof t.decisionTypeAr === "string", "decisionTypeAr must be string");
+      assert.ok(typeof t.decisionTypeEn === "string", "decisionTypeEn must be string");
+      assert.ok(["low", "medium", "high", "critical"].includes(t.inherentRiskLevel as string), "inherentRiskLevel must be valid");
+      assert.ok(Array.isArray(t.interviewTemplate), "interviewTemplate must be array");
+    }
+  });
+});

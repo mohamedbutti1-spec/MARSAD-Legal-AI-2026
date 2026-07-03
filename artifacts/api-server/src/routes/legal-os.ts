@@ -218,13 +218,12 @@ ${answersText}
     });
 
     // Parse and validate the JSON report
-    let report: Record<string, unknown>;
-    try {
-      report = parseModelJson(aiResult.text) as Record<string, unknown>;
-    } catch {
-      req.log.error({ text: aiResult.text }, "Failed to parse legal-os JSON");
+    const parseResult = parseModelJson<Record<string, unknown>>(aiResult.text);
+    if (!parseResult.ok) {
+      req.log.error({ raw: parseResult.raw }, "Failed to parse legal-os JSON");
       res.status(500).json({ error: "Failed to parse AI response. Please try again." }); return;
     }
+    const report = parseResult.data;
 
     // Validate required Decision Brief structure
     const validationError = validateBrief(report);

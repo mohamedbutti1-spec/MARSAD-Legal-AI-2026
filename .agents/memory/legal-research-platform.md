@@ -159,19 +159,44 @@ Route is `/api/healthz` (not `/api/health`).
 
 `PerplexityProvider.complete()` throws `NotImplemented`. Do not implement until user explicitly approves. Infrastructure (key storage, routing) is already in place.
 
-## Legal OS — AI Legal Operating System
+## Legal OS — AI Legal Operating System (legacy)
 
-`/legal-os` — a 4-screen guided workflow: role picker → scenario list → interview → Decision Brief.
+`/legal-os` — original 4-screen workflow, preserved but superseded by Admin OS at `/admin-os`. Do not remove (existing sessions reference it).
 
-Key architecture decisions:
-- Scenario catalog lives in `artifacts/api-server/src/data/legal-os-scenarios.ts` (served by API, not bundled in frontend)
-- Sessions saved to `legal_os_sessions` table via Drizzle push (table exists)
-- Decision Brief is a **one-shot JSON response** — not streamed — with 11 mandatory sections
-- All RAG helpers shared via `artifacts/api-server/src/utils/rag.ts`; both `assistant.ts` and `legal-os.ts` import from there — no duplication
+## Admin Decision OS — Al-Shamsi Theory (Phase 1 foundation)
 
-Security invariant: `resolveCitations()` takes optional `userId` parameter — DOC token lookups are scoped to `uploadedById = userId` to prevent cross-user document metadata leakage. Always pass `uid` when calling from user-scoped contexts.
+Backend engine for the government-grade Administrative Decision OS. Routes all at `/api/admin-os/*`.
 
-Server-side validation: `validateBrief()` in `legal-os.ts` checks required fields + enums before saving. Returns 422 if AI response is malformed.
+### DB tables (3 new, pushed)
+- `admin_decision_types` — seed catalog of ≥30 UAE decision types (6 domains: personnel, regulatory, procurement, appeals, citizen, digital)
+- `admin_decision_sessions` — one row per user assessment; stores brief JSONB + legalityScore + riskScore + canIssueToday
+- `admin_decision_briefs` — stores brief separately for future export tracking; cascade-delete when session deleted (manual, no FK)
+
+### Seed
+Run: `cd artifacts/api-server && /home/runner/workspace/scripts/node_modules/.bin/tsx --tsconfig tsconfig.json src/scripts/seed-admin-os.ts`
+Seed data lives in `artifacts/api-server/src/data/admin-os-seed.ts`. Idempotent (clears UAE rows before re-seeding).
+
+### 12-Dimension evaluator
+`artifacts/api-server/src/utils/admin-os-evaluator.ts` exports:
+- `buildEvaluatorPrompt()` — constructs bilingual system+user prompt for Claude
+- `validateAdminBrief()` — checks all 12 dimensions (status enum, score 0–100 bounds, explanationAr + explanationEn, arrays); returns 422 string or null
+- `computeLegalityScore()` — weighted average (Jurisdiction 20%, Cause 15%, Form 10%, Subject Matter 10%, Purpose 10%, Human Will 8%, Digital Will 5%, Algo Weight 5%, Algo Bias 5%, Explainability 4%, Oversight 4%, Judicial 4%)
+- `computeRiskScore()` — inverted legality + non-compliant penalty + missing-req penalty × inherentRisk multiplier
+- `VALID_ROLES` set — 7 allowed roles enforced server-side in POST /assess
+
+### API endpoints
+- `GET /api/admin-os/decision-types?jurisdiction=uae&domain=&risk_level=` — returns flat list + grouped by domain
+- `GET /api/admin-os/sessions` — user-scoped history (userId from x-user-id header)
+- `GET /api/admin-os/sessions/:id` — single session with full brief
+- `DELETE /api/admin-os/sessions/:id` — cascade-deletes linked brief row
+- `POST /api/admin-os/assess` — runs Al-Shamsi eval, saves session + brief, returns {session, brief, citations}
+- `POST /api/admin-os/followup` — chat on saved session
+
+### Auth note
+Header-based identity (x-user-id / x-user-role) is a pre-existing platform pattern, not introduced here. For production: replace getUserId() with JWT/session verification in roleAuth.ts.
+
+### RAG
+Admin OS reuses `utils/rag.ts` (shared with assistant + legal-os). buildContext() called with uid to scope DOC lookups.
 
 ## Tests
 

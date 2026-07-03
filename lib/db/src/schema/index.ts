@@ -9,3 +9,7 @@ export * from "./chat-sessions";
 export * from "./citations-log";
 export * from "./library-items";
 export * from "./legal-os-sessions";
+// Al-Shamsi Administrative Decision OS (Phase 1+)
+export * from "./admin-decision-types";
+export * from "./admin-decision-sessions";
+export * from "./admin-decision-briefs";

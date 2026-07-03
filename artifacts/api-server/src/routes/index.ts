@@ -17,6 +17,7 @@ import researchRouter     from "./research";
 import libraryRouter      from "./library";
 import dashboardRouter    from "./dashboard";
 import legalOsRouter      from "./legal-os";
+import adminOsRouter      from "./admin-os";
 
 const router: IRouter = Router();
 
@@ -38,5 +39,6 @@ router.use(researchRouter);
 router.use(libraryRouter);
 router.use(dashboardRouter);
 router.use(legalOsRouter);
+router.use(adminOsRouter);
 
 export default router;
