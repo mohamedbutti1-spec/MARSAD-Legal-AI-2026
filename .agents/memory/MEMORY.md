@@ -1,2 +1,3 @@
 - [Legal Research Platform Architecture](legal-research-platform.md) — auth headers, RAG chunks, audit log, caching, PDF import, uploadsByDay cast, health route path
 - [API client codegen](api-codegen.md) — orval regeneration command and when to run it after OpenAPI spec changes
+- [Citation token parsing](citation-token-parsing.md) — regex required for [DOC:N]/[SRC:N] tokens; split(":") is broken on bracketed strings
