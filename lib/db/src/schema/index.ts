@@ -8,3 +8,4 @@ export * from "./legal-sources";
 export * from "./chat-sessions";
 export * from "./citations-log";
 export * from "./library-items";
+export * from "./legal-os-sessions";

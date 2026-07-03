@@ -159,6 +159,20 @@ Route is `/api/healthz` (not `/api/health`).
 
 `PerplexityProvider.complete()` throws `NotImplemented`. Do not implement until user explicitly approves. Infrastructure (key storage, routing) is already in place.
 
+## Legal OS — AI Legal Operating System
+
+`/legal-os` — a 4-screen guided workflow: role picker → scenario list → interview → Decision Brief.
+
+Key architecture decisions:
+- Scenario catalog lives in `artifacts/api-server/src/data/legal-os-scenarios.ts` (served by API, not bundled in frontend)
+- Sessions saved to `legal_os_sessions` table via Drizzle push (table exists)
+- Decision Brief is a **one-shot JSON response** — not streamed — with 11 mandatory sections
+- All RAG helpers shared via `artifacts/api-server/src/utils/rag.ts`; both `assistant.ts` and `legal-os.ts` import from there — no duplication
+
+Security invariant: `resolveCitations()` takes optional `userId` parameter — DOC token lookups are scoped to `uploadedById = userId` to prevent cross-user document metadata leakage. Always pass `uid` when calling from user-scoped contexts.
+
+Server-side validation: `validateBrief()` in `legal-os.ts` checks required fields + enums before saving. Returns 422 if AI response is malformed.
+
 ## Tests
 
 Integration test suite in `artifacts/api-server/src/test/api.test.ts`. Run with `pnpm --filter @workspace/api-server run test`. Includes security invariant tests for AI provider abstraction.

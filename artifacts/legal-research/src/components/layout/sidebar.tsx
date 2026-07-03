@@ -94,6 +94,14 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           show: canUseAi,
         },
         {
+          href: '/legal-os',
+          labelAr: 'المكتب القانوني',
+          labelEn: 'Legal OS',
+          icon: <Scale className="w-4.5 h-4.5" />,
+          show: canUseAi,
+          badge: 'جديد',
+        },
+        {
           href: '/literature-review',
           labelAr: 'مراجعة الأدبيات',
           labelEn: 'Literature Review',
