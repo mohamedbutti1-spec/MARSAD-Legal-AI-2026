@@ -33,6 +33,7 @@ import PersonalLibrary    from '@/pages/personal-library';
 // Admin
 import UserManagement     from '@/pages/user-management';
 import Settings           from '@/pages/settings';
+import AdminLegalOS       from '@/pages/admin-legal-os';
 
 // Legacy route aliases (keep old URLs working)
 import AiSearch           from '@/pages/ai-search';
@@ -111,6 +112,11 @@ function Router() {
         <Route path="/library"    component={PersonalLibrary} />
 
         {/* ── Administration (owner-only) ───────────────────────────── */}
+        <Route path="/admin/legal-os">
+          <RouteGuard allow={canManageUsers}>
+            <AdminLegalOS />
+          </RouteGuard>
+        </Route>
         <Route path="/admin/users">
           <RouteGuard allow={canManageUsers}>
             <UserManagement />

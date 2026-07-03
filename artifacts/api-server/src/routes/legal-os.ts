@@ -19,7 +19,8 @@ import {
   extractCitationTokens,
   resolveCitations,
 } from "../utils/rag";
-import { ROLES, findScenario, formatAnswers } from "../data/legal-os-scenarios";
+import { ROLES, findScenario, formatAnswers, type Role, type Scenario } from "../data/legal-os-scenarios";
+import { legalOsCustomRolesTable, legalOsCustomScenariosTable } from "@workspace/db";
 
 // ─── Decision Brief validation ─────────────────────────────────────────────────
 
@@ -64,9 +65,94 @@ function getUserId(req: import("express").Request): number {
   return parseInt(Array.isArray(h) ? h[0] : h, 10);
 }
 
+// ─── Shared catalog helper ─────────────────────────────────────────────────────
+/**
+ * Returns the full scenario catalog: hardcoded built-ins merged with any
+ * admin-created roles/scenarios from the database.
+ *
+ * Custom DB scenarios attached to a built-in role override an existing
+ * scenario with the same id, or are appended as new scenarios.
+ * Entirely new DB roles (not matching any built-in id) are appended at the end.
+ *
+ * Falls back to the hardcoded-only catalog if the DB is unavailable.
+ */
+async function getMergedCatalog(): Promise<Role[]> {
+  const [dbRoles, dbScenarios] = await Promise.all([
+    db.select().from(legalOsCustomRolesTable),
+    db.select().from(legalOsCustomScenariosTable).where(eq(legalOsCustomScenariosTable.isActive, true)),
+  ]);
+
+  // Deep clone the hardcoded catalog so we don't mutate the module-level constant
+  const merged: Role[] = ROLES.map((r) => ({ ...r, scenarios: [...r.scenarios] }));
+
+  // Merge DB scenarios into built-in roles, or queue for custom-role attachment
+  for (const dbs of dbScenarios) {
+    const scenario: Scenario = {
+      id: dbs.scenarioKey,
+      titleAr: dbs.titleAr,
+      titleEn: dbs.titleEn,
+      descriptionAr: dbs.descriptionAr,
+      jurisdictions: (dbs.jurisdictions as string[]) ?? [],
+      estimatedMinutes: dbs.estimatedMinutes,
+      questions: (dbs.questions as Scenario["questions"]) ?? [],
+    };
+    const builtinRole = merged.find((r) => r.id === dbs.roleKey);
+    if (builtinRole) {
+      const idx = builtinRole.scenarios.findIndex((s) => s.id === scenario.id);
+      if (idx >= 0) builtinRole.scenarios[idx] = scenario;
+      else builtinRole.scenarios.push(scenario);
+    }
+    // Custom-role scenarios are handled in the loop below
+  }
+
+  // Append fully custom DB roles (not present in the hardcoded catalog)
+  for (const dbRole of dbRoles) {
+    if (merged.some((r) => r.id === dbRole.roleKey)) continue;
+    const roleScenarios = dbScenarios
+      .filter((s) => s.roleKey === dbRole.roleKey)
+      .map((s): Scenario => ({
+        id: s.scenarioKey,
+        titleAr: s.titleAr,
+        titleEn: s.titleEn,
+        descriptionAr: s.descriptionAr,
+        jurisdictions: (s.jurisdictions as string[]) ?? [],
+        estimatedMinutes: s.estimatedMinutes,
+        questions: (s.questions as Scenario["questions"]) ?? [],
+      }));
+    merged.push({
+      id: dbRole.roleKey,
+      titleAr: dbRole.titleAr,
+      titleEn: dbRole.titleEn,
+      descriptionAr: dbRole.descriptionAr,
+      icon: dbRole.icon,
+      scenarios: roleScenarios,
+    });
+  }
+
+  return merged;
+}
+
+/** Find a role and scenario by id within the merged catalog. */
+async function findInMergedCatalog(
+  roleId: string,
+  scenarioId: string,
+): Promise<{ role: Role; scenario: Scenario } | null> {
+  const roles = await getMergedCatalog();
+  const role = roles.find((r) => r.id === roleId);
+  if (!role) return null;
+  const scenario = role.scenarios.find((s) => s.id === scenarioId);
+  if (!scenario) return null;
+  return { role, scenario };
+}
+
 // ─── GET /legal-os/scenarios ───────────────────────────────────────────────────
-router.get("/legal-os/scenarios", requireAnyRole, (_req, res): void => {
-  res.json({ roles: ROLES });
+router.get("/legal-os/scenarios", requireAnyRole, async (_req, res): Promise<void> => {
+  try {
+    res.json({ roles: await getMergedCatalog() });
+  } catch {
+    // Fallback to hardcoded catalog on DB error
+    res.json({ roles: ROLES });
+  }
 });
 
 // ─── GET /legal-os/sessions ────────────────────────────────────────────────────
@@ -180,11 +266,11 @@ router.post("/legal-os/assess", requireSupervisorOrOwner, async (req, res): Prom
     res.status(400).json({ error: "roleId, scenarioId, and answers are required" }); return;
   }
 
-  const role = ROLES.find((r) => r.id === roleId);
-  const scenario = findScenario(roleId, scenarioId);
-  if (!role || !scenario) {
+  const found = await findInMergedCatalog(roleId, scenarioId).catch(() => null);
+  if (!found) {
     res.status(400).json({ error: "Unknown role or scenario" }); return;
   }
+  const { role, scenario } = found;
 
   // Build semantic query from scenario + answers for RAG retrieval
   const answersText = formatAnswers(scenario, answers);

@@ -194,6 +194,13 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           show: canManageUsers,
         },
         {
+          href: '/admin/legal-os',
+          labelAr: 'فهرس السيناريوهات',
+          labelEn: 'Scenario Catalog',
+          icon: <Scale className="w-4.5 h-4.5" />,
+          show: canManageUsers,
+        },
+        {
           href: '/settings',
           labelAr: 'الإعدادات',
           labelEn: 'Settings',
