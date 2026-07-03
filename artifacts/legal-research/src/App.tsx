@@ -30,6 +30,9 @@ import Citations          from '@/pages/citations';
 import DocumentComparison from '@/pages/document-comparison';
 import PersonalLibrary    from '@/pages/personal-library';
 
+// Theory
+import ShamsiTheory       from '@/pages/shamsi-theory';
+
 // Admin
 import UserManagement     from '@/pages/user-management';
 import Settings           from '@/pages/settings';
@@ -67,6 +70,7 @@ function Router() {
       <Switch>
         {/* ── Main ─────────────────────────────────────────────────── */}
         <Route path="/" component={Dashboard} />
+        <Route path="/shamsi-theory" component={ShamsiTheory} />
 
         {/* ── Research Tools (requires canUseAi) ───────────────────── */}
         <Route path="/research">

@@ -20,6 +20,7 @@ import {
   Scale,
   ChevronDown,
   BarChart3,
+  Sparkles,
 } from 'lucide-react';
 import { useUserContext } from '@/lib/user-context';
 
@@ -72,6 +73,14 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           labelEn: 'Dashboard',
           icon: <LayoutDashboard className="w-4.5 h-4.5" />,
           show: true,
+        },
+        {
+          href: '/shamsi-theory',
+          labelAr: 'نظرية الشامسي',
+          labelEn: 'Al-Shamsi Theory',
+          icon: <Sparkles className="w-4.5 h-4.5" />,
+          show: true,
+          badge: 'مرجع',
         },
       ],
     },
