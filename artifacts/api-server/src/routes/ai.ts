@@ -1,5 +1,8 @@
+/**
+ * AI routes — all AI calls go through the AIRouter abstraction.
+ * No direct imports of Anthropic, Perplexity, or any other provider SDK here.
+ */
 import { Router, type IRouter } from "express";
-import Anthropic from "@anthropic-ai/sdk";
 import { db, documentsTable } from "@workspace/db";
 import {
   AiSearchBody,
@@ -9,17 +12,15 @@ import {
 import { requireSupervisorOrOwner } from "../middlewares/roleAuth";
 import { logAudit } from "../middlewares/auditLog";
 import { cache, TTL } from "../lib/cache";
+import { aiRouter, TaskType, parseModelJson } from "../ai";
 
 const router: IRouter = Router();
 
-function getAnthropicClient(): Anthropic | null {
-  if (!process.env.ANTHROPIC_API_KEY) return null;
-  return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-}
+// ─── RAG helpers (document-agnostic; used by multiple routes) ─────────────────
 
 /**
- * Chunk a document's text into ~500-word segments for RAG retrieval.
- * Returns an array of { chunkIndex, text, wordStart, wordEnd } objects.
+ * Chunk a document's text into ~500-word segments with overlap for RAG.
+ * Tags each chunk with [DOC:{id} CHUNK:{n}] so the model can cite sources.
  */
 function chunkText(
   text: string,
@@ -34,11 +35,7 @@ function chunkText(
 
   while (i < words.length) {
     const slice = words.slice(i, i + chunkSize);
-    chunks.push({
-      chunkIndex,
-      text: slice.join(" "),
-      charStart: charCursor,
-    });
+    chunks.push({ chunkIndex, text: slice.join(" "), charStart: charCursor });
     charCursor += slice.reduce((s, w) => s + w.length + 1, 0);
     i += chunkSize - overlap;
     chunkIndex++;
@@ -47,8 +44,8 @@ function chunkText(
 }
 
 /**
- * Build a RAG context string from documents, chunked for large texts.
- * Adds [DOC:{id} CHUNK:{n}] tags so the model can cite sources.
+ * Build a RAG context string from a list of documents.
+ * Includes [DOC:{id} CHUNK:{n}] tags so Claude can produce precise citations.
  */
 function buildRagContext(
   docs: Array<{ id: number; originalName: string; content: string | null }>,
@@ -59,28 +56,27 @@ function buildRagContext(
       if (!doc.content) return `[DOC:${doc.id}] ${doc.originalName}\n(No text content available)`;
       const chunks = chunkText(doc.content);
       const lines = chunks
-        .slice(0, Math.ceil(maxCharsPerDoc / 500)) // rough char budget
+        .slice(0, Math.ceil(maxCharsPerDoc / 500))
         .map((c) => `[DOC:${doc.id} CHUNK:${c.chunkIndex + 1}] ${c.text}`);
       return `Document: ${doc.originalName}\n${lines.join("\n\n")}`;
     })
     .join("\n\n" + "─".repeat(60) + "\n\n");
 }
 
-// POST /ai/search — RAG-enhanced semantic search
+// ─── POST /ai/search ──────────────────────────────────────────────────────────
+
 router.post("/ai/search", requireSupervisorOrOwner, async (req, res): Promise<void> => {
   const parsed = AiSearchBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
-  }
-
-  const client = getAnthropicClient();
-  if (!client) {
-    res.status(503).json({ error: "AI service not configured. Please set ANTHROPIC_API_KEY." });
-    return;
-  }
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
   const { query, documentIds, maxResults = 5 } = parsed.data;
+
+  let provider;
+  try {
+    provider = await aiRouter.routeFor(TaskType.DOCUMENT_SEARCH);
+  } catch (err: unknown) {
+    res.status(503).json({ error: (err as Error).message }); return;
+  }
 
   try {
     let docs = await db.select().from(documentsTable);
@@ -89,8 +85,7 @@ router.post("/ai/search", requireSupervisorOrOwner, async (req, res): Promise<vo
     }
 
     if (docs.length === 0) {
-      res.json({ query, results: [], summary: "No documents found to search." });
-      return;
+      res.json({ query, results: [], summary: "No documents found to search." }); return;
     }
 
     const ragContext = buildRagContext(docs, 3000);
@@ -109,7 +104,7 @@ Return a JSON object with exactly this structure:
       "documentId": <number — from DOC: tag>,
       "filename": "<original document name>",
       "excerpt": "<exact quoted passage from the document, 50-150 words>",
-      "section": "<describe the section, e.g. 'Article 3, Section 2' or 'Paragraph 5' or 'Chunk N'>",
+      "section": "<describe the section, e.g. 'Article 3, Section 2' or 'Chunk N'>",
       "relevance": <0.0-1.0>
     }
   ],
@@ -117,59 +112,44 @@ Return a JSON object with exactly this structure:
   "confidence": <0.0-1.0>
 }
 
-Return at most ${maxResults} results, ordered by relevance (highest first). If the documents do not contain relevant information, return empty results with summary explaining that. Return ONLY valid JSON — no markdown, no commentary.`;
+Return at most ${maxResults} results, ordered by relevance (highest first). If the documents do not contain relevant information, return empty results with an explanatory summary. Return ONLY valid JSON — no markdown, no commentary.`;
 
-    const message = await client.messages.create({
-      model: "claude-opus-4-5",
-      max_tokens: 3000,
-      messages: [{ role: "user", content: prompt }],
+    const aiResult = await provider.complete({
+      taskType: TaskType.DOCUMENT_SEARCH,
+      prompt,
+      maxTokens: 3000,
     });
 
-    const responseText = message.content[0].type === "text" ? message.content[0].text : "";
+    const parsed = parseModelJson<{
+      results: Array<{ documentId: number; filename: string; excerpt: string; section: string; relevance: number }>;
+      summary: string;
+      confidence: number;
+    }>(aiResult.text);
 
-    // Strip markdown code fences if present
-    const cleaned = responseText.replace(/^```(?:json)?\n?/m, "").replace(/\n?```$/m, "").trim();
+    const results = parsed.ok ? (parsed.data.results ?? []) : [];
+    const summary = parsed.ok ? (parsed.data.summary ?? "") : aiResult.text.slice(0, 800);
+    const confidence = parsed.ok ? (parsed.data.confidence ?? 0) : 0;
 
-    let results: Array<{
-      documentId: number;
-      filename: string;
-      excerpt: string;
-      section: string;
-      relevance: number;
-    }> = [];
-    let summary = "";
-    let confidence = 0;
-
-    try {
-      const parsed = JSON.parse(cleaned);
-      results = parsed.results || [];
-      summary = parsed.summary || "";
-      confidence = parsed.confidence || 0;
-    } catch {
-      summary = responseText.slice(0, 800);
-    }
-
-    logAudit(req, "ai.search", { details: { query: query.slice(0, 100), resultCount: results.length } });
-    req.log.info({ query, resultCount: results.length }, "AI semantic search completed");
-    res.json({ query, results, summary, confidence });
+    logAudit(req, "ai.search", { details: { query: query.slice(0, 100), resultCount: results.length, provider: aiResult.provider } });
+    req.log.info({ query, resultCount: results.length, provider: aiResult.provider, model: aiResult.model }, "AI semantic search completed");
+    res.json({ query, results, summary, confidence, _meta: { provider: aiResult.provider, model: aiResult.model } });
   } catch (err) {
     req.log.error({ err }, "AI search failed");
     res.status(500).json({ error: "AI search failed. Please try again." });
   }
 });
 
-// POST /ai/literature-review — RAG-enhanced literature review
+// ─── POST /ai/literature-review ───────────────────────────────────────────────
+
 router.post("/ai/literature-review", requireSupervisorOrOwner, async (req, res): Promise<void> => {
   const parsed = GenerateLiteratureReviewBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
-  }
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
-  const client = getAnthropicClient();
-  if (!client) {
-    res.status(503).json({ error: "AI service not configured. Please set ANTHROPIC_API_KEY." });
-    return;
+  let provider;
+  try {
+    provider = await aiRouter.routeFor(TaskType.LITERATURE_REVIEW);
+  } catch (err: unknown) {
+    res.status(503).json({ error: (err as Error).message }); return;
   }
 
   const { documentIds, topic, language = "Arabic" } = parsed.data;
@@ -181,13 +161,12 @@ router.post("/ai/literature-review", requireSupervisorOrOwner, async (req, res):
       .then((all) => all.filter((d) => documentIds.includes(d.id)));
 
     if (docs.length === 0) {
-      res.status(400).json({ error: "No valid documents found for the selected IDs." });
-      return;
+      res.status(400).json({ error: "No valid documents found for the selected IDs." }); return;
     }
 
     const ragContext = buildRagContext(docs, 3000);
 
-    const prompt = `You are an expert academic researcher specializing in comparative legal studies (UAE and French law). Generate a comprehensive, scholarly literature review in ${language} on: "${topic}"
+    const prompt = `You are an expert academic researcher specialising in comparative legal studies (UAE and French law). Generate a comprehensive, scholarly literature review in ${language} on: "${topic}"
 
 Base your review EXCLUSIVELY on these source documents:
 ${ragContext}
@@ -211,52 +190,42 @@ Return a JSON object:
 
 Return ONLY valid JSON — no markdown fences.`;
 
-    const message = await client.messages.create({
-      model: "claude-opus-4-5",
-      max_tokens: 6000,
-      messages: [{ role: "user", content: prompt }],
+    const aiResult = await provider.complete({
+      taskType: TaskType.LITERATURE_REVIEW,
+      prompt,
+      maxTokens: 6000,
     });
 
-    const responseText = message.content[0].type === "text" ? message.content[0].text : "";
-    const cleaned = responseText.replace(/^```(?:json)?\n?/m, "").replace(/\n?```$/m, "").trim();
+    const parsedJson = parseModelJson<{
+      review: string;
+      sources: Array<{ name: string; relevance: string }>;
+      wordCount: number;
+    }>(aiResult.text);
 
-    let review = "";
-    let sources: Array<{ name: string; relevance: string }> = docs.map((d) => ({
-      name: d.originalName,
-      relevance: "Primary source",
-    }));
-    let wordCount = 0;
+    const review   = parsedJson.ok ? (parsedJson.data.review   ?? aiResult.text) : aiResult.text;
+    const sources  = parsedJson.ok ? (parsedJson.data.sources  ?? docs.map((d) => ({ name: d.originalName, relevance: "Primary source" }))) : [];
+    const wordCount = parsedJson.ok ? (parsedJson.data.wordCount ?? 0) : 0;
 
-    try {
-      const parsedJson = JSON.parse(cleaned);
-      review = parsedJson.review || responseText;
-      sources = parsedJson.sources || sources;
-      wordCount = parsedJson.wordCount || 0;
-    } catch {
-      review = responseText;
-    }
-
-    logAudit(req, "ai.literature-review", { details: { topic: topic.slice(0, 100), docCount: docs.length } });
-    req.log.info({ topic, docCount: docs.length }, "Literature review generated");
-    res.json({ topic, review, sources, wordCount, generatedAt: new Date().toISOString() });
+    logAudit(req, "ai.literature-review", { details: { topic: topic.slice(0, 100), docCount: docs.length, provider: aiResult.provider } });
+    req.log.info({ topic, docCount: docs.length, provider: aiResult.provider, model: aiResult.model }, "Literature review generated");
+    res.json({ topic, review, sources, wordCount, generatedAt: new Date().toISOString(), _meta: { provider: aiResult.provider, model: aiResult.model } });
   } catch (err) {
     req.log.error({ err }, "Literature review failed");
     res.status(500).json({ error: "Literature review generation failed. Please try again." });
   }
 });
 
-// POST /ai/uae-france-compare — RAG-enhanced comparative analysis
+// ─── POST /ai/uae-france-compare ─────────────────────────────────────────────
+
 router.post("/ai/uae-france-compare", requireSupervisorOrOwner, async (req, res): Promise<void> => {
   const parsed = UaeFranceCompareBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
-  }
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
-  const client = getAnthropicClient();
-  if (!client) {
-    res.status(503).json({ error: "AI service not configured. Please set ANTHROPIC_API_KEY." });
-    return;
+  let provider;
+  try {
+    provider = await aiRouter.routeFor(TaskType.DOCUMENT_COMPARE);
+  } catch (err: unknown) {
+    res.status(503).json({ error: (err as Error).message }); return;
   }
 
   const { topic, documentIds, aspects } = parsed.data;
@@ -264,10 +233,7 @@ router.post("/ai/uae-france-compare", requireSupervisorOrOwner, async (req, res)
   try {
     const cacheKey = `uae-france:${topic}:${(documentIds || []).sort().join(",")}:${(aspects || []).join(",")}`;
     const cached = cache.get<Record<string, unknown>>(cacheKey);
-    if (cached) {
-      res.json({ ...cached, cached: true });
-      return;
-    }
+    if (cached) { res.json({ ...cached, cached: true }); return; }
 
     let docsContext = "";
     if (documentIds && documentIds.length > 0) {
@@ -275,9 +241,7 @@ router.post("/ai/uae-france-compare", requireSupervisorOrOwner, async (req, res)
         .select()
         .from(documentsTable)
         .then((all) => all.filter((d) => documentIds.includes(d.id)));
-      if (docs.length > 0) {
-        docsContext = buildRagContext(docs, 2500);
-      }
+      if (docs.length > 0) docsContext = buildRagContext(docs, 2500);
     }
 
     const aspectsStr =
@@ -285,7 +249,7 @@ router.post("/ai/uae-france-compare", requireSupervisorOrOwner, async (req, res)
         ? `Focus specifically on these aspects: ${aspects.join(", ")}.`
         : "Cover all relevant legal aspects including definitions, scope, procedures, penalties, and rights.";
 
-    const prompt = `You are a senior expert in comparative law specializing in UAE and French legal systems. Provide a comprehensive, citation-rich legal comparison on: "${topic}"
+    const prompt = `You are a senior expert in comparative law specialising in UAE and French legal systems. Provide a comprehensive, citation-rich legal comparison on: "${topic}"
 
 ${docsContext ? `Reference documents (cite them by name):\n${docsContext}\n\n` : ""}
 ${aspectsStr}
@@ -294,8 +258,8 @@ Return a JSON object:
 {
   "uaeAnalysis": "<detailed analysis of UAE law, with article/law references where available>",
   "franceAnalysis": "<detailed analysis of French law, with code article references where available>",
-  "similarities": ["<specific similarity 1>", "<specific similarity 2>", ...],
-  "differences": ["<key difference 1>", "<key difference 2>", ...],
+  "similarities": ["<specific similarity 1>", ...],
+  "differences": ["<key difference 1>", ...],
   "practicalImplications": "<what this means for practitioners>",
   "conclusion": "<balanced concluding synthesis>",
   "references": ["<UAE law/article cited>", "<French code article cited>", ...]
@@ -303,41 +267,24 @@ Return a JSON object:
 
 Be precise and scholarly. Return ONLY valid JSON — no markdown fences.`;
 
-    const message = await client.messages.create({
-      model: "claude-opus-4-5",
-      max_tokens: 5000,
-      messages: [{ role: "user", content: prompt }],
+    const aiResult = await provider.complete({
+      taskType: TaskType.DOCUMENT_COMPARE,
+      prompt,
+      maxTokens: 5000,
     });
 
-    const responseText = message.content[0].type === "text" ? message.content[0].text : "";
-    const cleaned = responseText.replace(/^```(?:json)?\n?/m, "").replace(/\n?```$/m, "").trim();
-
-    let result: Record<string, unknown> = {
-      uaeAnalysis: "",
-      franceAnalysis: "",
-      similarities: [],
-      differences: [],
-      practicalImplications: "",
-      conclusion: "",
-      references: [],
+    const parsedJson = parseModelJson<Record<string, unknown>>(aiResult.text);
+    const base: Record<string, unknown> = {
+      uaeAnalysis: "", franceAnalysis: "", similarities: [],
+      differences: [], practicalImplications: "", conclusion: "", references: [],
     };
+    const result = parsedJson.ok ? { ...base, ...parsedJson.data } : { ...base, uaeAnalysis: aiResult.text };
 
-    try {
-      const parsedJson = JSON.parse(cleaned);
-      result = { ...result, ...parsedJson };
-    } catch {
-      result.uaeAnalysis = responseText;
-    }
-
-    const response = {
-      topic,
-      ...result,
-      generatedAt: new Date().toISOString(),
-    };
+    const response = { topic, ...result, generatedAt: new Date().toISOString(), _meta: { provider: aiResult.provider, model: aiResult.model } };
 
     cache.set(cacheKey, response, TTL.LONG);
-    logAudit(req, "ai.uae-france-compare", { details: { topic: topic.slice(0, 100) } });
-    req.log.info({ topic }, "UAE-France comparison generated");
+    logAudit(req, "ai.uae-france-compare", { details: { topic: topic.slice(0, 100), provider: aiResult.provider } });
+    req.log.info({ topic, provider: aiResult.provider, model: aiResult.model }, "UAE-France comparison generated");
     res.json(response);
   } catch (err) {
     req.log.error({ err }, "UAE-France comparison failed");

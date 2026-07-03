@@ -8,6 +8,9 @@ export const settingsTable = pgTable("settings", {
   maxUploadSizeMb: integer("max_upload_size_mb").notNull().default(50),
   allowedFileTypes: text("allowed_file_types").notNull().default("pdf,docx,txt"),
   maintenanceMode: boolean("maintenance_mode").notNull().default(false),
+  // Provider API keys — stored server-side only; never returned via the public API.
+  claudeApiKey: text("claude_api_key"),
+  perplexityApiKey: text("perplexity_api_key"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });
 

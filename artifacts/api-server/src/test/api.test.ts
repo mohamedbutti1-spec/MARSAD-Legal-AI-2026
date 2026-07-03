@@ -239,7 +239,70 @@ describe("Export", () => {
 
 describe("Rate limiting", () => {
   it("Returns 200 for normal request frequency", async () => {
-    const { status } = await req("GET", "/api/health", undefined, {});
+    const { status } = await req("GET", "/api/healthz", undefined, {});
     assert.equal(status, 200);
+  });
+});
+
+describe("AI provider abstraction — security invariants", () => {
+  it("GET /api/settings never exposes raw API key values", async () => {
+    const { status, body } = await req("GET", "/api/settings");
+    assert.equal(status, 200);
+    const text = JSON.stringify(body);
+    // Raw key fields must not appear in the response
+    assert.ok(!text.includes("claudeApiKey"), "claudeApiKey field must not be in response");
+    assert.ok(!text.includes("perplexityApiKey"), "perplexityApiKey field must not be in response");
+    // Only boolean availability flags should be present
+    assert.ok(typeof (body as Record<string, unknown>).claude === "boolean", "claude flag must be boolean");
+    assert.ok(typeof (body as Record<string, unknown>).perplexity === "boolean", "perplexity flag must be boolean");
+  });
+
+  it("PATCH /api/settings/api-keys requires owner role", async () => {
+    const { status } = await req(
+      "PATCH",
+      "/api/settings/api-keys",
+      { claudeApiKey: "evil-key" },
+      SUPERVISOR_HEADERS,
+    );
+    assert.equal(status, 403);
+  });
+
+  it("PATCH /api/settings/api-keys returns only boolean flags — never the saved key", async () => {
+    const { status, body } = await req(
+      "PATCH",
+      "/api/settings/api-keys",
+      { perplexityApiKey: "pplx-test-placeholder" },
+    );
+    assert.equal(status, 200);
+    const text = JSON.stringify(body);
+    // Response must contain keyStatus booleans
+    assert.ok(text.includes("keyStatus"), "response must include keyStatus");
+    // But must NEVER echo back the raw key value
+    assert.ok(!text.includes("pplx-test-placeholder"), "raw key must not be echoed in response");
+    // Clean up
+    await req("PATCH", "/api/settings/api-keys", { perplexityApiKey: "" });
+  });
+
+  it("PATCH /api/settings/api-keys rejects unknown fields", async () => {
+    const { status } = await req(
+      "PATCH",
+      "/api/settings/api-keys",
+      { openaiApiKey: "sk-proj-bad-field" },
+    );
+    assert.equal(status, 400);
+  });
+
+  it("AI router routes DOCUMENT_SEARCH through Claude (provider in _meta)", async () => {
+    // This test only passes when a Claude key is configured.
+    // Skip gracefully if the service returns 503.
+    const { status, body } = await req("POST", "/api/ai/search", {
+      query: "test query for provider verification",
+      limit: 1,
+    });
+    if (status === 503) return; // No key configured in CI — acceptable
+    assert.equal(status, 200);
+    const meta = (body as Record<string, unknown>)._meta as Record<string, unknown> | undefined;
+    assert.ok(meta, "_meta field must be present");
+    assert.equal(meta.provider, "claude", "DOCUMENT_SEARCH must route to claude");
   });
 });
