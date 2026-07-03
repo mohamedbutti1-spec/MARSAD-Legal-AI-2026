@@ -139,7 +139,7 @@ export default function Dashboard() {
         ) : stats ? (
           <>
             {/* Row 1 — Document KPIs */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <button
                 type="button"
                 className="text-start moj-card p-5 hover:shadow-md transition-all hover:-translate-y-0.5 group cursor-pointer"

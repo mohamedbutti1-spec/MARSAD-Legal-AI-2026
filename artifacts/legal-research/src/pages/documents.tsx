@@ -90,7 +90,7 @@ export default function Documents() {
                     </div>
                     <div>
                       <h4 className="font-semibold text-foreground">{doc.filename}</h4>
-                      <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1"><span className="uppercase font-bold tracking-wider">{doc.fileType}</span></span>
                         <span className="flex items-center gap-1">• {(doc.fileSize / 1024 / 1024).toFixed(2)} MB</span>
                         <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {new Date(doc.uploadedAt).toLocaleDateString()}</span>

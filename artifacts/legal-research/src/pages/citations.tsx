@@ -182,7 +182,7 @@ export default function Citations() {
                 )}
 
                 {/* Common fields */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-medium text-muted-foreground mb-1">{t('المؤلف', 'Author')}</label>
                     <input type="text" className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary" placeholder="Al Shamsi, M." value={author} onChange={e => setAuthor(e.target.value)} />

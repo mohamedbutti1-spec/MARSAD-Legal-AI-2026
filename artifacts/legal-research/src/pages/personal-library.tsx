@@ -155,7 +155,7 @@ export default function PersonalLibrary() {
             <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" aria-hidden />
             <input
               type="text"
-              className="border border-border rounded-lg ps-8 pe-3 py-1.5 text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary w-48"
+              className="border border-border rounded-lg ps-8 pe-3 py-1.5 text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary w-full sm:w-48"
               placeholder={t('بحث...', 'Search...')}
               value={search}
               onChange={e => setSearch(e.target.value)}

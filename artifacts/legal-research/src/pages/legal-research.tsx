@@ -144,8 +144,8 @@ export default function LegalResearch() {
                     ))}
                   </select>
 
-                  {/* Date range */}
-                  <div className="flex items-center gap-2">
+                  {/* Date range — wraps on mobile */}
+                  <div className="flex flex-wrap items-center gap-2">
                     <label className="text-xs text-muted-foreground shrink-0">{t('من سنة', 'From year')}</label>
                     <input
                       type="number"

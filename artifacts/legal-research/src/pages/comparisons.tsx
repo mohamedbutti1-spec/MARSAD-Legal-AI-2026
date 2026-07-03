@@ -109,25 +109,48 @@ export default function Comparisons() {
                     )}
                   </CardHeader>
                   <CardContent className="p-0">
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm text-left">
+                    {/* Mobile: stacked cards per row */}
+                    <div className="sm:hidden divide-y divide-border">
+                      {rows.length === 0 ? (
+                        <p className="px-4 py-8 text-center text-sm text-muted-foreground">Empty table</p>
+                      ) : rows.map((row: any, i: number) => (
+                        <div key={i} className="p-4 space-y-3">
+                          {row.aspect && (
+                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{row.aspect}</p>
+                          )}
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <p className="text-[10px] font-bold text-amber-700 uppercase mb-1">UAE</p>
+                              <p className="text-sm text-foreground whitespace-pre-wrap">{row.uae || '—'}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] font-bold text-blue-700 uppercase mb-1">France</p>
+                              <p className="text-sm text-foreground whitespace-pre-wrap">{row.france || '—'}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Desktop: scrollable table */}
+                    <div className="hidden sm:block overflow-x-auto">
+                      <table className="w-full text-sm text-left min-w-[600px]">
                         <thead className="text-xs text-muted-foreground uppercase bg-muted/10">
                           <tr>
-                            <th className="px-6 py-4 font-semibold w-1/4">Aspect of Law</th>
-                            <th className="px-6 py-4 font-semibold w-3/8 border-l">UAE Perspective</th>
-                            <th className="px-6 py-4 font-semibold w-3/8 border-l">French Perspective</th>
+                            <th className="px-4 py-3 font-semibold w-1/4">Aspect of Law</th>
+                            <th className="px-4 py-3 font-semibold w-3/8 border-l">UAE Perspective</th>
+                            <th className="px-4 py-3 font-semibold w-3/8 border-l">French Perspective</th>
                           </tr>
                         </thead>
                         <tbody>
                           {rows.map((row: any, i: number) => (
                             <tr key={i} className="border-b last:border-0 hover:bg-muted/5">
-                              <td className="px-6 py-4 font-medium">{row.aspect || '-'}</td>
-                              <td className="px-6 py-4 border-l whitespace-pre-wrap">{row.uae || '-'}</td>
-                              <td className="px-6 py-4 border-l whitespace-pre-wrap">{row.france || '-'}</td>
+                              <td className="px-4 py-3 font-medium">{row.aspect || '-'}</td>
+                              <td className="px-4 py-3 border-l whitespace-pre-wrap">{row.uae || '-'}</td>
+                              <td className="px-4 py-3 border-l whitespace-pre-wrap">{row.france || '-'}</td>
                             </tr>
                           ))}
                           {rows.length === 0 && (
-                            <tr><td colSpan={3} className="px-6 py-8 text-center text-muted-foreground">Empty table</td></tr>
+                            <tr><td colSpan={3} className="px-4 py-8 text-center text-muted-foreground">Empty table</td></tr>
                           )}
                         </tbody>
                       </table>

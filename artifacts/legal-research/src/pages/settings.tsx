@@ -241,19 +241,19 @@ export default function Settings() {
                 <CardTitle>System Toggles</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
                     <h4 className="font-medium text-foreground">AI Features</h4>
                     <p className="text-sm text-muted-foreground">Enable semantic search and literature review.</p>
                   </div>
-                  <Switch checked={form.aiEnabled} onCheckedChange={(v) => setForm({ ...form, aiEnabled: v })} />
+                  <Switch checked={form.aiEnabled} onCheckedChange={(v) => setForm({ ...form, aiEnabled: v })} className="shrink-0 mt-0.5" />
                 </div>
-                <div className="flex items-center justify-between pt-4 border-t">
-                  <div>
+                <div className="flex items-start justify-between gap-4 pt-4 border-t">
+                  <div className="flex-1 min-w-0">
                     <h4 className="font-medium text-destructive">Maintenance Mode</h4>
                     <p className="text-sm text-muted-foreground">Lock out all non-owner users temporarily.</p>
                   </div>
-                  <Switch checked={form.maintenanceMode} onCheckedChange={(v) => setForm({ ...form, maintenanceMode: v })} />
+                  <Switch checked={form.maintenanceMode} onCheckedChange={(v) => setForm({ ...form, maintenanceMode: v })} className="shrink-0 mt-0.5" />
                 </div>
               </CardContent>
             </Card>
