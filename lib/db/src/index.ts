@@ -23,6 +23,15 @@ export {
   type CustodyVerificationResult,
   type ChainOfCustodyRecord,
 } from "./custody-service";
+// Phase 4 — Evidence Ledger service functions
+export {
+  recordEvidenceEvent,
+  getEvidenceChain,
+  verifyEvidenceChain,
+  type EvidenceEventInput,
+  type EvidenceVerificationResult,
+  type EvidenceLedgerRecord,
+} from "./evidence-service";
 // Phase 3 — Constitutional Memory service functions
 export {
   createOrUpdateMemory,

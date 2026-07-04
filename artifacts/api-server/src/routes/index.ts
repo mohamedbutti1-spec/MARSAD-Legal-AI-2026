@@ -27,6 +27,8 @@ import governanceRouter from "./governance";
 import custodyRouter from "./custody";
 // Phase 3 — Constitutional Memory (CM)
 import memoryRouter from "./memory";
+// Phase 4 — Constitutional Chain of Custody and Evidence Ledger
+import evidenceRouter from "./evidence";
 
 const router: IRouter = Router();
 
@@ -58,5 +60,7 @@ router.use(governanceRouter);
 router.use(custodyRouter);
 // Phase 3 — Constitutional Memory (CM)
 router.use(memoryRouter);
+// Phase 4 — Constitutional Chain of Custody and Evidence Ledger
+router.use(evidenceRouter);
 
 export default router;

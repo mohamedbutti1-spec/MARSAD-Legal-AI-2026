@@ -24,3 +24,5 @@ export * from "./decisions";
 export * from "./custody";
 // Phase 3 — Constitutional Memory (CM)
 export * from "./memory";
+// Phase 4 — Constitutional Chain of Custody and Evidence Ledger
+export * from "./evidence";

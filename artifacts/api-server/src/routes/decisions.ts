@@ -18,6 +18,7 @@ import {
   recordCustodyEvent,
   createOrUpdateMemory,
   recordMemoryEvent,
+  recordEvidenceEvent,
   type CustodyEventInput,
   type DecisionStageKey,
   type DciVersion,
@@ -751,6 +752,21 @@ router.post("/decisions", requireAnyRole, async (req, res): Promise<void> => {
       payload:   { caseNumber: decision.caseNumber, jurisdiction: decision.jurisdiction, status: decision.status },
     }).catch((e: unknown) => console.error("[memory.event.create]", e));
 
+    // Phase 4 — Evidence Ledger: decision created
+    recordEvidenceEvent({
+      decisionId:         decision.id,
+      action:             "decision.created",
+      eventCategory:      "creation",
+      actor:              String(custodyCtx.userId ?? "system"),
+      actorRole:          custodyCtx.userRole ?? null,
+      actorOrg:           custodyCtx.organization ?? null,
+      affectedObject:     `decision:${decision.id}`,
+      affectedObjectType: "decision",
+      evidenceSummaryAr:  `إنشاء قرار إداري جديد — ${decision.caseNumber}`,
+      evidenceSummaryEn:  `Administrative decision created — ${decision.caseNumber}`,
+      metadata:           { caseNumber: decision.caseNumber, jurisdiction: decision.jurisdiction, status: decision.status },
+    }).catch((e: unknown) => console.error("[evidence.create]", e));
+
     res.status(201).json({ decision });
   } catch (err) {
     console.error("[decisions.create]", err);
@@ -1092,6 +1108,20 @@ router.post("/decisions/:id/stages/:stageKey/complete", requireSupervisorOrOwner
       actorRole: String(getCustodyCtx(req).userRole ?? ""),
       payload:   { stageKey, nextStage: next },
     }).catch((e: unknown) => console.error("[memory.event.stage]", e));
+
+    // Phase 4 — Evidence Ledger: stage completed
+    recordEvidenceEvent({
+      decisionId,
+      action:             "stage.completed",
+      eventCategory:      "stage",
+      actor:              String(getUserId(req)),
+      actorRole:          getCustodyCtx(req).userRole ?? null,
+      affectedObject:     `stage:${stageKey}`,
+      affectedObjectType: "stage",
+      evidenceSummaryAr:  `استكمال المرحلة: ${stageKey}`,
+      evidenceSummaryEn:  `Stage completed: ${stageKey}`,
+      metadata:           { stageKey, nextStage: next },
+    }).catch((e: unknown) => console.error("[evidence.stage]", e));
 
     res.json({ success: true, nextStage: next, decision: updatedDecision });
   } catch (err) {
@@ -1635,6 +1665,20 @@ router.post("/decisions/:id/dci/amend", requireSupervisorOrOwner, async (req, re
       payload:   { reason: body.reason, fieldsChanged: Object.keys(safeChanges), newVersion: updated.currentVersion },
     }).catch((e: unknown) => console.error("[memory.event.dci]", e));
 
+    // Phase 4 — Evidence Ledger: DCI amended
+    recordEvidenceEvent({
+      decisionId,
+      action:             "dci.amended",
+      eventCategory:      "identity",
+      actor:              String(dciCtx.userId ?? "system"),
+      actorRole:          dciCtx.userRole ?? null,
+      affectedObject:     `dci:${decisionId}`,
+      affectedObjectType: "dci",
+      evidenceSummaryAr:  `تعديل الهوية الدستورية — الإصدار ${updated.currentVersion}`,
+      evidenceSummaryEn:  `DCI amended — version ${updated.currentVersion}`,
+      metadata:           { reason: body.reason, fieldsChanged: Object.keys(safeChanges), newVersion: updated.currentVersion },
+    }).catch((e: unknown) => console.error("[evidence.dci]", e));
+
     res.json({ dci: updated });
   } catch (err: unknown) {
     const typed = err as { statusCode?: number; message?: string };
@@ -1775,6 +1819,20 @@ router.post("/decisions/:id/qva/run", requireSupervisorOrOwner, async (req, res)
       actorId:   String(getUserId(req)),
       payload:   { qvaVarianceLevel, lsiStatus, runCount: runs.length, disagreements },
     }).catch((e: unknown) => console.error("[memory.event.qva]", e));
+
+    // Phase 4 — Evidence Ledger: QVA executed
+    recordEvidenceEvent({
+      decisionId,
+      action:             "qva.executed",
+      eventCategory:      "validation",
+      actor:              String(getUserId(req)),
+      actorRole:          getCustodyCtx(req).userRole ?? null,
+      affectedObject:     `qva:${decisionId}`,
+      affectedObjectType: "qva",
+      evidenceSummaryAr:  `تحليل التباين الكمي — المستوى: ${qvaVarianceLevel}`,
+      evidenceSummaryEn:  `QVA analysis — variance level: ${qvaVarianceLevel}`,
+      metadata:           { qvaVarianceLevel, lsiStatus, runCount: runs.length, disagreements },
+    }).catch((e: unknown) => console.error("[evidence.qva]", e));
 
     res.json({ qvaVarianceLevel, lsiStatus, runCount: runs.length, disagreements, runs });
   } catch (err) {
@@ -1935,6 +1993,20 @@ router.post("/decisions/:id/car/generate", requireAnyRole, async (req, res): Pro
         actorId:   String(userId),
         payload:   { generatedAt: new Date().toISOString() },
       }).catch((e: unknown) => console.error("[memory.event.car]", e));
+
+      // Phase 4 — Evidence Ledger: CAR generated
+      recordEvidenceEvent({
+        decisionId,
+        action:             "car.generated",
+        eventCategory:      "accountability",
+        actor:              String(userId),
+        actorRole:          getCustodyCtx(req).userRole ?? null,
+        affectedObject:     `car:${decisionId}`,
+        affectedObjectType: "car",
+        evidenceSummaryAr:  "إنشاء سجل الإجابة الدستورية",
+        evidenceSummaryEn:  "Constitutional Answer Record generated",
+        metadata:           { generatedAt: new Date().toISOString() },
+      }).catch((e: unknown) => console.error("[evidence.car]", e));
 
       const [car] = await db.select().from(decisionCarTable)
         .where(eq(decisionCarTable.decisionId, decisionId));

@@ -13,7 +13,8 @@ import {
   FileText, Hash, Eye, Scale, ChevronRight, ChevronDown, Search,
   Flag, Gavel, Lock, UnlockKeyhole, RefreshCw, ArrowRight, Users,
   Building2, BookOpen, GitMerge, Archive, BookMarked, GitBranch,
-  DownloadCloud, ShieldCheck, ShieldAlert, Link2,
+  DownloadCloud, ShieldCheck, ShieldAlert, Link2, Database, Fingerprint,
+  Activity,
 } from 'lucide-react';
 import { useUserContext, ROLE_META } from '@/lib/user-context';
 import { getPermissions } from '@/lib/permissions';
@@ -1677,11 +1678,347 @@ function CustodyTimeline({ decisionId }: { decisionId: number }) {
   );
 }
 
+// ─── 9b. Evidence Ledger Tab (Phase 4) ───────────────────────────────────────
+
+interface EvidenceEvent {
+  id: number;
+  sequenceNumber: number;
+  actor: string | null;
+  actorRole: string | null;
+  actorOrg: string | null;
+  timestamp: string;
+  action: string;
+  eventCategory: string;
+  evidenceSummaryAr: string | null;
+  evidenceSummaryEn: string | null;
+  affectedObject: string | null;
+  affectedObjectType: string | null;
+  previousHash: string | null;
+  currentHash: string;
+  chainHash: string;
+  digitalSignaturePlaceholder: string | null;
+  metadata: Record<string, unknown> | null;
+}
+
+interface EvidenceVerification {
+  valid: boolean;
+  integrityScore: number;
+  eventsChecked: number;
+  brokenLinks: number;
+  hashErrors: number;
+  genesisHash: string | null;
+  latestChainHash: string | null;
+  errors: Array<{ sequence: number; type: string; detail: string }>;
+}
+
+const EVENT_CATEGORY_COLORS: Record<string, string> = {
+  creation:       'bg-sky-100 text-sky-700 border-sky-200',
+  stage:          'bg-violet-100 text-violet-700 border-violet-200',
+  identity:       'bg-amber-100 text-amber-700 border-amber-200',
+  governance:     'bg-teal-100 text-teal-700 border-teal-200',
+  validation:     'bg-indigo-100 text-indigo-700 border-indigo-200',
+  accountability: 'bg-rose-100 text-rose-700 border-rose-200',
+  judicial:       'bg-emerald-100 text-emerald-700 border-emerald-200',
+  archive:        'bg-slate-100 text-slate-600 border-slate-200',
+  default:        'bg-muted text-muted-foreground border-border',
+};
+
+function IntegrityScoreBadge({ score, valid }: { score: number; valid: boolean }) {
+  const color = valid
+    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+    : score >= 60
+      ? 'bg-amber-50 text-amber-700 border-amber-200'
+      : 'bg-red-50 text-red-700 border-red-200';
+
+  return (
+    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border ${color}`}>
+      {valid ? <ShieldCheck className="w-4 h-4" /> : <ShieldAlert className="w-4 h-4" />}
+      <span className="font-bold text-sm">{score}/100</span>
+      <span className="text-xs opacity-70">{valid ? 'السلسلة سليمة' : 'تحذير: خلل في السلسلة'}</span>
+    </div>
+  );
+}
+
+function HashViewer({ label, hash }: { label: string; hash: string | null }) {
+  const [expanded, setExpanded] = React.useState(false);
+  if (!hash) return null;
+  return (
+    <div className="mt-1">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <Hash className="w-3 h-3" />
+        <span>{label}:</span>
+        <code className="font-mono">{expanded ? hash : `${hash.slice(0, 12)}…${hash.slice(-6)}`}</code>
+        {expanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+      </button>
+    </div>
+  );
+}
+
+function EvidenceEventCard({ ev, expanded, onToggle }: {
+  ev: EvidenceEvent;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  const catColor = EVENT_CATEGORY_COLORS[ev.eventCategory] ?? EVENT_CATEGORY_COLORS.default;
+  return (
+    <div className={`border rounded-lg overflow-hidden transition-all ${expanded ? 'border-primary/30 shadow-sm' : 'border-border'}`}>
+      {/* Header row */}
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center gap-3 p-3 text-left hover:bg-muted/30 transition-colors"
+      >
+        {/* Sequence badge */}
+        <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-[10px] font-bold flex items-center justify-center shrink-0">
+          {ev.sequenceNumber}
+        </span>
+        {/* Category chip */}
+        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border shrink-0 ${catColor}`}>
+          {ev.eventCategory}
+        </span>
+        {/* Action + summary */}
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-semibold text-foreground">{ev.action}</p>
+          {ev.evidenceSummaryAr && (
+            <p className="text-[11px] text-muted-foreground truncate">{ev.evidenceSummaryAr}</p>
+          )}
+        </div>
+        {/* Timestamp */}
+        <span className="text-[10px] text-muted-foreground shrink-0 font-mono">
+          {new Date(ev.timestamp).toLocaleTimeString('ar-AE', { hour: '2-digit', minute: '2-digit', hour12: false })}
+        </span>
+        {/* Hash valid indicator */}
+        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+        {expanded ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" /> : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
+      </button>
+
+      {/* Expanded inspector */}
+      {expanded && (
+        <div className="border-t border-border bg-muted/20 p-3 space-y-2">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+            {ev.actor     && <div><span className="text-muted-foreground">الجهة: </span><span>{ev.actor}</span></div>}
+            {ev.actorRole && <div><span className="text-muted-foreground">الدور: </span><span>{ev.actorRole}</span></div>}
+            {ev.actorOrg  && <div><span className="text-muted-foreground">المنظمة: </span><span>{ev.actorOrg}</span></div>}
+            {ev.affectedObject && (
+              <div>
+                <span className="text-muted-foreground">الكائن المتأثر: </span>
+                <code className="font-mono text-[10px]">{ev.affectedObject}</code>
+              </div>
+            )}
+            <div><span className="text-muted-foreground">التوقيت UTC: </span><span className="font-mono text-[10px]">{new Date(ev.timestamp).toISOString()}</span></div>
+          </div>
+
+          {/* Hash chain viewer */}
+          <div className="pt-1 border-t border-border/50 space-y-0.5">
+            <HashViewer label="التوقيع الرقمي" hash={ev.digitalSignaturePlaceholder} />
+            <HashViewer label="الهاش الحالي" hash={ev.currentHash} />
+            <HashViewer label="الهاش التراكمي" hash={ev.chainHash} />
+            {ev.previousHash && <HashViewer label="الهاش السابق" hash={ev.previousHash} />}
+          </div>
+
+          {/* Link to next (visual chain node) */}
+          {ev.previousHash && (
+            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground pt-0.5">
+              <Link2 className="w-3 h-3" />
+              <span>مرتبط بالحدث السابق — السلسلة مستمرة</span>
+              <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+            </div>
+          )}
+
+          {/* Raw metadata */}
+          {ev.metadata && (
+            <details className="text-[10px]">
+              <summary className="cursor-pointer text-muted-foreground hover:text-foreground">البيانات التفصيلية</summary>
+              <pre className="mt-1 p-2 bg-muted/60 rounded font-mono overflow-x-auto text-[10px] leading-relaxed">
+                {JSON.stringify(ev.metadata, null, 2)}
+              </pre>
+            </details>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EvidenceLedgerTab({ decisionId }: { decisionId: number }) {
+  const [expandedId, setExpandedId] = React.useState<number | null>(null);
+  const [verifying, setVerifying] = React.useState(false);
+  const [verifyResult, setVerifyResult] = React.useState<EvidenceVerification | null>(null);
+
+  const query = useQuery({
+    queryKey: ['evidence', decisionId],
+    queryFn: () => apiFetch('GET', `/api/evidence/${decisionId}`),
+    retry: false,
+  });
+
+  const data = query.data as {
+    totalEvents: number;
+    verification: EvidenceVerification;
+    chain: EvidenceEvent[];
+  } | undefined;
+
+  const verification: EvidenceVerification | null = verifyResult ?? data?.verification ?? null;
+  const chain: EvidenceEvent[] = data?.chain ?? [];
+
+  async function handleVerify() {
+    setVerifying(true);
+    try {
+      const result = await apiFetch('GET', `/api/evidence/${decisionId}/verify`);
+      setVerifyResult(result as unknown as EvidenceVerification);
+    } finally {
+      setVerifying(false);
+    }
+  }
+
+  async function handleExport() {
+    const result = await apiFetch('GET', `/api/evidence/${decisionId}/export`);
+    const blob = new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `evidence-package-decision-${decisionId}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  if (query.isLoading) return <LoadingSpinner />;
+
+  if (!data || chain.length === 0) {
+    return (
+      <EmptyState
+        icon={<Database className="w-5 h-5" />}
+        title="لا توجد أدلة مسجّلة بعد"
+        sub="سيتم إنشاء سجل الأدلة تلقائياً عند تنفيذ إجراءات القرار"
+      />
+    );
+  }
+
+  // Group events by date
+  const byDate: Record<string, EvidenceEvent[]> = {};
+  for (const ev of chain) {
+    const d = new Date(ev.timestamp).toLocaleDateString('ar-AE');
+    if (!byDate[d]) byDate[d] = [];
+    byDate[d].push(ev);
+  }
+
+  return (
+    <div className="space-y-4" dir="rtl">
+      {/* Header: integrity + controls */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Database className="w-4 h-4 text-muted-foreground" />
+          <span className="text-sm font-semibold">سجل الأدلة الدستورية</span>
+          <span className="text-xs text-muted-foreground">({chain.length} حدث)</span>
+        </div>
+        <div className="flex-1" />
+
+        {verification && (
+          <IntegrityScoreBadge score={verification.integrityScore} valid={verification.valid} />
+        )}
+
+        <button
+          onClick={handleVerify}
+          disabled={verifying}
+          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-primary/30 text-primary hover:bg-primary/5 transition-colors"
+        >
+          {verifying ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
+          تحقق من السلسلة
+        </button>
+
+        <button
+          onClick={handleExport}
+          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-border hover:bg-muted/40 transition-colors"
+        >
+          <DownloadCloud className="w-3.5 h-3.5" />
+          تصدير قضائي
+        </button>
+      </div>
+
+      {/* Integrity detail panel */}
+      {verification && (
+        <div className={`p-3 rounded-xl border text-xs space-y-1 ${verification.valid ? 'bg-emerald-50/60 border-emerald-200' : 'bg-red-50/60 border-red-200'}`}>
+          <div className="flex gap-4 flex-wrap">
+            <span><span className="text-muted-foreground">الأحداث المفحوصة: </span><strong>{verification.eventsChecked}</strong></span>
+            <span><span className="text-muted-foreground">أخطاء الهاش: </span><strong className={verification.hashErrors ? 'text-red-600' : 'text-emerald-600'}>{verification.hashErrors}</strong></span>
+            <span><span className="text-muted-foreground">كسور الروابط: </span><strong className={verification.brokenLinks ? 'text-red-600' : 'text-emerald-600'}>{verification.brokenLinks}</strong></span>
+          </div>
+          {verification.genesisHash && (
+            <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+              <Fingerprint className="w-3 h-3" />
+              <span>هاش البداية: </span>
+              <code className="font-mono">{verification.genesisHash.slice(0, 24)}…</code>
+            </div>
+          )}
+          {verification.latestChainHash && (
+            <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+              <Activity className="w-3 h-3" />
+              <span>الهاش الأخير: </span>
+              <code className="font-mono">{verification.latestChainHash.slice(0, 24)}…</code>
+            </div>
+          )}
+          {verification.errors.length > 0 && (
+            <div className="mt-1 pt-1 border-t border-red-200 space-y-0.5">
+              {verification.errors.map((e, i) => (
+                <div key={i} className="flex gap-2 text-[10px] text-red-700">
+                  <XCircle className="w-3 h-3 shrink-0 mt-0.5" />
+                  <span>[{e.sequence}] {e.detail}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Chain graph — visual linking nodes */}
+      <div className="relative px-2">
+        <div className="absolute right-[1.125rem] top-4 bottom-4 w-px bg-border" />
+        <div className="space-y-1">
+          {chain.map((ev) => (
+            <div key={ev.id} className="relative flex items-start gap-3">
+              {/* Node dot */}
+              <div className="relative z-10 mt-3.5">
+                <div className={`w-3 h-3 rounded-full border-2 border-white ring-1 ${
+                  (EVENT_CATEGORY_COLORS[ev.eventCategory] ?? '').includes('sky')       ? 'bg-sky-400 ring-sky-300' :
+                  (EVENT_CATEGORY_COLORS[ev.eventCategory] ?? '').includes('violet')    ? 'bg-violet-400 ring-violet-300' :
+                  (EVENT_CATEGORY_COLORS[ev.eventCategory] ?? '').includes('amber')     ? 'bg-amber-400 ring-amber-300' :
+                  (EVENT_CATEGORY_COLORS[ev.eventCategory] ?? '').includes('teal')      ? 'bg-teal-400 ring-teal-300' :
+                  (EVENT_CATEGORY_COLORS[ev.eventCategory] ?? '').includes('indigo')    ? 'bg-indigo-400 ring-indigo-300' :
+                  (EVENT_CATEGORY_COLORS[ev.eventCategory] ?? '').includes('rose')      ? 'bg-rose-400 ring-rose-300' :
+                  (EVENT_CATEGORY_COLORS[ev.eventCategory] ?? '').includes('emerald')   ? 'bg-emerald-400 ring-emerald-300' :
+                  'bg-slate-400 ring-slate-300'
+                }`} />
+              </div>
+              {/* Card */}
+              <div className="flex-1 pb-1">
+                <EvidenceEventCard
+                  ev={ev}
+                  expanded={expandedId === ev.id}
+                  onToggle={() => setExpandedId(expandedId === ev.id ? null : ev.id)}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Chain anchors */}
+      <div className="pt-2 border-t border-border/60">
+        <p className="text-[10px] text-muted-foreground flex items-center gap-1.5">
+          <Lock className="w-3 h-3" />
+          سجل الأدلة مقيّد بالإضافة فقط — لا حذف، لا تعديل. الأرشفة تتم بإضافة حدث جديد.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // ─── 10. Judge Dashboard ──────────────────────────────────────────────────────
 
 function JudgeDashboard() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [tab, setTab] = useState<'stages' | 'jdp' | 'dci' | 'car' | 'audit' | 'custody' | 'memory'>('stages');
+  const [tab, setTab] = useState<'stages' | 'jdp' | 'dci' | 'car' | 'audit' | 'custody' | 'memory' | 'evidence'>('stages');
 
   const listQuery = useQuery({
     queryKey: ['gov-decisions-judge'],
@@ -1706,13 +2043,14 @@ function JudgeDashboard() {
   if (listQuery.isLoading) return <LoadingSpinner />;
 
   const TABS: { key: typeof tab; label: string }[] = [
-    { key: 'stages',  label: 'المراحل' },
-    { key: 'jdp',     label: 'الحزمة الدفاعية' },
-    { key: 'dci',     label: 'الهوية الدستورية' },
-    { key: 'car',     label: 'سجل المساءلة' },
-    { key: 'audit',   label: 'سجل التدقيق' },
-    { key: 'custody', label: '⛓ الحيازة' },
-    { key: 'memory',  label: '📜 الذاكرة الدستورية' },
+    { key: 'stages',   label: 'المراحل' },
+    { key: 'jdp',      label: 'الحزمة الدفاعية' },
+    { key: 'dci',      label: 'الهوية الدستورية' },
+    { key: 'car',      label: 'سجل المساءلة' },
+    { key: 'audit',    label: 'سجل التدقيق' },
+    { key: 'custody',  label: '⛓ الحيازة' },
+    { key: 'memory',   label: '📜 الذاكرة الدستورية' },
+    { key: 'evidence', label: '🔐 سجل الأدلة' },
   ];
 
   return (
@@ -1894,6 +2232,12 @@ function JudgeDashboard() {
             {tab === 'memory' && selectedId ? (
               <div className="bg-white rounded-xl border border-border shadow-xs p-5">
                 <ConstitutionalMemoryTab decisionId={selectedId} />
+              </div>
+            ) : null}
+
+            {tab === 'evidence' && selectedId ? (
+              <div className="bg-white rounded-xl border border-border shadow-xs p-5">
+                <EvidenceLedgerTab decisionId={selectedId} />
               </div>
             ) : null}
           </div>

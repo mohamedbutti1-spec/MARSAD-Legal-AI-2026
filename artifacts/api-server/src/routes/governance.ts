@@ -20,6 +20,7 @@ import {
   getDecisionCustody,
   createOrUpdateMemory,
   recordMemoryEvent,
+  recordEvidenceEvent,
 } from "@workspace/db";
 import { getPermissions, ALL_ROLES } from "@workspace/db/permissions";
 
@@ -586,6 +587,21 @@ router.post(
         payload:   { delegatedAt: new Date().toISOString() },
       }).catch((e: unknown) => console.error("[memory.event.delegate]", e));
 
+      // Phase 4 — Evidence Ledger: delegation
+      recordEvidenceEvent({
+        decisionId:         id,
+        action:             "decision.delegated",
+        eventCategory:      "governance",
+        actor:              String(userId),
+        actorRole:          role,
+        actorOrg:           getUserOrg(req),
+        affectedObject:     `decision:${id}`,
+        affectedObjectType: "decision",
+        evidenceSummaryAr:  "تفويض القرار للمراجعة الإلزامية",
+        evidenceSummaryEn:  "Decision delegated for mandatory review",
+        metadata:           { delegatedAt: new Date().toISOString() },
+      }).catch((e: unknown) => console.error("[evidence.delegate]", e));
+
       res.json({ success: true, decision: updated });
     } catch (err) {
       console.error(err);
@@ -659,6 +675,21 @@ router.post(
         actorOrg:  getUserOrg(req),
         payload:   { undelegatedAt: new Date().toISOString() },
       }).catch((e: unknown) => console.error("[memory.event.undelegate]", e));
+
+      // Phase 4 — Evidence Ledger: undelegation
+      recordEvidenceEvent({
+        decisionId:         id,
+        action:             "decision.undelegated",
+        eventCategory:      "governance",
+        actor:              String(getUserId(req)),
+        actorRole:          role,
+        actorOrg:           getUserOrg(req),
+        affectedObject:     `decision:${id}`,
+        affectedObjectType: "decision",
+        evidenceSummaryAr:  "إلغاء تفويض المراجعة الإلزامية",
+        evidenceSummaryEn:  "Mandatory review delegation removed",
+        metadata:           { undelegatedAt: new Date().toISOString() },
+      }).catch((e: unknown) => console.error("[evidence.undelegate]", e));
 
       res.json({ success: true });
     } catch (err) {
