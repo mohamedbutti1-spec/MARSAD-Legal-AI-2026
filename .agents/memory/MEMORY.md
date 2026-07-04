@@ -7,3 +7,4 @@
 - [DCI — Decision Constitutional Identity](dci-implementation.md) — DB schema, stage→field mappings, seal logic, amendment transaction pattern, hash chain design
 - [Seven Constitutional Fixes](constitutional-fixes.md) — HII/QVA/LSI/CAR/gate logic; lib/db must be built (tsc --build) before api-server typecheck; aiFullyAdopted→materially_changed_outcome (not confirmed)
 - [Phase 2 — Executive Governance Layer](phase2-governance-layer.md) — permission matrix, DCI explicit allowlist, Express middleware types, JSX unknown pattern, audit log schema
+- [Phase 3 — Chain of Custody](phase3-chain-of-custody.md) — canonical JSON (JSONB key-order fix), advisory lock for atomic sequence, HMAC fail-fast, RBAC rules, 7 custody hooks wired

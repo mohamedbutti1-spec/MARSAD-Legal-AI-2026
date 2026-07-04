@@ -1174,11 +1174,197 @@ function ExternalAuditorDashboard() {
   );
 }
 
+// ─── Phase 3: Custody Timeline Component ──────────────────────────────────────
+
+interface CustodyRecord {
+  id: number;
+  sequenceNumber: number;
+  action: string;
+  actionCategory: string;
+  timestamp: string;
+  userId: number | null;
+  userRole: string | null;
+  organization: string | null;
+  deviceInfo: { userAgent?: string } | null;
+  ipAddress: string | null;
+  previousValue: Record<string, unknown> | null;
+  newValue: Record<string, unknown> | null;
+  legalJustification: string | null;
+  aiRecommendation: string | null;
+  humanModification: string | null;
+  digitalSignature: string;
+  previousRecordHash: string | null;
+  currentRecordHash: string;
+  chainHash: string;
+}
+
+const ACTION_CATEGORY_COLORS: Record<string, string> = {
+  decision:   'bg-blue-100 text-blue-800 ring-blue-200',
+  stage:      'bg-purple-100 text-purple-800 ring-purple-200',
+  dci:        'bg-amber-100 text-amber-800 ring-amber-200',
+  qva:        'bg-indigo-100 text-indigo-800 ring-indigo-200',
+  car:        'bg-emerald-100 text-emerald-800 ring-emerald-200',
+  jdp:        'bg-teal-100 text-teal-800 ring-teal-200',
+  governance: 'bg-rose-100 text-rose-800 ring-rose-200',
+};
+
+const ACTION_LABELS: Record<string, string> = {
+  'decision.created':       'إنشاء القرار',
+  'decision.delegated':     'تفويض للمراجعة',
+  'decision.undelegated':   'إلغاء التفويض',
+  'dci.amended':            'تعديل الهوية الدستورية',
+  'qva.run':                'تشغيل تحليل التباين',
+  'car.generated':          'إنشاء سجل المساءلة',
+  'jdp.generated':          'إنشاء الحزمة الدفاعية',
+};
+
+function CustodyTimeline({ decisionId }: { decisionId: number }) {
+  const [showHashes, setShowHashes] = useState(false);
+
+  const chainQuery = useQuery({
+    queryKey: ['custody-chain', decisionId],
+    queryFn: () => apiFetch('GET', `/api/custody/${decisionId}`),
+  });
+
+  const verifyQuery = useQuery({
+    queryKey: ['custody-verify', decisionId],
+    queryFn: () => apiFetch('GET', `/api/custody/${decisionId}/verify`),
+  });
+
+  if (chainQuery.isLoading) return <LoadingSpinner label="جارٍ تحميل سلسلة الحيازة…" />;
+  if (chainQuery.isError) return (
+    <ErrorCard message="تعذّر تحميل سلسلة الحيازة. قد لا تملك صلاحية الوصول." />
+  );
+
+  const records = ((chainQuery.data?.chain ?? []) as CustodyRecord[]);
+  const verifyData = verifyQuery.data;
+  // null = still loading, true = verified OK, false = tamper detected
+  const isValid: boolean | null = verifyData ? (verifyData.valid as boolean) : null;
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <SectionHeader icon={<Hash className="w-4 h-4" />} title="سلسلة الحيازة القانونية" sub={`${records.length} سجل · مُلحق فقط — لا حذف ولا تعديل`} />
+        <div className="flex items-center gap-2 flex-wrap">
+          {isValid === null ? (
+            <div className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-slate-100 text-slate-600">
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              جارٍ التحقق من سلامة السلسلة…
+            </div>
+          ) : (
+            <div className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full ${isValid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+              {isValid ? <CheckCircle2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
+              {isValid ? 'سلسلة سليمة' : `عُبث كُشف — موضع #${String((verifyData as {firstTamperedSequence?: number}).firstTamperedSequence ?? '?')}`}
+            </div>
+          )}
+          <button onClick={() => setShowHashes((x) => !x)}
+            className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded border border-border">
+            {showHashes ? 'إخفاء الهاشات' : 'إظهار الهاشات'}
+          </button>
+        </div>
+      </div>
+
+      {/* Latest chain hash */}
+      {chainQuery.data?.latestChainHash ? (
+        <div className="rounded-lg border border-border bg-muted/20 px-3 py-2 font-mono text-[10px] text-muted-foreground break-all">
+          <span className="text-[10px] font-semibold text-foreground font-sans block mb-0.5">هاش السلسلة الأخير (SHA-256):</span>
+          {showHashes ? String(chainQuery.data.latestChainHash) : `${String(chainQuery.data.latestChainHash).slice(0, 24)}…${String(chainQuery.data.latestChainHash).slice(-8)}`}
+        </div>
+      ) : null}
+
+      {/* Timeline */}
+      <div className="space-y-0">
+        {records.map((r, idx) => {
+          const isLast = idx === records.length - 1;
+          const cat = r.actionCategory ?? 'decision';
+          const catColor = ACTION_CATEGORY_COLORS[cat] ?? 'bg-slate-100 text-slate-700 ring-slate-200';
+          const actionLabel = (() => {
+            const base = r.action.startsWith('stage.completed.') ? `استكمال المرحلة: ${r.action.replace('stage.completed.', '')}` : (ACTION_LABELS[r.action] ?? r.action);
+            return base;
+          })();
+          const ts = new Date(r.timestamp);
+
+          return (
+            <div key={r.id} className="flex gap-3">
+              {/* Track */}
+              <div className="flex flex-col items-center shrink-0">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold z-10 ring-2 ring-white ${catColor}`}>
+                  {r.sequenceNumber}
+                </div>
+                {!isLast && <div className="w-0.5 bg-border flex-1 my-1 min-h-[12px]" />}
+              </div>
+
+              {/* Card */}
+              <div className={`flex-1 rounded-lg border p-3 mb-3 text-sm ${idx === 0 ? 'bg-amber-50/60 border-amber-200' : 'bg-white border-border'}`}>
+                <div className="flex items-start justify-between gap-2 flex-wrap mb-1.5">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-semibold text-foreground text-[13px]">{actionLabel}</span>
+                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${catColor}`}>{cat}</span>
+                    {idx === 0 && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800">سجل التأسيس</span>}
+                  </div>
+                  <span className="text-[11px] text-muted-foreground font-mono whitespace-nowrap">
+                    {ts.toISOString().replace('T', ' ').slice(0, 19)} UTC
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-[11px] text-muted-foreground">
+                  {r.userRole && <span>الدور: <span className="text-foreground font-medium">{r.userRole}</span></span>}
+                  {r.ipAddress && <span>IP: <span className="font-mono">{r.ipAddress}</span></span>}
+                  {r.organization && <span className="col-span-2 truncate">الجهة: <span className="text-foreground">{r.organization}</span></span>}
+                  {r.deviceInfo?.userAgent && <span className="col-span-2 truncate">المتصفح: <span className="text-foreground">{r.deviceInfo.userAgent.slice(0, 60)}…</span></span>}
+                </div>
+
+                {(r.legalJustification || r.aiRecommendation || r.humanModification) && (
+                  <div className="mt-2 pt-1.5 border-t border-border space-y-0.5 text-[11px]">
+                    {r.legalJustification && <p><span className="font-semibold text-foreground">التبرير القانوني: </span>{r.legalJustification}</p>}
+                    {r.aiRecommendation && <p><span className="font-semibold text-violet-700">توصية الذكاء الاصطناعي: </span>{r.aiRecommendation}</p>}
+                    {r.humanModification && <p><span className="font-semibold text-blue-700">التعديل البشري: </span>{r.humanModification}</p>}
+                  </div>
+                )}
+
+                {showHashes && (
+                  <div className="mt-2 pt-1.5 border-t border-dashed border-border space-y-1">
+                    <p className="font-mono text-[9px] break-all text-muted-foreground"><span className="font-semibold text-[10px] font-sans text-foreground">هاش السجل: </span>{r.currentRecordHash}</p>
+                    {r.previousRecordHash && <p className="font-mono text-[9px] break-all text-muted-foreground"><span className="font-semibold text-[10px] font-sans text-foreground">هاش السابق: </span>{r.previousRecordHash}</p>}
+                    <p className="font-mono text-[9px] break-all text-muted-foreground"><span className="font-semibold text-[10px] font-sans text-foreground">هاش السلسلة: </span>{r.chainHash}</p>
+                    {r.digitalSignature !== '[redacted]' && (
+                      <p className="font-mono text-[9px] break-all text-muted-foreground"><span className="font-semibold text-[10px] font-sans text-foreground">التوقيع الرقمي (HMAC): </span>{r.digitalSignature}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+        {records.length === 0 && <EmptyState title="لا توجد سجلات حيازة بعد" sub="سيُسجَّل كل إجراء تلقائياً بمجرد تنفيذه" />}
+      </div>
+
+      {/* Verification summary */}
+      {verifyData && (
+        <div className={`rounded-lg border p-3 text-xs ${isValid ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+          <div className="flex items-center gap-2 mb-2">
+            {isValid ? <Shield className="w-4 h-4 text-green-700" /> : <AlertTriangle className="w-4 h-4 text-red-700" />}
+            <span className={`font-bold ${isValid ? 'text-green-800' : 'text-red-800'}`}>
+              {isValid ? 'التحقق الكامل: سلسلة الحيازة سليمة — لم يُعبث بها' : `تحذير: كُشف تلاعب في السجل رقم ${String(verifyData.firstTamperedSequence ?? '?')}`}
+            </span>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-[11px]">
+            <span><span className="text-muted-foreground">السجلات المتحقق منها: </span><span className="font-mono font-bold">{String(verifyData.recordsChecked ?? 0)}</span></span>
+            <span><span className="text-muted-foreground">الهاش التأسيسي: </span><span className="font-mono">{verifyData.genesisHash ? `${String(verifyData.genesisHash).slice(0, 10)}…` : '—'}</span></span>
+            <span><span className="text-muted-foreground">الهاش الأخير: </span><span className="font-mono">{verifyData.latestChainHash ? `${String(verifyData.latestChainHash).slice(0, 10)}…` : '—'}</span></span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── 10. Judge Dashboard ──────────────────────────────────────────────────────
 
 function JudgeDashboard() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [tab, setTab] = useState<'stages' | 'jdp' | 'dci' | 'car' | 'audit'>('stages');
+  const [tab, setTab] = useState<'stages' | 'jdp' | 'dci' | 'car' | 'audit' | 'custody'>('stages');
 
   const listQuery = useQuery({
     queryKey: ['gov-decisions-judge'],
@@ -1203,11 +1389,12 @@ function JudgeDashboard() {
   if (listQuery.isLoading) return <LoadingSpinner />;
 
   const TABS: { key: typeof tab; label: string }[] = [
-    { key: 'stages', label: 'المراحل' },
-    { key: 'jdp',    label: 'الحزمة الدفاعية' },
-    { key: 'dci',    label: 'الهوية الدستورية' },
-    { key: 'car',    label: 'سجل المساءلة' },
-    { key: 'audit',  label: 'سجل التدقيق' },
+    { key: 'stages',  label: 'المراحل' },
+    { key: 'jdp',     label: 'الحزمة الدفاعية' },
+    { key: 'dci',     label: 'الهوية الدستورية' },
+    { key: 'car',     label: 'سجل المساءلة' },
+    { key: 'audit',   label: 'سجل التدقيق' },
+    { key: 'custody', label: '⛓ الحيازة' },
   ];
 
   return (
@@ -1379,6 +1566,12 @@ function JudgeDashboard() {
                 ) : <EmptyState title="لا توجد سجلات تدقيق" />}
               </div>
             )}
+
+            {tab === 'custody' && selectedId ? (
+              <div className="bg-white rounded-xl border border-border shadow-xs p-5">
+                <CustodyTimeline decisionId={selectedId} />
+              </div>
+            ) : null}
           </div>
         )}
       </div>

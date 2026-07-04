@@ -15,6 +15,9 @@ import {
   decisionJdpTable,
   decisionCarTable,
   auditLogsTable,
+  recordCustodyEvent,
+  verifyCustodyChain,
+  getDecisionCustody,
 } from "@workspace/db";
 import { getPermissions, ALL_ROLES } from "@workspace/db/permissions";
 
@@ -552,6 +555,23 @@ router.post(
         .from(decisionsTable)
         .where(eq(decisionsTable.id, id));
 
+      // Phase 3 — Chain of Custody: delegation event
+      recordCustodyEvent({
+        decisionId: id,
+        userId,
+        userRole:     role,
+        organization: getUserOrg(req),
+        action:         "decision.delegated",
+        actionCategory: "governance",
+        deviceInfo:  { userAgent: req.headers["user-agent"] ?? "" },
+        ipAddress:   String(Array.isArray(req.headers["x-forwarded-for"]) ? req.headers["x-forwarded-for"][0] : req.headers["x-forwarded-for"] ?? req.socket?.remoteAddress ?? ""),
+        previousValue: null,
+        newValue:    { delegatedForReview: true, delegatedBy: userId, delegatedAt: new Date().toISOString() },
+        legalJustification: "تفويض القرار للمراجعة الإلزامية من قِبل وكيل الوزارة",
+        aiRecommendation:   null,
+        humanModification:  "تفويض إداري",
+      }).catch((e: unknown) => console.error("[custody.delegate]", e));
+
       res.json({ success: true, decision: updated });
     } catch (err) {
       console.error(err);
@@ -596,6 +616,23 @@ router.post(
         .update(decisionsTable)
         .set({ metadata: meta, updatedAt: new Date() })
         .where(eq(decisionsTable.id, id));
+
+      // Phase 3 — Chain of Custody: undelegation event
+      recordCustodyEvent({
+        decisionId: id,
+        userId:       getUserId(req),
+        userRole:     role,
+        organization: getUserOrg(req),
+        action:         "decision.undelegated",
+        actionCategory: "governance",
+        deviceInfo:  { userAgent: req.headers["user-agent"] ?? "" },
+        ipAddress:   String(Array.isArray(req.headers["x-forwarded-for"]) ? req.headers["x-forwarded-for"][0] : req.headers["x-forwarded-for"] ?? req.socket?.remoteAddress ?? ""),
+        previousValue: { delegatedForReview: true },
+        newValue:    { delegatedForReview: false },
+        legalJustification: "إلغاء تفويض المراجعة الإلزامية",
+        aiRecommendation:   null,
+        humanModification:  "إلغاء التفويض الإداري",
+      }).catch((e: unknown) => console.error("[custody.undelegate]", e));
 
       res.json({ success: true });
     } catch (err) {
@@ -648,7 +685,31 @@ router.get("/governance/citizen/car", async (req, res) => {
       return;
     }
 
-    res.json({ decision, car });
+    // Phase 3 — include custody summary for public attestation (no sensitive hashes).
+    // Wrapped in try-catch so a custody service failure never breaks the primary
+    // citizen CAR response (custody is supplemental information here).
+    let custodySummary: {
+      recordCount: number;
+      valid: boolean | null;
+      latestChainHash: string | null;
+      genesisTimestamp: Date | null;
+      latestTimestamp: Date | null;
+    } | null = null;
+    try {
+      const custodyChain  = await getDecisionCustody(decision.id);
+      const custodyVerify = await verifyCustodyChain(decision.id);
+      custodySummary = {
+        recordCount:      custodyChain.length,
+        valid:            custodyVerify.valid,
+        latestChainHash:  custodyChain.at(-1)?.chainHash ? custodyChain.at(-1)!.chainHash.slice(0, 16) + "…" : null,
+        genesisTimestamp: custodyChain[0]?.timestamp ?? null,
+        latestTimestamp:  custodyChain.at(-1)?.timestamp ?? null,
+      };
+    } catch (custodyErr) {
+      console.error("[custody.citizen-car] non-fatal custody summary error:", custodyErr);
+    }
+
+    res.json({ decision, car, custodySummary });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "خطأ داخلي في الخادم" });

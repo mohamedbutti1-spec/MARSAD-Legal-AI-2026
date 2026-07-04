@@ -23,6 +23,8 @@ import legalOsAdminRouter from "./legal-os-admin";
 import decisionsRouter from "./decisions";
 // Phase 2 — Executive Governance Layer
 import governanceRouter from "./governance";
+// Phase 3 — Decision Chain of Custody
+import custodyRouter from "./custody";
 
 const router: IRouter = Router();
 
@@ -50,5 +52,7 @@ router.use(legalOsAdminRouter);
 router.use(decisionsRouter);
 // Phase 2 — Executive Governance Layer
 router.use(governanceRouter);
+// Phase 3 — Decision Chain of Custody
+router.use(custodyRouter);
 
 export default router;

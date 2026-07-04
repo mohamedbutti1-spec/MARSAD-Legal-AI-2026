@@ -14,3 +14,12 @@ export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 export const db = drizzle(pool, { schema });
 
 export * from "./schema";
+// Phase 3 — Chain of Custody service functions
+export {
+  recordCustodyEvent,
+  verifyCustodyChain,
+  getDecisionCustody,
+  type CustodyEventInput,
+  type CustodyVerificationResult,
+  type ChainOfCustodyRecord,
+} from "./custody-service";

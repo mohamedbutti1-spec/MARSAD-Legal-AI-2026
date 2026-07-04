@@ -15,6 +15,8 @@ import {
   decisionCarTable,
   auditLogsTable,
   DECISION_STAGE_KEYS,
+  recordCustodyEvent,
+  type CustodyEventInput,
   type DecisionStageKey,
   type DciVersion,
   type QvaRunResult,
@@ -46,6 +48,26 @@ function getUserId(req: import("express").Request): number {
   const h = req.headers["x-user-id"];
   if (!h) return 1;
   return parseInt(Array.isArray(h) ? h[0] : h, 10) || 1;
+}
+
+/** Phase 3 — Extract custody context from request headers. Fire-and-forget safe. */
+function getCustodyCtx(req: import("express").Request): Pick<CustodyEventInput, "userId" | "userRole" | "organization" | "deviceInfo" | "ipAddress"> {
+  const role = Array.isArray(req.headers["x-user-role"])
+    ? req.headers["x-user-role"][0]
+    : req.headers["x-user-role"];
+  const org = Array.isArray(req.headers["x-user-org"])
+    ? req.headers["x-user-org"][0]
+    : req.headers["x-user-org"];
+  const ip = Array.isArray(req.headers["x-forwarded-for"])
+    ? req.headers["x-forwarded-for"][0]
+    : req.headers["x-forwarded-for"] ?? req.socket?.remoteAddress;
+  return {
+    userId:       getUserId(req),
+    userRole:     role ?? null,
+    organization: org ?? null,
+    deviceInfo:   { userAgent: req.headers["user-agent"] ?? "" },
+    ipAddress:    ip ?? null,
+  };
 }
 
 function stageIndex(key: string): number {
@@ -690,6 +712,19 @@ router.post("/decisions", requireAnyRole, async (req, res): Promise<void> => {
     // Auto-create the Decision Constitutional Identity (DCI) — constitutional passport
     await initializeDci(decision.id, decision);
 
+    // Phase 3 — Chain of Custody: genesis record
+    recordCustodyEvent({
+      ...getCustodyCtx(req),
+      decisionId:     decision.id,
+      action:         "decision.created",
+      actionCategory: "decision",
+      previousValue:  null,
+      newValue:       { caseNumber: decision.caseNumber, titleAr: decision.titleAr, status: decision.status, jurisdiction: decision.jurisdiction },
+      legalJustification: `إنشاء قرار إداري جديد تحت إطار الشامسي الدستوري — ${decision.caseNumber}`,
+      aiRecommendation: null,
+      humanModification: null,
+    }).catch((e: unknown) => console.error("[custody.create]", e));
+
     res.status(201).json({ decision });
   } catch (err) {
     console.error("[decisions.create]", err);
@@ -1007,6 +1042,19 @@ router.post("/decisions/:id/stages/:stageKey/complete", requireSupervisorOrOwner
     }
 
     const [updatedDecision] = await db.select().from(decisionsTable).where(eq(decisionsTable.id, decisionId));
+
+    // Phase 3 — Chain of Custody: stage completion
+    recordCustodyEvent({
+      ...getCustodyCtx(req),
+      decisionId,
+      action:         `stage.completed.${stageKey}`,
+      actionCategory: "stage",
+      previousValue:  null,
+      newValue:       { stageKey, nextStage: next, stagesCompleted: updatedDecision?.stagesCompleted },
+      legalJustification: `استكمال المرحلة "${stageKey}" وفق المسار الدستوري للقرار الإداري`,
+      aiRecommendation: null,
+      humanModification: null,
+    }).catch((e: unknown) => console.error("[custody.stage]", e));
 
     res.json({ success: true, nextStage: next, decision: updatedDecision });
   } catch (err) {
@@ -1516,6 +1564,19 @@ router.post("/decisions/:id/dci/amend", requireSupervisorOrOwner, async (req, re
       },
     });
 
+    // Phase 3 — Chain of Custody: DCI amendment
+    recordCustodyEvent({
+      ...getCustodyCtx(req),
+      decisionId,
+      action:         "dci.amended",
+      actionCategory: "dci",
+      previousValue:  null,
+      newValue:       { reason: body.reason, fieldsChanged: Object.keys(safeChanges), newVersion: updated.currentVersion },
+      legalJustification: body.reason ?? null,
+      aiRecommendation:   null,
+      humanModification:  Object.keys(safeChanges).join(", "),
+    }).catch((e: unknown) => console.error("[custody.dci]", e));
+
     res.json({ dci: updated });
   } catch (err: unknown) {
     const typed = err as { statusCode?: number; message?: string };
@@ -1626,6 +1687,19 @@ router.post("/decisions/:id/qva/run", requireSupervisorOrOwner, async (req, res)
       entityId: decisionId,
       details: { runCount: runs.length, disagreements, qvaVarianceLevel, lsiStatus },
     });
+
+    // Phase 3 — Chain of Custody: QVA analysis
+    recordCustodyEvent({
+      ...getCustodyCtx(req),
+      decisionId,
+      action:         "qva.run",
+      actionCategory: "qva",
+      previousValue:  null,
+      newValue:       { runCount: runs.length, disagreements, qvaVarianceLevel, lsiStatus },
+      legalJustification: `تشغيل تحليل التباين الكمي — ${runs.length} دورة تحليل`,
+      aiRecommendation:   `مستوى التباين: ${qvaVarianceLevel} | حالة المشروعية: ${lsiStatus}`,
+      humanModification:  null,
+    }).catch((e: unknown) => console.error("[custody.qva]", e));
 
     res.json({ qvaVarianceLevel, lsiStatus, runCount: runs.length, disagreements, runs });
   } catch (err) {
@@ -1756,6 +1830,19 @@ router.post("/decisions/:id/car/generate", requireAnyRole, async (req, res): Pro
         entityId: decisionId,
         details: { generatedBy: userId },
       });
+
+      // Phase 3 — Chain of Custody: CAR generation
+      recordCustodyEvent({
+        ...getCustodyCtx(req),
+        decisionId,
+        action:         "car.generated",
+        actionCategory: "car",
+        previousValue:  null,
+        newValue:       { generatedBy: userId, generatedAt: new Date().toISOString() },
+        legalJustification: "إنشاء سجل الإجابة الدستورية بموجب إطار الإفصاح المدني والشفافية الإدارية",
+        aiRecommendation:   "أُنشئ بمساعدة الذكاء الاصطناعي وراجعه مسؤولون بشريون",
+        humanModification:  null,
+      }).catch((e: unknown) => console.error("[custody.car]", e));
 
       const [car] = await db.select().from(decisionCarTable)
         .where(eq(decisionCarTable.decisionId, decisionId));

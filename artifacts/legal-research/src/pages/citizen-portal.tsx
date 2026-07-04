@@ -8,9 +8,23 @@
  */
 import React, { useState } from 'react';
 import { Link } from 'wouter';
-import { Scale, Search, ChevronRight, AlertTriangle, Shield, FileText, Gavel, PhoneCall, ArrowLeft } from 'lucide-react';
+import { Scale, Search, ChevronRight, AlertTriangle, Shield, FileText, Gavel, PhoneCall, ArrowLeft, Hash, CheckCircle2, XCircle, Link2 } from 'lucide-react';
 
 // ─── API helper (no auth header needed for citizen endpoint) ──────────────────
+
+interface CustodySummary {
+  recordCount: number;
+  valid: boolean;
+  latestChainHash: string | null;
+  genesisTimestamp: string | null;
+  latestTimestamp: string | null;
+}
+
+interface CarResult {
+  decision: { caseNumber: string; titleAr: string };
+  car: Record<string, unknown>;
+  custodySummary: CustodySummary | null;
+}
 
 function fetchCar(caseNumber: string) {
   const base = (import.meta.env.BASE_URL ?? '').replace(/\/$/, '');
@@ -18,10 +32,7 @@ function fetchCar(caseNumber: string) {
     .then(async (r) => {
       const data = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error((data as { error?: string }).error || r.statusText);
-      return data as {
-        decision: { caseNumber: string; titleAr: string };
-        car: Record<string, unknown>;
-      };
+      return data as CarResult;
     });
 }
 
@@ -66,7 +77,7 @@ function CarSectionCard({ section, car }: { section: CarSection; car: Record<str
 export default function CitizenPortal() {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ decision: { caseNumber: string; titleAr: string }; car: Record<string, unknown> } | null>(null);
+  const [result, setResult] = useState<CarResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -238,6 +249,38 @@ export default function CitizenPortal() {
               </p>
               <p className="text-[11px] text-[#9B9BB4] mt-2">Powered by the M. Al-Shamsi Framework™</p>
             </div>
+
+            {/* Phase 3 — Chain of Custody Attestation */}
+            {result.custodySummary ? (
+              <div className={`rounded-2xl border p-4 ${result.custodySummary.valid ? 'border-[#00563F]/30 bg-[#00563F]/5' : 'border-red-200 bg-red-50'}`}>
+                <div className="flex items-center gap-2 mb-2">
+                  <Hash className="w-4 h-4 text-[#00563F] shrink-0" />
+                  <span className="text-sm font-bold text-[#1A1A2E]">سلسلة الحيازة القانونية — المرحلة 3</span>
+                  {result.custodySummary.valid ? (
+                    <span className="mr-auto flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                      <CheckCircle2 className="w-3 h-3" />سلسلة سليمة
+                    </span>
+                  ) : (
+                    <span className="mr-auto flex items-center gap-1 text-[11px] font-bold text-red-700 bg-red-100 px-2 py-0.5 rounded-full">
+                      <XCircle className="w-3 h-3" />تحذير: عُبث كُشف
+                    </span>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-[11px] text-[#5C5C7A]">
+                  <span>عدد سجلات الحيازة: <span className="font-bold text-[#1A1A2E]">{result.custodySummary.recordCount}</span></span>
+                  {result.custodySummary.latestChainHash && (
+                    <span className="truncate">هاش السلسلة: <span className="font-mono">{result.custodySummary.latestChainHash}</span></span>
+                  )}
+                </div>
+                <p className="text-[10px] text-[#9B9BB4] mt-2 leading-relaxed">
+                  كل إجراء على هذا القرار مُسجَّل في سلسلة حيازة مُشفَّرة وغير قابلة للتعديل، مع تحقق SHA-256 وتوقيع رقمي HMAC-SHA-256 لكل سجل.
+                </p>
+                <div className="flex items-center gap-1.5 mt-2">
+                  <Link2 className="w-3 h-3 text-[#9B9BB4]" />
+                  <span className="text-[10px] text-[#9B9BB4]">مُلحق فقط — لا حذف ولا تعديل ممكن بموجب إطار الشامسي™</span>
+                </div>
+              </div>
+            ) : null}
 
             {/* Actions */}
             <div className="flex flex-col sm:flex-row gap-3">

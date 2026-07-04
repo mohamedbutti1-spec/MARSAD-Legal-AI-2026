@@ -20,3 +20,5 @@ export * from "./admin-decision-roles";
 export * from "./admin-jurisdictions";
 // Module 1 — Intelligent Administrative Decision
 export * from "./decisions";
+// Phase 3 — Decision Chain of Custody
+export * from "./custody";
