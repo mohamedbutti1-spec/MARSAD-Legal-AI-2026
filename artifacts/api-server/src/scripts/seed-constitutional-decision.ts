@@ -478,6 +478,16 @@ async function seed() {
     legalityStatus:               "confirmed",
     constitutionalValidationStatus: "passed",
     alShamsiFrameworkCompliance:  "full",
+    // ── Human Influence Index & AI Actual Influence ──────────────────────────
+    // Stage 8 data: human added independent content (بند ضمان الرواتب)
+    // → joint decision; AI modified but human added independent element
+    humanInfluenceIndex:          "joint_decision",
+    aiActualInfluence:            "modified_human_direction",
+    // ── QVA / LSI — pre-seeded with a stable baseline ───────────────────────
+    lsiStatus:                    "stable",
+    qvaVarianceLevel:             "low",
+    qvaRunCount:                  3,
+    qvaResults:                   [],
     completeAuditHash,
     currentVersion:               1,
     versionHistory:               [],

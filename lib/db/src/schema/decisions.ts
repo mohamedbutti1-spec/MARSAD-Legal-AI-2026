@@ -159,6 +159,19 @@ export type DciVersion = {
   snapshot: Record<string, unknown>;
 };
 
+// ─── QVA Run Result ───────────────────────────────────────────────────────────
+// One record per independent AI analysis run performed during QVA.
+// Stores the principle-level gate results so variance can be audited later.
+
+export type QvaRunResult = {
+  /** Sequential index of this run (0-indexed) */
+  runIndex: number;
+  /** ISO-8601 timestamp of when this run was executed */
+  ranAt: string;
+  /** Principle-level gate results for this run */
+  principleResults: Record<string, { passed: boolean; gateStatus: string; notes: string }>;
+};
+
 export const decisionDciTable = pgTable("decision_dci", {
   id: serial("id").primaryKey(),
 
@@ -241,6 +254,42 @@ export const decisionDciTable = pgTable("decision_dci", {
    * Values: pending | full | substantial | partial | non_compliant
    */
   alShamsiFrameworkCompliance: text("al_shamsi_framework_compliance").notNull().default("pending"),
+
+  // ─── Human Influence Index (HII) & AI Actual Influence ───────────────────────
+
+  /**
+   * Whether the final decision was primarily shaped by human will, AI recommendation,
+   * or a genuine joint deliberation between human and AI.
+   * Values: pending | human_will | ai_recommendation | joint_decision
+   */
+  humanInfluenceIndex: text("human_influence_index").notNull().default("pending"),
+
+  /**
+   * Whether AI confirmed the human direction, modified it, or materially changed the outcome.
+   * Values: pending | confirmed_human_direction | modified_human_direction | materially_changed_outcome
+   */
+  aiActualInfluence: text("ai_actual_influence").notNull().default("pending"),
+
+  // ─── Quantitative Variance Analysis (QVA) & Legal Stability Index (LSI) ──────
+
+  /**
+   * Legal Stability Index — stability of legal outcomes across repeated independent AI analyses.
+   * An unstable result signals sensitivity to model stochasticity and warrants deeper human review.
+   * Values: pending | stable | variable | highly_variable
+   */
+  lsiStatus: text("lsi_status").notNull().default("pending"),
+
+  /**
+   * QVA variance level measured across multiple independent AI analysis runs of the same decision.
+   * Values: pending | low | moderate | high
+   */
+  qvaVarianceLevel: text("qva_variance_level").notNull().default("pending"),
+
+  /** Number of QVA analysis runs performed on this decision */
+  qvaRunCount: integer("qva_run_count").notNull().default(0),
+
+  /** Full results from each QVA run for complete auditability */
+  qvaResults: json("qva_results").$type<QvaRunResult[]>().default([]),
 
   // ─── Integrity ────────────────────────────────────────────────────────────
 
@@ -490,3 +539,67 @@ export const decisionJdpTable = pgTable("decision_jdp", {
 
 export type DecisionJdp = typeof decisionJdpTable.$inferSelect;
 export type JdpInsert = typeof decisionJdpTable.$inferInsert;
+
+// ─── Constitutional Answer Record (CAR) ───────────────────────────────────────
+// The CAR is a party-accessible transparency record explaining the factual and
+// legal basis of the decision in plain language. Unlike the JDP (government
+// legal defense prepared for court), the CAR is designed for fairness and the
+// affected party's constitutional right to understand why a decision was taken.
+// It is available on request to any affected party.
+//
+// State machine: pending → generating → ready | error
+
+export const decisionCarTable = pgTable("decision_car", {
+  id: serial("id").primaryKey(),
+
+  /** FK to decisionsTable — one CAR per decision. Cascade-deletes with the decision. */
+  decisionId: integer("decision_id").notNull().unique()
+    .references(() => decisionsTable.id, { onDelete: "cascade" }),
+
+  status: text("status").notNull().default("pending"),
+
+  // ─── Transparency Sections ────────────────────────────────────────────────
+
+  /** Clear Arabic narrative of the key facts that led to this decision */
+  factsReliedUpon: text("facts_relied_upon"),
+
+  /** Plain-language explanation of the legal authority for this decision */
+  legalBasisSummary: text("legal_basis_summary"),
+
+  /** Descriptions of evidence items considered */
+  evidenceConsidered: json("evidence_considered").$type<string[]>().default([]),
+
+  /** Alternatives that were considered and why each was rejected */
+  alternativesConsidered: json("alternatives_considered").$type<string[]>().default([]),
+
+  /** Plain Arabic explanation of how the AI system (MARSAD) was used */
+  aiRoleSummary: text("ai_role_summary"),
+
+  /** Who reviewed this decision and how they exercised independent judgment */
+  humanReviewSummary: text("human_review_summary"),
+
+  /** Main reasons in plain Arabic why this specific decision was taken */
+  reasonsForDecision: text("reasons_for_decision"),
+
+  /** What rights does the affected party have — appeal, clarification, representation */
+  affectedPartyRights: text("affected_party_rights"),
+
+  /** How to appeal — deadline, correct body, what the appeal should contain */
+  appealInformation: text("appeal_information"),
+
+  /**
+   * Mandatory AI disclosure statement for affected parties.
+   * Discloses that MARSAD AI system assisted in the decision and that
+   * a human official retained the final decision authority.
+   */
+  aiSystemDisclosure: text("ai_system_disclosure"),
+
+  errorMessage: text("error_message"),
+  generatedAt: timestamp("generated_at", { withTimezone: true }),
+  generatedBy: integer("generated_by"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type DecisionCar = typeof decisionCarTable.$inferSelect;
+export type CarInsert = typeof decisionCarTable.$inferInsert;

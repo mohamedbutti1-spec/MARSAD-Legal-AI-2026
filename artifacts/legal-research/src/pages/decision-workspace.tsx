@@ -11,7 +11,7 @@ import {
   Shield, CheckCircle2, XCircle, Clock, ChevronLeft, ChevronDown, ChevronUp,
   Sparkles, Scale, AlertTriangle, Building2, FileText, Loader2, ArrowRight,
   Lock, Check, Fingerprint, Gavel, BookOpen, Users, Link2, HelpCircle,
-  Download, Hash, RotateCcw,
+  Download, Hash, RotateCcw, UserCheck, Activity, Eye, ChevronRight,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -94,9 +94,27 @@ interface Dci {
   explainabilityLevel: string; transparencyLevel: string;
   evidenceCompleteness: string; proportionalityStatus: string;
   legalityStatus: string; constitutionalValidationStatus: string;
-  alShamsiFrameworkCompliance: string; completeAuditHash: string | null;
+  alShamsiFrameworkCompliance: string;
+  // HII & AI Actual Influence
+  humanInfluenceIndex: string; aiActualInfluence: string;
+  // QVA & LSI
+  lsiStatus: string; qvaVarianceLevel: string;
+  qvaRunCount: number; qvaResults: unknown[];
+  completeAuditHash: string | null;
   currentVersion: number; versionHistory: DciVersion[];
   isSealed: boolean; sealedAt: string | null; sealedBy: number | null;
+  createdAt: string; updatedAt: string;
+}
+
+interface Car {
+  id: number; decisionId: number; status: string;
+  factsReliedUpon: string | null; legalBasisSummary: string | null;
+  evidenceConsidered: string[]; alternativesConsidered: string[];
+  aiRoleSummary: string | null; humanReviewSummary: string | null;
+  reasonsForDecision: string | null; affectedPartyRights: string | null;
+  appealInformation: string | null; aiSystemDisclosure: string | null;
+  errorMessage: string | null;
+  generatedAt: string | null; generatedBy: number | null;
   createdAt: string; updatedAt: string;
 }
 
@@ -131,16 +149,45 @@ const DCI_VALUE_LABELS: Record<string, Record<string, string>> = {
   alShamsiFrameworkCompliance: {
     pending: 'قيد الإعداد', full: 'امتثال كامل', substantial: 'امتثال جوهري', partial: 'امتثال جزئي', non_compliant: 'غير ممتثل',
   },
+  // ── HII — Human Influence Index ───────────────────────────────────────────
+  humanInfluenceIndex: {
+    pending: 'قيد الإعداد',
+    human_will: 'إرادة بشرية مستقلة',
+    ai_recommendation: 'توصية الذكاء الاصطناعي',
+    joint_decision: 'قرار مشترك',
+  },
+  // ── AI Actual Influence ───────────────────────────────────────────────────
+  aiActualInfluence: {
+    pending: 'قيد الإعداد',
+    confirmed_human_direction: 'أكّد التوجه البشري',
+    modified_human_direction: 'عدّل التوجه البشري',
+    materially_changed_outcome: 'غيّر النتيجة جوهرياً',
+  },
+  // ── LSI — Legal Stability Index ───────────────────────────────────────────
+  lsiStatus: {
+    pending: 'لم يُحلَّل بعد',
+    stable: 'مستقر',
+    variable: 'متذبذب',
+    highly_variable: 'عالي التذبذب',
+  },
+  // ── QVA Variance Level ────────────────────────────────────────────────────
+  qvaVarianceLevel: {
+    pending: 'لم يُحلَّل بعد',
+    low: 'تباين منخفض',
+    moderate: 'تباين متوسط',
+    high: 'تباين عالٍ',
+  },
 };
 
 function dciChipClass(value: string): string {
   if (value === 'pending') return 'text-slate-500 bg-slate-50 border-slate-200 dark:text-slate-400 dark:bg-slate-900/40 dark:border-slate-700';
-  if (['passed', 'confirmed', 'full', 'complete', 'comprehensive'].includes(value))
+  if (['passed', 'confirmed', 'full', 'complete', 'comprehensive', 'human_will', 'stable', 'confirmed_human_direction', 'low'].includes(value))
     return 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-950/30 dark:border-emerald-800/40';
-  if (['substantial', 'adequate', 'proportionate', 'high'].includes(value))
+  if (['substantial', 'adequate', 'proportionate', 'high', 'joint_decision', 'variable', 'moderate', 'modified_human_direction'].includes(value))
     return 'text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-950/30 dark:border-amber-800/40';
-  if (['partial', 'marginally_proportionate', 'questionable', 'minimal'].includes(value))
+  if (['partial', 'marginally_proportionate', 'questionable', 'minimal', 'ai_recommendation'].includes(value))
     return 'text-orange-700 bg-orange-50 border-orange-200 dark:text-orange-400 dark:bg-orange-950/30 dark:border-orange-800/40';
+  // highly_variable, materially_changed_outcome, non_compliant, failed, violated → red
   return 'text-red-700 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-950/30 dark:border-red-800/40';
 }
 
@@ -299,6 +346,25 @@ function DciPanel({ decisionId, decision }: { decisionId: number; decision: Deci
         </div>
       </div>
 
+      {/* ── Human Influence Index (HII) & AI Actual Influence ──── */}
+      <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+        <div className="flex items-center gap-2 border-b border-border/40 pb-2">
+          <UserCheck className="w-3.5 h-3.5 text-muted-foreground" />
+          <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">مؤشر التأثير البشري — HII & AI Influence</h3>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+          <DciField label="مؤشر التأثير البشري (HII)" field="humanInfluenceIndex" value={dci.humanInfluenceIndex} />
+          <DciField label="التأثير الفعلي للذكاء الاصطناعي" field="aiActualInfluence" value={dci.aiActualInfluence} />
+        </div>
+        <p className="text-[10px] text-muted-foreground/50 leading-relaxed">
+          يقيس مؤشر التأثير البشري ما إذا كانت إرادة الإنسان هي المُشكِّلة الفعلية للقرار أم توصية الذكاء الاصطناعي.
+          التأثير الفعلي يُسجِّل ما إذا كان الذكاء الاصطناعي قد أكّد التوجه البشري أم عدّله أم غيّره.
+        </p>
+      </div>
+
+      {/* ── QVA & LSI ──────────────────────────────────────────── */}
+      <QvaSection decisionId={decisionId} dci={dci} />
+
       {/* ── Integrity & Hash ───────────────────────────────────── */}
       <div className="rounded-xl border border-border bg-card p-5 space-y-4">
         <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground border-b border-border/40 pb-2">سلامة البيانات والبصمة الرقمية</h3>
@@ -356,6 +422,334 @@ function DciPanel({ decisionId, decision }: { decisionId: number; decision: Deci
           Powered by the M. Al-Shamsi Framework™ · MARSAD Constitutional Standard v1.0
         </p>
       </div>
+    </div>
+  );
+}
+
+// ─── QVA Section Component ────────────────────────────────────────────────────
+
+function QvaSection({ decisionId, dci }: { decisionId: number; dci: Dci }) {
+  const [isRunning, setIsRunning] = useState(false);
+  const [runError, setRunError] = useState<string | null>(null);
+  const qc = useQueryClient();
+
+  const lsiColors: Record<string, string> = {
+    stable:          'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-950/30 dark:border-emerald-800/40',
+    variable:        'text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-950/30 dark:border-amber-800/40',
+    highly_variable: 'text-red-700 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-950/30 dark:border-red-800/40',
+    pending:         'text-slate-500 bg-slate-50 border-slate-200 dark:text-slate-400 dark:bg-slate-900/40 dark:border-slate-700',
+  };
+  const lsiLabels: Record<string, string> = {
+    stable: 'مستقر', variable: 'متذبذب', highly_variable: 'عالي التذبذب', pending: 'لم يُحلَّل',
+  };
+  const varLabels: Record<string, string> = {
+    low: 'تباين منخفض', moderate: 'تباين متوسط', high: 'تباين عالٍ', pending: 'لم يُحلَّل',
+  };
+
+  const handleRunQva = async () => {
+    setIsRunning(true); setRunError(null);
+    try {
+      await apiFetch('POST', `/api/decisions/${decisionId}/qva/run`, {});
+      qc.invalidateQueries({ queryKey: ['dci', decisionId] });
+    } catch (e: unknown) {
+      setRunError((e as Error)?.message || 'فشل تشغيل QVA');
+    }
+    setIsRunning(false);
+  };
+
+  const hasRun = dci.qvaRunCount > 0;
+  const lsi = dci.lsiStatus ?? 'pending';
+  const qva = dci.qvaVarianceLevel ?? 'pending';
+
+  return (
+    <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+      <div className="flex items-center justify-between gap-3 border-b border-border/40 pb-2">
+        <div className="flex items-center gap-2">
+          <Activity className="w-3.5 h-3.5 text-muted-foreground" />
+          <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">تحليل التباين الكمي QVA · مؤشر الاستقرار القانوني LSI</h3>
+        </div>
+        {dci.isSealed && (
+          <button onClick={handleRunQva} disabled={isRunning}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border bg-background text-[10px] font-bold text-foreground/70 hover:text-foreground hover:bg-muted/60 transition-colors disabled:opacity-50 shrink-0">
+            {isRunning ? <Loader2 className="w-3 h-3 animate-spin" /> : <Activity className="w-3 h-3" />}
+            {isRunning ? 'جارٍ التحليل...' : hasRun ? 'إعادة التحليل' : 'تشغيل QVA'}
+          </button>
+        )}
+      </div>
+
+      {!dci.isSealed && (
+        <p className="text-xs text-muted-foreground/60 italic">يتوفر QVA بعد اكتمال التحقق الدستوري وختم الهوية الدستورية.</p>
+      )}
+
+      {dci.isSealed && !hasRun && !isRunning && (
+        <p className="text-xs text-muted-foreground/60 italic">
+          يُشغِّل QVA نفس التحليل الدستوري ثلاث مرات مستقلة ويقيس تباين النتائج.
+          نتيجة مستقرة تعني اتساق الذكاء الاصطناعي؛ نتيجة متذبذبة تستدعي مراجعة بشرية أعمق.
+        </p>
+      )}
+
+      {hasRun && (
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60">مؤشر الاستقرار القانوني (LSI)</p>
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md border text-xs font-semibold ${lsiColors[lsi] ?? lsiColors.pending}`}>
+              {lsiLabels[lsi] ?? lsi}
+            </span>
+          </div>
+          <div className="space-y-1.5">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60">مستوى التباين</p>
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md border text-xs font-semibold ${lsiColors[qva === 'low' ? 'stable' : qva === 'moderate' ? 'variable' : qva === 'high' ? 'highly_variable' : 'pending']}`}>
+              {varLabels[qva] ?? qva}
+            </span>
+          </div>
+          <div className="col-span-2">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60 mb-1">عدد التشغيلات المنجزة</p>
+            <p className="text-sm font-mono font-bold text-foreground">{dci.qvaRunCount} / 3</p>
+          </div>
+        </div>
+      )}
+
+      {runError && (
+        <p className="text-xs text-red-600 dark:text-red-400 font-mono">{runError}</p>
+      )}
+
+      <p className="text-[10px] text-muted-foreground/40 leading-relaxed">
+        QVA هو إجراء تقني يُقيّم ثبات نتائج الذكاء الاصطناعي عبر تشغيلات مستقلة.
+        LSI هو التصنيف القانوني للاستقرار: مستقر · متذبذب · عالي التذبذب.
+      </p>
+    </div>
+  );
+}
+
+// ─── CAR Panel ────────────────────────────────────────────────────────────────
+
+function CarSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <div className="flex items-center gap-2 px-5 py-3 border-b border-border/40 bg-muted/30">
+        <Eye className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+        <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground leading-none">{title}</h3>
+      </div>
+      <div className="p-5">{children}</div>
+    </div>
+  );
+}
+
+function CarPanel({ decisionId, decision }: { decisionId: number; decision: Decision }) {
+  const [isGenerating, setIsGenerating] = useState(false);
+  const qc = useQueryClient();
+
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['car', decisionId],
+    queryFn: () => apiFetch('GET', `/api/decisions/${decisionId}/car`),
+    retry: false,
+    refetchInterval: (q) => {
+      const s = (q.state.data as { car?: { status: string } } | undefined)?.car?.status;
+      return s === 'generating' ? 4000 : false;
+    },
+  });
+
+  const car: Car | null = data?.car ?? null;
+  const notFound = !isLoading && (!data || data.error || !car);
+  const statusReady = car?.status === 'ready';
+  const statusGenerating = car?.status === 'generating' || isGenerating;
+  const statusError = car?.status === 'error';
+
+  const handleGenerate = async () => {
+    setIsGenerating(true);
+    try {
+      await apiFetch('POST', `/api/decisions/${decisionId}/car/generate`, {});
+      await refetch();
+      qc.invalidateQueries({ queryKey: ['car', decisionId] });
+    } catch (e: unknown) {
+      alert((e as Error)?.message || 'فشل توليد سجل المساءلة الدستورية');
+    }
+    setIsGenerating(false);
+  };
+
+  if (isLoading) return (
+    <div className="flex items-center justify-center py-24">
+      <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+    </div>
+  );
+
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 space-y-5 max-w-5xl pb-20">
+
+      {/* ── Status Header ───────────────────────────────────── */}
+      <div className={`rounded-2xl border-2 p-5 sm:p-6 ${statusReady ? 'border-blue-300/70 bg-gradient-to-br from-blue-50/60 to-transparent dark:border-blue-700/40 dark:from-blue-950/20' : statusError ? 'border-red-300/60 bg-red-50/30 dark:border-red-800/40' : 'border-border bg-card'}`}>
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-[10px] font-mono font-bold tracking-widest text-muted-foreground/50 uppercase" dir="ltr">
+              {decision.caseNumber} · CAR · سجل المساءلة الدستورية
+            </div>
+            <div className="flex items-center gap-2">
+              <Eye className="w-4 h-4 text-foreground/60 shrink-0" />
+              <h2 className="text-lg font-bold text-foreground">سجل المساءلة الدستورية</h2>
+            </div>
+            <p className="text-xs text-muted-foreground">وثيقة شفافية للأطراف المتأثرة · باللغة العربية السهلة · إطار الشامسي™</p>
+          </div>
+          <div className="flex flex-col items-end gap-2">
+            {statusReady ? (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-100 dark:bg-blue-950/50 border border-blue-300 dark:border-blue-700 text-blue-800 dark:text-blue-300 text-xs font-bold">
+                <CheckCircle2 className="w-3.5 h-3.5" /> جاهز للإفصاح
+              </div>
+            ) : statusGenerating ? (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-bold">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" /> جارٍ التوليد...
+              </div>
+            ) : statusError ? (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-100 dark:bg-red-950/40 border border-red-300 dark:border-red-700 text-red-800 dark:text-red-300 text-xs font-bold">
+                <XCircle className="w-3.5 h-3.5" /> فشل التوليد
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted border border-border text-muted-foreground text-xs font-bold">
+                <Clock className="w-3 h-3" /> لم يُولَّد بعد
+              </div>
+            )}
+            {!statusGenerating && (
+              <button onClick={handleGenerate} disabled={isGenerating}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-foreground text-background text-xs font-bold hover:opacity-90 transition-opacity disabled:opacity-50">
+                {statusError ? <RotateCcw className="w-3.5 h-3.5" /> : <Sparkles className="w-3.5 h-3.5" />}
+                {statusReady ? 'إعادة التوليد' : statusError ? 'إعادة المحاولة' : 'توليد السجل'}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {statusError && car?.errorMessage && (
+          <div className="mt-4 p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/40">
+            <p className="text-xs text-red-700 dark:text-red-400 font-mono break-all">{car.errorMessage}</p>
+          </div>
+        )}
+
+        {(notFound || (!car && !isGenerating)) && (
+          <div className="mt-4 p-4 rounded-xl bg-muted/40 border border-border/40 space-y-2">
+            <p className="text-sm text-foreground/80 leading-relaxed">
+              سجل المساءلة الدستورية (CAR) وثيقة شفافية تُخصَّص للأطراف المتأثرة بالقرار الإداري.
+              تشرح باللغة العربية المبسّطة: لماذا اتُّخذ القرار، وما هي حقوق الطرف المتأثر، وكيف يمكنه التظلم.
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 pt-1">
+              {['الوقائع المستند إليها','السند القانوني','الأدلة المُراعاة','البدائل المدروسة','دور الذكاء الاصطناعي','المراجعة البشرية','أسباب القرار','حقوق الطرف المتأثر','معلومات التظلم','إفصاح عن الذكاء الاصطناعي'].map((s) => (
+                <div key={s} className="flex items-center gap-1.5 text-[10px] text-muted-foreground/70">
+                  <ChevronRight className="w-3 h-3 text-muted-foreground/30 shrink-0" />{s}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {statusGenerating && (
+        <div className="rounded-xl border border-slate-200/60 dark:border-slate-700/40 bg-slate-50/40 dark:bg-slate-900/20 p-10 text-center space-y-3">
+          <Loader2 className="w-8 h-8 animate-spin text-slate-500 mx-auto" />
+          <p className="text-sm font-semibold text-foreground">جارٍ توليد سجل المساءلة الدستورية...</p>
+          <p className="text-xs text-muted-foreground max-w-sm mx-auto">يُعدّ MARSAD وثيقة الشفافية المُخصَّصة للأطراف المتأثرة. قد يستغرق ذلك 20–40 ثانية.</p>
+        </div>
+      )}
+
+      {statusReady && car && (
+        <div className="space-y-4">
+
+          {/* AI Disclosure Banner — always first */}
+          {car.aiSystemDisclosure && (
+            <div className="rounded-xl border border-blue-200/70 dark:border-blue-800/40 bg-blue-50/50 dark:bg-blue-950/10 p-4 flex items-start gap-3">
+              <Activity className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wide text-blue-700 dark:text-blue-400 mb-1">إفصاح إلزامي — دور الذكاء الاصطناعي</p>
+                <p className="text-xs text-blue-800/80 dark:text-blue-300/80 leading-relaxed">{car.aiSystemDisclosure}</p>
+              </div>
+            </div>
+          )}
+
+          {car.factsReliedUpon && (
+            <CarSection title="01 · الوقائع المستند إليها">
+              <p className="text-sm text-foreground/80 leading-relaxed">{car.factsReliedUpon}</p>
+            </CarSection>
+          )}
+
+          {car.legalBasisSummary && (
+            <CarSection title="02 · السند القانوني — بلغة سهلة">
+              <p className="text-sm text-foreground/80 leading-relaxed">{car.legalBasisSummary}</p>
+            </CarSection>
+          )}
+
+          {car.evidenceConsidered.length > 0 && (
+            <CarSection title="03 · الأدلة المُراعاة">
+              <ul className="space-y-1.5">
+                {car.evidenceConsidered.map((item, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm text-foreground/80">
+                    <span className="text-[10px] font-mono text-muted-foreground/50 shrink-0 mt-0.5">{String(i + 1).padStart(2, '0')}.</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </CarSection>
+          )}
+
+          {car.alternativesConsidered.length > 0 && (
+            <CarSection title="04 · البدائل التي جرى دراستها">
+              <ul className="space-y-1.5">
+                {car.alternativesConsidered.map((item, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm text-foreground/80">
+                    <span className="text-[10px] font-mono text-muted-foreground/50 shrink-0 mt-0.5">{String(i + 1).padStart(2, '0')}.</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </CarSection>
+          )}
+
+          {car.aiRoleSummary && (
+            <CarSection title="05 · دور الذكاء الاصطناعي في هذا القرار">
+              <p className="text-sm text-foreground/80 leading-relaxed">{car.aiRoleSummary}</p>
+            </CarSection>
+          )}
+
+          {car.humanReviewSummary && (
+            <CarSection title="06 · المراجعة البشرية المستقلة">
+              <p className="text-sm text-foreground/80 leading-relaxed">{car.humanReviewSummary}</p>
+            </CarSection>
+          )}
+
+          {car.reasonsForDecision && (
+            <CarSection title="07 · أسباب القرار">
+              <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-line">{car.reasonsForDecision}</p>
+            </CarSection>
+          )}
+
+          {car.affectedPartyRights && (
+            <div className="rounded-xl border-2 border-emerald-300/70 dark:border-emerald-700/40 bg-gradient-to-br from-emerald-50/60 to-transparent dark:from-emerald-950/10 overflow-hidden">
+              <div className="flex items-center gap-2 px-5 py-3 border-b border-emerald-200/60 dark:border-emerald-800/30">
+                <Shield className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-400 leading-none">08 · حقوقك كطرف متأثر</h3>
+              </div>
+              <div className="p-5">
+                <p className="text-sm text-foreground/80 leading-relaxed">{car.affectedPartyRights}</p>
+              </div>
+            </div>
+          )}
+
+          {car.appealInformation && (
+            <div className="rounded-xl border-2 border-amber-300/70 dark:border-amber-700/40 bg-gradient-to-br from-amber-50/60 to-transparent dark:from-amber-950/10 overflow-hidden">
+              <div className="flex items-center gap-2 px-5 py-3 border-b border-amber-200/60 dark:border-amber-800/30">
+                <Scale className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-400 leading-none">09 · كيفية التظلم والطعن بالقرار</h3>
+              </div>
+              <div className="p-5">
+                <p className="text-sm text-foreground/80 leading-relaxed">{car.appealInformation}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Footer */}
+          <div className="text-center py-2">
+            <p className="text-[10px] text-muted-foreground/30 tracking-wide">
+              Powered by the M. Al-Shamsi Framework™ · MARSAD Constitutional Transparency Standard v1.0
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -740,29 +1134,24 @@ function JdpPanel({ decisionId, decision }: { decisionId: number; decision: Deci
             <JdpSection title="09 · نتائج التحقق الدستوري" icon={Shield}>
               <div className="flex items-center gap-3 mb-4 flex-wrap">
                 <TestChip result={jdp.constitutionalValidationResults.overallResult === 'passed' ? 'passed' : 'failed'} />
-                {jdp.constitutionalValidationResults.alShamsiScore != null && (
-                  <span className="text-xs text-muted-foreground">نقاط إطار الشامسي: <span className="font-bold text-foreground">{jdp.constitutionalValidationResults.alShamsiScore}</span>/100</span>
-                )}
                 {jdp.constitutionalValidationResults.validationDate && (
                   <span className="text-[10px] text-muted-foreground/50 font-mono" dir="ltr">{jdp.constitutionalValidationResults.validationDate.substring(0, 10)}</span>
                 )}
               </div>
               {jdp.constitutionalValidationResults.principleResults.length > 0 && (
                 <div className="space-y-2">
-                  {jdp.constitutionalValidationResults.principleResults.map((pr, i) => (
-                    <div key={i} className="flex items-start gap-3 text-xs border-b border-border/30 pb-2 last:border-0 last:pb-0">
-                      <div className="shrink-0 mt-0.5">
-                        {pr.passed ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> : <XCircle className="w-3.5 h-3.5 text-red-500" />}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
+                  {jdp.constitutionalValidationResults.principleResults.map((pr, i) => {
+                    const gateLabel = pr.passed ? 'مستوفٍ' : 'غير مستوفٍ';
+                    return (
+                      <div key={i} className="flex items-start gap-3 text-xs border-b border-border/30 pb-2 last:border-0 last:pb-0">
+                        <span className={`shrink-0 mt-0.5 inline-flex items-center px-1.5 py-0.5 rounded border text-[9px] font-bold whitespace-nowrap ${pr.passed ? 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-950/30 dark:border-emerald-800/40' : 'text-red-700 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-950/30 dark:border-red-800/40'}`}>{gateLabel}</span>
+                        <div className="flex-1">
                           <span className="font-semibold text-foreground">{pr.principle}</span>
-                          {pr.score != null && <span className="text-[10px] text-muted-foreground/60">{pr.score}/100</span>}
+                          <p className="text-foreground/65 mt-0.5">{pr.notes}</p>
                         </div>
-                        <p className="text-foreground/65 mt-0.5">{pr.notes}</p>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
               <JdpConclusion text={jdp.constitutionalValidationResults.conclusion} />
@@ -1406,30 +1795,25 @@ function AIAnalysisPanel({ analysis, stageKey }: { analysis: Record<string, unkn
             </div>
           )}
 
-          {/* Constitutional validation principle results */}
+          {/* Constitutional validation principle results — binary gate display, no numerical scores */}
           {stageKey === 'constitutional_validation' && Boolean(analysis.principleResults) && (
             <div className="space-y-2">
-              <p className="text-xs font-bold text-muted-foreground">نتائج المبادئ الدستورية</p>
+              <p className="text-xs font-bold text-muted-foreground">بوابات المبادئ الدستورية العشرة</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {Object.entries(analysis.principleResults as Record<string, Record<string, unknown>>).map(([key, result]) => {
-                  const pr = result as { passed: boolean; score: number; notes: string };
+                  const pr = result as { passed: boolean; gateStatus?: string; notes?: string };
+                  const gateLabel = pr.passed ? 'مستوفٍ' : 'غير مستوفٍ';
                   return (
                     <div key={key} className={`flex items-start gap-2 p-2 rounded-lg border text-xs ${pr.passed ? 'border-emerald-200/60 bg-emerald-50/50 dark:border-emerald-800/30' : 'border-red-200/60 bg-red-50/50 dark:border-red-800/30'}`}>
-                      {pr.passed ? <Check className="w-3 h-3 text-emerald-500 shrink-0 mt-0.5" /> : <XCircle className="w-3 h-3 text-red-500 shrink-0 mt-0.5" />}
+                      <span className={`shrink-0 mt-0.5 inline-flex items-center px-1.5 py-0.5 rounded border text-[9px] font-bold whitespace-nowrap ${pr.passed ? 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-950/30 dark:border-emerald-800/40' : 'text-red-700 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-950/30 dark:border-red-800/40'}`}>{gateLabel}</span>
                       <div>
-                        <span className="font-mono text-muted-foreground/60">{key}</span>
+                        <span className="font-mono text-muted-foreground/60 text-[10px]">{key}</span>
                         {pr.notes && <p className="text-muted-foreground mt-0.5">{String(pr.notes)}</p>}
                       </div>
                     </div>
                   );
                 })}
               </div>
-              {typeof analysis.asliPreScore === 'number' && (
-                <div className="flex items-center gap-2 p-3 rounded-lg border border-border/60 bg-muted/20">
-                  <Scale className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm font-bold text-foreground">مؤشر ASLI التمهيدي: <span className="font-mono">{analysis.asliPreScore}/100</span></span>
-                </div>
-              )}
             </div>
           )}
 
@@ -1556,7 +1940,7 @@ export default function DecisionWorkspace() {
 
   const decisionId = params.id ? parseInt(params.id) : null;
   const [activeStage, setActiveStage] = useState<StageKey>('administrative_request');
-  const [activeView, setActiveView] = useState<'stage' | 'dci' | 'jdp'>('stage');
+  const [activeView, setActiveView] = useState<'stage' | 'dci' | 'jdp' | 'car'>('stage');
   const [formData, setFormData] = useState<Record<StageKey, Record<string, unknown>>>({} as any);
   const [aiAnalysis, setAiAnalysis] = useState<Record<StageKey, Record<string, unknown>>>({} as any);
   const [validationResults, setValidationResults] = useState<Record<StageKey, { passed: boolean; analysis: Record<string, unknown>; validationStatus: string }>>({} as any);
@@ -1734,14 +2118,14 @@ export default function DecisionWorkspace() {
             </div>
 
             {/* ── View Tab Bar ──────────────────────────────────── */}
-            <div role="tablist" aria-label="عرض القرار" className="border-b border-border/60 bg-card px-4 sm:px-6 lg:px-8 flex items-center gap-0">
+            <div role="tablist" aria-label="عرض القرار" className="border-b border-border/60 bg-card px-4 sm:px-6 lg:px-8 flex items-center gap-0 overflow-x-auto">
               <button
                 role="tab"
                 aria-selected={activeView === 'stage'}
                 aria-controls="panel-stage"
                 id="tab-stage"
                 onClick={() => setActiveView('stage')}
-                className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors -mb-px ${activeView === 'stage' ? 'border-foreground text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+                className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors -mb-px whitespace-nowrap ${activeView === 'stage' ? 'border-foreground text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
               >
                 <Scale className="w-3.5 h-3.5" /> مراحل القرار
               </button>
@@ -1751,7 +2135,7 @@ export default function DecisionWorkspace() {
                 aria-controls="panel-dci"
                 id="tab-dci"
                 onClick={() => setActiveView('dci')}
-                className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors -mb-px ${activeView === 'dci' ? 'border-amber-500 text-amber-700 dark:text-amber-400' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+                className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors -mb-px whitespace-nowrap ${activeView === 'dci' ? 'border-amber-500 text-amber-700 dark:text-amber-400' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
               >
                 <Fingerprint className="w-3.5 h-3.5" /> الهوية الدستورية DCI
               </button>
@@ -1761,9 +2145,19 @@ export default function DecisionWorkspace() {
                 aria-controls="panel-jdp"
                 id="tab-jdp"
                 onClick={() => setActiveView('jdp')}
-                className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors -mb-px ${activeView === 'jdp' ? 'border-emerald-500 text-emerald-700 dark:text-emerald-400' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+                className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors -mb-px whitespace-nowrap ${activeView === 'jdp' ? 'border-emerald-500 text-emerald-700 dark:text-emerald-400' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
               >
                 <Gavel className="w-3.5 h-3.5" /> الدفاع القضائي JDP
+              </button>
+              <button
+                role="tab"
+                aria-selected={activeView === 'car'}
+                aria-controls="panel-car"
+                id="tab-car"
+                onClick={() => setActiveView('car')}
+                className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors -mb-px whitespace-nowrap ${activeView === 'car' ? 'border-blue-500 text-blue-700 dark:text-blue-400' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+              >
+                <Eye className="w-3.5 h-3.5" /> المساءلة الدستورية CAR
               </button>
             </div>
 
@@ -1841,6 +2235,10 @@ export default function DecisionWorkspace() {
                 ) : activeView === 'dci' ? (
                   <div role="tabpanel" id="panel-dci" aria-labelledby="tab-dci">
                     <DciPanel decisionId={decisionId!} decision={decision} />
+                  </div>
+                ) : activeView === 'car' ? (
+                  <div role="tabpanel" id="panel-car" aria-labelledby="tab-car">
+                    <CarPanel decisionId={decisionId!} decision={decision} />
                   </div>
                 ) : (
                 <div role="tabpanel" id="panel-stage" aria-labelledby="tab-stage" className="p-4 sm:p-6 lg:p-8 max-w-3xl space-y-6">

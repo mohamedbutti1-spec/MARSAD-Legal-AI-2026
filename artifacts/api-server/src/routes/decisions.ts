@@ -12,10 +12,12 @@ import {
   decisionStagesTable,
   decisionDciTable,
   decisionJdpTable,
+  decisionCarTable,
   auditLogsTable,
   DECISION_STAGE_KEYS,
   type DecisionStageKey,
   type DciVersion,
+  type QvaRunResult,
   type FactualEvent,
   type LegalBasisSection,
   type LegislationItem,
@@ -121,6 +123,12 @@ async function initializeDci(
     legalityStatus: "pending",
     constitutionalValidationStatus: "pending",
     alShamsiFrameworkCompliance: "pending",
+    humanInfluenceIndex: "pending",
+    aiActualInfluence: "pending",
+    lsiStatus: "pending",
+    qvaVarianceLevel: "pending",
+    qvaRunCount: 0,
+    qvaResults: [],
     currentVersion: 1,
     versionHistory: [],
     isSealed: false,
@@ -190,35 +198,66 @@ async function updateDciFromStage(
       update.humanDecisionOwner = [name, pos, org].filter(Boolean).join(" · ") || null;
       // MARSAD AI assists all 11 stages — always "comprehensive"
       update.aiParticipationLevel = "comprehensive";
-      const score = analysis.oversightComplianceScore as number | undefined;
-      update.humanOversightLevel =
-        score == null ? "pending" :
-        score >= 90 ? "full" :
-        score >= 70 ? "substantial" :
-        score >= 50 ? "partial" : "minimal";
+      // Derive human oversight level from the binary gate
+      const oversightPassed = Boolean(analysis.passed);
+      const humanJudgmentDoc = Boolean(analysis.humanJudgmentDocumented);
+      const aiContribAcknowledged = Boolean(analysis.aiContributionAcknowledged);
+      update.humanOversightLevel = oversightPassed ? "full" : humanJudgmentDoc ? "substantial" : "partial";
+
+      // ── Human Influence Index (HII) ────────────────────────────────────────
+      // Compare what the human added vs. what AI recommended.
+      // Field 'humanJudgmentAdditions' captures any independent human additions.
+      // Field 'aiRecommendationAdopted' captures extent of AI adoption.
+      const humanAdditions = (data.humanJudgmentAdditions as string) ?? "";
+      const aiAdopted = (data.aiRecommendationAdopted as string) ?? "";
+      const hasHumanAdditions = humanAdditions.trim().length > 15;
+      const aiFullyAdopted =
+        aiAdopted.includes("جميع") || aiAdopted.includes("كل") ||
+        aiAdopted.toLowerCase().includes("all") || aiAdopted.toLowerCase().includes("fully");
+
+      if (hasHumanAdditions) {
+        // Human independently added content beyond what AI recommended.
+        // Both human and AI shaped the outcome — genuine joint deliberation.
+        update.humanInfluenceIndex = "joint_decision";
+        update.aiActualInfluence = "modified_human_direction"; // AI analysis influenced but didn't fully determine
+      } else if (aiFullyAdopted && aiContribAcknowledged && !hasHumanAdditions) {
+        // Human adopted all AI recommendations without independent additions.
+        // AI materially shaped the direction the human took — this is the
+        // highest measurable AI influence without an explicit human override.
+        update.humanInfluenceIndex = "ai_recommendation";
+        update.aiActualInfluence = "materially_changed_outcome"; // AI recommendations were the primary driver
+      } else {
+        // Human exercised independent judgment; AI was advisory/confirmatory.
+        // The human's outcome would likely have been the same without AI.
+        update.humanInfluenceIndex = "human_will";
+        update.aiActualInfluence = "confirmed_human_direction"; // AI confirmed rather than changed
+      }
       break;
     }
     case "constitutional_validation": {
       const overallPassed = Boolean(analysis.overallPassed);
       update.constitutionalValidationStatus = overallPassed ? "passed" : "failed";
-      // Derive explainability and transparency from the 10-principle results
+      // Derive explainability and transparency from gate-based principle results (no scores)
       const pr = analysis.principleResults as
-        Record<string, { passed: boolean; score: number }> | undefined;
-      const expScore = pr?.explainability?.score ?? (pr?.explainability?.passed ? 85 : 40);
-      update.explainabilityLevel =
-        expScore >= 90 ? "high" : expScore >= 70 ? "adequate" :
-        expScore >= 50 ? "partial" : "insufficient";
-      const transScore = pr?.transparency?.score ?? (pr?.transparency?.passed ? 85 : 40);
-      update.transparencyLevel =
-        transScore >= 90 ? "high" : transScore >= 70 ? "adequate" :
-        transScore >= 50 ? "partial" : "insufficient";
-      // Al-Shamsi compliance from the ASLI pre-score
-      const asli = analysis.asliPreScore as number | undefined;
-      update.alShamsiFrameworkCompliance =
-        asli == null ? "pending" :
-        asli >= 95 ? "full" :
-        asli >= 80 ? "substantial" :
-        asli >= 60 ? "partial" : "non_compliant";
+        Record<string, { passed: boolean }> | undefined;
+      // Gate-based: passed principle = high/adequate, failed = partial/insufficient
+      update.explainabilityLevel = pr?.explainability?.passed ? "high" : "insufficient";
+      update.transparencyLevel = pr?.transparency?.passed ? "high" : "insufficient";
+      // Al-Shamsi compliance — gate-based: count passing principles
+      if (pr) {
+        const principleKeys = [
+          "ai_serves_law", "legality", "transparency", "human_oversight",
+          "explainability", "proportionality", "due_process",
+          "accountability", "judicial_reviewability", "continuous_legitimacy",
+        ];
+        const passingCount = principleKeys.filter((k) => pr[k]?.passed).length;
+        update.alShamsiFrameworkCompliance =
+          passingCount === 10 ? "full" :
+          passingCount >= 8 ? "substantial" :
+          passingCount >= 6 ? "partial" : "non_compliant";
+      } else {
+        update.alShamsiFrameworkCompliance = overallPassed ? "full" : "non_compliant";
+      }
       // Seal the DCI when constitutional validation passes
       if (overallPassed) {
         const allStages = await db
@@ -492,18 +531,17 @@ ${stagesStr}
 {
   "overallPassed": boolean,
   "principleResults": {
-    "ai_serves_law": { "passed": boolean, "score": 0, "notes": string },
-    "legality": { "passed": boolean, "score": 0, "notes": string },
-    "transparency": { "passed": boolean, "score": 0, "notes": string },
-    "human_oversight": { "passed": boolean, "score": 0, "notes": string },
-    "explainability": { "passed": boolean, "score": 0, "notes": string },
-    "proportionality": { "passed": boolean, "score": 0, "notes": string },
-    "due_process": { "passed": boolean, "score": 0, "notes": string },
-    "accountability": { "passed": boolean, "score": 0, "notes": string },
-    "judicial_reviewability": { "passed": boolean, "score": 0, "notes": string },
-    "continuous_legitimacy": { "passed": boolean, "score": 0, "notes": string }
+    "ai_serves_law": { "passed": boolean, "gateStatus": "مستوفٍ|يحتاج مراجعة|غير مستوفٍ", "notes": string },
+    "legality": { "passed": boolean, "gateStatus": "مستوفٍ|يحتاج مراجعة|غير مستوفٍ", "notes": string },
+    "transparency": { "passed": boolean, "gateStatus": "مستوفٍ|يحتاج مراجعة|غير مستوفٍ", "notes": string },
+    "human_oversight": { "passed": boolean, "gateStatus": "مستوفٍ|يحتاج مراجعة|غير مستوفٍ", "notes": string },
+    "explainability": { "passed": boolean, "gateStatus": "مستوفٍ|يحتاج مراجعة|غير مستوفٍ", "notes": string },
+    "proportionality": { "passed": boolean, "gateStatus": "مستوفٍ|يحتاج مراجعة|غير مستوفٍ", "notes": string },
+    "due_process": { "passed": boolean, "gateStatus": "مستوفٍ|يحتاج مراجعة|غير مستوفٍ", "notes": string },
+    "accountability": { "passed": boolean, "gateStatus": "مستوفٍ|يحتاج مراجعة|غير مستوفٍ", "notes": string },
+    "judicial_reviewability": { "passed": boolean, "gateStatus": "مستوفٍ|يحتاج مراجعة|غير مستوفٍ", "notes": string },
+    "continuous_legitimacy": { "passed": boolean, "gateStatus": "مستوفٍ|يحتاج مراجعة|غير مستوفٍ", "notes": string }
   },
-  "asliPreScore": 0,
   "criticalFailures": [string],
   "remediationRequired": [string],
   "constitutionalSummary": string,
@@ -1359,6 +1397,8 @@ const AMENDABLE_FIELDS: Record<string, Set<string> | "text"> = {
   proportionalityStatus:       new Set(["pending", "proportionate", "marginally_proportionate", "disproportionate"]),
   legalityStatus:              new Set(["pending", "confirmed", "questionable", "violated"]),
   alShamsiFrameworkCompliance: new Set(["pending", "full", "substantial", "partial", "non_compliant"]),
+  humanInfluenceIndex:         new Set(["pending", "human_will", "ai_recommendation", "joint_decision"]),
+  aiActualInfluence:           new Set(["pending", "confirmed_human_direction", "modified_human_direction", "materially_changed_outcome"]),
 };
 
 router.post("/decisions/:id/dci/amend", requireSupervisorOrOwner, async (req, res): Promise<void> => {
@@ -1483,6 +1523,274 @@ router.post("/decisions/:id/dci/amend", requireSupervisorOrOwner, async (req, re
     if (typed.statusCode === 422) { res.status(422).json({ error: typed.message }); return; }
     console.error("[dci.amend]", err);
     res.status(500).json({ error: "Failed to amend DCI" });
+  }
+});
+
+// ─── QVA — Quantitative Variance Analysis ─────────────────────────────────────
+
+/**
+ * POST /decisions/:id/qva/run
+ * Run the constitutional validation prompt three independent times and measure
+ * variance in principle-level gate outcomes. Populates QVA and LSI fields on DCI.
+ * Requires a sealed DCI (constitutional validation must have passed first).
+ */
+router.post("/decisions/:id/qva/run", requireSupervisorOrOwner, async (req, res): Promise<void> => {
+  try {
+    const decisionId = parseInt(req.params.id as string, 10);
+    const decision = await assertDecisionAccess(req, decisionId);
+    if (!decision) { res.status(403).json({ error: "Access denied" }); return; }
+
+    const [dci] = await db.select().from(decisionDciTable)
+      .where(eq(decisionDciTable.decisionId, decisionId));
+    if (!dci?.isSealed) {
+      res.status(422).json({ error: "QVA requires a sealed DCI. Complete constitutional validation first." });
+      return;
+    }
+
+    const allStages = await db.select().from(decisionStagesTable)
+      .where(eq(decisionStagesTable.decisionId, decisionId))
+      .orderBy(decisionStagesTable.stageNumber);
+
+    const prompt = buildStagePrompt("constitutional_validation", {}, decision, allStages);
+    const QVA_RUN_COUNT = 3;
+    const runs: QvaRunResult[] = [];
+
+    const provider = await aiRouter.routeFor(TaskType.RAG);
+
+    for (let i = 0; i < QVA_RUN_COUNT; i++) {
+      try {
+        const result = await provider.complete({
+          taskType: TaskType.RAG,
+          prompt,
+          systemPrompt: STAGE_SYSTEM_PROMPT,
+          maxTokens: 3000,
+        });
+        const cleaned = result.text.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+        const parseResult = parseModelJson<Record<string, unknown>>(cleaned);
+        if (parseResult.ok && parseResult.data.principleResults) {
+          const pr = parseResult.data.principleResults as Record<string, { passed: boolean; gateStatus?: string; notes?: string }>;
+          runs.push({
+            runIndex: i,
+            ranAt: new Date().toISOString(),
+            principleResults: Object.fromEntries(
+              Object.entries(pr).map(([k, v]) => [k, {
+                passed: Boolean(v.passed),
+                gateStatus: v.passed ? "مستوفٍ" : "غير مستوفٍ",
+                notes: String(v.notes ?? ""),
+              }]),
+            ),
+          });
+        }
+      } catch (runErr) {
+        console.error(`[qva.run] run ${i} failed:`, runErr);
+      }
+    }
+
+    if (runs.length < 2) {
+      res.status(500).json({ error: "Insufficient QVA runs to compute variance — AI parse failures on most runs." });
+      return;
+    }
+
+    // Count principles where not all runs agree on passed/failed.
+    // Only include principles that are present in ALL runs to avoid
+    // AI parse incompleteness artificially inflating disagreement count.
+    const PRINCIPLE_KEYS = [
+      "ai_serves_law", "legality", "transparency", "human_oversight",
+      "explainability", "proportionality", "due_process",
+      "accountability", "judicial_reviewability", "continuous_legitimacy",
+    ];
+    let disagreements = 0;
+    for (const p of PRINCIPLE_KEYS) {
+      const presentInAll = runs.every((r) => p in r.principleResults);
+      if (!presentInAll) continue; // skip principle if any run failed to parse it
+      const votes = runs.map((r) => r.principleResults[p].passed);
+      if (!votes.every((v) => v === votes[0])) disagreements++;
+    }
+
+    const qvaVarianceLevel: string =
+      disagreements === 0 ? "low" : disagreements <= 2 ? "moderate" : "high";
+    const lsiStatus: string =
+      qvaVarianceLevel === "low" ? "stable" :
+      qvaVarianceLevel === "moderate" ? "variable" : "highly_variable";
+
+    await db.update(decisionDciTable).set({
+      qvaResults: runs,
+      qvaRunCount: runs.length,
+      qvaVarianceLevel,
+      lsiStatus,
+      updatedAt: new Date(),
+    }).where(eq(decisionDciTable.decisionId, decisionId));
+
+    logAudit(req, "qva.run", {
+      entityType: "decision",
+      entityId: decisionId,
+      details: { runCount: runs.length, disagreements, qvaVarianceLevel, lsiStatus },
+    });
+
+    res.json({ qvaVarianceLevel, lsiStatus, runCount: runs.length, disagreements, runs });
+  } catch (err) {
+    console.error("[qva.run]", err);
+    res.status(500).json({ error: "QVA analysis failed" });
+  }
+});
+
+// ─── CAR — Constitutional Answer Record ────────────────────────────────────────
+
+async function generateCarContent(
+  decision: typeof decisionsTable.$inferSelect,
+  dci: typeof decisionDciTable.$inferSelect,
+  stages: (typeof decisionStagesTable.$inferSelect)[],
+): Promise<Record<string, unknown>> {
+  const systemPrompt = `You are an administrative transparency officer preparing a Constitutional Answer Record (سجل المساءلة الدستورية — CAR) for an affected party.
+Write in clear, accessible Modern Standard Arabic that any educated adult can understand. Avoid legal jargon where possible.
+The CAR is NOT a legal defense document. It explains to the affected party WHY a decision was made and WHAT RIGHTS they have.
+Return ONLY valid JSON. No markdown fences. No explanations outside the JSON.`;
+
+  const stageContext = stages
+    .filter((s) => ["administrative_request", "facts_evidence", "legal_basis", "proportionality", "human_oversight"].includes(s.stageKey))
+    .map((s) => {
+      const data = JSON.stringify((s.stageData as Record<string, unknown>) ?? {}).substring(0, 500);
+      return `[${s.stageKey}]: ${data}`;
+    }).join("\n\n");
+
+  const userPrompt = `Generate a Constitutional Answer Record (CAR) for this administrative decision.
+
+Decision: ${decision.titleAr}
+Reference: ${decision.caseNumber}
+Type: ${decision.decisionType}
+Issuing Authority: ${decision.issuingAuthority ?? "—"}
+Organization: ${decision.organizationUnit}
+
+Legal Basis: ${((dci.applicableLegalBasis as string[]) ?? []).join("; ")}
+Purpose: ${(dci.purposeOfDecision as string | null) ?? "—"}
+Human Decision Owner: ${(dci.humanDecisionOwner as string | null) ?? "—"}
+Completed Stages: ${stages.length} of 11
+
+Stage Context:
+${stageContext}
+
+Return a JSON object with EXACTLY these keys. All values must be in clear Arabic:
+{
+  "factsReliedUpon": "Clear Arabic narrative of key facts leading to this decision — what happened, when, and by whom",
+  "legalBasisSummary": "Plain-language Arabic explanation of legal authority — which law, which article, and why it applies",
+  "evidenceConsidered": ["Arabic description of first evidence item", "second evidence item"],
+  "alternativesConsidered": ["Alternative considered and why rejected (Arabic)", "..."],
+  "aiRoleSummary": "Plain Arabic explanation of how MARSAD AI system was used — what it analyzed, what it recommended, and that a human official made the final decision",
+  "humanReviewSummary": "Who reviewed this decision, their official position, and how they exercised independent judgment",
+  "reasonsForDecision": "Main reasons in plain Arabic why this specific decision was taken — 2–3 paragraphs of core justification",
+  "affectedPartyRights": "Rights of the affected party: right to receive this document, right to request clarification, right to legal representation, right to appeal",
+  "appealInformation": "How to appeal: deadline, correct court or body (e.g., المحكمة الاتحادية الإدارية), and what the appeal should contain",
+  "aiSystemDisclosure": "نظام MARSAD للذكاء الاصطناعي الإداري ساعد في تحليل هذا الملف عبر [N] مراحل. القرار النهائي اتخذه مسؤول بشري مُخوَّل. للاستفسار عن دور الذكاء الاصطناعي، تواصل مع [اسم الجهة]."
+}`;
+
+  const provider = await aiRouter.routeFor(TaskType.RAG);
+  const result = await provider.complete({
+    taskType: TaskType.RAG,
+    systemPrompt,
+    prompt: userPrompt,
+    maxTokens: 4000,
+  });
+
+  const cleaned = result.text.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+  const jsonStr = cleaned.replace(/^```(?:json)?\s*/m, "").replace(/\s*```$/m, "").trim();
+  const parseResult = parseModelJson<Record<string, unknown>>(jsonStr);
+  if (!parseResult.ok) {
+    throw new Error(`CAR JSON parse failed — raw: ${String(jsonStr).slice(0, 200)}`);
+  }
+  return parseResult.data;
+}
+
+/**
+ * POST /decisions/:id/car/generate
+ * Generate the Constitutional Answer Record (CAR) for the affected party.
+ * Requires a sealed DCI.
+ */
+router.post("/decisions/:id/car/generate", requireAnyRole, async (req, res): Promise<void> => {
+  try {
+    const decisionId = parseInt(req.params.id as string, 10);
+    const userId = getUserId(req);
+    const decision = await assertDecisionAccess(req, decisionId);
+    if (!decision) { res.status(403).json({ error: "Access denied" }); return; }
+
+    const [dci] = await db.select().from(decisionDciTable)
+      .where(eq(decisionDciTable.decisionId, decisionId));
+    if (!dci?.isSealed) {
+      res.status(422).json({ error: "CAR requires a sealed DCI. Complete constitutional validation first." });
+      return;
+    }
+
+    const stages = await db.select().from(decisionStagesTable)
+      .where(eq(decisionStagesTable.decisionId, decisionId))
+      .orderBy(decisionStagesTable.stageNumber);
+
+    // Upsert to "generating" first so client can poll
+    await db.insert(decisionCarTable)
+      .values({ decisionId, status: "generating" })
+      .onConflictDoUpdate({
+        target: decisionCarTable.decisionId,
+        set: { status: "generating", errorMessage: null, updatedAt: new Date() },
+      });
+
+    try {
+      const content = await generateCarContent(decision, dci, stages);
+      await db.update(decisionCarTable).set({
+        status: "ready",
+        factsReliedUpon: String(content.factsReliedUpon ?? ""),
+        legalBasisSummary: String(content.legalBasisSummary ?? ""),
+        evidenceConsidered: (content.evidenceConsidered as string[]) ?? [],
+        alternativesConsidered: (content.alternativesConsidered as string[]) ?? [],
+        aiRoleSummary: String(content.aiRoleSummary ?? ""),
+        humanReviewSummary: String(content.humanReviewSummary ?? ""),
+        reasonsForDecision: String(content.reasonsForDecision ?? ""),
+        affectedPartyRights: String(content.affectedPartyRights ?? ""),
+        appealInformation: String(content.appealInformation ?? ""),
+        aiSystemDisclosure: String(content.aiSystemDisclosure ?? ""),
+        generatedAt: new Date(),
+        generatedBy: userId,
+        errorMessage: null,
+        updatedAt: new Date(),
+      }).where(eq(decisionCarTable.decisionId, decisionId));
+
+      logAudit(req, "car.generate", {
+        entityType: "decision",
+        entityId: decisionId,
+        details: { generatedBy: userId },
+      });
+
+      const [car] = await db.select().from(decisionCarTable)
+        .where(eq(decisionCarTable.decisionId, decisionId));
+      res.json({ car });
+    } catch (genErr) {
+      const errMsg = genErr instanceof Error ? genErr.message : "Unknown error";
+      await db.update(decisionCarTable).set({ status: "error", errorMessage: errMsg.slice(0, 500), updatedAt: new Date() })
+        .where(eq(decisionCarTable.decisionId, decisionId));
+      console.error("[car.generate]", genErr);
+      res.status(500).json({ error: `CAR generation failed: ${errMsg}` });
+    }
+  } catch (err) {
+    console.error("[car.generate.outer]", err);
+    res.status(500).json({ error: "Failed to initiate CAR generation" });
+  }
+});
+
+/**
+ * GET /decisions/:id/car
+ * Retrieve the Constitutional Answer Record for a decision.
+ */
+router.get("/decisions/:id/car", requireAnyRole, async (req, res): Promise<void> => {
+  try {
+    const decisionId = parseInt(req.params.id as string, 10);
+    const decision = await assertDecisionAccess(req, decisionId);
+    if (!decision) { res.status(403).json({ error: "Access denied" }); return; }
+
+    const [car] = await db.select().from(decisionCarTable)
+      .where(eq(decisionCarTable.decisionId, decisionId));
+    if (!car) { res.status(404).json({ error: "CAR not found" }); return; }
+
+    res.json({ car });
+  } catch (err) {
+    console.error("[car.get]", err);
+    res.status(500).json({ error: "Failed to load CAR" });
   }
 });
 
