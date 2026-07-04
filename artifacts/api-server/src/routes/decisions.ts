@@ -1,0 +1,822 @@
+/**
+ * Module 1 — Intelligent Administrative Decision
+ * Constitutional administrative decision lifecycle API.
+ * Every endpoint is audited, AI-assisted, and constitutionally validated.
+ */
+import { Router, type IRouter } from "express";
+import { createHash } from "crypto";
+import { eq, and, desc, sql } from "drizzle-orm";
+import {
+  db,
+  decisionsTable,
+  decisionStagesTable,
+  auditLogsTable,
+  DECISION_STAGE_KEYS,
+  type DecisionStageKey,
+} from "@workspace/db";
+import { requireAnyRole, requireSupervisorOrOwner } from "../middlewares/roleAuth";
+import { logAudit } from "../middlewares/auditLog";
+import { aiRouter, TaskType } from "../ai";
+import { parseModelJson } from "../ai/providers/interface";
+
+const router: IRouter = Router();
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function getUserId(req: import("express").Request): number {
+  const h = req.headers["x-user-id"];
+  if (!h) return 1;
+  return parseInt(Array.isArray(h) ? h[0] : h, 10) || 1;
+}
+
+function stageIndex(key: string): number {
+  return DECISION_STAGE_KEYS.indexOf(key as DecisionStageKey);
+}
+
+function nextStage(key: string): DecisionStageKey | null {
+  const idx = stageIndex(key);
+  return idx >= 0 && idx < DECISION_STAGE_KEYS.length - 1
+    ? DECISION_STAGE_KEYS[idx + 1]
+    : null;
+}
+
+function computeAuditHash(
+  decisionId: number,
+  stageKey: string,
+  stageData: unknown,
+  userId: number,
+  timestamp: string,
+): string {
+  return createHash("sha256")
+    .update(JSON.stringify({ decisionId, stageKey, stageData, userId, timestamp }))
+    .digest("hex");
+}
+
+/**
+ * Verify that the requesting user owns the decision or has supervisor/owner role.
+ * Returns the decision row if authorized, or null if access is denied.
+ */
+async function assertDecisionAccess(
+  req: import("express").Request,
+  decisionId: number,
+): Promise<typeof decisionsTable.$inferSelect | null> {
+  const [decision] = await db
+    .select()
+    .from(decisionsTable)
+    .where(eq(decisionsTable.id, decisionId));
+  if (!decision) return null;
+
+  const role = Array.isArray(req.headers["x-user-role"])
+    ? req.headers["x-user-role"][0]
+    : (req.headers["x-user-role"] ?? "viewer");
+  const userId = getUserId(req);
+
+  // Owners and supervisors can access all decisions; viewers only their own
+  if (role === "owner" || role === "supervisor") return decision;
+  if (decision.createdBy === userId) return decision;
+  return null; // access denied — caller must return 403
+}
+
+/**
+ * Enforce that the current operation targets the decision's currentStage.
+ * The constitutional lifecycle must proceed sequentially.
+ */
+function assertCurrentStage(
+  decision: typeof decisionsTable.$inferSelect,
+  stageKey: string,
+): { ok: true } | { ok: false; error: string } {
+  if (decision.currentStage !== stageKey) {
+    return {
+      ok: false,
+      error: `Stage '${stageKey}' is not the active stage. Current stage is '${decision.currentStage}'. Constitutional lifecycle must proceed sequentially.`,
+    };
+  }
+  return { ok: true };
+}
+
+// ─── Stage AI Prompts ─────────────────────────────────────────────────────────
+
+const STAGE_SYSTEM_PROMPT = `You are an expert in UAE Administrative Law, GCC administrative governance, 
+French Droit Administratif, and the M. Al-Shamsi Framework for Intelligent Administrative Decision Legitimacy.
+You assist government officials in creating constitutionally compliant administrative decisions.
+You must always return valid JSON only — no markdown, no explanations outside the JSON structure.
+Every "aiContribution" field must be a formal Arabic statement describing what AI contributed.
+Every "stageSummary" must be a single concise Arabic sentence summarizing the stage outcome.`;
+
+function buildStagePrompt(
+  stageKey: DecisionStageKey,
+  stageData: Record<string, unknown>,
+  decisionContext: { titleAr: string; jurisdiction: string; decisionType: string },
+  allStages: Array<{ stageKey: string; stageData: unknown; aiAnalysis: unknown }>,
+): string {
+  const ctx = `القرار: "${decisionContext.titleAr}" | الاختصاص: ${decisionContext.jurisdiction} | النوع: ${decisionContext.decisionType}`;
+  const stageDataStr = JSON.stringify(stageData, null, 2);
+
+  switch (stageKey) {
+    case "administrative_request":
+      return `
+${ctx}
+
+تحليل الطلب الإداري — Administrative Request Analysis
+
+بيانات المرحلة:
+${stageDataStr}
+
+حلل هذا الطلب الإداري وفق مبادئ القانون الإداري الإماراتي وإطار الشامسي. أعد كائن JSON:
+{
+  "passed": boolean,
+  "requestClassification": "appointment|promotion|dismissal|license|revocation|penalty|confiscation|expropriation|other",
+  "urgencyAssessment": "routine|urgent|emergency",
+  "constitutionalFlags": [string],
+  "issues": [string],
+  "recommendations": [string],
+  "aiContribution": "جملة عربية رسمية تصف ما أسهم به الذكاء الاصطناعي",
+  "stageSummary": "جملة عربية واحدة موجزة"
+}`;
+
+    case "legal_authority":
+      return `
+${ctx}
+
+التحقق من الاختصاص — Legal Authority Verification
+
+بيانات المرحلة:
+${stageDataStr}
+
+طبّق اختبار الاختصاص الرباعي وفق القانون الإداري الإماراتي:
+1. الاختصاص الموضوعي — 2. الاختصاص المكاني — 3. الاختصاص الزمني — 4. الاختصاص الدرجي
+
+أعد كائن JSON:
+{
+  "passed": boolean,
+  "competenceAnalysis": {
+    "material": { "passed": boolean, "notes": string },
+    "territorial": { "passed": boolean, "notes": string },
+    "temporal": { "passed": boolean, "notes": string },
+    "hierarchical": { "passed": boolean, "notes": string }
+  },
+  "delegationValid": null,
+  "issues": [string],
+  "recommendations": [string],
+  "aiContribution": string,
+  "stageSummary": string
+}`;
+
+    case "facts_evidence":
+      return `
+${ctx}
+
+تقييم الوقائع والأدلة — Facts & Evidence Assessment
+
+بيانات المرحلة:
+${stageDataStr}
+
+قيّم الركن المادي (وجود الوقائع وصحتها واكتمال السجل الإثباتي والترابط المنطقي).
+
+أعد كائن JSON:
+{
+  "passed": boolean,
+  "factualStrength": "strong|adequate|weak|insufficient",
+  "evidenceQuality": "high|adequate|low|insufficient",
+  "keyGaps": [string],
+  "issues": [string],
+  "recommendations": [string],
+  "aiContribution": string,
+  "stageSummary": string
+}`;
+
+    case "legal_basis":
+      return `
+${ctx}
+
+التحقق من السند القانوني — Legal Basis Validation
+
+بيانات المرحلة:
+${stageDataStr}
+
+تحقق من الوجود والانطباق والسريان والكفاية والتحديد.
+
+أعد كائن JSON:
+{
+  "passed": boolean,
+  "legalBasisStrength": "strong|adequate|weak|insufficient",
+  "citedInstruments": [string],
+  "additionalRecommendedBases": [string],
+  "issues": [string],
+  "recommendations": [string],
+  "aiContribution": string,
+  "stageSummary": string
+}`;
+
+    case "administrative_objective":
+      return `
+${ctx}
+
+تقييم الهدف الإداري — Administrative Objective Evaluation
+
+بيانات المرحلة:
+${stageDataStr}
+
+تحقق من مشروعية الغاية ودرأ خطر الانحراف بالسلطة (détournement de pouvoir).
+
+أعد كائن JSON:
+{
+  "passed": boolean,
+  "purposeLegitimacy": "legitimate|questionable|illegitimate",
+  "publicInterestScore": 0,
+  "purposeDeviationRisk": "low|medium|high",
+  "indicators": [string],
+  "issues": [string],
+  "recommendations": [string],
+  "aiContribution": string,
+  "stageSummary": string
+}`;
+
+    case "discretionary_power":
+      return `
+${ctx}
+
+تحليل السلطة التقديرية — Discretionary Power Analysis
+
+بيانات المرحلة:
+${stageDataStr}
+
+حلل طبيعة القرار ونطاق السلطة التقديرية ومؤشرات الانحراف والتعسف والغلو.
+
+أعد كائن JSON:
+{
+  "passed": boolean,
+  "decisionNature": "fully_bound|limited_discretion|wide_discretion",
+  "discretionScope": string,
+  "abuseRisk": "low|medium|high",
+  "abuseIndicators": [string],
+  "issues": [string],
+  "recommendations": [string],
+  "aiContribution": string,
+  "stageSummary": string
+}`;
+
+    case "proportionality":
+      return `
+${ctx}
+
+اختبار مبدأ التناسب — Proportionality Test
+
+بيانات المرحلة:
+${stageDataStr}
+
+طبّق الاختبار الثلاثي: 1. الملاءمة 2. الضرورة 3. التناسب الدقيق.
+
+أعد كائن JSON:
+{
+  "passed": boolean,
+  "suitabilityTest": { "passed": boolean, "analysis": string },
+  "necessityTest": { "passed": boolean, "analysis": string, "alternatives": [string] },
+  "proportionalityTest": { "passed": boolean, "analysis": string },
+  "overallProportionality": "proportionate|marginally_proportionate|disproportionate",
+  "issues": [string],
+  "recommendations": [string],
+  "aiContribution": string,
+  "stageSummary": string
+}`;
+
+    case "human_oversight":
+      return `
+${ctx}
+
+التحقق من الرقابة البشرية — Human Oversight Verification
+
+بيانات المرحلة:
+${stageDataStr}
+
+تحقق من المبدأ الدستوري الرابع: تحديد مسؤول بشري، إقرار بإسهام الذكاء الاصطناعي، توثيق الحكم البشري.
+
+أعد كائن JSON:
+{
+  "passed": boolean,
+  "officialIdentified": boolean,
+  "aiContributionAcknowledged": boolean,
+  "humanJudgmentDocumented": boolean,
+  "oversightStatement": string,
+  "aiContributionSummary": string,
+  "oversightComplianceScore": 0,
+  "issues": [string],
+  "aiContribution": string,
+  "stageSummary": string
+}`;
+
+    case "constitutional_validation": {
+      const stagesStr = allStages
+        .filter((s) => s.stageKey !== "constitutional_validation")
+        .map((s) => `\n=== ${s.stageKey} ===\n${JSON.stringify(s.stageData, null, 2)}`)
+        .join("\n");
+      return `
+${ctx}
+
+التحقق الدستوري الشامل — Comprehensive Constitutional Validation
+إطار الشامسي · MARSAD Constitutional Standard v1.0
+
+بيانات جميع المراحل السابقة:
+${stagesStr}
+
+قيّم هذا القرار مقابل المبادئ الدستورية العشرة لمنصة مرصد. أعد كائن JSON:
+{
+  "overallPassed": boolean,
+  "principleResults": {
+    "ai_serves_law": { "passed": boolean, "score": 0, "notes": string },
+    "legality": { "passed": boolean, "score": 0, "notes": string },
+    "transparency": { "passed": boolean, "score": 0, "notes": string },
+    "human_oversight": { "passed": boolean, "score": 0, "notes": string },
+    "explainability": { "passed": boolean, "score": 0, "notes": string },
+    "proportionality": { "passed": boolean, "score": 0, "notes": string },
+    "due_process": { "passed": boolean, "score": 0, "notes": string },
+    "accountability": { "passed": boolean, "score": 0, "notes": string },
+    "judicial_reviewability": { "passed": boolean, "score": 0, "notes": string },
+    "continuous_legitimacy": { "passed": boolean, "score": 0, "notes": string }
+  },
+  "asliPreScore": 0,
+  "criticalFailures": [string],
+  "remediationRequired": [string],
+  "constitutionalSummary": string,
+  "aiContribution": string,
+  "stageSummary": string
+}`;
+    }
+
+    case "decision_drafting": {
+      const stagesStr = allStages
+        .filter((s) =>
+          ["administrative_request","legal_authority","legal_basis","administrative_objective",
+            "proportionality","human_oversight"].includes(s.stageKey),
+        )
+        .map((s) => `\n=== ${s.stageKey} ===\n${JSON.stringify(s.stageData, null, 2)}`)
+        .join("\n");
+      return `
+${ctx}
+
+صياغة القرار الإداري الرسمي — Formal Administrative Decision Drafting
+
+المراحل المكتملة:
+${stagesStr}
+
+بيانات مرحلة الصياغة:
+${stageDataStr}
+
+اصغ قراراً إدارياً رسمياً باللغة العربية. أعد كائن JSON:
+{
+  "preamble": string,
+  "recitals": string,
+  "operativeClauses": string,
+  "reasons": string,
+  "appealRights": string,
+  "fullDecisionText": string,
+  "aiContribution": string,
+  "stageSummary": string
+}`;
+    }
+
+    case "final_review": {
+      const stagesStr = allStages
+        .map((s) => {
+          const analysis = s.aiAnalysis as Record<string, unknown> | null;
+          return `=== ${s.stageKey}: ${analysis?.stageSummary ?? "مكتمل"} ===`;
+        })
+        .join("\n");
+      return `
+${ctx}
+
+المراجعة النهائية — Final Review
+
+ملخص المراحل:
+${stagesStr}
+
+بيانات المراجعة:
+${stageDataStr}
+
+أعد ملخصاً نهائياً شاملاً. أعد كائن JSON:
+{
+  "passed": boolean,
+  "readinessScore": 0,
+  "constitutionalCompliance": "full|substantial|partial|insufficient",
+  "executiveSummaryAr": string,
+  "executiveSummaryEn": string,
+  "keyStrengths": [string],
+  "remainingRisks": [string],
+  "recommendedActions": [string],
+  "certificationStatement": string,
+  "aiContribution": string,
+  "stageSummary": string
+}`;
+    }
+
+    default:
+      return `Analyze stage ${stageKey} and return JSON with passed, issues, recommendations, aiContribution, stageSummary.\nData: ${stageDataStr}`;
+  }
+}
+
+// ─── Routes ───────────────────────────────────────────────────────────────────
+
+// GET /decisions — list all decisions
+router.get("/decisions", requireAnyRole, async (req, res): Promise<void> => {
+  try {
+    const userId = getUserId(req);
+    const role = Array.isArray(req.headers["x-user-role"])
+      ? req.headers["x-user-role"][0]
+      : (req.headers["x-user-role"] ?? "viewer");
+
+    const rows =
+      role === "owner"
+        ? await db.select().from(decisionsTable).orderBy(desc(decisionsTable.createdAt))
+        : await db
+            .select()
+            .from(decisionsTable)
+            .where(eq(decisionsTable.createdBy, userId))
+            .orderBy(desc(decisionsTable.createdAt));
+
+    res.json({ decisions: rows });
+  } catch (err) {
+    console.error("[decisions.list]", err);
+    res.status(500).json({ error: "Failed to load decisions" });
+  }
+});
+
+// POST /decisions — create a new decision case
+router.post("/decisions", requireAnyRole, async (req, res): Promise<void> => {
+  try {
+    const body = req.body as Record<string, string>;
+    const { titleAr, titleEn, jurisdiction, decisionType, organizationUnit, issuingAuthority } = body;
+
+    if (!titleAr || !jurisdiction || !decisionType || !organizationUnit) {
+      res.status(400).json({ error: "titleAr, jurisdiction, decisionType, organizationUnit are required" });
+      return;
+    }
+
+    const userId = getUserId(req);
+    const year = new Date().getFullYear();
+    const [countRow] = await db.select({ cnt: sql<number>`count(*)::int` }).from(decisionsTable);
+    const seq = String((countRow?.cnt ?? 0) + 1).padStart(4, "0");
+    const caseNumber = `MARSAD-${year}-${seq}`;
+
+    const [decision] = await db
+      .insert(decisionsTable)
+      .values({
+        caseNumber,
+        titleAr,
+        titleEn: titleEn ?? null,
+        jurisdiction,
+        decisionType,
+        organizationUnit,
+        issuingAuthority: issuingAuthority ?? null,
+        status: "in_progress",
+        currentStage: "administrative_request",
+        stagesCompleted: [],
+        createdBy: userId,
+      })
+      .returning();
+
+    logAudit(req, "decision.create", {
+      entityType: "decision",
+      entityId: decision.id,
+      details: { caseNumber, titleAr, jurisdiction, decisionType },
+    });
+
+    res.status(201).json({ decision });
+  } catch (err) {
+    console.error("[decisions.create]", err);
+    res.status(500).json({ error: "Failed to create decision" });
+  }
+});
+
+// GET /decisions/:id — get full decision with all stages
+router.get("/decisions/:id", requireAnyRole, async (req, res): Promise<void> => {
+  try {
+    const id = parseInt(req.params.id as string, 10);
+    if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+    const decision = await assertDecisionAccess(req, id);
+    if (!decision) { res.status(404).json({ error: "Decision not found or access denied" }); return; }
+
+    const stages = await db
+      .select()
+      .from(decisionStagesTable)
+      .where(eq(decisionStagesTable.decisionId, id))
+      .orderBy(decisionStagesTable.stageNumber, decisionStagesTable.createdAt);
+
+    res.json({ decision, stages });
+  } catch (err) {
+    console.error("[decisions.get]", err);
+    res.status(500).json({ error: "Failed to load decision" });
+  }
+});
+
+// PUT /decisions/:id/stages/:stageKey — save (upsert) stage form data
+// No auditHash here — hash is only computed at validation time (after data is final)
+router.put("/decisions/:id/stages/:stageKey", requireAnyRole, async (req, res): Promise<void> => {
+  try {
+    const decisionId = parseInt(req.params.id as string, 10);
+    const stageKey = req.params.stageKey as DecisionStageKey;
+
+    if (!DECISION_STAGE_KEYS.includes(stageKey)) {
+      res.status(400).json({ error: "Invalid stage key" }); return;
+    }
+
+    // Ownership check
+    const decision = await assertDecisionAccess(req, decisionId);
+    if (!decision) { res.status(403).json({ error: "Access denied" }); return; }
+
+    const stageData = req.body as Record<string, unknown>;
+    const idx = stageIndex(stageKey);
+
+    const existing = await db
+      .select()
+      .from(decisionStagesTable)
+      .where(
+        and(
+          eq(decisionStagesTable.decisionId, decisionId),
+          eq(decisionStagesTable.stageKey, stageKey),
+        ),
+      );
+
+    if (existing.length > 0) {
+      // In-place update is acceptable for draft saves; auditHash stays null until validation
+      await db
+        .update(decisionStagesTable)
+        .set({ stageData, validationStatus: "pending", auditHash: null })
+        .where(eq(decisionStagesTable.id, existing[0].id));
+    } else {
+      await db.insert(decisionStagesTable).values({
+        decisionId,
+        stageKey,
+        stageNumber: idx + 1,
+        stageData,
+        validationStatus: "pending",
+        // auditHash intentionally omitted — will be set at validation time
+      });
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("[decisions.saveStage]", err);
+    res.status(500).json({ error: "Failed to save stage data" });
+  }
+});
+
+// POST /decisions/:id/stages/:stageKey/ai-assist — AI analysis for this stage
+router.post("/decisions/:id/stages/:stageKey/ai-assist", requireAnyRole, async (req, res): Promise<void> => {
+  try {
+    const decisionId = parseInt(req.params.id as string, 10);
+    const stageKey = req.params.stageKey as DecisionStageKey;
+
+    const decision = await assertDecisionAccess(req, decisionId);
+    if (!decision) { res.status(403).json({ error: "Access denied" }); return; }
+
+    const allStages = await db
+      .select()
+      .from(decisionStagesTable)
+      .where(eq(decisionStagesTable.decisionId, decisionId))
+      .orderBy(decisionStagesTable.stageNumber);
+
+    const stageData = req.body as Record<string, unknown>;
+    const prompt = buildStagePrompt(stageKey, stageData, decision, allStages);
+
+    const provider = await aiRouter.routeFor(TaskType.RAG);
+    const result = await provider.complete({
+      taskType: TaskType.RAG,
+      prompt,
+      systemPrompt: STAGE_SYSTEM_PROMPT,
+      maxTokens: 2500,
+    });
+
+    const cleaned = result.text.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+    const parseResult = parseModelJson<Record<string, unknown>>(cleaned);
+
+    if (!parseResult.ok) {
+      res.status(500).json({ error: "AI analysis could not be parsed", raw: cleaned.slice(0, 500) });
+      return;
+    }
+
+    const analysis = parseResult.data;
+
+    // Store AI analysis in the stage record
+    await db
+      .update(decisionStagesTable)
+      .set({
+        aiAnalysis: analysis,
+        aiContribution: (analysis.aiContribution as string) || null,
+      })
+      .where(
+        and(
+          eq(decisionStagesTable.decisionId, decisionId),
+          eq(decisionStagesTable.stageKey, stageKey),
+        ),
+      );
+
+    res.json({ analysis });
+  } catch (err) {
+    console.error("[decisions.aiAssist]", err);
+    res.status(500).json({ error: "AI assistance failed" });
+  }
+});
+
+// POST /decisions/:id/stages/:stageKey/validate — constitutional validation
+// Restricted to supervisor/owner — viewers cannot trigger validation
+router.post("/decisions/:id/stages/:stageKey/validate", requireSupervisorOrOwner, async (req, res): Promise<void> => {
+  try {
+    const decisionId = parseInt(req.params.id as string, 10);
+    const stageKey = req.params.stageKey as DecisionStageKey;
+    const userId = getUserId(req);
+
+    // Ownership check
+    const decision = await assertDecisionAccess(req, decisionId);
+    if (!decision) { res.status(403).json({ error: "Access denied" }); return; }
+
+    // Enforce sequential constitutional progression
+    const sequenceCheck = assertCurrentStage(decision, stageKey);
+    if (!sequenceCheck.ok) { res.status(422).json({ error: sequenceCheck.error }); return; }
+
+    const allStages = await db
+      .select()
+      .from(decisionStagesTable)
+      .where(eq(decisionStagesTable.decisionId, decisionId))
+      .orderBy(decisionStagesTable.stageNumber);
+
+    const stageData = req.body as Record<string, unknown>;
+    const prompt = buildStagePrompt(stageKey, stageData, decision, allStages);
+
+    const provider = await aiRouter.routeFor(TaskType.RAG);
+    const result = await provider.complete({
+      taskType: TaskType.RAG,
+      prompt,
+      systemPrompt: STAGE_SYSTEM_PROMPT,
+      maxTokens: 3000,
+    });
+
+    const cleaned = result.text.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+    const parseResult = parseModelJson<Record<string, unknown>>(cleaned);
+
+    if (!parseResult.ok) {
+      res.status(500).json({ error: "Validation could not be parsed" }); return;
+    }
+
+    const analysis = parseResult.data;
+    const passed = stageKey === "constitutional_validation"
+      ? Boolean(analysis.overallPassed)
+      : Boolean(analysis.passed);
+
+    const validationStatus = passed ? "passed" : "failed";
+    const timestamp = new Date().toISOString();
+    const hash = computeAuditHash(decisionId, stageKey, stageData, userId, timestamp);
+
+    const existing = await db
+      .select()
+      .from(decisionStagesTable)
+      .where(
+        and(
+          eq(decisionStagesTable.decisionId, decisionId),
+          eq(decisionStagesTable.stageKey, stageKey),
+        ),
+      );
+
+    if (existing.length > 0) {
+      await db
+        .update(decisionStagesTable)
+        .set({
+          validationStatus,
+          validationDetails: analysis,
+          aiAnalysis: analysis,
+          aiContribution: (analysis.aiContribution as string) || null,
+          validatedAt: new Date(),
+          validatedBy: userId,
+          auditHash: hash,
+        })
+        .where(eq(decisionStagesTable.id, existing[0].id));
+    } else {
+      await db.insert(decisionStagesTable).values({
+        decisionId,
+        stageKey,
+        stageNumber: stageIndex(stageKey) + 1,
+        stageData,
+        validationStatus,
+        validationDetails: analysis,
+        aiAnalysis: analysis,
+        aiContribution: (analysis.aiContribution as string) || null,
+        validatedAt: new Date(),
+        validatedBy: userId,
+        auditHash: hash,
+      });
+    }
+
+    logAudit(req, "decision.stage.validate", {
+      entityType: "decision",
+      entityId: decisionId,
+      details: { stageKey, passed, hash },
+    });
+
+    res.json({ passed, analysis, validationStatus });
+  } catch (err) {
+    console.error("[decisions.validate]", err);
+    res.status(500).json({ error: "Validation failed" });
+  }
+});
+
+// POST /decisions/:id/stages/:stageKey/complete — mark stage complete and advance
+router.post("/decisions/:id/stages/:stageKey/complete", requireSupervisorOrOwner, async (req, res): Promise<void> => {
+  try {
+    const decisionId = parseInt(req.params.id as string, 10);
+    const stageKey = req.params.stageKey as DecisionStageKey;
+    const userId = getUserId(req);
+
+    // Ownership check
+    const decision = await assertDecisionAccess(req, decisionId);
+    if (!decision) { res.status(403).json({ error: "Access denied" }); return; }
+
+    // Enforce sequential constitutional progression
+    const sequenceCheck = assertCurrentStage(decision, stageKey);
+    if (!sequenceCheck.ok) { res.status(422).json({ error: sequenceCheck.error }); return; }
+
+    const stageRecords = await db
+      .select()
+      .from(decisionStagesTable)
+      .where(
+        and(
+          eq(decisionStagesTable.decisionId, decisionId),
+          eq(decisionStagesTable.stageKey, stageKey),
+        ),
+      );
+
+    if (stageRecords.length === 0 || stageRecords[0].validationStatus !== "passed") {
+      res.status(422).json({
+        error: "Stage must pass constitutional validation before completion",
+        validationStatus: stageRecords[0]?.validationStatus ?? "pending",
+      });
+      return;
+    }
+
+    await db
+      .update(decisionStagesTable)
+      .set({ completedAt: new Date() })
+      .where(eq(decisionStagesTable.id, stageRecords[0].id));
+
+    const next = nextStage(stageKey);
+    const currentCompleted = (decision.stagesCompleted as string[]) ?? [];
+    if (!currentCompleted.includes(stageKey)) currentCompleted.push(stageKey);
+
+    await db
+      .update(decisionsTable)
+      .set({
+        currentStage: next ?? "final_review",
+        stagesCompleted: currentCompleted,
+        status: next == null ? "complete" : "in_progress",
+        updatedAt: new Date(),
+      })
+      .where(eq(decisionsTable.id, decisionId));
+
+    logAudit(req, "decision.stage.complete", {
+      entityType: "decision",
+      entityId: decisionId,
+      details: { stageKey, nextStage: next, completedBy: userId },
+    });
+
+    const [updatedDecision] = await db.select().from(decisionsTable).where(eq(decisionsTable.id, decisionId));
+
+    res.json({ success: true, nextStage: next, decision: updatedDecision });
+  } catch (err) {
+    console.error("[decisions.complete]", err);
+    res.status(500).json({ error: "Failed to complete stage" });
+  }
+});
+
+// GET /decisions/:id/audit — full audit trail (supervisor/owner only)
+router.get("/decisions/:id/audit", requireSupervisorOrOwner, async (req, res): Promise<void> => {
+  try {
+    const decisionId = parseInt(req.params.id as string, 10);
+
+    // Ownership check
+    const decision = await assertDecisionAccess(req, decisionId);
+    if (!decision) { res.status(403).json({ error: "Access denied" }); return; }
+
+    const logs = await db
+      .select()
+      .from(auditLogsTable)
+      .where(
+        and(
+          eq(auditLogsTable.entityType, "decision"),
+          eq(auditLogsTable.entityId, decisionId),
+        ),
+      )
+      .orderBy(auditLogsTable.createdAt);
+
+    const stages = await db
+      .select()
+      .from(decisionStagesTable)
+      .where(eq(decisionStagesTable.decisionId, decisionId))
+      .orderBy(decisionStagesTable.stageNumber, decisionStagesTable.createdAt);
+
+    res.json({ auditLogs: logs, stages });
+  } catch (err) {
+    console.error("[decisions.audit]", err);
+    res.status(500).json({ error: "Failed to load audit trail" });
+  }
+});
+
+export default router;

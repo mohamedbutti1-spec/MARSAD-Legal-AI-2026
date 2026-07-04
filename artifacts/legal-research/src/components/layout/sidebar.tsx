@@ -91,6 +91,14 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           show: true,
           badge: 'دستوري',
         },
+        {
+          href: '/decisions',
+          labelAr: 'القرار الإداري الذكي',
+          labelEn: 'Intelligent Decision',
+          icon: <Scale className="w-4.5 h-4.5" />,
+          show: true,
+          badge: 'الوحدة 1',
+        },
       ],
     },
     {

@@ -18,3 +18,5 @@ export * from "./admin-decision-briefs";
 export * from "./admin-decision-roles";
 // Phase 4 — Jurisdiction registry
 export * from "./admin-jurisdictions";
+// Module 1 — Intelligent Administrative Decision
+export * from "./decisions";

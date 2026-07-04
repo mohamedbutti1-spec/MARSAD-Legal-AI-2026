@@ -33,6 +33,9 @@ import PersonalLibrary    from '@/pages/personal-library';
 // Theory & Governance
 import ShamsiTheory              from '@/pages/shamsi-theory';
 import ConstitutionalPrinciples  from '@/pages/constitutional-principles';
+// Module 1 — Intelligent Administrative Decision
+import Decisions                 from '@/pages/decisions';
+import DecisionWorkspace         from '@/pages/decision-workspace';
 
 // Admin
 import UserManagement     from '@/pages/user-management';
@@ -73,6 +76,23 @@ function Router() {
         <Route path="/" component={Dashboard} />
         <Route path="/shamsi-theory"             component={ShamsiTheory} />
         <Route path="/constitutional-principles" component={ConstitutionalPrinciples} />
+
+        {/* ── Module 1 — Intelligent Administrative Decision ───────── */}
+        <Route path="/decisions/new">
+          <RouteGuard allow={canUseAi}>
+            <DecisionWorkspace />
+          </RouteGuard>
+        </Route>
+        <Route path="/decisions/:id">
+          <RouteGuard allow={canUseAi}>
+            <DecisionWorkspace />
+          </RouteGuard>
+        </Route>
+        <Route path="/decisions">
+          <RouteGuard allow={canUseAi}>
+            <Decisions />
+          </RouteGuard>
+        </Route>
 
         {/* ── Research Tools (requires canUseAi) ───────────────────── */}
         <Route path="/research">

@@ -19,6 +19,8 @@ import dashboardRouter    from "./dashboard";
 import legalOsRouter      from "./legal-os";
 import adminOsRouter      from "./admin-os";
 import legalOsAdminRouter from "./legal-os-admin";
+// Module 1 — Intelligent Administrative Decision
+import decisionsRouter from "./decisions";
 
 const router: IRouter = Router();
 
@@ -42,5 +44,7 @@ router.use(dashboardRouter);
 router.use(legalOsRouter);
 router.use(adminOsRouter);
 router.use(legalOsAdminRouter);
+// Module 1
+router.use(decisionsRouter);
 
 export default router;
