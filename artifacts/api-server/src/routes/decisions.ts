@@ -10,9 +10,11 @@ import {
   db,
   decisionsTable,
   decisionStagesTable,
+  decisionDciTable,
   auditLogsTable,
   DECISION_STAGE_KEYS,
   type DecisionStageKey,
+  type DciVersion,
 } from "@workspace/db";
 import { requireAnyRole, requireSupervisorOrOwner } from "../middlewares/roleAuth";
 import { logAudit } from "../middlewares/auditLog";
@@ -76,6 +78,158 @@ async function assertDecisionAccess(
   if (decision.createdBy === userId) return decision;
   return null; // access denied — caller must return 403
 }
+
+// ─── DCI Service ──────────────────────────────────────────────────────────────
+
+/**
+ * Auto-create the Decision Constitutional Identity when a decision is first created.
+ * All assessment fields start as "pending" and are populated as stages complete.
+ */
+async function initializeDci(
+  decisionId: number,
+  decision: typeof decisionsTable.$inferSelect,
+): Promise<void> {
+  const authority = [decision.organizationUnit, decision.issuingAuthority]
+    .filter(Boolean)
+    .join(" — ") || null;
+  await db.insert(decisionDciTable).values({
+    decisionId,
+    decisionType: decision.decisionType,
+    competentAuthority: authority,
+    applicableLegalBasis: [],
+    aiParticipationLevel: "pending",
+    humanOversightLevel: "pending",
+    explainabilityLevel: "pending",
+    transparencyLevel: "pending",
+    evidenceCompleteness: "pending",
+    proportionalityStatus: "pending",
+    legalityStatus: "pending",
+    constitutionalValidationStatus: "pending",
+    alShamsiFrameworkCompliance: "pending",
+    currentVersion: 1,
+    versionHistory: [],
+    isSealed: false,
+  });
+}
+
+/**
+ * Extract DCI-relevant data from a completed stage and update the DCI record.
+ * Called automatically after each stage is marked complete.
+ * Stage 9 (constitutional_validation) also seals the DCI when passed.
+ */
+async function updateDciFromStage(
+  decisionId: number,
+  stageKey: string,
+  stageRecord: typeof decisionStagesTable.$inferSelect,
+  userId: number,
+): Promise<void> {
+  const analysis = (stageRecord.aiAnalysis as Record<string, unknown>) ?? {};
+  const data = (stageRecord.stageData as Record<string, unknown>) ?? {};
+  type DciUpdate = Partial<typeof decisionDciTable.$inferInsert> & { updatedAt: Date };
+  const update: DciUpdate = { updatedAt: new Date() };
+
+  switch (stageKey) {
+    case "legal_authority": {
+      const name = (data.issuingAuthorityName as string) || null;
+      const pos = (data.authorityPosition as string) || null;
+      update.competentAuthority = [name, pos].filter(Boolean).join(" · ") || null;
+      break;
+    }
+    case "facts_evidence": {
+      const quality = analysis.evidenceQuality as string | undefined;
+      update.evidenceCompleteness =
+        quality === "high" ? "complete" :
+        quality === "adequate" ? "substantial" :
+        quality === "low" ? "partial" : "insufficient";
+      break;
+    }
+    case "legal_basis": {
+      const bases: string[] = [];
+      if (data.primaryLaw) bases.push(data.primaryLaw as string);
+      if (data.specificArticles) bases.push(data.specificArticles as string);
+      const cited = analysis.citedInstruments as string[] | undefined;
+      if (Array.isArray(cited)) bases.push(...cited);
+      update.applicableLegalBasis = [...new Set(bases)];
+      const passed = Boolean(analysis.passed);
+      const strength = analysis.legalBasisStrength as string | undefined;
+      update.legalityStatus = passed ? "confirmed" :
+        strength === "weak" ? "questionable" : "violated";
+      break;
+    }
+    case "administrative_objective": {
+      update.purposeOfDecision = (data.primaryObjective as string) || null;
+      break;
+    }
+    case "proportionality": {
+      const overall = analysis.overallProportionality as string | undefined;
+      update.proportionalityStatus =
+        overall === "proportionate" ? "proportionate" :
+        overall === "marginally_proportionate" ? "marginally_proportionate" :
+        "disproportionate";
+      break;
+    }
+    case "human_oversight": {
+      const name = (data.officialName as string) || null;
+      const pos = (data.officialPosition as string) || null;
+      const org = (data.officialOrganization as string) || null;
+      update.humanDecisionOwner = [name, pos, org].filter(Boolean).join(" · ") || null;
+      // MARSAD AI assists all 11 stages — always "comprehensive"
+      update.aiParticipationLevel = "comprehensive";
+      const score = analysis.oversightComplianceScore as number | undefined;
+      update.humanOversightLevel =
+        score == null ? "pending" :
+        score >= 90 ? "full" :
+        score >= 70 ? "substantial" :
+        score >= 50 ? "partial" : "minimal";
+      break;
+    }
+    case "constitutional_validation": {
+      const overallPassed = Boolean(analysis.overallPassed);
+      update.constitutionalValidationStatus = overallPassed ? "passed" : "failed";
+      // Derive explainability and transparency from the 10-principle results
+      const pr = analysis.principleResults as
+        Record<string, { passed: boolean; score: number }> | undefined;
+      const expScore = pr?.explainability?.score ?? (pr?.explainability?.passed ? 85 : 40);
+      update.explainabilityLevel =
+        expScore >= 90 ? "high" : expScore >= 70 ? "adequate" :
+        expScore >= 50 ? "partial" : "insufficient";
+      const transScore = pr?.transparency?.score ?? (pr?.transparency?.passed ? 85 : 40);
+      update.transparencyLevel =
+        transScore >= 90 ? "high" : transScore >= 70 ? "adequate" :
+        transScore >= 50 ? "partial" : "insufficient";
+      // Al-Shamsi compliance from the ASLI pre-score
+      const asli = analysis.asliPreScore as number | undefined;
+      update.alShamsiFrameworkCompliance =
+        asli == null ? "pending" :
+        asli >= 95 ? "full" :
+        asli >= 80 ? "substantial" :
+        asli >= 60 ? "partial" : "non_compliant";
+      // Seal the DCI when constitutional validation passes
+      if (overallPassed) {
+        const allStages = await db
+          .select()
+          .from(decisionStagesTable)
+          .where(eq(decisionStagesTable.decisionId, decisionId))
+          .orderBy(decisionStagesTable.stageNumber);
+        const hashInput = allStages.map((s) => s.auditHash ?? "").join("|");
+        update.completeAuditHash = createHash("sha256").update(hashInput).digest("hex");
+        update.isSealed = true;
+        update.sealedAt = new Date();
+        update.sealedBy = userId;
+      }
+      break;
+    }
+  }
+
+  if (Object.keys(update).length > 1) {
+    await db
+      .update(decisionDciTable)
+      .set(update)
+      .where(eq(decisionDciTable.decisionId, decisionId));
+  }
+}
+
+// ─── Stage Sequence Guard ─────────────────────────────────────────────────────
 
 /**
  * Enforce that the current operation targets the decision's currentStage.
@@ -480,6 +634,9 @@ router.post("/decisions", requireAnyRole, async (req, res): Promise<void> => {
       details: { caseNumber, titleAr, jurisdiction, decisionType },
     });
 
+    // Auto-create the Decision Constitutional Identity (DCI) — constitutional passport
+    await initializeDci(decision.id, decision);
+
     res.status(201).json({ decision });
   } catch (err) {
     console.error("[decisions.create]", err);
@@ -777,6 +934,25 @@ router.post("/decisions/:id/stages/:stageKey/complete", requireSupervisorOrOwner
       details: { stageKey, nextStage: next, completedBy: userId },
     });
 
+    // Auto-update the Decision Constitutional Identity from this completed stage
+    try {
+      const [completedStageRecord] = await db
+        .select()
+        .from(decisionStagesTable)
+        .where(
+          and(
+            eq(decisionStagesTable.decisionId, decisionId),
+            eq(decisionStagesTable.stageKey, stageKey),
+          ),
+        );
+      if (completedStageRecord) {
+        await updateDciFromStage(decisionId, stageKey, completedStageRecord, userId);
+      }
+    } catch (dciErr) {
+      // Non-fatal — DCI update failure must never block stage completion
+      console.error("[dci.update.failed]", dciErr);
+    }
+
     const [updatedDecision] = await db.select().from(decisionsTable).where(eq(decisionsTable.id, decisionId));
 
     res.json({ success: true, nextStage: next, decision: updatedDecision });
@@ -816,6 +992,173 @@ router.get("/decisions/:id/audit", requireSupervisorOrOwner, async (req, res): P
   } catch (err) {
     console.error("[decisions.audit]", err);
     res.status(500).json({ error: "Failed to load audit trail" });
+  }
+});
+
+// ─── DCI Endpoints ────────────────────────────────────────────────────────────
+
+// GET /decisions/:id/dci — retrieve the Decision Constitutional Identity
+router.get("/decisions/:id/dci", requireAnyRole, async (req, res): Promise<void> => {
+  try {
+    const decisionId = parseInt(req.params.id as string, 10);
+    const decision = await assertDecisionAccess(req, decisionId);
+    if (!decision) { res.status(403).json({ error: "Access denied" }); return; }
+
+    const [dci] = await db
+      .select()
+      .from(decisionDciTable)
+      .where(eq(decisionDciTable.decisionId, decisionId));
+    if (!dci) { res.status(404).json({ error: "DCI not found" }); return; }
+
+    res.json({ dci });
+  } catch (err) {
+    console.error("[dci.get]", err);
+    res.status(500).json({ error: "Failed to load DCI" });
+  }
+});
+
+// POST /decisions/:id/dci/amend — recorded amendment to a sealed DCI
+// Supervisors/owners only. Creates a version snapshot before applying any change.
+// Only fields in AMENDABLE_FIELDS are permitted; each field has a constrained value-set
+// or is marked 'text'. The read-modify-write runs inside a transaction to prevent
+// concurrent amendments from racing. completeAuditHash is a hash chain that includes
+// the full amendment payload, so every amendment is cryptographically attested.
+const AMENDABLE_FIELDS: Record<string, Set<string> | "text"> = {
+  competentAuthority:          "text",
+  purposeOfDecision:           "text",
+  humanDecisionOwner:          "text",
+  aiParticipationLevel:        new Set(["pending", "none", "advisory", "analytical", "drafting", "comprehensive"]),
+  humanOversightLevel:         new Set(["pending", "full", "substantial", "partial", "minimal"]),
+  explainabilityLevel:         new Set(["pending", "high", "adequate", "partial", "insufficient"]),
+  transparencyLevel:           new Set(["pending", "high", "adequate", "partial", "insufficient"]),
+  evidenceCompleteness:        new Set(["pending", "complete", "substantial", "partial", "insufficient"]),
+  proportionalityStatus:       new Set(["pending", "proportionate", "marginally_proportionate", "disproportionate"]),
+  legalityStatus:              new Set(["pending", "confirmed", "questionable", "violated"]),
+  alShamsiFrameworkCompliance: new Set(["pending", "full", "substantial", "partial", "non_compliant"]),
+};
+
+router.post("/decisions/:id/dci/amend", requireSupervisorOrOwner, async (req, res): Promise<void> => {
+  try {
+    const decisionId = parseInt(req.params.id as string, 10);
+    const userId = getUserId(req);
+
+    const decision = await assertDecisionAccess(req, decisionId);
+    if (!decision) { res.status(403).json({ error: "Access denied" }); return; }
+
+    const body = req.body as { reason?: string; changes?: Record<string, unknown> };
+    if (!body.reason?.trim() || !body.changes || Object.keys(body.changes).length === 0) {
+      res.status(400).json({ error: "reason (non-empty string) and changes (non-empty object) are required" });
+      return;
+    }
+
+    // Validate and sanitise the incoming changes against the explicit allowlist
+    const validationErrors: string[] = [];
+    const safeChanges: Record<string, string | null> = {};
+    for (const [key, raw] of Object.entries(body.changes)) {
+      const rule = AMENDABLE_FIELDS[key];
+      if (!rule) {
+        validationErrors.push(`'${key}' is not an amendable field`);
+        continue;
+      }
+      if (raw !== null && typeof raw !== "string") {
+        validationErrors.push(`'${key}' must be a string or null`);
+        continue;
+      }
+      if (rule !== "text" && raw !== null && !rule.has(raw as string)) {
+        validationErrors.push(`'${key}' value '${raw}' is not allowed; permitted: ${[...rule].join(", ")}`);
+        continue;
+      }
+      safeChanges[key] = raw as string | null;
+    }
+    if (validationErrors.length > 0) {
+      res.status(400).json({ error: "Validation failed", details: validationErrors });
+      return;
+    }
+    if (Object.keys(safeChanges).length === 0) {
+      res.status(400).json({ error: "No valid amendable fields provided" });
+      return;
+    }
+
+    // Run as a transaction to prevent concurrent amendment races on currentVersion/versionHistory
+    const updated = await db.transaction(async (tx) => {
+      const [dci] = await tx
+        .select()
+        .from(decisionDciTable)
+        .where(eq(decisionDciTable.decisionId, decisionId))
+        .for("update"); // row-level lock
+
+      if (!dci) throw Object.assign(new Error("DCI not found"), { statusCode: 404 });
+      if (!dci.isSealed) {
+        throw Object.assign(
+          new Error("DCI has not been sealed yet. Amendments are only permitted after constitutional validation passes."),
+          { statusCode: 422 },
+        );
+      }
+
+      // Snapshot the fields being changed before overwriting them
+      const snapshot: Record<string, unknown> = {};
+      for (const key of Object.keys(safeChanges)) {
+        snapshot[key] = (dci as Record<string, unknown>)[key];
+      }
+
+      const changedAt = new Date().toISOString();
+      const versionEntry: DciVersion = {
+        version: dci.currentVersion,
+        changedAt,
+        changedBy: userId,
+        reason: body.reason!.trim(),
+        snapshot,
+      };
+      const history = [...((dci.versionHistory as DciVersion[]) ?? []), versionEntry];
+
+      // Hash chain: SHA-256 over (previousHash | canonicalized amendment payload)
+      // This cryptographically attests both the amendment content and its position in the chain.
+      const canonicalPayload = JSON.stringify({
+        reason: versionEntry.reason,
+        changedAt,
+        changedBy: userId,
+        changes: safeChanges,
+      });
+      const prevHash = dci.completeAuditHash ?? "genesis";
+      const newHash = createHash("sha256")
+        .update(`${prevHash}|amendment:${canonicalPayload}`)
+        .digest("hex");
+
+      await tx
+        .update(decisionDciTable)
+        .set({
+          ...safeChanges,
+          completeAuditHash: newHash,
+          currentVersion: dci.currentVersion + 1,
+          versionHistory: history,
+          updatedAt: new Date(),
+        })
+        .where(eq(decisionDciTable.decisionId, decisionId));
+
+      const [result] = await tx
+        .select()
+        .from(decisionDciTable)
+        .where(eq(decisionDciTable.decisionId, decisionId));
+      return result;
+    });
+
+    logAudit(req, "dci.amend", {
+      entityType: "decision",
+      entityId: decisionId,
+      details: {
+        reason: body.reason,
+        newVersion: updated.currentVersion,
+        fieldsChanged: Object.keys(safeChanges),
+      },
+    });
+
+    res.json({ dci: updated });
+  } catch (err: unknown) {
+    const typed = err as { statusCode?: number; message?: string };
+    if (typed.statusCode === 404) { res.status(404).json({ error: typed.message }); return; }
+    if (typed.statusCode === 422) { res.status(422).json({ error: typed.message }); return; }
+    console.error("[dci.amend]", err);
+    res.status(500).json({ error: "Failed to amend DCI" });
   }
 });
 

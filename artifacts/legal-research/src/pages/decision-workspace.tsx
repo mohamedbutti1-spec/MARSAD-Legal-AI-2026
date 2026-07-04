@@ -10,7 +10,7 @@ import { AppLayout } from '@/components/layout/app-layout';
 import {
   Shield, CheckCircle2, XCircle, Clock, ChevronLeft, ChevronDown, ChevronUp,
   Sparkles, Scale, AlertTriangle, Building2, FileText, Loader2, ArrowRight,
-  Lock, Check,
+  Lock, Check, Fingerprint,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -33,6 +33,285 @@ interface DecisionStage {
   stageData: Record<string, unknown>; aiContribution?: string;
   aiAnalysis: Record<string, unknown>; validationStatus: string;
   validationDetails: Record<string, unknown>; completedAt?: string;
+}
+
+interface DciVersion {
+  version: number; changedAt: string; changedBy: number; reason: string;
+  snapshot: Record<string, unknown>;
+}
+
+interface Dci {
+  id: number; decisionId: number; decisionType: string;
+  competentAuthority: string | null; applicableLegalBasis: string[];
+  purposeOfDecision: string | null; humanDecisionOwner: string | null;
+  aiParticipationLevel: string; humanOversightLevel: string;
+  explainabilityLevel: string; transparencyLevel: string;
+  evidenceCompleteness: string; proportionalityStatus: string;
+  legalityStatus: string; constitutionalValidationStatus: string;
+  alShamsiFrameworkCompliance: string; completeAuditHash: string | null;
+  currentVersion: number; versionHistory: DciVersion[];
+  isSealed: boolean; sealedAt: string | null; sealedBy: number | null;
+  createdAt: string; updatedAt: string;
+}
+
+// ─── DCI Helpers & Panel ─────────────────────────────────────────────────────
+
+const DCI_VALUE_LABELS: Record<string, Record<string, string>> = {
+  aiParticipationLevel: {
+    pending: 'قيد الإعداد', none: 'لا إسهام', advisory: 'استشاري',
+    analytical: 'تحليلي', drafting: 'صياغة', comprehensive: 'شامل — كل المراحل',
+  },
+  humanOversightLevel: {
+    pending: 'قيد الإعداد', full: 'كامل', substantial: 'جوهري', partial: 'جزئي', minimal: 'ضئيل',
+  },
+  explainabilityLevel: {
+    pending: 'قيد الإعداد', high: 'عالية', adequate: 'كافية', partial: 'جزئية', insufficient: 'غير كافية',
+  },
+  transparencyLevel: {
+    pending: 'قيد الإعداد', high: 'عالية', adequate: 'كافية', partial: 'جزئية', insufficient: 'غير كافية',
+  },
+  evidenceCompleteness: {
+    pending: 'قيد الإعداد', complete: 'مكتملة', substantial: 'جوهرية', partial: 'جزئية', insufficient: 'غير كافية',
+  },
+  proportionalityStatus: {
+    pending: 'قيد الإعداد', proportionate: 'متناسب', marginally_proportionate: 'متناسب نسبياً', disproportionate: 'غير متناسب',
+  },
+  legalityStatus: {
+    pending: 'قيد الإعداد', confirmed: 'مؤكدة', questionable: 'قابلة للطعن', violated: 'منتهكة',
+  },
+  constitutionalValidationStatus: {
+    pending: 'قيد التحقق', passed: 'اجتاز التحقق الدستوري', failed: 'لم يجتز التحقق',
+  },
+  alShamsiFrameworkCompliance: {
+    pending: 'قيد الإعداد', full: 'امتثال كامل', substantial: 'امتثال جوهري', partial: 'امتثال جزئي', non_compliant: 'غير ممتثل',
+  },
+};
+
+function dciChipClass(value: string): string {
+  if (value === 'pending') return 'text-slate-500 bg-slate-50 border-slate-200 dark:text-slate-400 dark:bg-slate-900/40 dark:border-slate-700';
+  if (['passed', 'confirmed', 'full', 'complete', 'comprehensive'].includes(value))
+    return 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-950/30 dark:border-emerald-800/40';
+  if (['substantial', 'adequate', 'proportionate', 'high'].includes(value))
+    return 'text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-950/30 dark:border-amber-800/40';
+  if (['partial', 'marginally_proportionate', 'questionable', 'minimal'].includes(value))
+    return 'text-orange-700 bg-orange-50 border-orange-200 dark:text-orange-400 dark:bg-orange-950/30 dark:border-orange-800/40';
+  return 'text-red-700 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-950/30 dark:border-red-800/40';
+}
+
+function DciChip({ field, value }: { field: string; value: string | null | undefined }) {
+  const v = value ?? 'pending';
+  const label = DCI_VALUE_LABELS[field]?.[v] ?? v;
+  return (
+    <span className={`inline-flex items-center self-start px-2.5 py-0.5 rounded-md border text-xs font-semibold ${dciChipClass(v)}`}>
+      {label}
+    </span>
+  );
+}
+
+function DciField({ label, field, value }: { label: string; field: string; value: string | null | undefined }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60 leading-none">{label}</p>
+      <DciChip field={field} value={value} />
+    </div>
+  );
+}
+
+function DciPanel({ decisionId, decision }: { decisionId: number; decision: Decision }) {
+  const [showHistory, setShowHistory] = useState(false);
+  const { data, isLoading } = useQuery({
+    queryKey: ['dci', decisionId],
+    queryFn: () => apiFetch('GET', `/api/decisions/${decisionId}/dci`),
+    refetchInterval: 8000,
+  });
+
+  const dci: Dci | null = data?.dci ?? null;
+
+  if (isLoading) return (
+    <div className="flex items-center justify-center py-24">
+      <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+    </div>
+  );
+  // Distinguish server/network errors from genuine absence
+  const dataError = (data as { error?: string } | undefined)?.error;
+  if (dataError || (!isLoading && !dci)) return (
+    <div className="flex items-center justify-center py-24 text-center px-8">
+      <div className="space-y-3 max-w-xs">
+        <Fingerprint className="w-8 h-8 text-muted-foreground/30 mx-auto" />
+        <p className="text-sm font-semibold text-foreground">تعذّر تحميل الهوية الدستورية</p>
+        <p className="text-xs text-muted-foreground">
+          {dataError ?? 'لم يُعثر على الهوية الدستورية لهذا القرار'}
+        </p>
+      </div>
+    </div>
+  );
+
+  // dci is guaranteed non-null past this point (all null cases returned above)
+  if (!dci) return null;
+
+  const hasHistory = dci.versionHistory?.length > 0;
+
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 space-y-5 max-w-4xl pb-16">
+
+      {/* ── Constitutional Passport Header ─────────────────────── */}
+      <div className={`rounded-2xl border-2 p-5 sm:p-6 ${dci.isSealed
+        ? 'border-amber-300/70 bg-gradient-to-br from-amber-50/70 to-amber-50/30 dark:border-amber-700/50 dark:from-amber-950/25 dark:to-transparent'
+        : 'border-border bg-card'}`}
+      >
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-[10px] font-mono font-bold tracking-widest text-muted-foreground/50 uppercase" dir="ltr">
+              {decision.caseNumber} · DCI · v{dci.currentVersion}
+            </div>
+            <div className="flex items-center gap-2">
+              <Fingerprint className="w-4 h-4 text-foreground/60 shrink-0" />
+              <h2 className="text-lg font-bold text-foreground">الهوية الدستورية للقرار</h2>
+            </div>
+            <p className="text-xs text-muted-foreground">الجواز الدستوري · إطار الشامسي™ · MARSAD Constitutional Standard v1.0</p>
+          </div>
+          <div className="flex flex-col items-end gap-1.5">
+            {dci.isSealed ? (
+              <>
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-100 dark:bg-amber-950/50 border border-amber-300/80 dark:border-amber-700/60 text-amber-800 dark:text-amber-300 text-xs font-bold">
+                  <Lock className="w-3 h-3" /> مُختوم دستورياً
+                </div>
+                {dci.sealedAt && (
+                  <span className="text-[10px] text-muted-foreground/50" dir="ltr">
+                    {new Date(dci.sealedAt).toLocaleDateString('ar-AE', { year: 'numeric', month: 'short', day: 'numeric' })}
+                  </span>
+                )}
+              </>
+            ) : (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted border border-border text-muted-foreground text-xs font-bold">
+                <Clock className="w-3 h-3" /> قيد الإعداد
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Decision Identity ──────────────────────────────────── */}
+      <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+        <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground border-b border-border/40 pb-2">هوية القرار</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60">معرّف القرار</p>
+            <p className="text-sm font-mono font-bold text-foreground" dir="ltr">{decision.caseNumber}</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60">نوع القرار</p>
+            <p className="text-sm font-semibold text-foreground">{dci.decisionType}</p>
+          </div>
+          <div className="sm:col-span-2 space-y-1">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60">الجهة المختصة بالإصدار</p>
+            <p className="text-sm text-foreground">{dci.competentAuthority ?? <span className="text-muted-foreground italic">— قيد الإعداد (مرحلة التحقق من الاختصاص) —</span>}</p>
+          </div>
+          <div className="sm:col-span-2 space-y-1">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60">الغرض من القرار</p>
+            <p className="text-sm text-foreground leading-relaxed">{dci.purposeOfDecision ?? <span className="text-muted-foreground italic">— قيد الإعداد (مرحلة الهدف الإداري) —</span>}</p>
+          </div>
+          <div className="sm:col-span-2 space-y-1">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60">المالك البشري للقرار</p>
+            <p className="text-sm text-foreground">{dci.humanDecisionOwner ?? <span className="text-muted-foreground italic">— قيد الإعداد (مرحلة الرقابة البشرية) —</span>}</p>
+          </div>
+          {dci.applicableLegalBasis && dci.applicableLegalBasis.length > 0 && (
+            <div className="sm:col-span-2 space-y-2">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60">السند القانوني المنطبق</p>
+              <div className="space-y-1">
+                {dci.applicableLegalBasis.map((basis, i) => (
+                  <div key={i} className="flex items-start gap-2 text-xs text-foreground/80 py-1 border-b border-border/20 last:border-0">
+                    <span className="text-muted-foreground/40 font-mono shrink-0 mt-0.5">{String(i + 1).padStart(2, '0')}</span>
+                    <span>{basis}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {(!dci.applicableLegalBasis || dci.applicableLegalBasis.length === 0) && (
+            <div className="sm:col-span-2 space-y-1">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60">السند القانوني المنطبق</p>
+              <p className="text-xs text-muted-foreground italic">— قيد الإعداد (مرحلة السند القانوني) —</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Constitutional Assessment Grid ─────────────────────── */}
+      <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+        <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground border-b border-border/40 pb-2">التقييم الدستوري الشامل</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-4">
+          <DciField label="إسهام الذكاء الاصطناعي" field="aiParticipationLevel" value={dci.aiParticipationLevel} />
+          <DciField label="الرقابة البشرية" field="humanOversightLevel" value={dci.humanOversightLevel} />
+          <DciField label="القابلية للتفسير" field="explainabilityLevel" value={dci.explainabilityLevel} />
+          <DciField label="الشفافية" field="transparencyLevel" value={dci.transparencyLevel} />
+          <DciField label="اكتمال الأدلة" field="evidenceCompleteness" value={dci.evidenceCompleteness} />
+          <DciField label="التناسب" field="proportionalityStatus" value={dci.proportionalityStatus} />
+          <DciField label="المشروعية" field="legalityStatus" value={dci.legalityStatus} />
+          <DciField label="التحقق الدستوري" field="constitutionalValidationStatus" value={dci.constitutionalValidationStatus} />
+          <DciField label="امتثال إطار الشامسي" field="alShamsiFrameworkCompliance" value={dci.alShamsiFrameworkCompliance} />
+        </div>
+      </div>
+
+      {/* ── Integrity & Hash ───────────────────────────────────── */}
+      <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+        <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground border-b border-border/40 pb-2">سلامة البيانات والبصمة الرقمية</h3>
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60">بصمة التحقق الدستورية الشاملة (SHA-256)</p>
+            {dci.completeAuditHash ? (
+              <p className="text-[11px] font-mono text-foreground/60 break-all leading-relaxed bg-muted/40 rounded-lg px-3 py-2.5 border border-border/40" dir="ltr">
+                {dci.completeAuditHash}
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground/60 italic">تُحسب تلقائياً عند اجتياز التحقق الدستوري (المرحلة 9)</p>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted-foreground">
+            <span><span className="font-semibold text-foreground/60">الإصدار:</span> {dci.currentVersion}</span>
+            <span><span className="font-semibold text-foreground/60">أُنشئ:</span> <span dir="ltr">{new Date(dci.createdAt).toLocaleDateString('ar-AE')}</span></span>
+            <span><span className="font-semibold text-foreground/60">آخر تحديث:</span> <span dir="ltr">{new Date(dci.updatedAt).toLocaleDateString('ar-AE')}</span></span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Version History ────────────────────────────────────── */}
+      {hasHistory && (
+        <div className="rounded-xl border border-border bg-card overflow-hidden">
+          <button
+            onClick={() => setShowHistory(!showHistory)}
+            className="w-full flex items-center justify-between px-5 py-3 hover:bg-muted/40 transition-colors"
+          >
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              سجل التعديلات الدستورية ({dci.versionHistory.length})
+            </span>
+            {showHistory ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+          </button>
+          {showHistory && (
+            <div className="px-5 pb-4 space-y-0 border-t border-border/40 divide-y divide-border/30">
+              {dci.versionHistory.map((v) => (
+                <div key={v.version} className="py-3 space-y-1.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[10px] font-mono font-bold text-muted-foreground bg-muted px-1.5 py-0.5 rounded" dir="ltr">v{v.version}→v{v.version + 1}</span>
+                    <span className="text-[10px] text-muted-foreground/50" dir="ltr">{new Date(v.changedAt).toLocaleString('ar-AE')}</span>
+                  </div>
+                  <p className="text-xs font-medium text-foreground/80">{v.reason}</p>
+                  <p className="text-[10px] text-muted-foreground/50">الحقول المُعدَّلة: {Object.keys(v.snapshot).join('، ')}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Footer */}
+      <div className="text-center pt-2">
+        <p className="text-[10px] text-muted-foreground/30 tracking-wide">
+          Powered by the M. Al-Shamsi Framework™ · MARSAD Constitutional Standard v1.0
+        </p>
+      </div>
+    </div>
+  );
 }
 
 // ─── Stage Configuration ──────────────────────────────────────────────────────
@@ -651,6 +930,7 @@ export default function DecisionWorkspace() {
 
   const decisionId = params.id ? parseInt(params.id) : null;
   const [activeStage, setActiveStage] = useState<StageKey>('administrative_request');
+  const [activeView, setActiveView] = useState<'stage' | 'dci'>('stage');
   const [formData, setFormData] = useState<Record<StageKey, Record<string, unknown>>>({} as any);
   const [aiAnalysis, setAiAnalysis] = useState<Record<StageKey, Record<string, unknown>>>({} as any);
   const [validationResults, setValidationResults] = useState<Record<StageKey, { passed: boolean; analysis: Record<string, unknown>; validationStatus: string }>>({} as any);
@@ -770,6 +1050,7 @@ export default function DecisionWorkspace() {
       }
       qc.invalidateQueries({ queryKey: ['decision', decisionId] });
       qc.invalidateQueries({ queryKey: ['decisions'] });
+      qc.invalidateQueries({ queryKey: ['dci', decisionId] });
     } catch (e: any) { alert(e.message || 'فشل إتمام المرحلة'); }
     setIsCompleting(false);
   };
@@ -824,6 +1105,30 @@ export default function DecisionWorkspace() {
                   <span className="text-xs font-mono text-muted-foreground">{Math.round((completed.length / STAGE_ORDER.length) * 100)}%</span>
                 </div>
               </div>
+            </div>
+
+            {/* ── View Tab Bar ──────────────────────────────────── */}
+            <div role="tablist" aria-label="عرض القرار" className="border-b border-border/60 bg-card px-4 sm:px-6 lg:px-8 flex items-center gap-0">
+              <button
+                role="tab"
+                aria-selected={activeView === 'stage'}
+                aria-controls="panel-stage"
+                id="tab-stage"
+                onClick={() => setActiveView('stage')}
+                className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors -mb-px ${activeView === 'stage' ? 'border-foreground text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+              >
+                <Scale className="w-3.5 h-3.5" /> مراحل القرار
+              </button>
+              <button
+                role="tab"
+                aria-selected={activeView === 'dci'}
+                aria-controls="panel-dci"
+                id="tab-dci"
+                onClick={() => setActiveView('dci')}
+                className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors -mb-px ${activeView === 'dci' ? 'border-amber-500 text-amber-700 dark:text-amber-400' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+              >
+                <Fingerprint className="w-3.5 h-3.5" /> الهوية الدستورية DCI
+              </button>
             </div>
 
             {/* ── Two-column layout ─────────────────────────────── */}
@@ -891,9 +1196,14 @@ export default function DecisionWorkspace() {
                 </div>
               </div>
 
-              {/* Main Stage Content */}
+              {/* Main Stage Content OR DCI Panel */}
               <div className="flex-1 overflow-y-auto">
-                <div className="p-4 sm:p-6 lg:p-8 max-w-3xl space-y-6">
+                {activeView === 'dci' ? (
+                  <div role="tabpanel" id="panel-dci" aria-labelledby="tab-dci">
+                    <DciPanel decisionId={decisionId!} decision={decision} />
+                  </div>
+                ) : (
+                <div role="tabpanel" id="panel-stage" aria-labelledby="tab-stage" className="p-4 sm:p-6 lg:p-8 max-w-3xl space-y-6">
 
                   {/* Stage header */}
                   <div className="space-y-2">
@@ -963,6 +1273,7 @@ export default function DecisionWorkspace() {
                     )}
                   </div>
                 </div>
+                )}
               </div>
             </div>
           </div>

@@ -4,3 +4,4 @@
 - [Citation token parsing](citation-token-parsing.md) — regex required for [DOC:N]/[SRC:N] tokens; split(":") is broken on bracketed strings
 - [Phase 5 — PDF & Audit Trail](phase5-pdf-audit.md) — puppeteer browser install, waitUntil limits, stats endpoint scoping rule
 - [Module 1 — Intelligent Administrative Decision](module1-decisions.md) — security model, audit hash integrity, stage sequence enforcement, case number format
+- [DCI — Decision Constitutional Identity](dci-implementation.md) — DB schema, stage→field mappings, seal logic, amendment transaction pattern, hash chain design

@@ -141,3 +141,140 @@ export const insertDecisionStageSchema = createInsertSchema(decisionStagesTable)
 });
 export type InsertDecisionStage = z.infer<typeof insertDecisionStageSchema>;
 export type DecisionStage = typeof decisionStagesTable.$inferSelect;
+
+// ─── Decision Constitutional Identity (DCI) ───────────────────────────────────
+// The DCI is the constitutional passport of each administrative decision.
+// It is auto-generated on creation, updated as stages complete, and sealed
+// after constitutional validation. Every later module reads the DCI rather than
+// recalculating these values. Immutable after sealing except through a recorded
+// amendment (new versionHistory entry).
+
+export type DciVersion = {
+  /** Snapshot number (the version that was current before this amendment) */
+  version: number;
+  changedAt: string;    // ISO-8601
+  changedBy: number;    // userId of the supervisor/owner who made the change
+  reason: string;       // mandatory justification text
+  /** Fields that changed and their previous values */
+  snapshot: Record<string, unknown>;
+};
+
+export const decisionDciTable = pgTable("decision_dci", {
+  id: serial("id").primaryKey(),
+
+  /** FK to decisionsTable — one DCI per decision, always. Cascade-deletes with the decision. */
+  decisionId: integer("decision_id").notNull().unique().references(() => decisionsTable.id, { onDelete: "cascade" }),
+
+  // ─── Decision Identity ─────────────────────────────────────────────────────
+
+  /** Type of the administrative decision (appointment, penalty, etc.) */
+  decisionType: text("decision_type").notNull(),
+
+  /** Issuing authority name and position — set at legal_authority stage */
+  competentAuthority: text("competent_authority"),
+
+  // ─── Constitutional Content (populated as stages complete) ─────────────────
+
+  /** Applicable laws, articles, and instruments — set at legal_basis stage */
+  applicableLegalBasis: json("applicable_legal_basis").$type<string[]>().default([]),
+
+  /** Formal purpose statement — set at administrative_objective stage */
+  purposeOfDecision: text("purpose_of_decision"),
+
+  /** Full name, position, and organisation of the human owner — set at human_oversight stage */
+  humanDecisionOwner: text("human_decision_owner"),
+
+  // ─── AI & Human Participation Assessment ──────────────────────────────────
+
+  /**
+   * Extent of AI participation throughout the decision lifecycle.
+   * Values: pending | none | advisory | analytical | drafting | comprehensive
+   */
+  aiParticipationLevel: text("ai_participation_level").notNull().default("pending"),
+
+  /**
+   * Verified degree of human oversight.
+   * Values: pending | full | substantial | partial | minimal
+   */
+  humanOversightLevel: text("human_oversight_level").notNull().default("pending"),
+
+  /**
+   * Degree to which the decision can be explained to a reasonable person.
+   * Values: pending | high | adequate | partial | insufficient
+   */
+  explainabilityLevel: text("explainability_level").notNull().default("pending"),
+
+  /**
+   * Degree of public transparency of the decision and its process.
+   * Values: pending | high | adequate | partial | insufficient
+   */
+  transparencyLevel: text("transparency_level").notNull().default("pending"),
+
+  // ─── Constitutional Indicators ────────────────────────────────────────────
+
+  /**
+   * Quality and completeness of the evidentiary record.
+   * Values: pending | complete | substantial | partial | insufficient
+   */
+  evidenceCompleteness: text("evidence_completeness").notNull().default("pending"),
+
+  /**
+   * Result of the three-pronged proportionality test.
+   * Values: pending | proportionate | marginally_proportionate | disproportionate
+   */
+  proportionalityStatus: text("proportionality_status").notNull().default("pending"),
+
+  /**
+   * Legal authority and lawfulness assessment.
+   * Values: pending | confirmed | questionable | violated
+   */
+  legalityStatus: text("legality_status").notNull().default("pending"),
+
+  /**
+   * Result of Stage 9 — the constitutional gate (10-principle check).
+   * Values: pending | passed | failed
+   */
+  constitutionalValidationStatus: text("constitutional_validation_status").notNull().default("pending"),
+
+  /**
+   * Overall M. Al-Shamsi Framework compliance rating.
+   * Values: pending | full | substantial | partial | non_compliant
+   */
+  alShamsiFrameworkCompliance: text("al_shamsi_framework_compliance").notNull().default("pending"),
+
+  // ─── Integrity ────────────────────────────────────────────────────────────
+
+  /**
+   * SHA-256 computed over all individual stage audit hashes in stage order.
+   * Set when constitutional_validation passes. Recomputed on each amendment.
+   */
+  completeAuditHash: text("complete_audit_hash"),
+
+  // ─── Versioning ───────────────────────────────────────────────────────────
+
+  /** Monotonically increasing version counter (starts at 1). */
+  currentVersion: integer("current_version").notNull().default(1),
+
+  /**
+   * Ordered list of amendment records. Each entry captures the previous DCI state,
+   * the reason for the amendment, and who made it.
+   * Entries are append-only — never deleted.
+   */
+  versionHistory: json("version_history").$type<DciVersion[]>().default([]),
+
+  // ─── Immutability Seal ────────────────────────────────────────────────────
+
+  /**
+   * Becomes true when constitutional_validation stage passes.
+   * After sealing, any change creates a new versionHistory entry.
+   */
+  isSealed: boolean("is_sealed").notNull().default(false),
+  sealedAt: timestamp("sealed_at", { withTimezone: true }),
+  sealedBy: integer("sealed_by"),
+
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type DecisionDci = typeof decisionDciTable.$inferSelect;
+export type DciInsert = typeof decisionDciTable.$inferInsert;
