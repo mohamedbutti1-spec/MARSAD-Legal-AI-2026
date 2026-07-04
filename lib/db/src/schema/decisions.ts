@@ -278,3 +278,215 @@ export const decisionDciTable = pgTable("decision_dci", {
 
 export type DecisionDci = typeof decisionDciTable.$inferSelect;
 export type DciInsert = typeof decisionDciTable.$inferInsert;
+
+// ─── Judicial Defense Package (JDP) — Section Types ──────────────────────────
+// Structured types for every section of the court-ready constitutional artifact.
+
+export type FactualEvent = {
+  stageNumber: number;
+  stage: string;
+  stageName: string;
+  date?: string | null;
+  description: string;
+  actor?: string | null;
+  aiContribution?: string | null;
+};
+
+export type LegalBasisGround = {
+  law: string;
+  article?: string | null;
+  relevance: string;
+};
+
+export type LegalBasisSection = {
+  overview: string;
+  grounds: LegalBasisGround[];
+  conclusion: string;
+};
+
+export type LegislationItem = {
+  title: string;
+  reference: string;
+  applicableArticles: string[];
+  relevance: string;
+};
+
+export type EvidenceItem = {
+  type: string;
+  description: string;
+  weight: "high" | "medium" | "low";
+  admissibility: string;
+};
+
+export type EvidenceSection = {
+  overview: string;
+  items: EvidenceItem[];
+  completenessAssessment: string;
+  conclusion: string;
+};
+
+export type ProportionalityTest = {
+  result: "passed" | "failed" | "marginal";
+  reasoning: string;
+};
+
+export type ProportionalitySection = {
+  legitimateAimTest: ProportionalityTest;
+  necessityTest: ProportionalityTest;
+  strictProportionalityTest: ProportionalityTest;
+  overallConclusion: string;
+};
+
+export type DiscretionarySection = {
+  overview: string;
+  factorsConsidered: string[];
+  alternativesEvaluated: string;
+  publicInterestBalance: string;
+  conclusion: string;
+};
+
+export type StageAiContribution = {
+  stage: string;
+  stageName: string;
+  contribution: string;
+  humanVerification: string;
+  reviewedBy?: string | null;
+};
+
+export type AiParticipationSection = {
+  overview: string;
+  totalStagesWithAiAssistance: number;
+  participationLevel: string;
+  stageContributions: StageAiContribution[];
+  overallAssessment: string;
+};
+
+export type OversightVerificationStep = {
+  stage: string;
+  stageName: string;
+  humanAction: string;
+  outcome: string;
+};
+
+export type HumanOversightSection = {
+  authorizedOfficer: string;
+  position?: string | null;
+  organization?: string | null;
+  oversightLevel: string;
+  verificationSteps: OversightVerificationStep[];
+  conclusion: string;
+};
+
+export type PrincipleResult = {
+  principle: string;
+  passed: boolean;
+  score?: number | null;
+  notes: string;
+};
+
+export type ConstitutionalValidationSection = {
+  overallResult: string;
+  validationDate?: string | null;
+  alShamsiScore?: number | null;
+  principleResults: PrincipleResult[];
+  conclusion: string;
+};
+
+export type DciSummarySection = {
+  decisionId: string;
+  decisionType: string;
+  competentAuthority?: string | null;
+  constitutionalValidationStatus: string;
+  alShamsiFrameworkCompliance: string;
+  sealedAt?: string | null;
+  completeAuditHash?: string | null;
+  currentVersion: number;
+};
+
+export type AuditStageRecord = {
+  stageNumber: number;
+  stage: string;
+  stageName: string;
+  auditHash?: string | null;
+  completedAt?: string | null;
+};
+
+export type AuditChainSection = {
+  overview: string;
+  stages: AuditStageRecord[];
+  completeHash?: string | null;
+  integrityStatus: "verified" | "pending" | "compromised";
+};
+
+export type JdpVersionHistorySection = {
+  currentVersion: number;
+  isSealed: boolean;
+  sealedAt?: string | null;
+  amendments: DciVersion[];
+};
+
+export type JudicialQuestion = {
+  category: string;
+  question: string;
+  legalGrounding: string;
+  preparedAnswer: string;
+  relevantEvidence?: string | null;
+};
+
+export type ExplainabilitySection = {
+  overview: string;
+  decisionRationale: string;
+  alternativesConsidered: string;
+  impactAssessment: string;
+  publicInterestJustification: string;
+  minorityInterestConsiderations?: string | null;
+  conclusion: string;
+};
+
+// ─── Judicial Defense Package (JDP) Table ─────────────────────────────────────
+// The JDP is generated after a decision's DCI is sealed. It assembles all
+// constitutional evidence and reasoning into a court-ready artifact that lets
+// any constitutionally validated decision be defended immediately before an
+// administrative court without rebuilding the reasoning afterward.
+//
+// State machine: pending → generating → ready | error
+
+export const decisionJdpTable = pgTable("decision_jdp", {
+  id: serial("id").primaryKey(),
+
+  /** FK to decisionsTable — one JDP per decision. Cascade-deletes with the decision. */
+  decisionId: integer("decision_id")
+    .notNull()
+    .unique()
+    .references(() => decisionsTable.id, { onDelete: "cascade" }),
+
+  // ─── Generation State ─────────────────────────────────────────────────────
+  status: text("status").notNull().default("pending"),
+  generatedAt: timestamp("generated_at", { withTimezone: true }),
+  generatedBy: integer("generated_by"),
+  /** Total milliseconds taken by the AI generation call */
+  generationDurationMs: integer("generation_duration_ms"),
+  errorMessage: text("error_message"),
+
+  // ─── 14 Constitutional Sections ──────────────────────────────────────────
+  factualChronology:               json("factual_chronology").$type<FactualEvent[]>(),
+  legalBasis:                      json("legal_basis").$type<LegalBasisSection>(),
+  applicableLegislation:           json("applicable_legislation").$type<LegislationItem[]>(),
+  evidenceSummary:                 json("evidence_summary").$type<EvidenceSection>(),
+  proportionalityAnalysis:         json("proportionality_analysis").$type<ProportionalitySection>(),
+  discretionaryReasoning:          json("discretionary_reasoning").$type<DiscretionarySection>(),
+  aiParticipationExplanation:      json("ai_participation_explanation").$type<AiParticipationSection>(),
+  humanOversightRecord:            json("human_oversight_record").$type<HumanOversightSection>(),
+  constitutionalValidationResults: json("constitutional_validation_results").$type<ConstitutionalValidationSection>(),
+  dciSummary:                      json("dci_summary").$type<DciSummarySection>(),
+  auditChain:                      json("audit_chain").$type<AuditChainSection>(),
+  versionHistoryRecord:            json("version_history_record").$type<JdpVersionHistorySection>(),
+  anticipatedJudicialReviewQuestions: json("anticipated_judicial_review_questions").$type<JudicialQuestion[]>(),
+  explainabilityReport:            json("explainability_report").$type<ExplainabilitySection>(),
+
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type DecisionJdp = typeof decisionJdpTable.$inferSelect;
+export type JdpInsert = typeof decisionJdpTable.$inferInsert;

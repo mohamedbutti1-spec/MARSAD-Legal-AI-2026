@@ -45,3 +45,32 @@ The DCI is an auto-generated, auto-updated record that accumulates constitutiona
 - TypeScript narrowing: after compound null guards, add `if (!dci) return null;` to give the compiler a clear narrowing point — otherwise TS18047 errors cascade
 
 **Why:** Constitutional identity must be immutable and auditable; the transaction + hash chain + allowlist together enforce this without needing a separate audit service.
+
+---
+
+## JDP — Judicial Defense Package (built on top of DCI)
+
+### What it is
+A court-ready defense artifact generated after the DCI is sealed. Contains 14 constitutional sections covering every angle a court would probe. AI-generated, synchronous, status machine: `pending → generating → ready | error`.
+
+### DB
+- Table: `decision_jdp` in `lib/db/src/schema/decisions.ts`
+- One-per-decision unique constraint on `decisionId` (FK cascade from `decisionsTable`)
+- 14 section JSON columns + `status`, `generatedAt`, `generatedBy`, `generationDurationMs`, `errorMessage`
+
+### API endpoints
+- `POST /decisions/:id/jdp/generate` — sealed DCI required; returns 409 if already generating; atomic upsert to "generating" via `onConflictDoUpdate`; validates all 14 sections present before setting "ready"; inner catch rolls to "error" without crashing outer handler
+- `GET /decisions/:id/jdp` — retrieve with access check
+- `GET /decisions/:id/jdp/export` — structured JSON envelope; `Content-Disposition: attachment`
+
+### AI call pattern for JDP
+Uses `provider.complete({ taskType, systemPrompt, prompt, maxTokens: 8000 })` — NOT `.generate()`, NOT `messages: [...]`. Strip `<think>` tags, then `parseModelJson<Record<string, unknown>>`. Validate all 14 keys before accepting output.
+
+### Concurrency guard
+Select status first → return 409 if "generating" → then `insert ... onConflictDoUpdate` to "generating". Not perfectly atomic (small TOCTOU window) but sufficient for low-concurrency government use.
+
+### Frontend
+- `JdpSection` wrapper + `TestChip` + `JdpPanel` added before Stage Configuration in `decision-workspace.tsx`
+- `activeView` state typed `'stage' | 'dci' | 'jdp'`; third tab uses `Gavel` icon + emerald accent
+- Judicial questions (section 13) rendered as accordion with expand/collapse per question
+- JDP panel polls every 4 s while status is "generating" via React Query `refetchInterval`

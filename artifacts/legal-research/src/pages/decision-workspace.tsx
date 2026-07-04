@@ -10,7 +10,8 @@ import { AppLayout } from '@/components/layout/app-layout';
 import {
   Shield, CheckCircle2, XCircle, Clock, ChevronLeft, ChevronDown, ChevronUp,
   Sparkles, Scale, AlertTriangle, Building2, FileText, Loader2, ArrowRight,
-  Lock, Check, Fingerprint,
+  Lock, Check, Fingerprint, Gavel, BookOpen, Users, Link2, HelpCircle,
+  Download, Hash, RotateCcw,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -38,6 +39,51 @@ interface DecisionStage {
 interface DciVersion {
   version: number; changedAt: string; changedBy: number; reason: string;
   snapshot: Record<string, unknown>;
+}
+
+// ─── JDP Types (matching DB schema) ──────────────────────────────────────────
+interface JdpFactualEvent { stageNumber: number; stage: string; stageName: string; date?: string | null; description: string; actor?: string | null; aiContribution?: string | null; }
+interface JdpLegalBasisGround { law: string; article?: string | null; relevance: string; }
+interface JdpLegalBasis { overview: string; grounds: JdpLegalBasisGround[]; conclusion: string; }
+interface JdpLegislationItem { title: string; reference: string; applicableArticles: string[]; relevance: string; }
+interface JdpEvidenceItem { type: string; description: string; weight: string; admissibility: string; }
+interface JdpEvidence { overview: string; items: JdpEvidenceItem[]; completenessAssessment: string; conclusion: string; }
+interface JdpProportionalityTest { result: string; reasoning: string; }
+interface JdpProportionality { legitimateAimTest: JdpProportionalityTest; necessityTest: JdpProportionalityTest; strictProportionalityTest: JdpProportionalityTest; overallConclusion: string; }
+interface JdpDiscretionary { overview: string; factorsConsidered: string[]; alternativesEvaluated: string; publicInterestBalance: string; conclusion: string; }
+interface JdpStageAi { stage: string; stageName: string; contribution: string; humanVerification: string; reviewedBy?: string | null; }
+interface JdpAiParticipation { overview: string; totalStagesWithAiAssistance: number; participationLevel: string; stageContributions: JdpStageAi[]; overallAssessment: string; }
+interface JdpOversightStep { stage: string; stageName: string; humanAction: string; outcome: string; }
+interface JdpHumanOversight { authorizedOfficer: string; position?: string | null; organization?: string | null; oversightLevel: string; verificationSteps: JdpOversightStep[]; conclusion: string; }
+interface JdpPrincipleResult { principle: string; passed: boolean; score?: number | null; notes: string; }
+interface JdpConstitutionalValidation { overallResult: string; validationDate?: string | null; alShamsiScore?: number | null; principleResults: JdpPrincipleResult[]; conclusion: string; }
+interface JdpDciSummary { decisionId: string; decisionType: string; competentAuthority?: string | null; constitutionalValidationStatus: string; alShamsiFrameworkCompliance: string; sealedAt?: string | null; completeAuditHash?: string | null; currentVersion: number; }
+interface JdpAuditStage { stageNumber: number; stage: string; stageName: string; auditHash?: string | null; completedAt?: string | null; }
+interface JdpAuditChain { overview: string; stages: JdpAuditStage[]; completeHash?: string | null; integrityStatus: string; }
+interface JdpVersionHistory { currentVersion: number; isSealed: boolean; sealedAt?: string | null; amendments: DciVersion[]; }
+interface JdpJudicialQuestion { category: string; question: string; legalGrounding: string; preparedAnswer: string; relevantEvidence?: string | null; }
+interface JdpExplainability { overview: string; decisionRationale: string; alternativesConsidered: string; impactAssessment: string; publicInterestJustification: string; minorityInterestConsiderations?: string | null; conclusion: string; }
+
+interface Jdp {
+  id: number; decisionId: number;
+  status: 'pending' | 'generating' | 'ready' | 'error';
+  generatedAt?: string | null; generatedBy?: number | null;
+  generationDurationMs?: number | null; errorMessage?: string | null;
+  factualChronology?: JdpFactualEvent[] | null;
+  legalBasis?: JdpLegalBasis | null;
+  applicableLegislation?: JdpLegislationItem[] | null;
+  evidenceSummary?: JdpEvidence | null;
+  proportionalityAnalysis?: JdpProportionality | null;
+  discretionaryReasoning?: JdpDiscretionary | null;
+  aiParticipationExplanation?: JdpAiParticipation | null;
+  humanOversightRecord?: JdpHumanOversight | null;
+  constitutionalValidationResults?: JdpConstitutionalValidation | null;
+  dciSummary?: JdpDciSummary | null;
+  auditChain?: JdpAuditChain | null;
+  versionHistoryRecord?: JdpVersionHistory | null;
+  anticipatedJudicialReviewQuestions?: JdpJudicialQuestion[] | null;
+  explainabilityReport?: JdpExplainability | null;
+  createdAt: string; updatedAt: string;
 }
 
 interface Dci {
@@ -310,6 +356,586 @@ function DciPanel({ decisionId, decision }: { decisionId: number; decision: Deci
           Powered by the M. Al-Shamsi Framework™ · MARSAD Constitutional Standard v1.0
         </p>
       </div>
+    </div>
+  );
+}
+
+// ─── JDP Helpers & Panel ──────────────────────────────────────────────────────
+
+function JdpSection({
+  title, icon: Icon, children, accent,
+}: {
+  title: string;
+  icon?: React.ComponentType<{ className?: string }>;
+  children: React.ReactNode;
+  accent?: string;
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <div className={`flex items-center gap-2 px-5 py-3 border-b border-border/40 ${accent ?? 'bg-muted/30'}`}>
+        {Icon && <Icon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
+        <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground leading-none">{title}</h3>
+      </div>
+      <div className="p-5">{children}</div>
+    </div>
+  );
+}
+
+function JdpConclusion({ text }: { text: string }) {
+  return (
+    <div className="mt-3 p-3 rounded-lg bg-muted/40 border border-border/40">
+      <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60 mb-1">الخلاصة</p>
+      <p className="text-xs text-foreground/80 leading-relaxed">{text}</p>
+    </div>
+  );
+}
+
+function TestChip({ result }: { result: string }) {
+  const map: Record<string, { label: string; cls: string }> = {
+    passed:   { label: 'اجتاز', cls: 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-950/30 dark:border-emerald-800/40' },
+    marginal: { label: 'هامشي', cls: 'text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-950/30 dark:border-amber-800/40' },
+    failed:   { label: 'لم يجتز', cls: 'text-red-700 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-950/30 dark:border-red-800/40' },
+  };
+  const { label, cls } = map[result] ?? { label: result, cls: 'text-muted-foreground bg-muted border-border' };
+  return <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-bold ${cls}`}>{label}</span>;
+}
+
+function JdpPanel({ decisionId, decision }: { decisionId: number; decision: Decision }) {
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [expandedQ, setExpandedQ] = useState<number | null>(null);
+  const qc = useQueryClient();
+
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['jdp', decisionId],
+    queryFn: () => apiFetch('GET', `/api/decisions/${decisionId}/jdp`),
+    retry: false,
+    refetchInterval: (q) => {
+      const s = (q.state.data as { jdp?: { status: string } } | undefined)?.jdp?.status;
+      return s === 'generating' ? 4000 : false;
+    },
+  });
+
+  const jdp: Jdp | null = data?.jdp ?? null;
+  const notFound = !isLoading && (!data || data.error || !jdp);
+  const statusReady = jdp?.status === 'ready';
+  const statusGenerating = jdp?.status === 'generating' || isGenerating;
+  const statusError = jdp?.status === 'error';
+
+  const handleGenerate = async () => {
+    setIsGenerating(true);
+    try {
+      await apiFetch('POST', `/api/decisions/${decisionId}/jdp/generate`, {});
+      await refetch();
+      qc.invalidateQueries({ queryKey: ['jdp', decisionId] });
+    } catch (e: unknown) {
+      const msg = (e as Error)?.message || 'فشل توليد حزمة الدفاع القضائي';
+      alert(msg);
+    }
+    setIsGenerating(false);
+  };
+
+  const handleExport = () => {
+    window.open(`/api/decisions/${decisionId}/jdp/export`, '_blank');
+  };
+
+  if (isLoading) return (
+    <div className="flex items-center justify-center py-24">
+      <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+    </div>
+  );
+
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 space-y-5 max-w-5xl pb-20">
+
+      {/* ── Status Header ───────────────────────────────────── */}
+      <div className={`rounded-2xl border-2 p-5 sm:p-6 ${statusReady ? 'border-emerald-300/70 bg-gradient-to-br from-emerald-50/60 to-transparent dark:border-emerald-700/40 dark:from-emerald-950/20' : statusError ? 'border-red-300/60 bg-red-50/30 dark:border-red-800/40 dark:bg-red-950/10' : 'border-border bg-card'}`}>
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-[10px] font-mono font-bold tracking-widest text-muted-foreground/50 uppercase" dir="ltr">
+              {decision.caseNumber} · JDP · حزمة الدفاع القضائي
+            </div>
+            <div className="flex items-center gap-2">
+              <Gavel className="w-4 h-4 text-foreground/60 shrink-0" />
+              <h2 className="text-lg font-bold text-foreground">حزمة الدفاع القضائي</h2>
+            </div>
+            <p className="text-xs text-muted-foreground">أداة دستورية كاملة جاهزة للمحكمة الإدارية · 14 قسماً · إطار الشامسي™</p>
+          </div>
+          <div className="flex flex-col items-end gap-2">
+            {/* Status badge */}
+            {statusReady ? (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300 text-xs font-bold">
+                <CheckCircle2 className="w-3.5 h-3.5" /> جاهزة للمحكمة
+              </div>
+            ) : statusGenerating ? (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-100 dark:bg-blue-950/40 border border-blue-300 dark:border-blue-700 text-blue-800 dark:text-blue-300 text-xs font-bold">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" /> جارٍ التوليد...
+              </div>
+            ) : statusError ? (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-100 dark:bg-red-950/40 border border-red-300 dark:border-red-700 text-red-800 dark:text-red-300 text-xs font-bold">
+                <XCircle className="w-3.5 h-3.5" /> فشل التوليد
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted border border-border text-muted-foreground text-xs font-bold">
+                <Clock className="w-3 h-3" /> لم تُولَّد بعد
+              </div>
+            )}
+            {/* Action buttons */}
+            <div className="flex items-center gap-2">
+              {statusReady && (
+                <button onClick={handleExport} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border bg-card text-xs font-semibold text-foreground/70 hover:text-foreground hover:bg-muted/60 transition-colors">
+                  <Download className="w-3.5 h-3.5" /> تصدير
+                </button>
+              )}
+              {!statusGenerating && (
+                <button onClick={handleGenerate} disabled={isGenerating}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-foreground text-background text-xs font-bold hover:opacity-90 transition-opacity disabled:opacity-50">
+                  {statusError ? <RotateCcw className="w-3.5 h-3.5" /> : <Sparkles className="w-3.5 h-3.5" />}
+                  {statusReady ? 'إعادة التوليد' : statusError ? 'إعادة المحاولة' : 'توليد الحزمة'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+        {/* Error detail */}
+        {statusError && jdp?.errorMessage && (
+          <div className="mt-4 p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/40">
+            <p className="text-xs text-red-700 dark:text-red-400 font-mono break-all">{jdp.errorMessage}</p>
+          </div>
+        )}
+        {/* Explanation when not yet generated */}
+        {(notFound || (!jdp && !isGenerating)) && (
+          <div className="mt-4 p-4 rounded-xl bg-muted/40 border border-border/40 space-y-2">
+            <p className="text-sm text-foreground/80 leading-relaxed">
+              تُنشأ حزمة الدفاع القضائي تلقائياً بعد ختم الهوية الدستورية للقرار.
+              تشتمل الحزمة على 14 قسماً دستورياً يُغطي كل جانب يُحتمل إثارته أمام المحكمة الإدارية.
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 pt-1">
+              {['السجل الوقائي التسلسلي','السند القانوني','التشريعات السارية','ملخص الأدلة','تحليل التناسب','الاستنساب الإداري','إسهام الذكاء الاصطناعي','سجل الرقابة البشرية','نتائج التحقق الدستوري','ملخص الهوية الدستورية','سلسلة التدقيق','سجل الإصدارات','الأسئلة القضائية المتوقعة','تقرير قابلية التفسير'].map((s) => (
+                <div key={s} className="flex items-center gap-1.5 text-[10px] text-muted-foreground/70">
+                  <CheckCircle2 className="w-3 h-3 text-muted-foreground/30 shrink-0" />{s}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Generating spinner ───────────────────────────────── */}
+      {statusGenerating && (
+        <div className="rounded-xl border border-blue-200/60 dark:border-blue-800/40 bg-blue-50/40 dark:bg-blue-950/10 p-10 text-center space-y-3">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600 dark:text-blue-400 mx-auto" />
+          <p className="text-sm font-semibold text-foreground">جارٍ توليد حزمة الدفاع القضائي...</p>
+          <p className="text-xs text-muted-foreground max-w-sm mx-auto leading-relaxed">
+            يُحلّل نظام MARSAD كامل مراحل القرار ويُعدّ الحجج القانونية لكل قسم من الأقسام الدستورية الأربعة عشر. قد يستغرق ذلك 30–60 ثانية.
+          </p>
+        </div>
+      )}
+
+      {/* ── 14 Constitutional Sections ──────────────────────── */}
+      {statusReady && jdp && (
+        <div className="space-y-4">
+
+          {/* 01 — Factual Chronology */}
+          {jdp.factualChronology && jdp.factualChronology.length > 0 && (
+            <JdpSection title="01 · السجل الوقائي التسلسلي" icon={Clock}>
+              <div className="space-y-0">
+                {jdp.factualChronology.map((ev, i) => (
+                  <div key={i} className="flex gap-3 pb-4 last:pb-0">
+                    <div className="flex flex-col items-center gap-0">
+                      <div className="w-6 h-6 rounded-full bg-foreground/8 border border-border flex items-center justify-center text-[9px] font-mono font-bold text-foreground/50 shrink-0">{ev.stageNumber}</div>
+                      {i < jdp.factualChronology!.length - 1 && <div className="w-px flex-1 bg-border/40 mt-1 min-h-[12px]" />}
+                    </div>
+                    <div className="flex-1 pt-0.5">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className="text-xs font-bold text-foreground">{ev.stageName}</span>
+                        {ev.date && <span className="text-[10px] text-muted-foreground/60 font-mono" dir="ltr">{ev.date.substring(0, 10)}</span>}
+                        {ev.actor && <span className="text-[10px] text-muted-foreground/60">· {ev.actor}</span>}
+                      </div>
+                      <p className="text-xs text-foreground/80 leading-relaxed">{ev.description}</p>
+                      {ev.aiContribution && (
+                        <p className="text-[10px] text-muted-foreground/55 mt-1.5 flex items-center gap-1">
+                          <Sparkles className="w-2.5 h-2.5 shrink-0" /> {ev.aiContribution}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </JdpSection>
+          )}
+
+          {/* 02 — Legal Basis */}
+          {jdp.legalBasis && (
+            <JdpSection title="02 · السند القانوني" icon={Scale}>
+              <p className="text-xs text-foreground/80 leading-relaxed mb-3">{jdp.legalBasis.overview}</p>
+              {jdp.legalBasis.grounds.length > 0 && (
+                <div className="space-y-2">
+                  {jdp.legalBasis.grounds.map((g, i) => (
+                    <div key={i} className="flex gap-2 text-xs border-b border-border/30 pb-2 last:border-0 last:pb-0">
+                      <span className="text-muted-foreground/40 font-mono shrink-0 mt-0.5">{String(i + 1).padStart(2, '0')}.</span>
+                      <div>
+                        <span className="font-semibold text-foreground">{g.law}</span>
+                        {g.article && <span className="text-muted-foreground ml-1 mr-1">·</span>}
+                        {g.article && <span className="font-mono text-[10px] text-muted-foreground">{g.article}</span>}
+                        <p className="text-foreground/70 mt-0.5">{g.relevance}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <JdpConclusion text={jdp.legalBasis.conclusion} />
+            </JdpSection>
+          )}
+
+          {/* 03 — Applicable Legislation */}
+          {jdp.applicableLegislation && jdp.applicableLegislation.length > 0 && (
+            <JdpSection title="03 · التشريعات السارية" icon={BookOpen}>
+              <div className="space-y-3">
+                {jdp.applicableLegislation.map((leg, i) => (
+                  <div key={i} className="p-3 rounded-lg border border-border/50 bg-muted/20 space-y-1">
+                    <div className="flex items-start justify-between gap-2 flex-wrap">
+                      <span className="text-xs font-bold text-foreground">{leg.title}</span>
+                      <span className="text-[10px] font-mono text-muted-foreground/60 shrink-0" dir="ltr">{leg.reference}</span>
+                    </div>
+                    {leg.applicableArticles.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {leg.applicableArticles.map((art, j) => (
+                          <span key={j} className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-foreground/6 border border-border/40 text-foreground/60" dir="ltr">{art}</span>
+                        ))}
+                      </div>
+                    )}
+                    <p className="text-[10px] text-muted-foreground/70">{leg.relevance}</p>
+                  </div>
+                ))}
+              </div>
+            </JdpSection>
+          )}
+
+          {/* 04 — Evidence Summary */}
+          {jdp.evidenceSummary && (
+            <JdpSection title="04 · ملخص الأدلة" icon={FileText}>
+              <p className="text-xs text-foreground/80 leading-relaxed mb-3">{jdp.evidenceSummary.overview}</p>
+              {jdp.evidenceSummary.items.length > 0 && (
+                <div className="space-y-2">
+                  {jdp.evidenceSummary.items.map((item, i) => (
+                    <div key={i} className="flex gap-3 text-xs border-b border-border/30 pb-2 last:border-0 last:pb-0">
+                      <div className="shrink-0 mt-0.5">
+                        <span className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-bold border ${item.weight === 'high' ? 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-950/30 dark:border-emerald-800/40' : item.weight === 'medium' ? 'text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-950/30 dark:border-amber-800/40' : 'text-slate-600 bg-slate-50 border-slate-200 dark:text-slate-400 dark:bg-slate-900/30 dark:border-slate-700'}`}>{item.weight === 'high' ? 'عالي' : item.weight === 'medium' ? 'متوسط' : 'منخفض'}</span>
+                      </div>
+                      <div className="flex-1">
+                        <span className="font-semibold text-foreground">{item.type}</span>
+                        <p className="text-foreground/70 mt-0.5">{item.description}</p>
+                        <p className="text-[10px] text-muted-foreground/60 mt-0.5 italic">{item.admissibility}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="mt-3 text-xs text-foreground/70 leading-relaxed">
+                <span className="font-semibold">تقييم الاكتمال: </span>{jdp.evidenceSummary.completenessAssessment}
+              </div>
+              <JdpConclusion text={jdp.evidenceSummary.conclusion} />
+            </JdpSection>
+          )}
+
+          {/* 05 — Proportionality Analysis */}
+          {jdp.proportionalityAnalysis && (
+            <JdpSection title="05 · تحليل التناسب" icon={Scale}>
+              <div className="space-y-3">
+                {[
+                  { label: 'اختبار المشروعية', test: jdp.proportionalityAnalysis.legitimateAimTest },
+                  { label: 'اختبار الضرورة', test: jdp.proportionalityAnalysis.necessityTest },
+                  { label: 'اختبار التناسب الصارم', test: jdp.proportionalityAnalysis.strictProportionalityTest },
+                ].map(({ label, test }) => (
+                  <div key={label} className="p-3 rounded-lg border border-border/50 bg-muted/20 space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-foreground">{label}</span>
+                      <TestChip result={test.result} />
+                    </div>
+                    <p className="text-xs text-foreground/70 leading-relaxed">{test.reasoning}</p>
+                  </div>
+                ))}
+              </div>
+              <JdpConclusion text={jdp.proportionalityAnalysis.overallConclusion} />
+            </JdpSection>
+          )}
+
+          {/* 06 — Discretionary Reasoning */}
+          {jdp.discretionaryReasoning && (
+            <JdpSection title="06 · الاستنساب الإداري" icon={Scale}>
+              <p className="text-xs text-foreground/80 leading-relaxed mb-3">{jdp.discretionaryReasoning.overview}</p>
+              {jdp.discretionaryReasoning.factorsConsidered.length > 0 && (
+                <div className="mb-3">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60 mb-1.5">العوامل المُراعاة</p>
+                  <div className="space-y-1">
+                    {jdp.discretionaryReasoning.factorsConsidered.map((f, i) => (
+                      <div key={i} className="flex items-start gap-2 text-xs text-foreground/80">
+                        <span className="text-muted-foreground/40 font-mono shrink-0 mt-0.5">{String(i + 1).padStart(2, '0')}.</span>{f}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="text-xs text-foreground/70 leading-relaxed mb-2">
+                <span className="font-semibold">البدائل المُقيَّمة: </span>{jdp.discretionaryReasoning.alternativesEvaluated}
+              </div>
+              <div className="text-xs text-foreground/70 leading-relaxed">
+                <span className="font-semibold">موازنة المصلحة العامة: </span>{jdp.discretionaryReasoning.publicInterestBalance}
+              </div>
+              <JdpConclusion text={jdp.discretionaryReasoning.conclusion} />
+            </JdpSection>
+          )}
+
+          {/* 07 — AI Participation Explanation */}
+          {jdp.aiParticipationExplanation && (
+            <JdpSection title="07 · بيان إسهام الذكاء الاصطناعي" icon={Sparkles}>
+              <p className="text-xs text-foreground/80 leading-relaxed mb-3">{jdp.aiParticipationExplanation.overview}</p>
+              {jdp.aiParticipationExplanation.stageContributions.length > 0 && (
+                <div className="space-y-2">
+                  {jdp.aiParticipationExplanation.stageContributions.map((sc, i) => (
+                    <div key={i} className="p-3 rounded-lg border border-border/40 bg-muted/20 space-y-1.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[10px] font-mono text-muted-foreground/50 bg-muted px-1.5 py-0.5 rounded" dir="ltr">{sc.stage}</span>
+                        <span className="text-xs font-semibold text-foreground">{sc.stageName}</span>
+                        {sc.reviewedBy && <span className="text-[10px] text-muted-foreground/50">· {sc.reviewedBy}</span>}
+                      </div>
+                      <p className="text-xs text-foreground/75"><span className="font-semibold">الإسهام: </span>{sc.contribution}</p>
+                      <p className="text-xs text-foreground/60"><span className="font-semibold">التحقق البشري: </span>{sc.humanVerification}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <JdpConclusion text={jdp.aiParticipationExplanation.overallAssessment} />
+            </JdpSection>
+          )}
+
+          {/* 08 — Human Oversight Record */}
+          {jdp.humanOversightRecord && (
+            <JdpSection title="08 · سجل الرقابة البشرية" icon={Users}>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                <div><p className="text-[10px] text-muted-foreground/60 font-bold uppercase tracking-wide mb-0.5">المسؤول المُخوَّل</p><p className="text-xs font-semibold text-foreground">{jdp.humanOversightRecord.authorizedOfficer}</p></div>
+                <div><p className="text-[10px] text-muted-foreground/60 font-bold uppercase tracking-wide mb-0.5">المنصب</p><p className="text-xs text-foreground">{jdp.humanOversightRecord.position ?? '—'}</p></div>
+                <div><p className="text-[10px] text-muted-foreground/60 font-bold uppercase tracking-wide mb-0.5">الجهة</p><p className="text-xs text-foreground">{jdp.humanOversightRecord.organization ?? '—'}</p></div>
+              </div>
+              {jdp.humanOversightRecord.verificationSteps.length > 0 && (
+                <div className="space-y-2">
+                  {jdp.humanOversightRecord.verificationSteps.map((step, i) => (
+                    <div key={i} className="flex gap-2 text-xs border-b border-border/30 pb-2 last:border-0 last:pb-0">
+                      <span className="text-[10px] font-mono text-muted-foreground/50 bg-muted px-1 py-0.5 rounded shrink-0 mt-0.5" dir="ltr">{step.stage}</span>
+                      <div>
+                        <span className="font-semibold text-foreground">{step.stageName}: </span>
+                        <span className="text-foreground/75">{step.humanAction}</span>
+                        {step.outcome && <span className="text-muted-foreground/60"> → {step.outcome}</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <JdpConclusion text={jdp.humanOversightRecord.conclusion} />
+            </JdpSection>
+          )}
+
+          {/* 09 — Constitutional Validation Results */}
+          {jdp.constitutionalValidationResults && (
+            <JdpSection title="09 · نتائج التحقق الدستوري" icon={Shield}>
+              <div className="flex items-center gap-3 mb-4 flex-wrap">
+                <TestChip result={jdp.constitutionalValidationResults.overallResult === 'passed' ? 'passed' : 'failed'} />
+                {jdp.constitutionalValidationResults.alShamsiScore != null && (
+                  <span className="text-xs text-muted-foreground">نقاط إطار الشامسي: <span className="font-bold text-foreground">{jdp.constitutionalValidationResults.alShamsiScore}</span>/100</span>
+                )}
+                {jdp.constitutionalValidationResults.validationDate && (
+                  <span className="text-[10px] text-muted-foreground/50 font-mono" dir="ltr">{jdp.constitutionalValidationResults.validationDate.substring(0, 10)}</span>
+                )}
+              </div>
+              {jdp.constitutionalValidationResults.principleResults.length > 0 && (
+                <div className="space-y-2">
+                  {jdp.constitutionalValidationResults.principleResults.map((pr, i) => (
+                    <div key={i} className="flex items-start gap-3 text-xs border-b border-border/30 pb-2 last:border-0 last:pb-0">
+                      <div className="shrink-0 mt-0.5">
+                        {pr.passed ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> : <XCircle className="w-3.5 h-3.5 text-red-500" />}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold text-foreground">{pr.principle}</span>
+                          {pr.score != null && <span className="text-[10px] text-muted-foreground/60">{pr.score}/100</span>}
+                        </div>
+                        <p className="text-foreground/65 mt-0.5">{pr.notes}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <JdpConclusion text={jdp.constitutionalValidationResults.conclusion} />
+            </JdpSection>
+          )}
+
+          {/* 10 — DCI Summary */}
+          {jdp.dciSummary && (
+            <JdpSection title="10 · ملخص الهوية الدستورية" icon={Fingerprint}>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {[
+                  { label: 'معرّف القرار', value: jdp.dciSummary.decisionId, mono: true },
+                  { label: 'نوع القرار', value: jdp.dciSummary.decisionType },
+                  { label: 'الجهة المختصة', value: jdp.dciSummary.competentAuthority ?? '—' },
+                  { label: 'التحقق الدستوري', value: jdp.dciSummary.constitutionalValidationStatus },
+                  { label: 'إطار الشامسي', value: jdp.dciSummary.alShamsiFrameworkCompliance },
+                  { label: 'الإصدار', value: String(jdp.dciSummary.currentVersion), mono: true },
+                ].map(({ label, value, mono }) => (
+                  <div key={label}>
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60 mb-0.5">{label}</p>
+                    <p className={`text-xs font-semibold text-foreground ${mono ? 'font-mono' : ''}`}>{value}</p>
+                  </div>
+                ))}
+                {jdp.dciSummary.completeAuditHash && (
+                  <div className="col-span-2 sm:col-span-3">
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60 mb-1">بصمة التحقق الشاملة</p>
+                    <p className="text-[10px] font-mono text-foreground/50 break-all bg-muted/40 rounded px-2 py-1 border border-border/30" dir="ltr">{jdp.dciSummary.completeAuditHash}</p>
+                  </div>
+                )}
+              </div>
+            </JdpSection>
+          )}
+
+          {/* 11 — Audit Chain */}
+          {jdp.auditChain && (
+            <JdpSection title="11 · سلسلة التدقيق" icon={Link2}>
+              <p className="text-xs text-foreground/80 leading-relaxed mb-3">{jdp.auditChain.overview}</p>
+              <div className="flex items-center gap-2 mb-3">
+                <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-bold ${jdp.auditChain.integrityStatus === 'verified' ? 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-950/30 dark:border-emerald-800/40' : 'text-red-700 bg-red-50 border-red-200'}`}>
+                  <Hash className="w-2.5 h-2.5 mr-1" />
+                  {jdp.auditChain.integrityStatus === 'verified' ? 'سلامة البيانات مُتحقَّق منها' : 'تحذير: مشكلة في سلامة البيانات'}
+                </span>
+              </div>
+              {jdp.auditChain.stages.length > 0 && (
+                <div className="space-y-1.5">
+                  {jdp.auditChain.stages.map((st, i) => (
+                    <div key={i} className="flex items-center gap-2 text-[10px] py-1 border-b border-border/20 last:border-0">
+                      <span className="font-mono font-bold text-muted-foreground/50 w-5 shrink-0">{st.stageNumber}</span>
+                      <span className="font-mono text-muted-foreground/50 shrink-0" dir="ltr">{st.stage}</span>
+                      <span className="text-foreground/70 flex-1 min-w-0">{st.stageName}</span>
+                      <span className="font-mono text-muted-foreground/40 truncate max-w-[100px] shrink-0" dir="ltr" title={st.auditHash ?? undefined}>{st.auditHash ? st.auditHash.substring(0, 8) + '…' : '—'}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </JdpSection>
+          )}
+
+          {/* 12 — Version History */}
+          {jdp.versionHistoryRecord && (
+            <JdpSection title="12 · سجل الإصدارات" icon={CheckCircle2}>
+              <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
+                <span><span className="font-semibold text-foreground">الإصدار الحالي:</span> {jdp.versionHistoryRecord.currentVersion}</span>
+                <span><span className="font-semibold text-foreground">مختوم:</span> {jdp.versionHistoryRecord.isSealed ? 'نعم' : 'لا'}</span>
+                {jdp.versionHistoryRecord.sealedAt && <span dir="ltr" className="text-muted-foreground/60">{jdp.versionHistoryRecord.sealedAt.substring(0, 10)}</span>}
+              </div>
+              {jdp.versionHistoryRecord.amendments.length === 0 ? (
+                <p className="text-xs text-muted-foreground/60 italic">لا توجد تعديلات مُسجَّلة — الهوية الدستورية لم تُعدَّل منذ الختم</p>
+              ) : (
+                <div className="space-y-2">
+                  {jdp.versionHistoryRecord.amendments.map((v, i) => (
+                    <div key={i} className="p-3 rounded-lg border border-border/40 bg-muted/20 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[10px] font-mono font-bold bg-muted px-1.5 py-0.5 rounded text-muted-foreground" dir="ltr">v{v.version}→v{v.version + 1}</span>
+                        <span className="text-[10px] text-muted-foreground/50" dir="ltr">{v.changedAt.substring(0, 10)}</span>
+                      </div>
+                      <p className="text-xs text-foreground/80">{v.reason}</p>
+                      <p className="text-[10px] text-muted-foreground/50">الحقول: {Object.keys(v.snapshot).join('، ')}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </JdpSection>
+          )}
+
+          {/* 13 — Anticipated Judicial Review Questions (most prominent section) */}
+          {jdp.anticipatedJudicialReviewQuestions && jdp.anticipatedJudicialReviewQuestions.length > 0 && (
+            <JdpSection title="13 · الأسئلة القضائية المتوقعة والردود المُعدَّة" icon={HelpCircle} accent="bg-amber-50/50 dark:bg-amber-950/10">
+              <p className="text-xs text-muted-foreground/70 mb-4 leading-relaxed">
+                الأسئلة التي يُرجَّح أن تطرحها المحكمة الإدارية، مع الردود القانونية المُعدَّة والمستندة إلى سجل القرار.
+              </p>
+              <div className="space-y-2">
+                {jdp.anticipatedJudicialReviewQuestions.map((q, i) => (
+                  <div key={i} className="rounded-lg border border-border/50 overflow-hidden">
+                    <button
+                      onClick={() => setExpandedQ(expandedQ === i ? null : i)}
+                      className="w-full flex items-start gap-3 px-4 py-3 hover:bg-muted/40 transition-colors text-right"
+                    >
+                      <div className="shrink-0 mt-0.5 flex items-center gap-2">
+                        <span className="text-[9px] font-mono font-bold text-muted-foreground/40 w-5">{String(i + 1).padStart(2, '0')}</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/40 text-amber-700 dark:text-amber-400 font-bold shrink-0">{q.category}</span>
+                      </div>
+                      <p className="flex-1 text-xs font-semibold text-foreground text-right">{q.question}</p>
+                      {expandedQ === i ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />}
+                    </button>
+                    {expandedQ === i && (
+                      <div className="px-4 pb-4 space-y-3 border-t border-border/30 bg-muted/20">
+                        <div className="pt-3">
+                          <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60 mb-1">السند القانوني للطعن</p>
+                          <p className="text-xs text-foreground/75 leading-relaxed">{q.legalGrounding}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60 mb-1">الرد القانوني المُعدّ</p>
+                          <p className="text-xs text-foreground/85 leading-relaxed">{q.preparedAnswer}</p>
+                        </div>
+                        {q.relevantEvidence && (
+                          <div>
+                            <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60 mb-1">الأدلة الداعمة</p>
+                            <p className="text-xs text-foreground/70 leading-relaxed">{q.relevantEvidence}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </JdpSection>
+          )}
+
+          {/* 14 — Explainability Report */}
+          {jdp.explainabilityReport && (
+            <JdpSection title="14 · تقرير قابلية التفسير الشامل" icon={BookOpen}>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60 mb-1">نظرة عامة</p>
+                  <p className="text-xs text-foreground/80 leading-relaxed">{jdp.explainabilityReport.overview}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60 mb-1">مبررات القرار</p>
+                  <p className="text-xs text-foreground/80 leading-relaxed">{jdp.explainabilityReport.decisionRationale}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60 mb-1">البدائل المُقيَّمة</p>
+                  <p className="text-xs text-foreground/75 leading-relaxed">{jdp.explainabilityReport.alternativesConsidered}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60 mb-1">تقييم الأثر</p>
+                  <p className="text-xs text-foreground/75 leading-relaxed">{jdp.explainabilityReport.impactAssessment}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60 mb-1">المصلحة العامة</p>
+                  <p className="text-xs text-foreground/75 leading-relaxed">{jdp.explainabilityReport.publicInterestJustification}</p>
+                </div>
+                {jdp.explainabilityReport.minorityInterestConsiderations && (
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60 mb-1">اعتبارات الأطراف المتأثرة</p>
+                    <p className="text-xs text-foreground/75 leading-relaxed">{jdp.explainabilityReport.minorityInterestConsiderations}</p>
+                  </div>
+                )}
+                <JdpConclusion text={jdp.explainabilityReport.conclusion} />
+              </div>
+            </JdpSection>
+          )}
+
+          {/* Footer */}
+          <div className="text-center py-2">
+            <p className="text-[10px] text-muted-foreground/30 tracking-wide">
+              Powered by the M. Al-Shamsi Framework™ · MARSAD Judicial Defense Standard v1.0
+            </p>
+          </div>
+
+        </div>
+      )}
     </div>
   );
 }
@@ -930,7 +1556,7 @@ export default function DecisionWorkspace() {
 
   const decisionId = params.id ? parseInt(params.id) : null;
   const [activeStage, setActiveStage] = useState<StageKey>('administrative_request');
-  const [activeView, setActiveView] = useState<'stage' | 'dci'>('stage');
+  const [activeView, setActiveView] = useState<'stage' | 'dci' | 'jdp'>('stage');
   const [formData, setFormData] = useState<Record<StageKey, Record<string, unknown>>>({} as any);
   const [aiAnalysis, setAiAnalysis] = useState<Record<StageKey, Record<string, unknown>>>({} as any);
   const [validationResults, setValidationResults] = useState<Record<StageKey, { passed: boolean; analysis: Record<string, unknown>; validationStatus: string }>>({} as any);
@@ -1129,6 +1755,16 @@ export default function DecisionWorkspace() {
               >
                 <Fingerprint className="w-3.5 h-3.5" /> الهوية الدستورية DCI
               </button>
+              <button
+                role="tab"
+                aria-selected={activeView === 'jdp'}
+                aria-controls="panel-jdp"
+                id="tab-jdp"
+                onClick={() => setActiveView('jdp')}
+                className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors -mb-px ${activeView === 'jdp' ? 'border-emerald-500 text-emerald-700 dark:text-emerald-400' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+              >
+                <Gavel className="w-3.5 h-3.5" /> الدفاع القضائي JDP
+              </button>
             </div>
 
             {/* ── Two-column layout ─────────────────────────────── */}
@@ -1198,7 +1834,11 @@ export default function DecisionWorkspace() {
 
               {/* Main Stage Content OR DCI Panel */}
               <div className="flex-1 overflow-y-auto">
-                {activeView === 'dci' ? (
+                {activeView === 'jdp' ? (
+                  <div role="tabpanel" id="panel-jdp" aria-labelledby="tab-jdp">
+                    <JdpPanel decisionId={decisionId!} decision={decision} />
+                  </div>
+                ) : activeView === 'dci' ? (
                   <div role="tabpanel" id="panel-dci" aria-labelledby="tab-dci">
                     <DciPanel decisionId={decisionId!} decision={decision} />
                   </div>

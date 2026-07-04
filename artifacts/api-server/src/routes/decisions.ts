@@ -11,10 +11,25 @@ import {
   decisionsTable,
   decisionStagesTable,
   decisionDciTable,
+  decisionJdpTable,
   auditLogsTable,
   DECISION_STAGE_KEYS,
   type DecisionStageKey,
   type DciVersion,
+  type FactualEvent,
+  type LegalBasisSection,
+  type LegislationItem,
+  type EvidenceSection,
+  type ProportionalitySection,
+  type DiscretionarySection,
+  type AiParticipationSection,
+  type HumanOversightSection,
+  type ConstitutionalValidationSection,
+  type DciSummarySection,
+  type AuditChainSection,
+  type JdpVersionHistorySection,
+  type JudicialQuestion,
+  type ExplainabilitySection,
 } from "@workspace/db";
 import { requireAnyRole, requireSupervisorOrOwner } from "../middlewares/roleAuth";
 import { logAudit } from "../middlewares/auditLog";
@@ -992,6 +1007,315 @@ router.get("/decisions/:id/audit", requireSupervisorOrOwner, async (req, res): P
   } catch (err) {
     console.error("[decisions.audit]", err);
     res.status(500).json({ error: "Failed to load audit trail" });
+  }
+});
+
+// ─── JDP Service ──────────────────────────────────────────────────────────────
+
+/** Extract a compact summary of stage form data to keep the AI prompt within token bounds. */
+function summarizeStageData(stage: typeof decisionStagesTable.$inferSelect): Record<string, unknown> {
+  const data = (stage.stageData as Record<string, unknown>) ?? {};
+  return Object.fromEntries(Object.entries(data).slice(0, 12));
+}
+
+/**
+ * Call the AI to generate all 14 JDP sections as a structured JSON object.
+ * The prompt passes the full decision context: metadata, sealed DCI, and all stages.
+ */
+async function generateJdpContent(
+  decision: typeof decisionsTable.$inferSelect,
+  dci: typeof decisionDciTable.$inferSelect,
+  stages: (typeof decisionStagesTable.$inferSelect)[],
+): Promise<Record<string, unknown>> {
+  const legalBasisList = ((dci.applicableLegalBasis as string[]) ?? []).join("; ") || "غير محدد";
+  const sealedAtStr = dci.sealedAt instanceof Date ? dci.sealedAt.toISOString() : (dci.sealedAt as string | null) ?? "N/A";
+
+  const stagesContext = stages
+    .map((s) => {
+      const data = JSON.stringify(summarizeStageData(s)).substring(0, 350);
+      const analysis = JSON.stringify((s.aiAnalysis as Record<string, unknown>) ?? {}).substring(0, 350);
+      return `[${s.stageNumber}] ${s.stageKey} (completed: ${s.completedAt ?? "pending"})
+  data: ${data}
+  analysis: ${analysis}
+  hash: ${s.auditHash ?? "N/A"}`;
+    })
+    .join("\n\n");
+
+  const systemPrompt = `You are a senior constitutional law expert and administrative law specialist for the UAE government.
+You generate precise, court-ready Judicial Defense Packages (JDP) for administrative decisions under the M. Al-Shamsi Framework for Intelligent Administrative Decision-Making.
+Narrative text must be in Arabic. Technical identifiers (hashes, stage keys, ISO dates) remain in Latin script.
+Return ONLY valid JSON — no markdown fences, no explanation, no text before or after the JSON object.`;
+
+  const userPrompt = `Generate a complete Judicial Defense Package (JDP) for this administrative decision.
+
+=== DECISION IDENTITY ===
+Case Number: ${decision.caseNumber}
+Title (Arabic): ${decision.titleAr}
+Type: ${decision.decisionType}
+Jurisdiction: ${decision.jurisdiction}
+Issuing Authority: ${decision.issuingAuthority ?? "غير محدد"}
+Organization: ${decision.organizationUnit ?? "غير محدد"}
+Created: ${decision.createdAt}
+
+=== SEALED CONSTITUTIONAL IDENTITY (DCI) ===
+Competent Authority: ${dci.competentAuthority ?? "pending"}
+Legal Basis: ${legalBasisList}
+Purpose: ${dci.purposeOfDecision ?? "pending"}
+Human Decision Owner: ${dci.humanDecisionOwner ?? "pending"}
+AI Participation Level: ${dci.aiParticipationLevel}
+Human Oversight Level: ${dci.humanOversightLevel}
+Explainability Level: ${dci.explainabilityLevel}
+Transparency Level: ${dci.transparencyLevel}
+Evidence Completeness: ${dci.evidenceCompleteness}
+Proportionality Status: ${dci.proportionalityStatus}
+Legality Status: ${dci.legalityStatus}
+Constitutional Validation Status: ${dci.constitutionalValidationStatus}
+Al-Shamsi Framework Compliance: ${dci.alShamsiFrameworkCompliance}
+Complete Audit Hash: ${dci.completeAuditHash ?? "N/A"}
+DCI Version: ${dci.currentVersion} | Sealed: ${sealedAtStr}
+
+=== COMPLETED DECISION STAGES (${stages.length} stages) ===
+${stagesContext}
+
+Return a single JSON object with EXACTLY these 14 keys. Use real data from the decision context above.
+
+{
+  "factualChronology": [{"stageNumber":1,"stage":"stage_key","stageName":"Arabic stage name","date":"ISO date or null","description":"Detailed Arabic narrative of what occurred in this stage and its constitutional significance","actor":"Name/role of who performed this","aiContribution":"What MARSAD AI system contributed in this stage"}],
+  "legalBasis": {"overview":"Arabic overview of entire legal basis","grounds":[{"law":"Law or decree name","article":"Article number or null","relevance":"Arabic relevance to this decision"}],"conclusion":"Arabic legal basis conclusion"},
+  "applicableLegislation": [{"title":"Full legislation title","reference":"Official reference number","applicableArticles":["Art. X","Art. Y"],"relevance":"Arabic relevance statement"}],
+  "evidenceSummary": {"overview":"Arabic evidence overview","items":[{"type":"Type of evidence","description":"Arabic description","weight":"high","admissibility":"Why this evidence is admissible"}],"completenessAssessment":"Arabic assessment of evidence completeness","conclusion":"Arabic evidence conclusion"},
+  "proportionalityAnalysis": {"legitimateAimTest":{"result":"passed","reasoning":"Arabic reasoning"},"necessityTest":{"result":"passed","reasoning":"Arabic reasoning"},"strictProportionalityTest":{"result":"passed","reasoning":"Arabic reasoning"},"overallConclusion":"Arabic proportionality conclusion"},
+  "discretionaryReasoning": {"overview":"Arabic overview of administrative discretion exercised","factorsConsidered":["Arabic factor 1","Arabic factor 2","Arabic factor 3"],"alternativesEvaluated":"Arabic description of alternatives considered and why rejected","publicInterestBalance":"Arabic public interest analysis","conclusion":"Arabic discretionary reasoning conclusion"},
+  "aiParticipationExplanation": {"overview":"Arabic overview of AI participation throughout the decision lifecycle","totalStagesWithAiAssistance":11,"participationLevel":"comprehensive","stageContributions":[{"stage":"stage_key","stageName":"Arabic stage name","contribution":"Arabic description of AI contribution","humanVerification":"Arabic description of how human verified AI output","reviewedBy":"Role of the human reviewer"}],"overallAssessment":"Arabic overall assessment of AI participation appropriateness"},
+  "humanOversightRecord": {"authorizedOfficer":"Full name and official title","position":"Official position","organization":"Organization name","oversightLevel":"full","verificationSteps":[{"stage":"stage_key","stageName":"Arabic stage name","humanAction":"Arabic description of human action taken","outcome":"Arabic outcome of that action"}],"conclusion":"Arabic human oversight conclusion"},
+  "constitutionalValidationResults": {"overallResult":"passed","validationDate":"ISO date or null","alShamsiScore":95,"principleResults":[{"principle":"Arabic principle name","passed":true,"score":90,"notes":"Arabic notes on this principle"}],"conclusion":"Arabic constitutional validation conclusion"},
+  "dciSummary": {"decisionId":"${decision.caseNumber}","decisionType":"${decision.decisionType}","competentAuthority":"${dci.competentAuthority ?? ""}","constitutionalValidationStatus":"${dci.constitutionalValidationStatus}","alShamsiFrameworkCompliance":"${dci.alShamsiFrameworkCompliance}","sealedAt":"${sealedAtStr}","completeAuditHash":"${dci.completeAuditHash ?? ""}","currentVersion":${dci.currentVersion}},
+  "auditChain": {"overview":"Arabic audit chain integrity overview","stages":[{"stageNumber":1,"stage":"stage_key","stageName":"Arabic stage name","auditHash":"hash or null","completedAt":"ISO date or null"}],"completeHash":"${dci.completeAuditHash ?? ""}","integrityStatus":"verified"},
+  "versionHistoryRecord": {"currentVersion":${dci.currentVersion},"isSealed":${dci.isSealed},"sealedAt":"${sealedAtStr}","amendments":[]},
+  "anticipatedJudicialReviewQuestions": [{"category":"Legal Authority","question":"Arabic question a court would ask","legalGrounding":"Legal basis for this challenge","preparedAnswer":"Complete Arabic answer with specific evidence citations from this decision's record","relevantEvidence":"Which specific evidence supports this answer"}],
+  "explainabilityReport": {"overview":"Arabic high-level overview","decisionRationale":"Complete Arabic rationale for why this decision was taken and why it is the appropriate response","alternativesConsidered":"Arabic description of alternatives evaluated and specific reasons they were rejected","impactAssessment":"Arabic assessment of who is affected by this decision and how","publicInterestJustification":"Arabic justification of the public interest served by this decision","minorityInterestConsiderations":"Arabic description of how affected party interests were considered or null","conclusion":"Arabic explainability conclusion"}
+}
+
+CRITICAL REQUIREMENTS:
+1. Generate ALL 11 stages in factualChronology and aiParticipationExplanation.stageContributions
+2. Generate at LEAST 6 anticipatedJudicialReviewQuestions covering: Legal Authority, Proportionality, Evidence Quality, Procedural Compliance, Constitutional Validity, and AI Accountability
+3. All narrative fields must be substantive Arabic text, not placeholders
+4. Use actual data from the provided decision context — do not invent facts not present in the context
+5. Return ONLY the JSON object, nothing else`;
+
+  const provider = await aiRouter.routeFor(TaskType.RAG);
+  const result = await provider.complete({
+    taskType: TaskType.RAG,
+    systemPrompt,
+    prompt: userPrompt,
+    maxTokens: 8000,
+  });
+
+  const cleaned = result.text.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+  const jsonStr = cleaned
+    .replace(/^```(?:json)?\s*/m, "")
+    .replace(/\s*```$/m, "")
+    .trim();
+
+  const parseResult = parseModelJson<Record<string, unknown>>(jsonStr);
+  if (!parseResult.ok) {
+    throw new Error(`JDP JSON parse failed — raw: ${parseResult.raw?.slice(0, 200) ?? "empty"}`);
+  }
+  return parseResult.data;
+}
+
+// ─── JDP Endpoints ────────────────────────────────────────────────────────────
+
+// POST /decisions/:id/jdp/generate — generate (or regenerate) the Judicial Defense Package
+// Requires a sealed DCI. Blocks until AI generation completes (≈30–60 s).
+// Non-fatal regeneration: existing JDP is set to "generating" first so the UI can show progress.
+router.post("/decisions/:id/jdp/generate", requireAnyRole, async (req, res): Promise<void> => {
+  try {
+    const decisionId = parseInt(req.params.id as string, 10);
+    const userId = getUserId(req);
+
+    const decision = await assertDecisionAccess(req, decisionId);
+    if (!decision) { res.status(403).json({ error: "Access denied" }); return; }
+
+    const [dci] = await db.select().from(decisionDciTable)
+      .where(eq(decisionDciTable.decisionId, decisionId));
+    if (!dci) {
+      res.status(404).json({ error: "DCI not found — the decision must complete constitutional validation first" });
+      return;
+    }
+    if (!dci.isSealed) {
+      res.status(422).json({
+        error: "The Decision Constitutional Identity (DCI) has not been sealed. The Judicial Defense Package can only be generated after constitutional validation passes.",
+      });
+      return;
+    }
+
+    // Guard: reject if generation is already in progress
+    const [before] = await db.select({ status: decisionJdpTable.status })
+      .from(decisionJdpTable)
+      .where(eq(decisionJdpTable.decisionId, decisionId));
+    if (before?.status === "generating") {
+      res.status(409).json({ error: "JDP generation is already in progress for this decision. Please wait for the current run to complete." });
+      return;
+    }
+
+    // Atomic upsert to "generating" — handles both first-create and re-generate cases
+    await db.insert(decisionJdpTable)
+      .values({ decisionId, status: "generating" })
+      .onConflictDoUpdate({
+        target: decisionJdpTable.decisionId,
+        set: { status: "generating", errorMessage: null, updatedAt: new Date() },
+      });
+
+    // 14 required section keys — validated before any DB write
+    const REQUIRED_JDP_SECTIONS = [
+      "factualChronology", "legalBasis", "applicableLegislation", "evidenceSummary",
+      "proportionalityAnalysis", "discretionaryReasoning", "aiParticipationExplanation",
+      "humanOversightRecord", "constitutionalValidationResults", "dciSummary",
+      "auditChain", "versionHistoryRecord", "anticipatedJudicialReviewQuestions", "explainabilityReport",
+    ] as const;
+
+    const startMs = Date.now();
+    try {
+      const stages = await db.select().from(decisionStagesTable)
+        .where(eq(decisionStagesTable.decisionId, decisionId))
+        .orderBy(decisionStagesTable.stageNumber);
+
+      const sections = await generateJdpContent(decision, dci, stages);
+      const durationMs = Date.now() - startMs;
+
+      // Runtime section integrity check — all 14 sections must be present and non-null
+      const missingSections = REQUIRED_JDP_SECTIONS.filter((k) => !sections[k]);
+      if (missingSections.length > 0) {
+        throw new Error(`AI output is missing required sections: ${missingSections.join(", ")}. The model may have truncated its response.`);
+      }
+
+      await db.update(decisionJdpTable).set({
+        status: "ready",
+        generatedAt: new Date(),
+        generatedBy: userId,
+        generationDurationMs: durationMs,
+        factualChronology:               sections.factualChronology as FactualEvent[],
+        legalBasis:                      sections.legalBasis as LegalBasisSection,
+        applicableLegislation:           sections.applicableLegislation as LegislationItem[],
+        evidenceSummary:                 sections.evidenceSummary as EvidenceSection,
+        proportionalityAnalysis:         sections.proportionalityAnalysis as ProportionalitySection,
+        discretionaryReasoning:          sections.discretionaryReasoning as DiscretionarySection,
+        aiParticipationExplanation:      sections.aiParticipationExplanation as AiParticipationSection,
+        humanOversightRecord:            sections.humanOversightRecord as HumanOversightSection,
+        constitutionalValidationResults: sections.constitutionalValidationResults as ConstitutionalValidationSection,
+        dciSummary:                      sections.dciSummary as DciSummarySection,
+        auditChain:                      sections.auditChain as AuditChainSection,
+        versionHistoryRecord:            sections.versionHistoryRecord as JdpVersionHistorySection,
+        anticipatedJudicialReviewQuestions: sections.anticipatedJudicialReviewQuestions as JudicialQuestion[],
+        explainabilityReport:            sections.explainabilityReport as ExplainabilitySection,
+        errorMessage: null,
+        updatedAt: new Date(),
+      }).where(eq(decisionJdpTable.decisionId, decisionId));
+
+      logAudit(req, "jdp.generate", {
+        entityType: "decision",
+        entityId: decisionId,
+        details: { durationMs, sectionCount: Object.keys(sections).length },
+      });
+
+      const [jdp] = await db.select().from(decisionJdpTable)
+        .where(eq(decisionJdpTable.decisionId, decisionId));
+      res.json({ jdp });
+    } catch (genErr) {
+      const errMsg = genErr instanceof Error ? genErr.message : "Unknown generation error";
+      await db.update(decisionJdpTable)
+        .set({ status: "error", errorMessage: errMsg, updatedAt: new Date() })
+        .where(eq(decisionJdpTable.decisionId, decisionId));
+      console.error("[jdp.generate]", genErr);
+      res.status(500).json({ error: `JDP generation failed: ${errMsg}` });
+    }
+  } catch (err) {
+    console.error("[jdp.generate.outer]", err);
+    res.status(500).json({ error: "Failed to initiate JDP generation" });
+  }
+});
+
+// GET /decisions/:id/jdp — retrieve the Judicial Defense Package
+router.get("/decisions/:id/jdp", requireAnyRole, async (req, res): Promise<void> => {
+  try {
+    const decisionId = parseInt(req.params.id as string, 10);
+    const decision = await assertDecisionAccess(req, decisionId);
+    if (!decision) { res.status(403).json({ error: "Access denied" }); return; }
+
+    const [jdp] = await db.select().from(decisionJdpTable)
+      .where(eq(decisionJdpTable.decisionId, decisionId));
+    if (!jdp) { res.status(404).json({ error: "JDP not found" }); return; }
+
+    res.json({ jdp });
+  } catch (err) {
+    console.error("[jdp.get]", err);
+    res.status(500).json({ error: "Failed to load JDP" });
+  }
+});
+
+// GET /decisions/:id/jdp/export — structured JSON export for court submission
+// Returns a self-describing envelope suitable for archiving or printing.
+router.get("/decisions/:id/jdp/export", requireAnyRole, async (req, res): Promise<void> => {
+  try {
+    const decisionId = parseInt(req.params.id as string, 10);
+    const decision = await assertDecisionAccess(req, decisionId);
+    if (!decision) { res.status(403).json({ error: "Access denied" }); return; }
+
+    const [jdp] = await db.select().from(decisionJdpTable)
+      .where(eq(decisionJdpTable.decisionId, decisionId));
+    if (!jdp || jdp.status !== "ready") {
+      res.status(404).json({ error: "JDP not ready for export" });
+      return;
+    }
+
+    logAudit(req, "jdp.export", {
+      entityType: "decision",
+      entityId: decisionId,
+      details: { caseNumber: decision.caseNumber },
+    });
+
+    const exportPayload = {
+      exportVersion: "1.0",
+      exportedAt: new Date().toISOString(),
+      marsadVersion: "1.0",
+      framework: "M. Al-Shamsi Framework for Intelligent Administrative Decision-Making",
+      decision: {
+        caseNumber: decision.caseNumber,
+        titleAr: decision.titleAr,
+        decisionType: decision.decisionType,
+        jurisdiction: decision.jurisdiction,
+      },
+      packageMeta: {
+        generatedAt: jdp.generatedAt,
+        generationDurationMs: jdp.generationDurationMs,
+        sectionCount: 14,
+      },
+      sections: {
+        factualChronology:               jdp.factualChronology,
+        legalBasis:                      jdp.legalBasis,
+        applicableLegislation:           jdp.applicableLegislation,
+        evidenceSummary:                 jdp.evidenceSummary,
+        proportionalityAnalysis:         jdp.proportionalityAnalysis,
+        discretionaryReasoning:          jdp.discretionaryReasoning,
+        aiParticipationExplanation:      jdp.aiParticipationExplanation,
+        humanOversightRecord:            jdp.humanOversightRecord,
+        constitutionalValidationResults: jdp.constitutionalValidationResults,
+        dciSummary:                      jdp.dciSummary,
+        auditChain:                      jdp.auditChain,
+        versionHistoryRecord:            jdp.versionHistoryRecord,
+        anticipatedJudicialReviewQuestions: jdp.anticipatedJudicialReviewQuestions,
+        explainabilityReport:            jdp.explainabilityReport,
+      },
+    };
+
+    const filename = `JDP-${decision.caseNumber.replace(/[/\\]/g, "-")}.json`;
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.json(exportPayload);
+  } catch (err) {
+    console.error("[jdp.export]", err);
+    res.status(500).json({ error: "Failed to export JDP" });
   }
 });
 
