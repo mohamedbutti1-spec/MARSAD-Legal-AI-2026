@@ -32,6 +32,7 @@ import {
   type RemedyRecommendation,
   type RiskLevel,
 } from "@workspace/db/judicial-review-service";
+import { logAudit } from "../middlewares/auditLog";
 
 const router: IRouter = Router();
 
@@ -362,6 +363,18 @@ router.post(
 
       const role   = getRole(req);
       const review = await runAiReview(decision.id, role);
+
+      // Audit: judicial review triggered (fire-and-forget)
+      logAudit(req, "judicial_review.run", {
+        entityType: "decision",
+        entityId:   decision.id,
+        details: {
+          reviewVersion:           review.reviewVersion,
+          constitutionalRiskScore: review.constitutionalRiskScore,
+          riskLevel:               review.riskLevel,
+          totalDefects:            (review.detectedDefects ?? []).length,
+        },
+      });
 
       res.json({
         success:                 true,

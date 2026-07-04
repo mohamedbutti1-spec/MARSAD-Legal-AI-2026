@@ -13,6 +13,9 @@ interface AppLayoutProps {
   variant?: 'default' | 'chat';
 }
 
+/** True only in the Replit/dev environment — signals that role-switching is demo scaffolding. */
+const IS_DEMO_MODE = import.meta.env.DEV || import.meta.env.MODE === 'development';
+
 export function AppLayout({ children, variant = 'default' }: AppLayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -57,6 +60,19 @@ export function AppLayout({ children, variant = 'default' }: AppLayoutProps) {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* P0-1: Demo mode banner — role selector is scaffolding only, not production auth */}
+        {IS_DEMO_MODE && (
+          <div
+            className="shrink-0 bg-amber-500 text-white text-[11px] font-semibold text-center py-1 px-4 flex items-center justify-center gap-2"
+            role="banner"
+            aria-label="Demo mode notice"
+            dir="ltr"
+          >
+            <span>⚠️</span>
+            <span>DEMO MODE — Role selection is scaffolding only. Production deployment requires UAE Pass or enterprise SSO.</span>
+            <span>⚠️</span>
+          </div>
+        )}
         <Header onMenuClick={() => setMobileOpen(true)} />
 
         {variant === 'chat' ? (
@@ -73,7 +89,7 @@ export function AppLayout({ children, variant = 'default' }: AppLayoutProps) {
             {/* Platform footer */}
             <footer className="border-t border-border/40 px-4 sm:px-6 lg:px-8 py-3">
               <p className="text-[10px] text-muted-foreground/40 text-center tracking-wide select-none" dir="ltr">
-                Powered by the M. Al-Shamsi Framework™
+                مرصد (MARSAD) · منصة القرارات الإدارية الذكية · إطار الشامسي الدستوري™ Alpha 1.0
               </p>
             </footer>
           </main>

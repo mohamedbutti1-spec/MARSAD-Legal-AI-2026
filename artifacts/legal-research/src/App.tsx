@@ -80,6 +80,7 @@ function Router() {
         <Route path="/constitutional-principles" component={ConstitutionalPrinciples} />
 
         {/* ── Phase 2 — Executive Governance Hub ───────────────────── */}
+        {/* Governance requires canViewGovernanceDashboard — enforced inside GovernanceHub */}
         <Route path="/governance" component={GovernanceHub} />
         <Route path="/citizen"    component={CitizenPortal} />
 

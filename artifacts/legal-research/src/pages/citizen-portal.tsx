@@ -2,7 +2,7 @@
  * Citizen Portal — بوابة المواطن
  *
  * Public-facing Arabic-first page. Citizens enter a decision case number and
- * receive the Constitutional Answer Record (CAR) for that decision.
+ * receive the Constitutional Accountability Record (CAR — سجل المساءلة الدستورية) for that decision.
  * No authentication required — only sealed decisions are served.
  * Completely standalone layout (no sidebar, no main app header).
  */

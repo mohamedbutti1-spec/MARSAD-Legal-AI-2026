@@ -204,7 +204,7 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           labelAr: 'مقارنة الوثائق',
           labelEn: 'Document Comparison',
           icon: <GitCompareArrows className="w-4.5 h-4.5" />,
-          show: true,
+          show: false, // P1-6: screen is placeholder — hidden until comparison creation is implemented
         },
         {
           href: '/library',

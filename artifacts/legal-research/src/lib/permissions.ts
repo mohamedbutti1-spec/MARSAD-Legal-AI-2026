@@ -205,11 +205,11 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canSearchByCaseNumber: false, canViewGovernanceDashboard: true,
   },
 
-  // ── 7. Constitutional Reviewer — all constitutional data + QVA/LSI ────────
+  // ── 7. Constitutional Reviewer — all constitutional data + JDP + QVA/LSI ──
   constitutional_reviewer: {
     canReadDecisionList: true, canReadDecisionDetail: true,
     canReadStageData: true, canReadAiAnalysis: false,
-    canReadJdp: false, canReadDci: true, canReadCar: false,
+    canReadJdp: true, canReadDci: true, canReadCar: false,  // JDP is the primary artefact of constitutional review
     canReadAuditLog: false, canReadAuditHashes: false,
     canReadQvaRaw: false, canReadHii: true, canReadConstitutionalGates: true,
     canDelegateDecision: false, canRunHashVerification: false,

@@ -6,6 +6,7 @@
 import { Router, type IRouter } from "express";
 import { createHash } from "crypto";
 import { eq, and, desc, sql } from "drizzle-orm";
+import { z } from "zod";
 import {
   db,
   decisionsTable,
@@ -672,16 +673,30 @@ router.get("/decisions", requireAnyRole, async (req, res): Promise<void> => {
   }
 });
 
+// ─── Zod schemas for write endpoints ─────────────────────────────────────────
+
+const CreateDecisionSchema = z.object({
+  titleAr:          z.string().min(3, "titleAr must be ≥ 3 chars").max(500),
+  titleEn:          z.string().max(500).optional(),
+  jurisdiction:     z.string().min(2).max(100),
+  decisionType:     z.string().min(2).max(100),
+  organizationUnit: z.string().min(2).max(200),
+  issuingAuthority: z.string().max(200).optional(),
+});
+
 // POST /decisions — create a new decision case
 router.post("/decisions", requireAnyRole, async (req, res): Promise<void> => {
   try {
-    const body = req.body as Record<string, string>;
-    const { titleAr, titleEn, jurisdiction, decisionType, organizationUnit, issuingAuthority } = body;
-
-    if (!titleAr || !jurisdiction || !decisionType || !organizationUnit) {
-      res.status(400).json({ error: "titleAr, jurisdiction, decisionType, organizationUnit are required" });
+    const parsed = CreateDecisionSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        error: "بيانات القرار غير صالحة",
+        code: "VALIDATION_ERROR",
+        details: parsed.error.flatten().fieldErrors,
+      });
       return;
     }
+    const { titleAr, titleEn, jurisdiction, decisionType, organizationUnit, issuingAuthority } = parsed.data;
 
     const userId = getUserId(req);
     const year = new Date().getFullYear();

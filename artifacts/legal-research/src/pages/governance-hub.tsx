@@ -3020,7 +3020,7 @@ export default function GovernanceHub() {
       {/* Footer */}
       <div className="pt-8 border-t border-border">
         <p className="text-center text-xs text-muted-foreground">
-          Powered by the M. Al-Shamsi Framework™ — Phase 2 Executive Governance Layer
+          مرصد (MARSAD) Alpha 1.0 · منصة القرارات الإدارية الذكية · إطار الشامسي الدستوري™
         </p>
       </div>
     </div>
