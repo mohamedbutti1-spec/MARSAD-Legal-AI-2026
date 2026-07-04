@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "nkz5plJpA_eZxjVoup_JA"
+uri = "file://MARSAD_ALPHA_REVIEW.md"
+type = "text"
+title = "MARSAD Alpha Review — Structured Platform Assessment"
