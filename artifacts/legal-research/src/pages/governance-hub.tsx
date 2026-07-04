@@ -12,7 +12,8 @@ import {
   BarChart3, Shield, AlertTriangle, CheckCircle2, Clock, XCircle,
   FileText, Hash, Eye, Scale, ChevronRight, ChevronDown, Search,
   Flag, Gavel, Lock, UnlockKeyhole, RefreshCw, ArrowRight, Users,
-  Building2, BookOpen, GitMerge,
+  Building2, BookOpen, GitMerge, Archive, BookMarked, GitBranch,
+  DownloadCloud, ShieldCheck, ShieldAlert, Link2,
 } from 'lucide-react';
 import { useUserContext, ROLE_META } from '@/lib/user-context';
 import { getPermissions } from '@/lib/permissions';
@@ -1218,6 +1219,322 @@ const ACTION_LABELS: Record<string, string> = {
   'jdp.generated':          'إنشاء الحزمة الدفاعية',
 };
 
+// ─── Constitutional Memory Tab ────────────────────────────────────────────────
+
+const MEMORY_EVENT_LABELS: Record<string, string> = {
+  'decision.created':  'إنشاء القرار',
+  'stage.completed':   'استكمال مرحلة',
+  'dci.generated':     'تعديل الهوية الدستورية',
+  'car.generated':     'إنشاء سجل المساءلة',
+  'jdp.generated':     'إنشاء الحزمة الدفاعية',
+  'human.review':      'مراجعة بشرية',
+  'amendment':         'تعديل',
+  'appeal.filed':      'تقديم طعن',
+  'court.decision':    'حكم قضائي',
+  'correction':        'تصحيح',
+  'closure':           'إغلاق',
+  'archive':           'أرشفة',
+  'memory.sealed':     'ختم الذاكرة',
+  'memory.verified':   'التحقق من السلامة',
+  'custody.event':     'حدث الحيازة',
+};
+
+const EVENT_ICON: Record<string, React.ReactNode> = {
+  'decision.created':  <FileText className="w-3.5 h-3.5" />,
+  'stage.completed':   <CheckCircle2 className="w-3.5 h-3.5" />,
+  'dci.generated':     <Shield className="w-3.5 h-3.5" />,
+  'car.generated':     <BookOpen className="w-3.5 h-3.5" />,
+  'jdp.generated':     <Scale className="w-3.5 h-3.5" />,
+  'human.review':      <Eye className="w-3.5 h-3.5" />,
+  'amendment':         <GitMerge className="w-3.5 h-3.5" />,
+  'appeal.filed':      <AlertTriangle className="w-3.5 h-3.5" />,
+  'court.decision':    <Gavel className="w-3.5 h-3.5" />,
+  'correction':        <RefreshCw className="w-3.5 h-3.5" />,
+  'closure':           <Lock className="w-3.5 h-3.5" />,
+  'archive':           <Archive className="w-3.5 h-3.5" />,
+  'memory.sealed':     <Lock className="w-3.5 h-3.5" />,
+  'memory.verified':   <ShieldCheck className="w-3.5 h-3.5" />,
+  'custody.event':     <Link2 className="w-3.5 h-3.5" />,
+};
+
+interface MemoryVersion {
+  memoryId: string;
+  decisionVersion: number;
+  constitutionalNumber: string;
+  decisionHash: string;
+  completeAuditHash: string;
+  createdAt: string;
+  decisionStatus: string | null;
+  constitutionalStatus: string | null;
+  complianceStatus: string | null;
+  appealStatus: string | null;
+  sealed: boolean;
+  archiveStatus: string;
+  governmentEntity: string | null;
+  issuerRole: string | null;
+  qva: number | null;
+  lsi: number | null;
+  humanInfluenceIndex: number | null;
+}
+
+interface MemoryEvent {
+  id: number;
+  sequenceNumber: number;
+  eventType: string;
+  eventSummaryAr: string | null;
+  eventHash: string;
+  chainHash: string;
+  recordedAt: string;
+  actorRole: string | null;
+}
+
+interface MemoryIntegrity {
+  valid: boolean;
+  versionsChecked: number;
+  timelineChecked: number;
+  latestChainHash: string | null;
+  errors: { location: string; type: string; detail: string }[];
+}
+
+function ConstitutionalMemoryTab({ decisionId }: { decisionId: number }) {
+  const [showHashes, setShowHashes] = useState(false);
+  const [activeVersion, setActiveVersion] = useState<number | null>(null);
+
+  const memoryQuery = useQuery({
+    queryKey: ['cm-memory', decisionId],
+    queryFn: () => apiFetch('GET', `/api/memory/${decisionId}`),
+  });
+
+  const data = memoryQuery.data as {
+    constitutionalNumber?: string;
+    currentVersion?: number;
+    totalVersions?: number;
+    timelineEvents?: number;
+    integrity?: MemoryIntegrity;
+    current?: MemoryVersion;
+    versions?: MemoryVersion[];
+    timeline?: MemoryEvent[];
+  } | undefined;
+
+  if (memoryQuery.isLoading) return <LoadingSpinner />;
+
+  if (memoryQuery.isError || !data?.current) {
+    return (
+      <div className="text-center py-10 space-y-2">
+        <BookMarked className="w-8 h-8 mx-auto text-muted-foreground/40" />
+        <p className="text-sm text-muted-foreground">لا توجد ذاكرة دستورية لهذا القرار بعد.</p>
+        <p className="text-xs text-muted-foreground/60">ستُنشأ تلقائياً عند تسجيل أول حدث دستوري.</p>
+      </div>
+    );
+  }
+
+  const { current, versions = [], timeline = [], integrity } = data;
+  const selectedVer = activeVersion !== null
+    ? versions.find(v => v.decisionVersion === activeVersion) ?? current
+    : current;
+
+  const statusColor = (s: string | null) => {
+    if (!s) return 'bg-slate-100 text-slate-500';
+    if (['compliant', 'valid', 'issued', 'none'].includes(s)) return 'bg-emerald-100 text-emerald-700';
+    if (['pending', 'draft', 'challenged'].includes(s)) return 'bg-amber-100 text-amber-700';
+    return 'bg-red-100 text-red-700';
+  };
+
+  return (
+    <div className="space-y-4 text-right" dir="rtl">
+      {/* Header card */}
+      <div className="rounded-xl border border-[#00563F]/20 bg-[#00563F]/5 p-4">
+        <div className="flex items-center gap-2 flex-wrap">
+          <BookMarked className="w-5 h-5 text-[#00563F] shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-[#1A1A2E]">الذاكرة الدستورية للقرار الإداري الذكي</p>
+            <p className="text-xs text-[#5C5C7A] font-mono">{data.constitutionalNumber}</p>
+          </div>
+          {current.sealed && (
+            <span className="flex items-center gap-1 text-[10px] font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full">
+              <Lock className="w-3 h-3" />مختوم
+            </span>
+          )}
+          {integrity && (
+            integrity.valid
+              ? <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full"><ShieldCheck className="w-3 h-3" />سلسلة سليمة</span>
+              : <span className="flex items-center gap-1 text-[10px] font-bold text-red-700 bg-red-100 px-2 py-0.5 rounded-full"><ShieldAlert className="w-3 h-3" />تحذير: عُبث كُشف</span>
+          )}
+        </div>
+
+        {/* Scores row */}
+        <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+          {[
+            { label: 'الإصدار', value: `v${current.decisionVersion}` },
+            { label: 'الأحداث', value: String(data.timelineEvents ?? 0) },
+            { label: 'النسخ', value: String(data.totalVersions ?? 1) },
+            { label: 'سجلات موثّقة', value: String(integrity?.versionsChecked ?? 0) },
+          ].map(({ label, value }) => (
+            <div key={label} className="bg-white/70 rounded-lg p-2 border border-[#00563F]/10">
+              <p className="text-[11px] text-[#5C5C7A]">{label}</p>
+              <p className="text-sm font-bold text-[#1A1A2E]">{value}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Status badges */}
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {[
+            { label: 'حالة القرار',      val: current.decisionStatus },
+            { label: 'الامتثال',          val: current.complianceStatus },
+            { label: 'الوضع الدستوري',    val: current.constitutionalStatus },
+            { label: 'حالة الطعن',        val: current.appealStatus },
+            { label: 'الأرشيف',           val: current.archiveStatus },
+          ].map(({ label, val }) => val ? (
+            <span key={label} className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusColor(val)}`}>
+              {label}: {val}
+            </span>
+          ) : null)}
+        </div>
+      </div>
+
+      {/* Version tree */}
+      {versions.length > 1 && (
+        <div className="rounded-xl border border-border p-3 bg-white">
+          <div className="flex items-center gap-1.5 mb-2">
+            <GitBranch className="w-3.5 h-3.5 text-muted-foreground" />
+            <p className="text-xs font-bold text-[#1A1A2E]">شجرة الإصدارات</p>
+          </div>
+          <div className="flex gap-1.5 flex-wrap">
+            {versions.map((v) => (
+              <button key={v.decisionVersion}
+                onClick={() => setActiveVersion(activeVersion === v.decisionVersion ? null : v.decisionVersion)}
+                className={`text-[11px] px-2.5 py-1 rounded-full border font-semibold transition-colors ${
+                  (activeVersion ?? current.decisionVersion) === v.decisionVersion
+                    ? 'border-[#00563F] bg-[#00563F]/10 text-[#00563F]'
+                    : 'border-border text-muted-foreground hover:border-[#00563F]/40'
+                }`}>
+                v{v.decisionVersion}
+              </button>
+            ))}
+          </div>
+          {selectedVer && (
+            <div className="mt-2 text-[11px] text-[#5C5C7A] space-y-0.5">
+              <p>الهاش: <span className="font-mono">{selectedVer.decisionHash.slice(0, 24)}…</span></p>
+              <p>التدقيق: <span className="font-mono">{selectedVer.completeAuditHash.slice(0, 24)}…</span></p>
+              <p>التاريخ: <span className="font-mono">{new Date(selectedVer.createdAt).toLocaleString('ar-AE')}</span></p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Integrity report */}
+      {integrity && (
+        <div className={`rounded-xl border p-3 ${integrity.valid ? 'border-emerald-200 bg-emerald-50/50' : 'border-red-200 bg-red-50/50'}`}>
+          <div className="flex items-center gap-1.5 mb-2">
+            {integrity.valid ? <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> : <ShieldAlert className="w-3.5 h-3.5 text-red-600" />}
+            <p className="text-xs font-bold text-[#1A1A2E]">تقرير سلامة الذاكرة الدستورية</p>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-center text-[11px]">
+            <div><p className="text-muted-foreground">النسخ المفحوصة</p><p className="font-bold">{integrity.versionsChecked}</p></div>
+            <div><p className="text-muted-foreground">الأحداث المفحوصة</p><p className="font-bold">{integrity.timelineChecked}</p></div>
+            <div><p className="text-muted-foreground">الأخطاء</p><p className={`font-bold ${integrity.errors.length ? 'text-red-600' : 'text-emerald-600'}`}>{integrity.errors.length}</p></div>
+          </div>
+          {integrity.errors.length > 0 && (
+            <div className="mt-2 space-y-1">
+              {integrity.errors.map((e, i) => (
+                <p key={i} className="text-[10px] text-red-600 bg-red-100 px-2 py-1 rounded font-mono">[{e.location}] {e.type}: {e.detail}</p>
+              ))}
+            </div>
+          )}
+          {integrity.latestChainHash && (
+            <div className="mt-2 flex items-center gap-1">
+              <Hash className="w-3 h-3 text-muted-foreground shrink-0" />
+              <button onClick={() => setShowHashes(!showHashes)} className="text-[10px] text-muted-foreground hover:text-foreground transition-colors">
+                {showHashes ? 'إخفاء هاش السلسلة' : 'عرض هاش السلسلة'}
+              </button>
+              {showHashes && (
+                <span className="text-[10px] font-mono text-[#3D3D5C] break-all mr-1">{integrity.latestChainHash}</span>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Timeline */}
+      <div className="rounded-xl border border-border bg-white p-3">
+        <div className="flex items-center gap-1.5 mb-3">
+          <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+          <p className="text-xs font-bold text-[#1A1A2E]">الجدول الزمني الدستوري</p>
+          <span className="mr-auto text-[10px] text-muted-foreground">{timeline.length} حدث</span>
+        </div>
+        {timeline.length === 0 ? (
+          <p className="text-xs text-muted-foreground text-center py-4">لا توجد أحداث مسجّلة بعد</p>
+        ) : (
+          <div className="space-y-0">
+            {timeline.map((ev, idx) => (
+              <div key={ev.id} className="relative flex gap-3">
+                {/* Connector line */}
+                {idx < timeline.length - 1 && (
+                  <div className="absolute right-[17px] top-7 bottom-0 w-px bg-border" />
+                )}
+                {/* Icon */}
+                <div className="shrink-0 w-8 h-8 rounded-full border-2 border-border bg-white flex items-center justify-center text-[#00563F] z-10">
+                  {EVENT_ICON[ev.eventType] ?? <FileText className="w-3.5 h-3.5" />}
+                </div>
+                {/* Content */}
+                <div className="pb-4 flex-1 min-w-0">
+                  <div className="flex items-start gap-1.5 flex-wrap">
+                    <span className="text-xs font-bold text-[#1A1A2E]">
+                      {MEMORY_EVENT_LABELS[ev.eventType] ?? ev.eventType}
+                    </span>
+                    {ev.actorRole && (
+                      <span className="text-[10px] font-semibold bg-[#F5F5FA] text-[#5C5C7A] px-1.5 py-0.5 rounded-full">
+                        {ev.actorRole}
+                      </span>
+                    )}
+                    <span className="mr-auto text-[10px] text-muted-foreground font-mono">
+                      #{ev.sequenceNumber}
+                    </span>
+                  </div>
+                  {ev.eventSummaryAr && (
+                    <p className="text-[11px] text-[#5C5C7A] mt-0.5">{ev.eventSummaryAr}</p>
+                  )}
+                  <p className="text-[10px] text-muted-foreground/70 mt-0.5">
+                    {new Date(ev.recordedAt).toLocaleString('ar-AE')}
+                  </p>
+                  {showHashes && (
+                    <p className="text-[9px] font-mono text-muted-foreground/60 mt-0.5 break-all">
+                      {ev.eventHash.slice(0, 32)}…
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Export + AI info footer */}
+      <div className="rounded-xl border border-border bg-muted/30 p-3">
+        <div className="grid grid-cols-2 gap-3 text-[11px] text-[#5C5C7A]">
+          <div>
+            <p className="font-bold text-[#1A1A2E] mb-1">الذكاء الاصطناعي</p>
+            <p>{current.archiveStatus === 'archived' ? '📦 مؤرشف' : '🟢 نشط'}</p>
+            {current.qva != null && <p>QVA: <span className="font-bold">{current.qva.toFixed(1)}</span></p>}
+            {current.lsi != null && <p>LSI: <span className="font-bold">{current.lsi.toFixed(1)}</span></p>}
+            {current.humanInfluenceIndex != null && <p>HII: <span className="font-bold">{current.humanInfluenceIndex.toFixed(1)}</span></p>}
+          </div>
+          <div>
+            <p className="font-bold text-[#1A1A2E] mb-1">الإطار القانوني</p>
+            <p>MARSAD-CM-v3.0</p>
+            <p>UAE-Admin-Law-2026</p>
+          </div>
+        </div>
+        <div className="mt-2 pt-2 border-t border-border/50 flex items-center gap-1.5">
+          <DownloadCloud className="w-3 h-3 text-muted-foreground" />
+          <p className="text-[10px] text-muted-foreground">الذاكرة الدستورية — ملحق فقط · لا حذف · لا تعديل · دليل دستوري دائم</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CustodyTimeline({ decisionId }: { decisionId: number }) {
   const [showHashes, setShowHashes] = useState(false);
 
@@ -1364,7 +1681,7 @@ function CustodyTimeline({ decisionId }: { decisionId: number }) {
 
 function JudgeDashboard() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [tab, setTab] = useState<'stages' | 'jdp' | 'dci' | 'car' | 'audit' | 'custody'>('stages');
+  const [tab, setTab] = useState<'stages' | 'jdp' | 'dci' | 'car' | 'audit' | 'custody' | 'memory'>('stages');
 
   const listQuery = useQuery({
     queryKey: ['gov-decisions-judge'],
@@ -1395,6 +1712,7 @@ function JudgeDashboard() {
     { key: 'car',     label: 'سجل المساءلة' },
     { key: 'audit',   label: 'سجل التدقيق' },
     { key: 'custody', label: '⛓ الحيازة' },
+    { key: 'memory',  label: '📜 الذاكرة الدستورية' },
   ];
 
   return (
@@ -1570,6 +1888,12 @@ function JudgeDashboard() {
             {tab === 'custody' && selectedId ? (
               <div className="bg-white rounded-xl border border-border shadow-xs p-5">
                 <CustodyTimeline decisionId={selectedId} />
+              </div>
+            ) : null}
+
+            {tab === 'memory' && selectedId ? (
+              <div className="bg-white rounded-xl border border-border shadow-xs p-5">
+                <ConstitutionalMemoryTab decisionId={selectedId} />
               </div>
             ) : null}
           </div>

@@ -52,3 +52,13 @@ The export endpoint (`GET /api/custody/:id/export`) returns `chain` (not `record
 
 ## Build sequence
 Always run `cd lib/db && npx tsc --build` before running `npx tsc --noEmit` in api-server — api-server imports from the compiled lib/db dist.
+
+## Constitutional Memory (CM) layer — added alongside Chain of Custody
+- Tables: `decision_memory` (one row per version, append-only) + `memory_timeline` (all constitutional events)
+- Service: `lib/db/src/memory-service.ts` — `createOrUpdateMemory`, `recordMemoryEvent`, `getConstitutionalMemory`, `archiveMemory`, `sealMemory`, `getMemoryHistory`
+- Routes: `artifacts/api-server/src/routes/memory.ts` — `/memory/:id`, `/memory/verify`, `/memory/archive`, `/memory/history`
+- Routes must NOT have `/api/` prefix — app mounts router at `/api` and strips it before matching
+- Hash normalization: ALL fields with DB defaults (aiEngine, status fields) must be normalized to their final stored value BEFORE computing decisionHash — never rely on DB default resolving after hash computation
+- Nested transaction fix: `_insertMemoryVersionInTx(tx, input)` is the internal lock-free version insert; `recordMemoryEvent` acquires BOTH advisory locks (CMEM + CMTL) upfront then calls `_insertMemoryVersionInTx` for bootstrap — NO nested `db.transaction()` call
+- Archive scope: `archiveMemory` updates by `memoryId` (not `decisionId`) so only the current version is updated, leaving history rows unchanged
+- Constitutional number format: `CM-UAE-YYYY-NNNNN` (decision ID zero-padded to 5 digits)

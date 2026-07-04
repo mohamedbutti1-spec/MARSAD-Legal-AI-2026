@@ -23,3 +23,16 @@ export {
   type CustodyVerificationResult,
   type ChainOfCustodyRecord,
 } from "./custody-service";
+// Phase 3 — Constitutional Memory service functions
+export {
+  createOrUpdateMemory,
+  recordMemoryEvent,
+  getConstitutionalMemory,
+  sealMemory,
+  archiveMemory,
+  getMemoryHistory,
+  type CreateMemoryInput,
+  type RecordMemoryEventInput,
+  type ConstitutionalMemory,
+  type MemoryIntegrityResult,
+} from "./memory-service";

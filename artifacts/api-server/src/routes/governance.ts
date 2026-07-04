@@ -18,6 +18,8 @@ import {
   recordCustodyEvent,
   verifyCustodyChain,
   getDecisionCustody,
+  createOrUpdateMemory,
+  recordMemoryEvent,
 } from "@workspace/db";
 import { getPermissions, ALL_ROLES } from "@workspace/db/permissions";
 
@@ -572,6 +574,18 @@ router.post(
         humanModification:  "تفويض إداري",
       }).catch((e: unknown) => console.error("[custody.delegate]", e));
 
+      // Phase 3 — Constitutional Memory: delegation event
+      recordMemoryEvent({
+        decisionId: id,
+        eventType:      "human.review",
+        eventSummaryAr: "تفويض القرار للمراجعة من قِبل وكيل الوزارة",
+        eventSummaryEn: "Decision delegated for mandatory undersecretary review",
+        actorId:   String(userId),
+        actorRole: role,
+        actorOrg:  getUserOrg(req),
+        payload:   { delegatedAt: new Date().toISOString() },
+      }).catch((e: unknown) => console.error("[memory.event.delegate]", e));
+
       res.json({ success: true, decision: updated });
     } catch (err) {
       console.error(err);
@@ -633,6 +647,18 @@ router.post(
         aiRecommendation:   null,
         humanModification:  "إلغاء التفويض الإداري",
       }).catch((e: unknown) => console.error("[custody.undelegate]", e));
+
+      // Phase 3 — Constitutional Memory: undelegation event
+      recordMemoryEvent({
+        decisionId: id,
+        eventType:      "amendment",
+        eventSummaryAr: "إلغاء تفويض المراجعة الإلزامية",
+        eventSummaryEn: "Mandatory review delegation removed",
+        actorId:   String(getUserId(req)),
+        actorRole: role,
+        actorOrg:  getUserOrg(req),
+        payload:   { undelegatedAt: new Date().toISOString() },
+      }).catch((e: unknown) => console.error("[memory.event.undelegate]", e));
 
       res.json({ success: true });
     } catch (err) {

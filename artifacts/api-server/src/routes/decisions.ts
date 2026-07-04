@@ -16,6 +16,8 @@ import {
   auditLogsTable,
   DECISION_STAGE_KEYS,
   recordCustodyEvent,
+  createOrUpdateMemory,
+  recordMemoryEvent,
   type CustodyEventInput,
   type DecisionStageKey,
   type DciVersion,
@@ -725,6 +727,30 @@ router.post("/decisions", requireAnyRole, async (req, res): Promise<void> => {
       humanModification: null,
     }).catch((e: unknown) => console.error("[custody.create]", e));
 
+    // Phase 3 — Constitutional Memory: bootstrap record
+    const custodyCtx = getCustodyCtx(req);
+    createOrUpdateMemory({
+      decisionId:       decision.id,
+      createdBy:        String(custodyCtx.userId ?? "system"),
+      governmentEntity: custodyCtx.organization ?? null,
+      issuerRole:       custodyCtx.userRole ?? null,
+      decisionStatus:   "draft",
+      constitutionalStatus: "valid",
+      complianceStatus: "pending",
+      appealStatus:     "none",
+    }).catch((e: unknown) => console.error("[memory.create]", e));
+
+    recordMemoryEvent({
+      decisionId: decision.id,
+      eventType:  "decision.created",
+      eventSummaryAr: `إنشاء قرار إداري جديد — ${decision.caseNumber}`,
+      eventSummaryEn: `Administrative decision created — ${decision.caseNumber}`,
+      actorId:   String(custodyCtx.userId ?? "system"),
+      actorRole: custodyCtx.userRole ?? undefined,
+      actorOrg:  custodyCtx.organization ?? undefined,
+      payload:   { caseNumber: decision.caseNumber, jurisdiction: decision.jurisdiction, status: decision.status },
+    }).catch((e: unknown) => console.error("[memory.event.create]", e));
+
     res.status(201).json({ decision });
   } catch (err) {
     console.error("[decisions.create]", err);
@@ -1055,6 +1081,17 @@ router.post("/decisions/:id/stages/:stageKey/complete", requireSupervisorOrOwner
       aiRecommendation: null,
       humanModification: null,
     }).catch((e: unknown) => console.error("[custody.stage]", e));
+
+    // Phase 3 — Constitutional Memory: stage event
+    recordMemoryEvent({
+      decisionId,
+      eventType:      "stage.completed",
+      eventSummaryAr: `استكمال المرحلة: ${stageKey}`,
+      eventSummaryEn: `Stage completed: ${stageKey}`,
+      actorId:   String(getUserId(req)),
+      actorRole: String(getCustodyCtx(req).userRole ?? ""),
+      payload:   { stageKey, nextStage: next },
+    }).catch((e: unknown) => console.error("[memory.event.stage]", e));
 
     res.json({ success: true, nextStage: next, decision: updatedDecision });
   } catch (err) {
@@ -1577,6 +1614,27 @@ router.post("/decisions/:id/dci/amend", requireSupervisorOrOwner, async (req, re
       humanModification:  Object.keys(safeChanges).join(", "),
     }).catch((e: unknown) => console.error("[custody.dci]", e));
 
+    // Phase 3 — Constitutional Memory: new version on DCI amendment
+    const dciCtx = getCustodyCtx(req);
+    createOrUpdateMemory({
+      decisionId,
+      createdBy:  String(dciCtx.userId ?? "system"),
+      issuerRole: dciCtx.userRole ?? null,
+      decisionStatus: "draft",
+      constitutionalStatus: "valid",
+      complianceStatus: "pending",
+    }).catch((e: unknown) => console.error("[memory.dci.version]", e));
+
+    recordMemoryEvent({
+      decisionId,
+      eventType:      "dci.generated",
+      eventSummaryAr: `تعديل الهوية الدستورية — الإصدار ${updated.currentVersion}`,
+      eventSummaryEn: `DCI amended — version ${updated.currentVersion}`,
+      actorId:   String(dciCtx.userId ?? "system"),
+      actorRole: dciCtx.userRole ?? undefined,
+      payload:   { reason: body.reason, fieldsChanged: Object.keys(safeChanges), newVersion: updated.currentVersion },
+    }).catch((e: unknown) => console.error("[memory.event.dci]", e));
+
     res.json({ dci: updated });
   } catch (err: unknown) {
     const typed = err as { statusCode?: number; message?: string };
@@ -1700,6 +1758,23 @@ router.post("/decisions/:id/qva/run", requireSupervisorOrOwner, async (req, res)
       aiRecommendation:   `مستوى التباين: ${qvaVarianceLevel} | حالة المشروعية: ${lsiStatus}`,
       humanModification:  null,
     }).catch((e: unknown) => console.error("[custody.qva]", e));
+
+    // Phase 3 — Constitutional Memory: QVA event + update scores
+    createOrUpdateMemory({
+      decisionId,
+      qva: typeof qvaVarianceLevel === "number" ? qvaVarianceLevel : null,
+      lsi: null,
+      complianceStatus: lsiStatus === "compliant" ? "compliant" : "pending",
+    }).catch((e: unknown) => console.error("[memory.qva.version]", e));
+
+    recordMemoryEvent({
+      decisionId,
+      eventType:      "stage.completed",
+      eventSummaryAr: `تحليل التباين الكمي — ${qvaVarianceLevel}`,
+      eventSummaryEn: `QVA analysis — variance level: ${qvaVarianceLevel}`,
+      actorId:   String(getUserId(req)),
+      payload:   { qvaVarianceLevel, lsiStatus, runCount: runs.length, disagreements },
+    }).catch((e: unknown) => console.error("[memory.event.qva]", e));
 
     res.json({ qvaVarianceLevel, lsiStatus, runCount: runs.length, disagreements, runs });
   } catch (err) {
@@ -1843,6 +1918,23 @@ router.post("/decisions/:id/car/generate", requireAnyRole, async (req, res): Pro
         aiRecommendation:   "أُنشئ بمساعدة الذكاء الاصطناعي وراجعه مسؤولون بشريون",
         humanModification:  null,
       }).catch((e: unknown) => console.error("[custody.car]", e));
+
+      // Phase 3 — Constitutional Memory: CAR event + update decision status to issued
+      createOrUpdateMemory({
+        decisionId,
+        decisionStatus: "issued",
+        complianceStatus: "compliant",
+        constitutionalStatus: "valid",
+      }).catch((e: unknown) => console.error("[memory.car.version]", e));
+
+      recordMemoryEvent({
+        decisionId,
+        eventType:      "car.generated",
+        eventSummaryAr: "إنشاء سجل الإجابة الدستورية — القرار صالح للإفصاح المدني",
+        eventSummaryEn: "Constitutional Answer Record generated — decision ready for public disclosure",
+        actorId:   String(userId),
+        payload:   { generatedAt: new Date().toISOString() },
+      }).catch((e: unknown) => console.error("[memory.event.car]", e));
 
       const [car] = await db.select().from(decisionCarTable)
         .where(eq(decisionCarTable.decisionId, decisionId));

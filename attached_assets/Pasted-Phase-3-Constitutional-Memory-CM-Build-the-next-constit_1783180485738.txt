@@ -1,0 +1,251 @@
+Phase 3 — Constitutional Memory (CM)
+
+Build the next constitutional layer called:
+
+Al-Shamsi Constitutional Memory (CM)
+
+Arabic:
+الذاكرة الدستورية للقرار الإداري الذكي
+
+Do NOT modify any existing module.
+
+Current modules (Decision Engine, DCI, JDP, CAR, QVA, LSI, HII, Executive Governance) remain unchanged.
+
+Constitutional Memory becomes the permanent legal memory of every administrative decision.
+
+------------------------------------------------
+Core Principle
+------------------------------------------------
+
+Every intelligent administrative decision must leave a complete constitutional memory that cannot be silently altered.
+
+The Constitutional Memory becomes the official legal history of the decision.
+
+------------------------------------------------
+Database
+------------------------------------------------
+
+Create decision_memory table.
+
+Fields:
+
+memoryId (UUID)
+
+decisionId
+
+constitutionalNumber
+
+decisionVersion
+
+previousVersion
+
+decisionHash
+
+completeAuditHash
+
+createdAt
+
+createdBy
+
+governmentEntity
+
+governmentUnit
+
+issuerRole
+
+humanDecisionMaker
+
+aiEngine
+
+aiModelVersion
+
+constitutionalFrameworkVersion
+
+legalFrameworkVersion
+
+humanInfluenceIndex
+
+aiActualInfluence
+
+QVA
+
+LSI
+
+complianceStatus
+
+constitutionalStatus
+
+decisionStatus
+
+appealStatus
+
+sealed
+
+sealedAt
+
+archiveStatus
+
+------------------------------------------------
+Memory Timeline
+------------------------------------------------
+
+Store every constitutional event:
+
+Decision created
+
+Stage completed
+
+DCI generated
+
+CAR generated
+
+JDP generated
+
+Human review
+
+Amendment
+
+Appeal
+
+Court decision
+
+Correction
+
+Closure
+
+Archive
+
+Nothing is overwritten.
+
+Only append.
+
+------------------------------------------------
+Version History
+------------------------------------------------
+
+Every amendment creates:
+
+Version 1
+
+Version 2
+
+Version 3
+
+...
+
+Each version references the previous one.
+
+------------------------------------------------
+Memory Integrity
+------------------------------------------------
+
+Every version generates SHA-256.
+
+Every chain generates Complete Audit Hash.
+
+Tampering must immediately invalidate the chain.
+
+------------------------------------------------
+Citizen Transparency
+------------------------------------------------
+
+Citizen sees:
+
+Decision number
+
+Version
+
+Current status
+
+Government entity
+
+Appeal status
+
+CAR
+
+No confidential information.
+
+------------------------------------------------
+Judicial View
+------------------------------------------------
+
+Judges can inspect:
+
+Entire constitutional history
+
+Timeline
+
+Every amendment
+
+Every reviewer
+
+Every hash
+
+Every constitutional event
+
+------------------------------------------------
+Government View
+------------------------------------------------
+
+Authorized officials can:
+
+Search
+
+Archive
+
+Export
+
+Verify integrity
+
+Generate constitutional history PDF
+
+------------------------------------------------
+Workspace
+
+Create a new tab:
+
+Constitutional Memory
+
+Arabic:
+
+الذاكرة الدستورية
+
+Include:
+
+Timeline
+
+Version tree
+
+Integrity
+
+Hashes
+
+Events
+
+Constitutional Number
+
+Export
+
+------------------------------------------------
+API
+
+GET /memory/:decisionId
+
+POST /memory/archive
+
+POST /memory/verify
+
+GET /memory/history
+
+------------------------------------------------
+Rules
+
+Append only.
+
+Never delete.
+
+Never overwrite.
+
+Every action becomes permanent constitutional evidence.
+
+Maintain compatibility with every previous module.

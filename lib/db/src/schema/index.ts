@@ -22,3 +22,5 @@ export * from "./admin-jurisdictions";
 export * from "./decisions";
 // Phase 3 — Decision Chain of Custody
 export * from "./custody";
+// Phase 3 — Constitutional Memory (CM)
+export * from "./memory";
