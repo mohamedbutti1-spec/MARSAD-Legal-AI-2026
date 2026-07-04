@@ -30,8 +30,9 @@ import Citations          from '@/pages/citations';
 import DocumentComparison from '@/pages/document-comparison';
 import PersonalLibrary    from '@/pages/personal-library';
 
-// Theory
-import ShamsiTheory       from '@/pages/shamsi-theory';
+// Theory & Governance
+import ShamsiTheory              from '@/pages/shamsi-theory';
+import ConstitutionalPrinciples  from '@/pages/constitutional-principles';
 
 // Admin
 import UserManagement     from '@/pages/user-management';
@@ -70,7 +71,8 @@ function Router() {
       <Switch>
         {/* ── Main ─────────────────────────────────────────────────── */}
         <Route path="/" component={Dashboard} />
-        <Route path="/shamsi-theory" component={ShamsiTheory} />
+        <Route path="/shamsi-theory"             component={ShamsiTheory} />
+        <Route path="/constitutional-principles" component={ConstitutionalPrinciples} />
 
         {/* ── Research Tools (requires canUseAi) ───────────────────── */}
         <Route path="/research">

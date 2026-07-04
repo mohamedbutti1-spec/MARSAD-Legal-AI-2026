@@ -1,7 +1,7 @@
 /**
  * نظرية الشامسي — Al-Shamsi Theory
  * Official scientific reference page for the Marsad platform.
- * Premium government-grade knowledge portal, Arabic-first, fully RTL.
+ * Premium institutional-grade knowledge portal, Arabic-first, fully RTL.
  */
 import React, { useState, useRef } from 'react';
 import { motion, useInView, AnimatePresence, type Variants } from 'framer-motion';

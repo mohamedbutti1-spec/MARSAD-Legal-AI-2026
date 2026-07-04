@@ -21,6 +21,7 @@ import {
   ChevronDown,
   BarChart3,
   Sparkles,
+  Shield,
 } from 'lucide-react';
 import { useUserContext } from '@/lib/user-context';
 
@@ -81,6 +82,14 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           icon: <Sparkles className="w-4.5 h-4.5" />,
           show: true,
           badge: 'مرجع',
+        },
+        {
+          href: '/constitutional-principles',
+          labelAr: 'المبادئ الدستورية',
+          labelEn: 'Constitutional Principles',
+          icon: <Shield className="w-4.5 h-4.5" />,
+          show: true,
+          badge: 'دستوري',
         },
       ],
     },

@@ -1,19 +1,29 @@
 ---
 name: MARSAD Locked Vision Mode
-description: Platform vision is frozen. Operating contract for all future work on MARSAD.
+description: Platform vision is frozen. Operating contract and constitutional governance for all future work on MARSAD.
 ---
 
-## Locked Vision Mode — Active
+## MARSAD Constitutional Standard v1.0 — Active
 
-Declared by the user. All future work on MARSAD operates under these constraints.
+Locked Vision Mode declared. All future work on MARSAD operates under the Constitutional Standard.
 
-### What This Means
-- The 10 Version 1 modules are fixed. No new modules unless explicitly approved by the user.
-- No new legal domains (criminal, civil, family, commercial, real estate).
-- No feature additions that do not directly serve one of the 10 modules.
-- Every change must answer: "Does this make the Intelligent Administrative Decision more lawful, transparent, explainable, or governable?" If no → do not build.
+---
 
-### The 10 Fixed Modules
+## Mission
+
+To make Intelligent Administrative Decisions more lawful, transparent, explainable, accountable and governable through a measurable legal framework.
+
+---
+
+## Constitutional Rule No. 1
+
+MARSAD shall never adapt the law to fit Artificial Intelligence.
+Artificial Intelligence shall always be adapted to fit the law.
+
+---
+
+## The Constitutional Architecture (10 Modules — Fixed)
+
 1. Intelligent Administrative Decision
 2. Administrative Decision Review
 3. Legitimacy Evaluation
@@ -25,46 +35,83 @@ Declared by the user. All future work on MARSAD operates under these constraints
 9. Administrative Decision Reports
 10. Administrative Decision Lifecycle
 
-### Allowed Work (Excellence Improvements Only)
-- Legal precision improvements
+No new modules unless explicitly approved by the user.
+
+---
+
+## Framework Governance
+
+- **Framework:** The M. Al-Shamsi Framework™
+- **Status:** Research Framework
+- **Validation:** Under Continuous Academic Review
+- **Version:** 1.0
+- **Maintained by:** MARSAD Research Team
+
+The Al-Shamsi Analytical Model is ONE analytical engine inside the platform — not the platform's identity.
+
+---
+
+## Constitutional Acceptance Criteria
+
+Every module shall satisfy ALL of the following before release (no numerical thresholds):
+- Legal Value
+- Institutional Readiness
+- Transparency
+- Explainability
+- Human Oversight
+- Due Process
+- Accountability
+- Proportionality
+- Judicial Reviewability
+- Continuous Legitimacy
+
+---
+
+## Allowed Work (Excellence Improvements Only)
+
+- Legal precision improvements within the 10 modules
 - UX/UI refinement
-- Government readiness uplift
+- Institutional readiness uplift
 - Accessibility improvements
 - Performance improvements
 - Clarity and hierarchy improvements
 - Removing duplicate/out-of-scope features
 - Deepening existing module quality
 
-### Forbidden Work (Without Explicit Approval)
-- New modules
-- New legal domains
+## Forbidden Work (Without Explicit Approval)
+
+- New modules beyond the 10
+- New legal domains (criminal, civil, family, commercial, real estate)
 - New product categories
 - Features that don't strengthen one of the 10 modules
 - Feature creep of any kind
 
-### Design Standard
-- Apple meets UAE Government
-- Minimal, Elegant, Professional, Government-grade, Calm, Highly trustworthy
-- No visual clutter, no unnecessary animations
-- Every element must have purpose
-- 95/100 minimum on: Legal Value, UI, UX, Government Readiness, Trust, Clarity, Performance, Accessibility, Consistency, Professionalism
+---
 
-### Platform Identity
-- MARSAD is a Government Decision Intelligence Platform
-- Specialized ONLY in the complete lifecycle of the Intelligent Administrative Decision
-- NOT a general legal platform, NOT a chatbot, NOT a legal encyclopedia
-- The Al-Shamsi Analytical Model is ONE engine inside the platform — not the platform's identity
+## Design Standard
 
-### Architecture Principles
-- Journey First
-- Arabic First
-- Security by Default
-- Legal First
-- Explainability by Design
-- Accessibility First
-- Government Ready
-- Every Screen Produces Value
-- Every Screen Generates Evidence
-- No Feature Without Legal Value
+- Design identity: Apple meets UAE Government
+- Minimal, Elegant, Professional, Institutional-grade, Calm, Highly trustworthy
+- No visual clutter, no unnecessary animations — every element must have purpose
+- Platform footer: "Powered by the M. Al-Shamsi Framework™"
 
-**Why:** The user has explicitly frozen the product scope to prevent feature creep and focus all effort on achieving government-launch quality across the 10 defined modules.
+## Terminology
+
+- Use "Institutional Grade" not "Government Grade"
+- The governing document is "MARSAD Constitutional Standard v1.0" not "The Standard"
+- Quality targets are "Constitutional Acceptance Criteria" not numerical scores (no 95/100)
+- The module list is "The Constitutional Architecture" not "10 Modules Locked"
+
+## Architecture Principles
+
+Journey First · Arabic First · Security by Default · Legal First
+Explainability by Design · Accessibility First · Institutional Ready
+Every Screen Produces Value · Every Screen Generates Evidence
+No Feature Without Legal Value
+
+## The Governing Question
+
+Before building anything: "Does this make the Intelligent Administrative Decision more lawful, transparent, explainable, or governable?"
+If not → do not build it.
+
+**Why:** The user has explicitly frozen the product scope and established constitutional governance to prevent feature creep and focus all effort on achieving institutional-launch quality across the 10 defined modules.

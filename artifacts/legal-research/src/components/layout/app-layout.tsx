@@ -70,6 +70,12 @@ export function AppLayout({ children, variant = 'default' }: AppLayoutProps) {
             <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
               {children}
             </div>
+            {/* Platform footer */}
+            <footer className="border-t border-border/40 px-4 sm:px-6 lg:px-8 py-3">
+              <p className="text-[10px] text-muted-foreground/40 text-center tracking-wide select-none" dir="ltr">
+                Powered by the M. Al-Shamsi Framework™
+              </p>
+            </footer>
           </main>
         )}
       </div>
