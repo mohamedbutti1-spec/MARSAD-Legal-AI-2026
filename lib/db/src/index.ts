@@ -32,6 +32,22 @@ export {
   type EvidenceVerificationResult,
   type EvidenceLedgerRecord,
 } from "./evidence-service";
+// Phase 5 — Constitutional Judicial Intelligence service functions
+export {
+  collectDecisionData,
+  getJudicialReview,
+  markJudicialReviewRunning,
+  saveJudicialReview,
+  markJudicialReviewFailed,
+  buildJudicialReport,
+  type JudicialReview,
+  type CjiAnalysisResult,
+  type JudicialDimension,
+  type ConstitutionalDefect,
+  type OutcomePrediction,
+  type RemedyRecommendation,
+  type RiskLevel,
+} from "./judicial-review-service";
 // Phase 3 — Constitutional Memory service functions
 export {
   createOrUpdateMemory,

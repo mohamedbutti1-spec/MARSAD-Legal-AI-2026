@@ -9,3 +9,4 @@
 - [Phase 2 — Executive Governance Layer](phase2-governance-layer.md) — permission matrix, DCI explicit allowlist, Express middleware types, JSX unknown pattern, audit log schema
 - [Phase 3 — Chain of Custody + Constitutional Memory](phase3-chain-of-custody.md) — custody hash chain, CM tables/service, nested-tx fix, hash normalization, route prefix rule
 - [Phase 4 — Evidence Ledger](phase4-evidence-ledger.md) — verifier tracks prevCurrentHash (not prevChainHash); chainHash also revalidated; advisory lock 0x4556_4944 "EVID"
+- [Phase 5 — Constitutional Judicial Intelligence](phase5-cji.md) — AI in route not lib/db; trimDecisionData hard cap 20k chars; req.params.decisionId needs String() cast; ConstitutionalMemory.current.field not .field directly

@@ -6,7 +6,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./schema": "./src/schema/index.ts",
-    "./permissions": "./src/permissions.ts"
+    "./permissions": "./src/permissions.ts",
+    "./judicial-review-service": "./src/judicial-review-service.ts"
   },
   "scripts": {
     "push": "drizzle-kit push --config ./drizzle.config.ts",

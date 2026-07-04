@@ -29,6 +29,8 @@ import custodyRouter from "./custody";
 import memoryRouter from "./memory";
 // Phase 4 — Constitutional Chain of Custody and Evidence Ledger
 import evidenceRouter from "./evidence";
+// Phase 5 — Constitutional Judicial Intelligence (CJI)
+import judicialReviewRouter from "./judicial-review";
 
 const router: IRouter = Router();
 
@@ -62,5 +64,7 @@ router.use(custodyRouter);
 router.use(memoryRouter);
 // Phase 4 — Constitutional Chain of Custody and Evidence Ledger
 router.use(evidenceRouter);
+// Phase 5 — Constitutional Judicial Intelligence (CJI)
+router.use(judicialReviewRouter);
 
 export default router;

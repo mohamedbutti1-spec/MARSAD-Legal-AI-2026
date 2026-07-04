@@ -14,7 +14,7 @@ import {
   Flag, Gavel, Lock, UnlockKeyhole, RefreshCw, ArrowRight, Users,
   Building2, BookOpen, GitMerge, Archive, BookMarked, GitBranch,
   DownloadCloud, ShieldCheck, ShieldAlert, Link2, Database, Fingerprint,
-  Activity,
+  Activity, Brain, Target, Zap, CircleDot, TrendingUp, Info,
 } from 'lucide-react';
 import { useUserContext, ROLE_META } from '@/lib/user-context';
 import { getPermissions } from '@/lib/permissions';
@@ -2014,11 +2014,624 @@ function EvidenceLedgerTab({ decisionId }: { decisionId: number }) {
   );
 }
 
+// ─── 9c. Judicial Intelligence Tab (Phase 5) ─────────────────────────────────
+
+type JudicialDimensionStatus = 'compliant' | 'minor_concern' | 'significant_concern' | 'deficient' | 'not_assessed';
+
+interface JudicialDimension {
+  dimension: string;
+  labelAr: string;
+  labelEn: string;
+  status: JudicialDimensionStatus;
+  riskScore: number;
+  finding: string;
+  legalReference?: string | null;
+}
+
+interface ConstitutionalDefect {
+  defectType: string;
+  severity: 'critical' | 'major' | 'minor' | 'advisory';
+  titleAr: string;
+  titleEn: string;
+  description: string;
+  affectedDimension: string | null;
+  remedyHint: string;
+}
+
+interface JudicialReviewData {
+  decisionId: number;
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'not_run';
+  reviewVersion?: number;
+  generatedAt?: string | null;
+  constitutionalRiskScore?: number | null;
+  riskLevel?: 'low' | 'moderate' | 'high' | 'critical' | null;
+  dimensions?: JudicialDimension[] | null;
+  detectedDefects?: ConstitutionalDefect[] | null;
+  findingsOfFact?: string[] | null;
+  findingsOfLaw?: string[] | null;
+  constitutionalObservations?: string[] | null;
+  aiObservations?: string[] | null;
+  humanOversightObservations?: string[] | null;
+  suggestedJudicialReasoning?: string | null;
+  outcomePrediction?: {
+    outcome: string;
+    confidencePercentage: number;
+    reasoning: string;
+    primaryRisk: string | null;
+  } | null;
+  remedyRecommendation?: {
+    remedy: string;
+    urgency: 'immediate' | 'standard' | 'advisory';
+    explanation: string;
+    conditions: string[];
+  } | null;
+  errorMessage?: string | null;
+  message?: string;
+}
+
+// Circular SVG risk gauge
+function RiskGauge({ score, level }: { score: number; level: string }) {
+  const radius  = 42;
+  const circ    = 2 * Math.PI * radius;
+  const fill    = circ * (score / 100);
+  const gap     = circ - fill;
+  const color   = level === 'critical' ? '#ef4444' : level === 'high' ? '#f97316' : level === 'moderate' ? '#eab308' : '#22c55e';
+
+  return (
+    <div className="relative flex flex-col items-center">
+      <svg width="110" height="110" viewBox="0 0 110 110" className="-rotate-90">
+        <circle cx="55" cy="55" r={radius} fill="none" stroke="#e5e7eb" strokeWidth="10" />
+        <circle
+          cx="55" cy="55" r={radius}
+          fill="none"
+          stroke={color}
+          strokeWidth="10"
+          strokeDasharray={`${fill} ${gap}`}
+          strokeLinecap="round"
+          style={{ transition: 'stroke-dasharray 0.5s ease' }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-2xl font-bold" style={{ color }}>{score}</span>
+        <span className="text-[10px] text-muted-foreground uppercase tracking-wide">/100</span>
+      </div>
+      <span className="text-[11px] font-semibold mt-1 uppercase tracking-wide" style={{ color }}>
+        {level === 'critical' ? 'حرج' : level === 'high' ? 'مرتفع' : level === 'moderate' ? 'متوسط' : 'منخفض'}
+      </span>
+    </div>
+  );
+}
+
+const DIMENSION_LABELS_AR: Record<string, string> = {
+  jurisdiction:           'الاختصاص',
+  procedure:              'الإجراءات',
+  form:                   'الشكل',
+  cause:                  'السبب',
+  subject:                'المحل',
+  purpose:                'الغاية',
+  human_influence:        'تأثير الإنسان',
+  ai_influence:           'تأثير الذكاء الاصطناعي',
+  constitutional_compliance: 'الالتزام الدستوري',
+  transparency:           'الشفافية',
+  explainability:         'قابلية التفسير',
+  proportionality:        'التناسب',
+  algorithmic_bias:       'التحيز الخوارزمي',
+  due_process:            'الإجراءات القانونية الواجبة',
+  equality:               'المساواة',
+  fundamental_rights:     'الحقوق الأساسية',
+};
+
+const DIMENSION_STATUS_COLORS: Record<JudicialDimensionStatus, string> = {
+  compliant:             'bg-emerald-100 text-emerald-700 border-emerald-200',
+  minor_concern:         'bg-yellow-100 text-yellow-700 border-yellow-200',
+  significant_concern:   'bg-orange-100 text-orange-700 border-orange-200',
+  deficient:             'bg-red-100 text-red-700 border-red-200',
+  not_assessed:          'bg-slate-100 text-slate-500 border-slate-200',
+};
+
+const DIMENSION_STATUS_LABELS: Record<JudicialDimensionStatus, string> = {
+  compliant:             'مطابق',
+  minor_concern:         'قلق بسيط',
+  significant_concern:   'قلق مهم',
+  deficient:             'قاصر',
+  not_assessed:          'غير مقيّم',
+};
+
+const DEFECT_SEVERITY_COLORS: Record<string, string> = {
+  critical: 'bg-red-50 border-red-300 text-red-800',
+  major:    'bg-orange-50 border-orange-300 text-orange-800',
+  minor:    'bg-yellow-50 border-yellow-300 text-yellow-800',
+  advisory: 'bg-sky-50 border-sky-300 text-sky-800',
+};
+
+const OUTCOME_CONFIG: Record<string, { ar: string; color: string; icon: React.ReactNode }> = {
+  likely_lawful:             { ar: 'على الأرجح مشروع',          color: 'bg-emerald-50 border-emerald-300 text-emerald-800', icon: <CheckCircle2 className="w-5 h-5 text-emerald-600" /> },
+  likely_partially_unlawful: { ar: 'على الأرجح مشروع جزئياً',  color: 'bg-orange-50 border-orange-300 text-orange-800',   icon: <AlertTriangle className="w-5 h-5 text-orange-600" /> },
+  likely_void:               { ar: 'على الأرجح باطل',           color: 'bg-red-50 border-red-300 text-red-800',            icon: <XCircle className="w-5 h-5 text-red-600" /> },
+  requires_further_review:   { ar: 'يستلزم مراجعة إضافية',     color: 'bg-violet-50 border-violet-300 text-violet-800',   icon: <Eye className="w-5 h-5 text-violet-600" /> },
+};
+
+const REMEDY_CONFIG: Record<string, { ar: string; color: string }> = {
+  uphold:                    { ar: 'تأييد القرار',                    color: 'bg-emerald-50 border-emerald-300 text-emerald-800' },
+  annul:                     { ar: 'إلغاء القرار',                    color: 'bg-red-50 border-red-300 text-red-800' },
+  partial_annulment:         { ar: 'إلغاء جزئي',                     color: 'bg-orange-50 border-orange-300 text-orange-800' },
+  remit_for_reconsideration: { ar: 'إعادة للنظر',                   color: 'bg-yellow-50 border-yellow-300 text-yellow-800' },
+  request_further_evidence:  { ar: 'طلب مزيد من الأدلة',           color: 'bg-sky-50 border-sky-300 text-sky-800' },
+};
+
+function DimensionCard({ dim, expanded, onToggle }: {
+  dim: JudicialDimension;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  const statusColor = DIMENSION_STATUS_COLORS[dim.status] ?? DIMENSION_STATUS_COLORS.not_assessed;
+  const statusLabel = DIMENSION_STATUS_LABELS[dim.status] ?? dim.status;
+  const riskBarColor =
+    dim.riskScore >= 75 ? 'bg-red-500' :
+    dim.riskScore >= 50 ? 'bg-orange-400' :
+    dim.riskScore >= 25 ? 'bg-yellow-400' : 'bg-emerald-400';
+
+  return (
+    <div className={`border rounded-lg overflow-hidden transition-all ${expanded ? 'border-primary/30 shadow-sm' : 'border-border'}`}>
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center gap-2.5 p-2.5 text-left hover:bg-muted/30 transition-colors"
+      >
+        <span className="text-[10px] font-bold text-muted-foreground w-4 shrink-0">{dim.riskScore}</span>
+        <div className="w-12 h-1.5 bg-muted rounded-full overflow-hidden shrink-0">
+          <div className={`h-full rounded-full ${riskBarColor}`} style={{ width: `${dim.riskScore}%` }} />
+        </div>
+        <span className="text-xs font-semibold flex-1 text-right">
+          {dim.labelAr || DIMENSION_LABELS_AR[dim.dimension] || dim.dimension}
+        </span>
+        <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded border shrink-0 ${statusColor}`}>
+          {statusLabel}
+        </span>
+        {expanded ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" /> : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
+      </button>
+      {expanded && (
+        <div className="border-t border-border/50 bg-muted/20 p-3 space-y-1.5 text-xs">
+          <p className="text-foreground leading-relaxed">{dim.finding}</p>
+          {dim.legalReference && (
+            <p className="text-muted-foreground flex items-center gap-1">
+              <BookOpen className="w-3 h-3 shrink-0" />
+              <span>{dim.legalReference}</span>
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function JudicialIntelligenceTab({ decisionId }: { decisionId: number }) {
+  const [running, setRunning]       = React.useState(false);
+  const [runError, setRunError]     = React.useState<string | null>(null);
+  const [expandedDim, setExpandedDim] = React.useState<string | null>(null);
+  const [activeSection, setActiveSection] = React.useState<'dimensions' | 'defects' | 'findings' | 'reasoning' | 'outcome'>('dimensions');
+
+  const query = useQuery({
+    queryKey:    ['judicial-review', decisionId],
+    queryFn:     () => apiFetch('GET', `/api/judicial-review/${decisionId}`),
+    retry:       false,
+    refetchInterval: running ? 5000 : false,
+  });
+
+  const review = query.data as JudicialReviewData | undefined;
+  const notRun  = !review || review.status === 'not_run';
+  const isRunning = review?.status === 'running' || running;
+  const completed  = review?.status === 'completed';
+  const failed     = review?.status === 'failed';
+
+  async function handleRun() {
+    setRunning(true);
+    setRunError(null);
+    try {
+      await apiFetch('POST', `/api/judicial-review/${decisionId}/run`);
+      await query.refetch();
+    } catch (e: unknown) {
+      setRunError(e instanceof Error ? e.message : 'فشل التشغيل');
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  async function handleExport() {
+    const result = await apiFetch('GET', `/api/judicial-review/${decisionId}/report`);
+    const blob = new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `judicial-intelligence-report-decision-${decisionId}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  if (query.isLoading) return <LoadingSpinner label="جارٍ تحميل بيانات الذكاء القضائي..." />;
+
+  // ── Not-run state ──────────────────────────────────────────────────────────
+  if (notRun || failed) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 gap-4" dir="rtl">
+        <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+          <Brain className="w-8 h-8 text-primary" />
+        </div>
+        <div className="text-center">
+          <h3 className="font-bold text-sm mb-1">محرك المراجعة الدستورية القضائية</h3>
+          <p className="text-xs text-muted-foreground max-w-xs">
+            يحلل الذكاء الاصطناعي هذا القرار عبر 16 بُعداً دستورياً تماماً كما يفعل القاضي الإداري.
+          </p>
+          {failed && review?.errorMessage && (
+            <p className="text-xs text-red-600 mt-2 bg-red-50 rounded-lg px-3 py-1.5">
+              خطأ سابق: {review.errorMessage}
+            </p>
+          )}
+          {runError && (
+            <p className="text-xs text-red-600 mt-2 bg-red-50 rounded-lg px-3 py-1.5">{runError}</p>
+          )}
+        </div>
+        <button
+          onClick={handleRun}
+          disabled={isRunning}
+          className="flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-xl font-semibold text-sm hover:bg-primary/90 transition-colors disabled:opacity-50"
+        >
+          {isRunning
+            ? <><RefreshCw className="w-4 h-4 animate-spin" />جارٍ التحليل الدستوري...</>
+            : <><Brain className="w-4 h-4" />{failed ? 'إعادة تشغيل التحليل' : 'تشغيل التحليل الدستوري'}</>}
+        </button>
+        <p className="text-[10px] text-muted-foreground">يستغرق التحليل 20-40 ثانية</p>
+      </div>
+    );
+  }
+
+  // ── Running state ──────────────────────────────────────────────────────────
+  if (isRunning) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 gap-4" dir="rtl">
+        <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center animate-pulse">
+          <Brain className="w-8 h-8 text-primary" />
+        </div>
+        <p className="text-sm font-semibold">المحرك القضائي يحلل القرار...</p>
+        <p className="text-xs text-muted-foreground">يتم تقييم 16 بُعداً دستورياً</p>
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (!completed || !review) return null;
+
+  const riskScore = review.constitutionalRiskScore ?? 0;
+  const riskLevel = review.riskLevel ?? 'low';
+  const dims      = review.dimensions ?? [];
+  const defects   = review.detectedDefects ?? [];
+  const outcome   = review.outcomePrediction;
+  const remedy    = review.remedyRecommendation;
+
+  const SECTIONS = [
+    { key: 'dimensions' as const, label: `الأبعاد (${dims.length})` },
+    { key: 'defects'   as const, label: `العيوب (${defects.length})` },
+    { key: 'findings'  as const, label: 'المستنتجات' },
+    { key: 'reasoning' as const, label: 'التسبيب القضائي' },
+    { key: 'outcome'   as const, label: 'النتيجة والعلاج' },
+  ] as const;
+
+  return (
+    <div className="space-y-4" dir="rtl">
+      {/* ── Header: risk gauge + controls ── */}
+      <div className="flex items-start gap-4 flex-wrap">
+        {/* Risk gauge */}
+        <div className="flex flex-col items-center gap-1">
+          <RiskGauge score={riskScore} level={riskLevel} />
+          <span className="text-[10px] text-muted-foreground">المخاطر الدستورية</span>
+        </div>
+
+        {/* Quick stats */}
+        <div className="flex-1 grid grid-cols-2 gap-2 min-w-[200px]">
+          {outcome && (
+            <div className={`px-3 py-2 rounded-xl border text-xs ${OUTCOME_CONFIG[outcome.outcome]?.color ?? 'bg-muted border-border'}`}>
+              <div className="flex items-center gap-1.5 mb-0.5">
+                {OUTCOME_CONFIG[outcome.outcome]?.icon}
+                <span className="font-bold text-[11px]">{OUTCOME_CONFIG[outcome.outcome]?.ar ?? outcome.outcome}</span>
+              </div>
+              <span className="text-[10px] opacity-70">ثقة: {outcome.confidencePercentage}%</span>
+            </div>
+          )}
+          {remedy && (
+            <div className={`px-3 py-2 rounded-xl border text-xs ${REMEDY_CONFIG[remedy.remedy]?.color ?? 'bg-muted border-border'}`}>
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <Gavel className="w-4 h-4" />
+                <span className="font-bold text-[11px]">{REMEDY_CONFIG[remedy.remedy]?.ar ?? remedy.remedy}</span>
+              </div>
+              <span className="text-[10px] opacity-70">
+                {remedy.urgency === 'immediate' ? '🔴 فوري' : remedy.urgency === 'standard' ? '🟡 عادي' : '🟢 استشاري'}
+              </span>
+            </div>
+          )}
+          <div className="px-3 py-2 rounded-xl border border-border bg-muted/30 text-xs">
+            <p className="font-bold text-[11px] text-foreground">{defects.filter((d) => d.severity === 'critical').length} حرج / {defects.length} عيب</p>
+            <p className="text-[10px] text-muted-foreground">العيوب الدستورية</p>
+          </div>
+          <div className="px-3 py-2 rounded-xl border border-border bg-muted/30 text-xs">
+            <p className="font-bold text-[11px] text-foreground">{dims.filter((d) => d.status === 'compliant').length}/{dims.length}</p>
+            <p className="text-[10px] text-muted-foreground">أبعاد مطابقة</p>
+          </div>
+        </div>
+
+        {/* Controls */}
+        <div className="flex flex-col gap-1.5">
+          <button
+            onClick={handleRun}
+            disabled={isRunning}
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-primary/30 text-primary hover:bg-primary/5 transition-colors"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            إعادة التحليل
+          </button>
+          <button
+            onClick={handleExport}
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-border hover:bg-muted/40 transition-colors"
+          >
+            <DownloadCloud className="w-3.5 h-3.5" />
+            تقرير قضائي
+          </button>
+        </div>
+      </div>
+
+      {/* Version + timestamp */}
+      {review.generatedAt && (
+        <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+          <Clock className="w-3 h-3" />
+          نُوِّلد في: {new Date(review.generatedAt).toLocaleString('ar-AE', { hour12: false })}
+          {review.reviewVersion && <span className="ms-2">• الإصدار {review.reviewVersion}</span>}
+        </p>
+      )}
+
+      {/* ── Section tabs ── */}
+      <div className="flex gap-1 overflow-x-auto pb-0.5">
+        {SECTIONS.map((s) => (
+          <button
+            key={s.key}
+            onClick={() => setActiveSection(s.key)}
+            className={`shrink-0 text-xs px-3 py-1.5 rounded-lg font-semibold transition-colors ${
+              activeSection === s.key ? 'bg-primary text-white' : 'bg-muted/40 text-muted-foreground hover:bg-muted/70'
+            }`}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Dimensions ── */}
+      {activeSection === 'dimensions' && (
+        <div className="space-y-1.5">
+          {dims.length === 0 ? (
+            <EmptyState title="لا توجد أبعاد محللة" />
+          ) : (
+            dims.map((dim) => (
+              <DimensionCard
+                key={dim.dimension}
+                dim={dim}
+                expanded={expandedDim === dim.dimension}
+                onToggle={() => setExpandedDim(expandedDim === dim.dimension ? null : dim.dimension)}
+              />
+            ))
+          )}
+        </div>
+      )}
+
+      {/* ── Defects ── */}
+      {activeSection === 'defects' && (
+        <div className="space-y-2">
+          {defects.length === 0 ? (
+            <div className="flex flex-col items-center py-8 gap-2">
+              <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+              <p className="text-sm font-semibold text-emerald-700">لا توجد عيوب دستورية مكتشفة</p>
+              <p className="text-xs text-muted-foreground">اجتاز القرار فحص العيوب الدستورية</p>
+            </div>
+          ) : (
+            defects.map((d, i) => (
+              <div key={i} className={`p-3 rounded-xl border ${DEFECT_SEVERITY_COLORS[d.severity] ?? 'bg-muted border-border'}`}>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span className="font-bold text-xs">{d.titleAr}</span>
+                  <span className="text-[9px] uppercase tracking-wide opacity-60 ms-auto">{d.severity}</span>
+                </div>
+                <p className="text-[11px] leading-relaxed mb-1.5">{d.description}</p>
+                {d.remedyHint && (
+                  <div className="flex items-start gap-1 text-[10px] opacity-80">
+                    <Zap className="w-3 h-3 shrink-0 mt-0.5" />
+                    <span><strong>الإجراء المقترح:</strong> {d.remedyHint}</span>
+                  </div>
+                )}
+                {d.affectedDimension && (
+                  <p className="text-[10px] opacity-60 mt-1">البُعد المتأثر: {DIMENSION_LABELS_AR[d.affectedDimension] ?? d.affectedDimension}</p>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {/* ── Findings ── */}
+      {activeSection === 'findings' && (
+        <div className="space-y-4">
+          {/* Findings of Fact */}
+          {(review.findingsOfFact ?? []).length > 0 && (
+            <div>
+              <p className="text-xs font-bold text-foreground mb-2 flex items-center gap-1.5">
+                <FileText className="w-3.5 h-3.5" />مستنتجات الوقائع
+              </p>
+              <ol className="space-y-1.5">
+                {(review.findingsOfFact ?? []).map((f, i) => (
+                  <li key={i} className="flex gap-2 text-xs">
+                    <span className="shrink-0 w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
+                    <span className="text-foreground leading-relaxed">{f}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+          {/* Findings of Law */}
+          {(review.findingsOfLaw ?? []).length > 0 && (
+            <div>
+              <p className="text-xs font-bold text-foreground mb-2 flex items-center gap-1.5">
+                <Scale className="w-3.5 h-3.5" />مستنتجات القانون
+              </p>
+              <ol className="space-y-1.5">
+                {(review.findingsOfLaw ?? []).map((f, i) => (
+                  <li key={i} className="flex gap-2 text-xs">
+                    <span className="shrink-0 w-5 h-5 rounded-full bg-violet-100 text-violet-700 text-[10px] font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
+                    <span className="text-foreground leading-relaxed">{f}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+          {/* Constitutional observations */}
+          {(review.constitutionalObservations ?? []).length > 0 && (
+            <div>
+              <p className="text-xs font-bold text-foreground mb-2 flex items-center gap-1.5">
+                <Shield className="w-3.5 h-3.5" />الملاحظات الدستورية
+              </p>
+              <ul className="space-y-1">
+                {(review.constitutionalObservations ?? []).map((o, i) => (
+                  <li key={i} className="flex gap-1.5 text-xs text-foreground">
+                    <CircleDot className="w-3 h-3 shrink-0 text-primary mt-0.5" />{o}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {/* AI observations */}
+          {(review.aiObservations ?? []).length > 0 && (
+            <div>
+              <p className="text-xs font-bold text-foreground mb-2 flex items-center gap-1.5">
+                <Brain className="w-3.5 h-3.5" />ملاحظات الذكاء الاصطناعي
+              </p>
+              <ul className="space-y-1">
+                {(review.aiObservations ?? []).map((o, i) => (
+                  <li key={i} className="flex gap-1.5 text-xs text-foreground">
+                    <CircleDot className="w-3 h-3 shrink-0 text-sky-500 mt-0.5" />{o}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {/* Human oversight observations */}
+          {(review.humanOversightObservations ?? []).length > 0 && (
+            <div>
+              <p className="text-xs font-bold text-foreground mb-2 flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5" />ملاحظات الرقابة البشرية
+              </p>
+              <ul className="space-y-1">
+                {(review.humanOversightObservations ?? []).map((o, i) => (
+                  <li key={i} className="flex gap-1.5 text-xs text-foreground">
+                    <CircleDot className="w-3 h-3 shrink-0 text-teal-500 mt-0.5" />{o}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Suggested Judicial Reasoning ── */}
+      {activeSection === 'reasoning' && (
+        <div className="bg-muted/30 rounded-xl border border-border p-4">
+          <p className="text-xs font-bold text-foreground mb-3 flex items-center gap-1.5">
+            <Gavel className="w-3.5 h-3.5" />
+            التسبيب القضائي المقترح
+          </p>
+          {review.suggestedJudicialReasoning ? (
+            <p className="text-sm text-foreground leading-loose font-serif whitespace-pre-wrap">
+              {review.suggestedJudicialReasoning}
+            </p>
+          ) : (
+            <EmptyState title="لا يوجد تسبيب قضائي" />
+          )}
+          <p className="text-[10px] text-muted-foreground mt-3 pt-3 border-t border-border flex items-center gap-1">
+            <Info className="w-3 h-3" />
+            هذا التسبيب مقترح من محرك الذكاء الاصطناعي وليس حكماً قضائياً. يجب مراجعته من قاضٍ مختص.
+          </p>
+        </div>
+      )}
+
+      {/* ── Outcome + Remedy ── */}
+      {activeSection === 'outcome' && (
+        <div className="space-y-3">
+          {/* Outcome prediction */}
+          {outcome && (
+            <div className={`p-4 rounded-xl border ${OUTCOME_CONFIG[outcome.outcome]?.color ?? 'bg-muted border-border'}`}>
+              <div className="flex items-center gap-2 mb-2">
+                {OUTCOME_CONFIG[outcome.outcome]?.icon}
+                <span className="font-bold text-sm">{OUTCOME_CONFIG[outcome.outcome]?.ar ?? outcome.outcome}</span>
+                <span className="ms-auto">
+                  <span className="text-xs font-bold">{outcome.confidencePercentage}%</span>
+                  <span className="text-[10px] opacity-70"> ثقة</span>
+                </span>
+              </div>
+              {/* Confidence bar */}
+              <div className="w-full h-1.5 bg-white/50 rounded-full mb-3">
+                <div
+                  className="h-full rounded-full bg-current opacity-60"
+                  style={{ width: `${outcome.confidencePercentage}%` }}
+                />
+              </div>
+              <p className="text-xs leading-relaxed mb-2">{outcome.reasoning}</p>
+              {outcome.primaryRisk && (
+                <div className="flex items-start gap-1.5 text-[11px] opacity-80">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                  <span><strong>المخاطر الرئيسية:</strong> {outcome.primaryRisk}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Remedy */}
+          {remedy && (
+            <div className={`p-4 rounded-xl border ${REMEDY_CONFIG[remedy.remedy]?.color ?? 'bg-muted border-border'}`}>
+              <div className="flex items-center gap-2 mb-2">
+                <Gavel className="w-4 h-4" />
+                <span className="font-bold text-sm">{REMEDY_CONFIG[remedy.remedy]?.ar ?? remedy.remedy}</span>
+                <span className={`ms-auto text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                  remedy.urgency === 'immediate' ? 'bg-red-200 text-red-800' :
+                  remedy.urgency === 'standard'  ? 'bg-yellow-200 text-yellow-800' :
+                  'bg-green-200 text-green-800'
+                }`}>
+                  {remedy.urgency === 'immediate' ? 'فوري' : remedy.urgency === 'standard' ? 'عادي' : 'استشاري'}
+                </span>
+              </div>
+              <p className="text-xs leading-relaxed mb-2">{remedy.explanation}</p>
+              {remedy.conditions.length > 0 && (
+                <div>
+                  <p className="text-[11px] font-semibold mb-1">الشروط الواجب توافرها:</p>
+                  <ul className="space-y-0.5">
+                    {remedy.conditions.map((c, i) => (
+                      <li key={i} className="flex gap-1.5 text-[11px]">
+                        <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5" />{c}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
+          <p className="text-[10px] text-muted-foreground flex items-center gap-1 pt-1">
+            <Info className="w-3 h-3" />
+            هذه توقعات وتوصيات مولّدة بالذكاء الاصطناعي لإرشاد القاضي. لا تُشكّل حكماً قانونياً ملزماً.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── 10. Judge Dashboard ──────────────────────────────────────────────────────
 
 function JudgeDashboard() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [tab, setTab] = useState<'stages' | 'jdp' | 'dci' | 'car' | 'audit' | 'custody' | 'memory' | 'evidence'>('stages');
+  const [tab, setTab] = useState<'stages' | 'jdp' | 'dci' | 'car' | 'audit' | 'custody' | 'memory' | 'evidence' | 'judicial'>('stages');
 
   const listQuery = useQuery({
     queryKey: ['gov-decisions-judge'],
@@ -2051,6 +2664,7 @@ function JudgeDashboard() {
     { key: 'custody',  label: '⛓ الحيازة' },
     { key: 'memory',   label: '📜 الذاكرة الدستورية' },
     { key: 'evidence', label: '🔐 سجل الأدلة' },
+    { key: 'judicial', label: '⚖️ الذكاء القضائي' },
   ];
 
   return (
@@ -2238,6 +2852,12 @@ function JudgeDashboard() {
             {tab === 'evidence' && selectedId ? (
               <div className="bg-white rounded-xl border border-border shadow-xs p-5">
                 <EvidenceLedgerTab decisionId={selectedId} />
+              </div>
+            ) : null}
+
+            {tab === 'judicial' && selectedId ? (
+              <div className="bg-white rounded-xl border border-border shadow-xs p-5">
+                <JudicialIntelligenceTab decisionId={selectedId} />
               </div>
             ) : null}
           </div>

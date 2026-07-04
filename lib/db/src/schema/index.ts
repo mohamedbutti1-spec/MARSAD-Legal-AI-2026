@@ -26,3 +26,5 @@ export * from "./custody";
 export * from "./memory";
 // Phase 4 — Constitutional Chain of Custody and Evidence Ledger
 export * from "./evidence";
+// Phase 5 — Constitutional Judicial Intelligence (CJI)
+export * from "./judicial-review";
