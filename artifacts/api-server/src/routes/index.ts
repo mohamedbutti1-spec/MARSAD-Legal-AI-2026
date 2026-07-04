@@ -21,6 +21,8 @@ import adminOsRouter      from "./admin-os";
 import legalOsAdminRouter from "./legal-os-admin";
 // Module 1 — Intelligent Administrative Decision
 import decisionsRouter from "./decisions";
+// Phase 2 — Executive Governance Layer
+import governanceRouter from "./governance";
 
 const router: IRouter = Router();
 
@@ -46,5 +48,7 @@ router.use(adminOsRouter);
 router.use(legalOsAdminRouter);
 // Module 1
 router.use(decisionsRouter);
+// Phase 2 — Executive Governance Layer
+router.use(governanceRouter);
 
 export default router;

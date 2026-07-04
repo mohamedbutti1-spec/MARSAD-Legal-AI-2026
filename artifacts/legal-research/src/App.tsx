@@ -36,6 +36,8 @@ import ConstitutionalPrinciples  from '@/pages/constitutional-principles';
 // Module 1 — Intelligent Administrative Decision
 import Decisions                 from '@/pages/decisions';
 import DecisionWorkspace         from '@/pages/decision-workspace';
+import GovernanceHub             from '@/pages/governance-hub';
+import CitizenPortal             from '@/pages/citizen-portal';
 
 // Admin
 import UserManagement     from '@/pages/user-management';
@@ -76,6 +78,10 @@ function Router() {
         <Route path="/" component={Dashboard} />
         <Route path="/shamsi-theory"             component={ShamsiTheory} />
         <Route path="/constitutional-principles" component={ConstitutionalPrinciples} />
+
+        {/* ── Phase 2 — Executive Governance Hub ───────────────────── */}
+        <Route path="/governance" component={GovernanceHub} />
+        <Route path="/citizen"    component={CitizenPortal} />
 
         {/* ── Module 1 — Intelligent Administrative Decision ───────── */}
         <Route path="/decisions/new">

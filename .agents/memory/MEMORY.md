@@ -6,3 +6,4 @@
 - [Module 1 — Intelligent Administrative Decision](module1-decisions.md) — security model, audit hash integrity, stage sequence enforcement, case number format
 - [DCI — Decision Constitutional Identity](dci-implementation.md) — DB schema, stage→field mappings, seal logic, amendment transaction pattern, hash chain design
 - [Seven Constitutional Fixes](constitutional-fixes.md) — HII/QVA/LSI/CAR/gate logic; lib/db must be built (tsc --build) before api-server typecheck; aiFullyAdopted→materially_changed_outcome (not confirmed)
+- [Phase 2 — Executive Governance Layer](phase2-governance-layer.md) — permission matrix, DCI explicit allowlist, Express middleware types, JSX unknown pattern, audit log schema

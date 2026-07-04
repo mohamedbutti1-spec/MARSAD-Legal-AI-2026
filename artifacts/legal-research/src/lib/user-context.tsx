@@ -1,21 +1,44 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import {
+  type UserRole,
+  type RolePermissions,
+  type GovernanceRole,
+  ALL_ROLES,
+  GOVERNANCE_ROLES,
+  ROLE_META,
+  getPermissions,
+} from '@/lib/permissions';
 
-export type UserRole = 'owner' | 'supervisor' | 'viewer';
+// Demo organisation for org-scoped roles (director_general / department_director).
+// In production this would come from a trusted identity claim.
+const DEMO_ORG = 'وزارة الصحة ووقاية المجتمع — الإدارة العامة للرقابة والتفتيش الصحي — إمارة أبوظبي';
+
+function orgForRole(role: UserRole): string {
+  return getPermissions(role).seeOwnOrgOnly ? DEMO_ORG : '';
+}
+
+export type { UserRole, GovernanceRole };
 export type AppLanguage = 'ar' | 'en';
 
 interface UserContextType {
   role: UserRole;
   userId: number;
+  userOrg: string; // '' for non-org-scoped roles; DEMO_ORG for seeOwnOrgOnly roles
   lang: AppLanguage;
   dir: 'rtl' | 'ltr';
   setRole: (role: UserRole) => void;
   setLang: (lang: AppLanguage) => void;
+  permissions: RolePermissions;
+  // Legacy permission booleans (kept for backward compatibility)
   canUpload: boolean;
   canUseAi: boolean;
   canManageUsers: boolean;
   canManageSettings: boolean;
   canComment: boolean;
   canViewAudit: boolean;
+  // Governance
+  isGovernanceRole: boolean;
+  canViewGovernanceDashboard: boolean;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -27,10 +50,12 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const savedRole = localStorage.getItem('userRole') as UserRole;
-    if (savedRole && ['owner', 'supervisor', 'viewer'].includes(savedRole)) {
+    if (savedRole && ALL_ROLES.includes(savedRole)) {
       setRoleState(savedRole);
+      localStorage.setItem('userOrg', orgForRole(savedRole));
     } else {
       localStorage.setItem('userRole', 'owner');
+      localStorage.setItem('userOrg', '');
     }
 
     const savedLang = localStorage.getItem('appLang') as AppLanguage;
@@ -41,7 +66,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('userId', String(userId));
   }, [userId]);
 
-  // Apply dir to <html> whenever language changes
   useEffect(() => {
     const dir = lang === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.setAttribute('dir', dir);
@@ -51,6 +75,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const handleSetRole = (newRole: UserRole) => {
     setRoleState(newRole);
     localStorage.setItem('userRole', newRole);
+    localStorage.setItem('userOrg', orgForRole(newRole));
   };
 
   const handleSetLang = (newLang: AppLanguage) => {
@@ -58,19 +83,27 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('appLang', newLang);
   };
 
+  const permissions = getPermissions(role);
+  const isGovernanceRole = GOVERNANCE_ROLES.includes(role as GovernanceRole);
+  const userOrg = orgForRole(role);
+
   const value: UserContextType = {
     role,
     userId,
+    userOrg,
     lang,
     dir: lang === 'ar' ? 'rtl' : 'ltr',
     setRole: handleSetRole,
     setLang: handleSetLang,
+    permissions,
     canUpload: role === 'owner' || role === 'supervisor',
     canUseAi: role === 'owner' || role === 'supervisor',
     canManageUsers: role === 'owner',
     canManageSettings: role === 'owner',
     canComment: role === 'owner' || role === 'supervisor',
-    canViewAudit: role === 'owner' || role === 'supervisor',
+    canViewAudit: permissions.canReadAuditLog,
+    isGovernanceRole,
+    canViewGovernanceDashboard: permissions.canViewGovernanceDashboard,
   };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
@@ -84,8 +117,9 @@ export function useUserContext() {
   return context;
 }
 
-/** Translation helper — returns Arabic or English string based on current lang */
 export function useT() {
   const { lang } = useUserContext();
   return (ar: string, en: string) => (lang === 'ar' ? ar : en);
 }
+
+export { ROLE_META, ALL_ROLES, GOVERNANCE_ROLES, getPermissions };

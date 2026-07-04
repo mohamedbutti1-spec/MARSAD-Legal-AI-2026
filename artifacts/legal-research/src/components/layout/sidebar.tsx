@@ -50,7 +50,7 @@ interface NavSection {
 
 export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: SidebarProps) {
   const [location] = useLocation();
-  const { role, lang, canManageUsers, canManageSettings, canUseAi, canViewAudit } = useUserContext();
+  const { role, lang, canManageUsers, canManageSettings, canUseAi, canViewAudit, canViewGovernanceDashboard } = useUserContext();
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
 
   const toggleSection = (id: string) => {
@@ -98,6 +98,14 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           icon: <Scale className="w-4.5 h-4.5" />,
           show: true,
           badge: 'الوحدة 1',
+        },
+        {
+          href: '/governance',
+          labelAr: 'مركز الحوكمة التنفيذية',
+          labelEn: 'Executive Governance Hub',
+          icon: <Shield className="w-4.5 h-4.5" />,
+          show: canViewGovernanceDashboard,
+          badge: 'المرحلة 2',
         },
       ],
     },

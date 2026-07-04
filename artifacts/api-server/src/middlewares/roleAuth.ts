@@ -1,15 +1,17 @@
 import type { Request, Response, NextFunction } from "express";
+import { ALL_ROLES, getPermissions } from "@workspace/db/permissions";
 
-export type UserRole = "owner" | "supervisor" | "viewer";
+export type UserRole = (typeof ALL_ROLES)[number];
 
 /**
  * Reads the X-User-Role header sent by the frontend (stored in localStorage).
  * For a full production deployment, replace this with a verified JWT/session check.
+ * Now supports all 14 roles (3 legacy + 11 governance).
  */
 export function requireRole(...allowedRoles: UserRole[]) {
   return (req: Request, res: Response, next: NextFunction): void => {
     const role = (req.headers["x-user-role"] as string) || "viewer";
-    if (!["owner", "supervisor", "viewer"].includes(role)) {
+    if (!ALL_ROLES.includes(role as UserRole)) {
       res.status(401).json({ error: "Invalid or missing user role" });
       return;
     }
@@ -21,6 +23,31 @@ export function requireRole(...allowedRoles: UserRole[]) {
   };
 }
 
-export const requireOwner = requireRole("owner");
+/**
+ * Permission-flag based middleware factory.
+ * Usage: requirePermission('canReadAuditLog')
+ */
+export function requirePermission(flag: keyof ReturnType<typeof getPermissions>) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const role = (req.headers["x-user-role"] as string) || "viewer";
+    const perms = getPermissions(role);
+    if (!perms[flag]) {
+      res.status(403).json({ error: `Permission denied: ${flag} is not granted for role '${role}'` });
+      return;
+    }
+    next();
+  };
+}
+
+export const requireOwner             = requireRole("owner");
 export const requireSupervisorOrOwner = requireRole("owner", "supervisor");
-export const requireAnyRole = requireRole("owner", "supervisor", "viewer");
+export const requireAnyRole           = requireRole("owner", "supervisor", "viewer");
+
+// Convenience guards for governance roles
+export const requireGovernanceRead = requireRole(
+  "owner", "supervisor", "viewer",
+  "minister", "undersecretary", "assistant_undersecretary",
+  "director_general", "department_director", "legal_department",
+  "constitutional_reviewer", "internal_auditor", "external_auditor",
+  "judge",
+);
