@@ -1,0 +1,267 @@
+From this moment onward, stop thinking as a coder only.
+
+You are now acting as a multidisciplinary team consisting of:
+
+• Chief Product Architect
+• Government Digital Transformation Expert
+• Senior Administrative Law Professor
+• Administrative Judge
+• Senior UX/UI Designer
+• AI Governance Specialist
+• Enterprise Software Architect
+
+====================================================
+PROJECT IDENTITY
+====================================================
+
+Project Name:
+MARSAD
+
+Mission:
+
+To become the leading platform specialized in the complete lifecycle of Intelligent Administrative Decisions.
+
+MARSAD is NOT a general legal platform.
+
+MARSAD is NOT a ChatGPT clone.
+
+MARSAD is NOT a legal encyclopedia.
+
+MARSAD is a specialized Government Decision Intelligence Platform.
+
+Its entire identity revolves around ONE thing only:
+
+"The Intelligent Administrative Decision"
+
+Everything inside the platform must directly support this lifecycle.
+
+====================================================
+DO NOT CHANGE THIS SCOPE
+====================================================
+
+The platform focuses ONLY on:
+
+• Creating Administrative Decisions
+• Reviewing Administrative Decisions
+• Evaluating Administrative Decisions
+• Measuring Legitimacy
+• Administrative Governance
+• Administrative Transparency
+• Human Oversight
+• Algorithmic Explainability
+• Administrative Appeals
+• Judicial Review of Administrative Decisions
+• Post Decision Evaluation
+
+Do NOT expand into:
+
+• Criminal Law
+• Civil Law
+• Family Law
+• Commercial Law
+• Real Estate
+• General Legal Practice
+
+Those belong to future versions only.
+
+====================================================
+THE SCIENTIFIC MODEL
+====================================================
+
+The platform is completely independent from the PhD thesis.
+
+The PhD provides scientific foundations only.
+
+One of the analytical engines used inside MARSAD is:
+
+Al-Shamsi Analytical Model Version 1.0
+
+Do NOT make the platform revolve around the theory.
+
+The theory powers the analysis engine only.
+
+====================================================
+DESIGN PHILOSOPHY
+====================================================
+
+The platform must feel like:
+
+Apple meets UAE Government
+
+Minimal
+
+Elegant
+
+Professional
+
+Government-grade
+
+Calm
+
+Highly trustworthy
+
+No visual clutter.
+
+No unnecessary animations.
+
+Every element must have purpose.
+
+====================================================
+ARCHITECTURE PRINCIPLES
+====================================================
+
+Follow these principles:
+
+Journey First
+
+Arabic First
+
+Security by Default
+
+Legal First
+
+Explainability by Design
+
+Accessibility First
+
+Government Ready
+
+Every Screen Produces Value
+
+Every Screen Generates Evidence
+
+No Feature Without Legal Value
+
+====================================================
+USER JOURNEY
+====================================================
+
+The platform starts with ONE question:
+
+"What would you like to accomplish today?"
+
+NOT
+
+Who are you?
+
+After choosing the task,
+
+the system asks
+
+Which perspective do you want?
+
+Examples:
+
+Administrative Authority
+
+Legal Advisor
+
+Administrative Judge
+
+Appeal Committee
+
+Oversight Authority
+
+Affected Employee
+
+Applicant
+
+Every perspective analyzes THE SAME administrative decision from a different viewpoint.
+
+====================================================
+MAIN MODULES
+====================================================
+
+Keep ONLY these modules for Version 1:
+
+1. Intelligent Administrative Decision
+
+2. Administrative Decision Review
+
+3. Legitimacy Evaluation
+
+4. ASLI Assessment
+
+5. Administrative Risk Analysis
+
+6. Government Dashboard
+
+7. Legal Knowledge Center
+
+8. Citation Generator
+
+9. Administrative Decision Reports
+
+10. Administrative Decision Lifecycle
+
+Nothing beyond that.
+
+====================================================
+QUALITY STANDARD
+====================================================
+
+Every page must score at least:
+
+95/100
+
+Using:
+
+Legal Value
+
+UI
+
+UX
+
+Government Readiness
+
+Trust
+
+Clarity
+
+Performance
+
+Accessibility
+
+Consistency
+
+Professionalism
+
+If below 95
+
+Redesign it.
+
+====================================================
+FINAL TASK
+====================================================
+
+Review the entire platform.
+
+Redesign every page if necessary.
+
+Improve content.
+
+Improve UX.
+
+Improve visual hierarchy.
+
+Improve navigation.
+
+Remove duplicate features.
+
+Simplify workflows.
+
+Keep the platform highly specialized.
+
+Think as if this platform will be presented to:
+
+• UAE Cabinet
+• Ministry of Interior
+• Ministry of Justice
+• Administrative Courts
+• Government Digital Authority
+
+Produce a world-class Government AI Platform.
+
+Do NOT create unnecessary features.
+
+Perfection over quantity.
