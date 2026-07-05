@@ -124,9 +124,48 @@ function CitationChip({ token, citation }: { token: string; citation?: Citation 
   );
 }
 
-// ─── Message content renderer ─────────────────────────────────────────────────
+// ─── Structured response renderer ─────────────────────────────────────────────
+//
+// The Legal Intelligence Engine formats responses with ## N. Section headers.
+// We segment the text on those headers and render each section distinctly.
+// Non-structured responses (legacy / short answers) fall back to plain rendering.
 
-function parseContent(text: string, citations: Citation[]): React.ReactNode[] {
+type ContentSegment =
+  | { kind: 'header'; num: string; title: string }
+  /** sectionNum: the ## N. number this text belongs to (undefined = preamble) */
+  | { kind: 'text'; content: string; sectionNum?: string };
+
+const SECTION_HEADER_RE = /^##\s+(\d+)\.\s+(.+)$/;
+
+/** Split an assistant response into header + text segments. */
+function segmentResponse(text: string): ContentSegment[] {
+  const segments: ContentSegment[] = [];
+  const lines = text.split('\n');
+  let textBuf: string[] = [];
+  let currentSectionNum: string | undefined = undefined;
+
+  function flushText() {
+    const trimmed = textBuf.join('\n').replace(/^\n+|\n+$/g, '');
+    if (trimmed) segments.push({ kind: 'text', content: trimmed, sectionNum: currentSectionNum });
+    textBuf = [];
+  }
+
+  for (const line of lines) {
+    const m = SECTION_HEADER_RE.exec(line.trimEnd());
+    if (m) {
+      flushText();
+      currentSectionNum = m[1];
+      segments.push({ kind: 'header', num: m[1], title: m[2].trim() });
+    } else {
+      textBuf.push(line);
+    }
+  }
+  flushText();
+  return segments;
+}
+
+/** Inline citation token → CitationChip substitution within a text block. */
+function parseCitationTokens(text: string, citations: Citation[], keyPrefix: string): React.ReactNode[] {
   if (!citations || citations.length === 0) return [text];
   const pattern = /\[(DOC|SRC):\d+\]/g;
   const parts: React.ReactNode[] = [];
@@ -136,11 +175,90 @@ function parseContent(text: string, citations: Citation[]): React.ReactNode[] {
     if (match.index > last) parts.push(text.slice(last, match.index));
     const token = match[0];
     const cit = citations.find((c) => c.token === token);
-    parts.push(<CitationChip key={`${token}-${match.index}`} token={token} citation={cit} />);
+    parts.push(<CitationChip key={`${keyPrefix}-${token}-${match.index}`} token={token} citation={cit} />);
     last = match.index + token.length;
   }
   if (last < text.length) parts.push(text.slice(last));
   return parts;
+}
+
+/**
+ * Render a structured (multi-section) or plain assistant response.
+ * Structured = at least one ## N. header detected.
+ */
+function AssistantContent({ content, citations }: { content: string; citations: Citation[] }) {
+  const segments = segmentResponse(content);
+  const isStructured = segments.some((s) => s.kind === 'header');
+
+  if (!isStructured) {
+    // Legacy / short answer — plain whitespace-aware rendering
+    return (
+      <p className="whitespace-pre-wrap break-words leading-7 text-sm">
+        {parseCitationTokens(content, citations, 'plain')}
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-0">
+      {segments.map((seg, idx) => {
+        if (seg.kind === 'header') {
+          return (
+            <div
+              key={idx}
+              className="flex items-center gap-2.5 pt-4 pb-1.5 border-b border-primary/12 first:pt-1"
+            >
+              <span className="flex-none w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center shrink-0">
+                {seg.num}
+              </span>
+              <h3 className="text-xs font-bold text-primary tracking-wide uppercase">
+                {seg.title}
+              </h3>
+            </div>
+          );
+        }
+        // Text block — split on newlines, render inline content per line.
+        // Label-style bolding (e.g. "قوة المركز القانوني:") is applied only
+        // inside section 9 to avoid false-positives in article references.
+        const isSection9 = seg.sectionNum === '9';
+        const lines = seg.content.split('\n');
+        return (
+          <div key={idx} className="pt-2 pb-1 space-y-1">
+            {lines.map((line, li) => {
+              // Skip blank lines — avoids stacked empty <p> elements
+              if (!line.trim()) return null;
+
+              // Bold "Label: value" lines — only in section 9 (Practical Opinion)
+              if (isSection9) {
+                const colonIdx = line.indexOf(':');
+                const isLabelLine =
+                  colonIdx > 0 &&
+                  !line.trim().startsWith('[') &&
+                  !line.trim().startsWith('•') &&
+                  !line.trim().startsWith('http');
+                if (isLabelLine) {
+                  const label = line.slice(0, colonIdx + 1);
+                  const rest = line.slice(colonIdx + 1);
+                  return (
+                    <p key={li} className="text-sm leading-7 break-words">
+                      <span className="font-semibold text-foreground">{label}</span>
+                      {parseCitationTokens(rest, citations, `${idx}-${li}`)}
+                    </p>
+                  );
+                }
+              }
+
+              return (
+                <p key={li} className="text-sm leading-7 break-words whitespace-pre-wrap">
+                  {parseCitationTokens(line, citations, `${idx}-${li}`)}
+                </p>
+              );
+            })}
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 // ─── Message bubble ───────────────────────────────────────────────────────────
@@ -158,20 +276,18 @@ function MessageBubble({ msg }: { msg: Message }) {
         </div>
       )}
 
-      <div className={`max-w-[88%] sm:max-w-[82%] ${isUser ? 'order-first' : ''}`}>
+      <div className={`max-w-[92%] sm:max-w-[86%] ${isUser ? 'order-first' : ''}`}>
         <div
           className={`rounded-2xl px-3 py-2.5 sm:px-4 sm:py-3 text-sm leading-relaxed ${
             isUser
               ? 'bg-muted border border-border text-foreground rounded-ss-none'
-              : 'bg-primary text-primary-foreground rounded-se-none'
+              : 'bg-card border border-border text-foreground rounded-se-none shadow-sm'
           }`}
         >
           {isUser ? (
             <p className="whitespace-pre-wrap break-words">{msg.content}</p>
           ) : (
-            <p className="whitespace-pre-wrap break-words leading-7">
-              {parseContent(msg.content, citations)}
-            </p>
+            <AssistantContent content={msg.content} citations={citations} />
           )}
         </div>
 
