@@ -97,11 +97,10 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
         },
         {
           href: '/decisions',
-          labelAr: 'القرار الإداري الذكي',
-          labelEn: 'Intelligent Decision',
+          labelAr: 'القرارات الإدارية',
+          labelEn: 'Administrative Decisions',
           icon: <Scale className="w-4.5 h-4.5" />,
           show: true,
-          badge: 'الوحدة 1',
         },
         {
           href: '/governance',
@@ -109,39 +108,35 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           labelEn: 'Executive Governance Hub',
           icon: <Shield className="w-4.5 h-4.5" />,
           show: canViewGovernanceDashboard,
-          badge: 'المرحلة 2',
         },
         {
           href: '/risk-engine',
-          labelAr: 'محرك المخاطر الوطني',
-          labelEn: 'National Risk Engine',
+          labelAr: 'تقييم المخاطر',
+          labelEn: 'Risk Assessment',
           icon: <ShieldAlert className="w-4.5 h-4.5" />,
           show: canViewRiskDashboard,
-          badge: 'NRME',
         },
         {
           href: '/constitutional-intelligence',
-          labelAr: 'الذكاء الدستوري',
-          labelEn: 'Constitutional Intelligence',
+          labelAr: 'المراجعة الدستورية',
+          labelEn: 'Constitutional Review',
           icon: <Scale className="w-4.5 h-4.5" />,
           show: canViewCilDashboard,
-          badge: 'CIL',
         },
       ],
     },
-    // ── Phase 43 — National Administrative Intelligence Platform ──────────────
+    // ── National Administrative Intelligence Platform ──────────────────────────
     {
       id: 'naip',
-      titleAr: 'الذكاء الإداري الوطني',
-      titleEn: 'National Admin Intelligence',
+      titleAr: 'الاستخبارات الوطنية',
+      titleEn: 'National Intelligence',
       items: [
         {
           href: '/naip',
-          labelAr: 'المنصة الوطنية NAIP',
-          labelEn: 'NAIP Executive Platform',
+          labelAr: 'منصة الذكاء الوطني',
+          labelEn: 'National Intelligence Platform',
           icon: <Cpu className="w-4.5 h-4.5" />,
           show: canViewNaipDashboard,
-          badge: 'NAIP',
         },
         {
           href: '/naip/dashboard',
@@ -201,19 +196,18 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
         },
       ],
     },
-    // ── Phase 44 — Judicial Digital Twin ─────────────────────────────────────
+    // ── Legal Decision Analysis ───────────────────────────────────────────────
     {
       id: 'jdt',
-      titleAr: 'التوأم القضائي الرقمي',
-      titleEn: 'Judicial Digital Twin',
+      titleAr: 'التحليل القانوني',
+      titleEn: 'Legal Analysis',
       items: [
         {
           href: '/decisions',
-          labelAr: 'تشغيل المحاكاة القضائية',
-          labelEn: 'Run Judicial Simulation',
+          labelAr: 'تحليل القرار القانوني',
+          labelEn: 'Legal Decision Analysis',
           icon: <Brain className="w-4.5 h-4.5" />,
           show: canViewJdtSimulation,
-          badge: 'JDT',
         },
       ],
     },
@@ -383,8 +377,8 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
         {!collapsed && (
           <div className="flex items-center gap-3 min-w-0">
             {/* Emblem */}
-            <div className="w-9 h-9 rounded-lg bg-gold/20 border border-gold/30 flex items-center justify-center shrink-0">
-              <Scale className="w-5 h-5 text-gold" />
+            <div className="w-9 h-9 rounded-lg bg-accent/20 border border-accent/30 flex items-center justify-center shrink-0">
+              <Scale className="w-5 h-5 text-accent" />
             </div>
             <div className="min-w-0">
               <div className="font-bold text-sidebar-foreground text-base leading-tight">
@@ -398,8 +392,8 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
         )}
 
         {collapsed && (
-          <div className="w-9 h-9 rounded-lg bg-gold/20 border border-gold/30 flex items-center justify-center">
-            <Scale className="w-5 h-5 text-gold" />
+          <div className="w-9 h-9 rounded-lg bg-accent/20 border border-accent/30 flex items-center justify-center">
+            <Scale className="w-5 h-5 text-accent" />
           </div>
         )}
 
@@ -468,19 +462,14 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
                           ${active ? 'nav-item-active' : 'text-sidebar-foreground/60 hover:nav-item-hover'}
                         `}
                       >
-                        <div className={`shrink-0 ${active ? 'text-gold' : 'text-sidebar-foreground/50 group-hover:text-sidebar-foreground/80'}`}>
+                        <div className={`shrink-0 ${active ? 'text-white' : 'text-sidebar-foreground/50 group-hover:text-sidebar-foreground/80'}`}>
                           {item.icon}
                         </div>
                         {!collapsed && (
                           <div className="flex-1 min-w-0 flex items-center justify-between">
-                            <span className={`text-sm font-medium truncate ${active ? 'text-gold' : ''}`}>
+                            <span className={`text-sm font-medium truncate ${active ? 'text-white' : ''}`}>
                               {lang === 'ar' ? item.labelAr : item.labelEn}
                             </span>
-                            {item.badge && (
-                              <span className="text-[10px] bg-gold/20 text-gold px-1.5 py-0.5 rounded-full font-bold leading-none">
-                                {item.badge}
-                              </span>
-                            )}
                           </div>
                         )}
                         {/* Tooltip for collapsed state */}

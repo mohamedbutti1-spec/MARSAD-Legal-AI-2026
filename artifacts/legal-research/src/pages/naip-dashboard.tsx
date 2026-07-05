@@ -288,8 +288,8 @@ export default function NaipDashboard() {
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
             <ModuleStatus icon={<Scale className="w-3.5 h-3.5" />} label={t('القرار الذكي', 'Decisions')} active={modules?.decisions ?? false} />
             <ModuleStatus icon={<Shield className="w-3.5 h-3.5" />} label={t('الحوكمة', 'Governance')} active={modules?.governance ?? false} />
-            <ModuleStatus icon={<ShieldAlert className="w-3.5 h-3.5" />} label="NRME" active={modules?.nrme ?? false} />
-            <ModuleStatus icon={<Scale className="w-3.5 h-3.5" />} label="CIL" active={modules?.cil ?? false} />
+            <ModuleStatus icon={<ShieldAlert className="w-3.5 h-3.5" />} label={t('المخاطر', 'Risk')} active={modules?.nrme ?? false} />
+            <ModuleStatus icon={<Scale className="w-3.5 h-3.5" />} label={t('دستوري', 'Review')} active={modules?.cil ?? false} />
             <ModuleStatus icon={<RefreshCw className="w-3.5 h-3.5" />} label={t('إعادة التشغيل', 'Replay')} active={modules?.replay ?? false} />
             <ModuleStatus icon={<Sparkles className="w-3.5 h-3.5" />} label={t('نظرية الشامسي', 'Al-Shamsi')} active={modules?.shamsi ?? false} />
             <ModuleStatus icon={<BookOpen className="w-3.5 h-3.5" />} label={t('المبادئ', 'Principles')} active={modules?.principles ?? false} />

@@ -367,7 +367,7 @@ export default function NaipUndersecretary() {
             { href: '/decisions/new', icon: <Plus className="w-5 h-5" />, label: 'قرار جديد', labelEn: 'New Decision', color: 'text-emerald-500' },
             { href: '/governance', icon: <Scale className="w-5 h-5" />, label: 'مركز الحوكمة', labelEn: 'Governance Hub', color: 'text-blue-500' },
             { href: '/risk-engine', icon: <BarChart3 className="w-5 h-5" />, label: 'محرك المخاطر', labelEn: 'Risk Engine', color: 'text-orange-500' },
-            { href: '/constitutional-intelligence', icon: <ShieldAlert className="w-5 h-5" />, label: 'الذكاء الدستوري', labelEn: 'CIL Dashboard', color: 'text-purple-500' },
+            { href: '/constitutional-intelligence', icon: <ShieldAlert className="w-5 h-5" />, label: 'المراجعة الدستورية', labelEn: 'Constitutional Review', color: 'text-purple-500' },
           ].map((a) => (
             <Link key={a.href} href={a.href}>
               <div className="bg-card border border-border rounded-xl p-4 flex flex-col items-center gap-2 hover:border-foreground/30 hover:bg-muted/30 cursor-pointer transition-colors text-center">

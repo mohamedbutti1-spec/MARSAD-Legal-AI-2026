@@ -1982,7 +1982,7 @@ function CilWarningsPanel({ decisionId }: { decisionId: number }) {
             : `تحذيرات الذكاء الدستوري — ${activeWarnings.length} تحذير نشط`}
         </span>
         <span className="ms-auto text-[10px] bg-muted border border-border px-1.5 py-0.5 rounded font-mono text-muted-foreground">
-          CIL Phase 42
+          المراجعة الدستورية
         </span>
       </div>
 
@@ -2303,7 +2303,7 @@ export default function DecisionWorkspace() {
                 onClick={() => setActiveView('risk')}
                 className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors -mb-px whitespace-nowrap ${activeView === 'risk' ? 'border-orange-500 text-orange-700 dark:text-orange-400' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
               >
-                <Activity className="w-3.5 h-3.5" /> مؤشرات المخاطر NRME
+                <Activity className="w-3.5 h-3.5" /> مؤشرات المخاطر
               </button>
             </div>
 

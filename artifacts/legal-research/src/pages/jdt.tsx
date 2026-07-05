@@ -495,8 +495,8 @@ export default function JdtPage() {
             </h2>
             <p className="text-muted-foreground max-w-md">
               {t(
-                'ليس لديك صلاحية عرض التوأم القضائي الرقمي. يُرجى التواصل مع مسؤول النظام.',
-                'You do not have permission to view the Judicial Digital Twin. Please contact your system administrator.'
+                'ليس لديك صلاحية عرض تحليل القرار القانوني. يُرجى التواصل مع مسؤول النظام.',
+                'You do not have permission to view Legal Decision Analysis. Please contact your system administrator.'
               )}
             </p>
           </div>
@@ -531,7 +531,7 @@ export default function JdtPage() {
           ) : (
             <RefreshCw className="w-4 h-4" />
           )}
-          {t('تشغيل المحاكاة', 'Run Simulation')}
+          {t('تشغيل التحليل', 'Run Analysis')}
         </button>
         {runMutation.isError && (
           <div className="flex items-start gap-2 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/40 rounded-lg px-3 py-2">
@@ -567,16 +567,13 @@ export default function JdtPage() {
                   <Brain className="w-6 h-6 text-primary" />
                 </div>
                 <h1 className="text-2xl font-bold text-foreground">
-                  {t('التوأم القضائي الرقمي', 'Judicial Digital Twin')}
+                  {t('تحليل القرار القانوني', 'Legal Decision Analysis')}
                 </h1>
-                <span className="text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full font-semibold shrink-0">
-                  Phase 44
-                </span>
               </div>
               <p className="text-sm text-muted-foreground pe-2">
                 {t(
-                  'محاكاة كاملة للمراجعة القضائية قبل التقديم — نظرية الشامسي™',
-                  'Complete pre-submission judicial review simulation — Al-Shamsi Theory™'
+                  'تحليل شامل للقرار عبر المراحل القضائية ومعايير الامتثال الدستوري',
+                  'Comprehensive decision analysis across judicial stages and constitutional compliance criteria'
                 )}
               </p>
             </div>
@@ -897,13 +894,13 @@ export default function JdtPage() {
                   {t('تكامل الوحدات', 'Module Integration')}
                 </h2>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* CIL Card */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Constitutional Compliance Card */}
                 <div className="bg-card border border-border rounded-xl p-4 space-y-3">
                   <div className="flex items-center gap-2">
                     <Shield className="w-4 h-4 text-blue-500" />
                     <span className="font-semibold text-sm text-foreground">
-                      {t('التقييم الدستوري CIL', 'Constitutional Assessment CIL')}
+                      {t('درجة الامتثال الدستوري', 'Constitutional Compliance')}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -929,12 +926,12 @@ export default function JdtPage() {
                   )}
                 </div>
 
-                {/* NRME Card */}
+                {/* Risk Score Card */}
                 <div className="bg-card border border-border rounded-xl p-4 space-y-3">
                   <div className="flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 text-orange-500" />
                     <span className="font-semibold text-sm text-foreground">
-                      {t('تقييم المخاطر NRME', 'Risk Assessment NRME')}
+                      {t('درجة المخاطر', 'Risk Score')}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -953,31 +950,6 @@ export default function JdtPage() {
                   )}
                 </div>
 
-                {/* Replay Integration Card */}
-                <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <RefreshCw className="w-4 h-4 text-purple-500" />
-                    <span className="font-semibold text-sm text-foreground">
-                      {t('تكامل الإعادة', 'Replay Integration')}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl font-bold tabular-nums text-foreground">
-                      {sim?.replayIntegration?.stagesAnalysed ?? '—'}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      {t('مراحل محللة', 'stages analysed')}
-                    </span>
-                  </div>
-                  {sim?.replayIntegration?.criticalStageKeys && (
-                    <p className="text-xs text-muted-foreground">
-                      {t('المراحل الحرجة:', 'Critical stages:')}{' '}
-                      <span className="font-semibold text-red-500">
-                        {sim.replayIntegration.criticalStageKeys.length}
-                      </span>
-                    </p>
-                  )}
-                </div>
               </div>
             </div>
 
@@ -1169,8 +1141,8 @@ export default function JdtPage() {
             {sim?.completedAt &&
               `${t('اكتملت في:', 'Completed:')} ${new Date(sim.completedAt).toLocaleString('ar-AE')} · `}
             {t(
-              'التوأم القضائي الرقمي — Phase 44 — نظرية الشامسي™',
-              'Judicial Digital Twin — Phase 44 — Al-Shamsi Theory™'
+              'تحليل القرار القانوني — نظرية الشامسي™',
+              'Legal Decision Analysis — Al-Shamsi Theory™'
             )}
           </div>
         </div>

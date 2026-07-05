@@ -230,7 +230,7 @@ export function RiskPanel({ decisionId }: { decisionId: number }) {
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Activity className="w-5 h-5 text-orange-500" />
-            <h2 className="text-base font-bold text-foreground">محرك المخاطر الوطني — NRME</h2>
+            <h2 className="text-base font-bold text-foreground">تقييم المخاطر</h2>
             {assessment && (
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${riskLevelBadge(assessment.riskLevel)}`}>
                 {riskLevelLabel(assessment.riskLevel)}

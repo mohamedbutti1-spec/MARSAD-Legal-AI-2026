@@ -346,7 +346,7 @@ export default function NaipDirectorGeneral() {
           <div className="bg-card border border-border rounded-xl p-5 space-y-4">
             <div className="flex items-center gap-2">
               <Scale className="w-4 h-4 text-muted-foreground" />
-              <h2 className="text-sm font-bold text-foreground">{t('توزيع الامتثال الدستوري', 'CIL Compliance Distribution')}</h2>
+              <h2 className="text-sm font-bold text-foreground">{t('توزيع الامتثال الدستوري', 'Constitutional Compliance Distribution')}</h2>
             </div>
             {cilDist ? (
               <div className="grid grid-cols-2 gap-3">
@@ -373,7 +373,7 @@ export default function NaipDirectorGeneral() {
           {[
             { href: '/decisions', icon: <FileText className="w-5 h-5" />, label: 'القرارات', labelEn: 'Decisions', color: 'text-blue-500' },
             { href: '/risk-engine', icon: <Target className="w-5 h-5" />, label: 'محرك المخاطر', labelEn: 'Risk Engine', color: 'text-orange-500' },
-            { href: '/constitutional-intelligence', icon: <ShieldAlert className="w-5 h-5" />, label: 'الذكاء الدستوري', labelEn: 'CIL Dashboard', color: 'text-purple-500' },
+            { href: '/constitutional-intelligence', icon: <ShieldAlert className="w-5 h-5" />, label: 'المراجعة الدستورية', labelEn: 'Constitutional Review', color: 'text-purple-500' },
           ].map((a) => (
             <Link key={a.href} href={a.href}>
               <div className="bg-card border border-border rounded-xl p-4 flex flex-col items-center gap-2 hover:border-foreground/30 hover:bg-muted/30 cursor-pointer transition-colors text-center">

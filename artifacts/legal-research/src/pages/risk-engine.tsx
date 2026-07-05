@@ -218,15 +218,12 @@ export default function RiskEngine() {
             <div className="flex items-center gap-2">
               <ShieldAlert className="w-6 h-6 text-orange-500" />
               <h1 className="text-xl font-bold text-foreground">
-                {t('محرك المخاطر الوطني', 'National Risk Modeling Engine')}
+                {t('تقييم المخاطر', 'Risk Assessment')}
               </h1>
-              <span className="text-[10px] font-bold tracking-widest text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-950/40 px-2 py-0.5 rounded-full border border-orange-200 dark:border-orange-800/40">
-                NRME
-              </span>
             </div>
             <p className="text-xs text-muted-foreground max-w-lg">
               {t(
-                'نظام تقييم المخاطر الدستورية والإدارية في الوقت الفعلي وفق إطار الشامسي — 15 مؤشر مخاطر + 3 مؤشرات مجمعة',
+                'نظام تقييم المخاطر الدستورية والإدارية في الوقت الفعلي — 15 مؤشر مخاطر + 3 مؤشرات مجمعة',
                 'Real-time constitutional & administrative risk assessment — 15 risk indices + 3 aggregate scores',
               )}
             </p>
@@ -395,7 +392,7 @@ export default function RiskEngine() {
               <p className="text-xs text-amber-700/80 dark:text-amber-400/80 leading-relaxed">
                 {t(
                   'يستند المحرك الوطني للمخاطر إلى 16 بعداً دستورياً وفق نظرية الشامسي، وتُحسب المؤشرات الـ15 استناداً إلى مدى امتثال القرار للمعايير الدستورية الإماراتية ومبادئ الشريعة الإدارية — المادة 25 وما يليها من الدستور الاتحادي، وقانون اتحادي رقم 11 لسنة 2008 في شأن القرارات الإدارية.',
-                  'The NRME computes 15 risk indices based on 16 Al-Shamsi constitutional dimensions, grounded in UAE Constitution Articles 25+ and Federal Law No. 11 of 2008 on Administrative Decisions.',
+                  'Risk assessment computes 15 risk indices based on 16 Al-Shamsi constitutional dimensions, grounded in UAE Constitution Articles 25+ and Federal Law No. 11 of 2008 on Administrative Decisions.',
                 )}
               </p>
             </div>

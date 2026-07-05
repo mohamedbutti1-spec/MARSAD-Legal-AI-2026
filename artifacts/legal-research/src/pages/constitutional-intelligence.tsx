@@ -630,11 +630,11 @@ function DecisionAssessmentView({
               <div className="bg-card border border-border rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <Activity className="w-4 h-4 text-blue-500" />
-                  <span className="text-sm font-bold">{t('تكامل NRME', 'NRME Integration')}</span>
+                  <span className="text-sm font-bold">{t('تكامل تقييم المخاطر', 'Risk Assessment Integration')}</span>
                 </div>
                 <div className="space-y-2 text-xs text-muted-foreground">
                   <div className="flex justify-between">
-                    <span>أثر دستوري على NRME</span>
+                    <span>{t('الأثر الدستوري على المخاطر', 'Constitutional risk impact')}</span>
                     <span className="font-bold tabular-nums text-foreground">{assessment.nrmeIntegration.constitutionalImpactScore}</span>
                   </div>
                   <div className="flex justify-between">
@@ -718,7 +718,7 @@ export default function ConstitutionalIntelligence() {
       <AppLayout>
         <div className="flex flex-col items-center justify-center h-96 text-muted-foreground gap-3">
           <Shield className="w-12 h-12 opacity-20" />
-          <p className="text-sm">{t('ليس لديك صلاحية لعرض لوحة الذكاء الدستوري', 'You do not have access to the Constitutional Intelligence Dashboard')}</p>
+          <p className="text-sm">{t('ليس لديك صلاحية لعرض لوحة المراجعة الدستورية', 'You do not have access to the Constitutional Review Dashboard')}</p>
         </div>
       </AppLayout>
     );
@@ -735,22 +735,19 @@ export default function ConstitutionalIntelligence() {
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-gold/20 border border-gold/30 flex items-center justify-center">
-                <Scale className="w-5 h-5 text-gold" />
+              <div className="w-10 h-10 rounded-xl bg-accent/15 border border-accent/25 flex items-center justify-center">
+                <Scale className="w-5 h-5 text-accent" />
               </div>
               <div>
                 <h1 className="text-xl font-bold text-foreground">
-                  {t('طبقة الذكاء الدستوري', 'Constitutional Intelligence Layer')}
+                  {t('المراجعة الدستورية', 'Constitutional Review')}
                 </h1>
                 <p className="text-xs text-muted-foreground">
-                  {t('المرحلة 42 · نظرية الشامسي™ · 12 مبدأً دستورياً', 'Phase 42 · Al-Shamsi Theory™ · 12 Constitutional Principles')}
+                  {t('نظرية الشامسي™ · 12 مبدأً دستورياً', 'Al-Shamsi Theory™ · 12 Constitutional Principles')}
                 </p>
               </div>
             </div>
           </div>
-          <span className="text-[10px] bg-gold/20 text-gold border border-gold/30 px-2 py-1 rounded font-bold tracking-wider">
-            CIL v42
-          </span>
         </div>
 
         {/* ── Dashboard Stats ── */}

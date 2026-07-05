@@ -291,8 +291,8 @@ export default function NaipJudge() {
               icon={<FileText className="w-4 h-4" />}
             />
             <StatTile
-              labelAr="تقييمات CIL مكتملة"
-              labelEn="Completed CIL Assessments"
+              labelAr="تقييمات دستورية مكتملة"
+              labelEn="Completed Constitutional Assessments"
               value={kpi?.completedCilCount}
               colorClass="text-emerald-600 dark:text-emerald-400"
               icon={<CheckCircle2 className="w-4 h-4" />}
@@ -323,7 +323,7 @@ export default function NaipJudge() {
                 <h2 className="text-sm font-bold text-foreground">{t('التقييمات الدستورية المكتملة', 'Completed Constitutional Assessments')}</h2>
               </div>
               <Link href="/constitutional-intelligence" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
-                {t('CIL', 'CIL Dashboard')} <ChevronRight className="w-3.5 h-3.5" />
+                {t('المراجعة الدستورية', 'Constitutional Review')} <ChevronRight className="w-3.5 h-3.5" />
               </Link>
             </div>
             <div className="divide-y divide-border/40">
@@ -456,7 +456,7 @@ export default function NaipJudge() {
         {/* ── Quick Links ──────────────────────────────────────────────────── */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {[
-            { href: '/constitutional-intelligence', icon: <Scale className="w-5 h-5" />, label: 'الذكاء الدستوري', labelEn: 'Constitutional Intelligence', color: 'text-violet-500' },
+            { href: '/constitutional-intelligence', icon: <Scale className="w-5 h-5" />, label: 'المراجعة الدستورية', labelEn: 'Constitutional Review', color: 'text-violet-500' },
             { href: '/decisions', icon: <FileText className="w-5 h-5" />, label: 'جميع القرارات', labelEn: 'All Decisions', color: 'text-blue-500' },
             { href: '/governance', icon: <BarChart3 className="w-5 h-5" />, label: 'مركز الحوكمة', labelEn: 'Governance Hub', color: 'text-emerald-500' },
           ].map((a) => (

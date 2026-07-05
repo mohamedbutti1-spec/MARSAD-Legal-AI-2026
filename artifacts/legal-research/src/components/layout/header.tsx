@@ -53,7 +53,7 @@ export function Header({ onMenuClick }: HeaderProps) {
 
         <button className="relative p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors">
           <Bell className="w-4 h-4" />
-          <span className="absolute top-1.5 end-1.5 w-1.5 h-1.5 bg-gold rounded-full" />
+          <span className="absolute top-1.5 end-1.5 w-1.5 h-1.5 bg-accent rounded-full" />
         </button>
 
         <div className="relative">
@@ -94,7 +94,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                                 </span>
                                 <span className={`font-medium truncate ${isActive ? 'text-foreground' : 'text-muted-foreground'}`}>{isAr ? m.ar : m.en}</span>
                               </div>
-                              {isActive && <span className="w-2 h-2 rounded-full bg-gold shrink-0 ms-2" />}
+                              {isActive && <span className="w-2 h-2 rounded-full bg-accent shrink-0 ms-2" />}
                             </button>
                           );
                         })}

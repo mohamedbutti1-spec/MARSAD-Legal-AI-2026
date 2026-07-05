@@ -49,7 +49,7 @@ interface ModuleTileProps {
   icon: React.ReactNode;
   nameAr: string;
   nameEn: string;
-  badge: string;
+  badge?: string;
   href: string;
   subtitle?: string;
   statusColor?: string;
@@ -59,14 +59,14 @@ function ModuleTile({ icon, nameAr, nameEn, badge, href, subtitle, statusColor =
   const t = useT();
   return (
     <Link href={href}>
-      <div className="bg-card border border-border rounded-xl p-5 hover:border-gold/40 hover:bg-gold/5 transition-all cursor-pointer group h-full flex flex-col gap-3">
+      <div className="bg-card border border-border rounded-xl p-5 hover:border-accent/40 hover:bg-accent/5 transition-all cursor-pointer group h-full flex flex-col gap-3">
         <div className="flex items-start justify-between">
-          <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center text-muted-foreground group-hover:bg-gold/15 group-hover:text-gold transition-all">
+          <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center text-muted-foreground group-hover:bg-accent/15 group-hover:text-accent transition-all">
             {icon}
           </div>
           <div className="flex items-center gap-2">
             <span className={`w-2 h-2 rounded-full ${statusColor}`} />
-            <span className="text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded font-bold tracking-wider">{badge}</span>
+            {badge && <span className="text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded font-bold tracking-wider">{badge}</span>}
           </div>
         </div>
         <div className="flex-1">
@@ -260,24 +260,21 @@ export default function NaipHome() {
               icon={<Shield className="w-5 h-5" />}
               nameAr="مركز الحوكمة التنفيذية"
               nameEn="Executive Governance"
-              badge="المرحلة 2"
               href="/governance"
               statusColor="bg-emerald-500"
             />
             <ModuleTile
               icon={<ShieldAlert className="w-5 h-5" />}
-              nameAr="محرك المخاطر الوطني"
-              nameEn="National Risk Modeling Engine"
-              badge="NRME"
+              nameAr="تقييم المخاطر"
+              nameEn="Risk Assessment"
               href="/risk-engine"
               subtitle={overview?.avgRiskIndex !== null && overview?.avgRiskIndex !== undefined ? `NRI: ${overview.avgRiskIndex}%` : undefined}
               statusColor="bg-amber-500"
             />
             <ModuleTile
               icon={<Scale className="w-5 h-5" />}
-              nameAr="الذكاء الدستوري"
-              nameEn="Constitutional Intelligence Layer"
-              badge="CIL"
+              nameAr="المراجعة الدستورية"
+              nameEn="Constitutional Review"
               href="/constitutional-intelligence"
               subtitle={overview?.avgComplianceScore !== null && overview?.avgComplianceScore !== undefined ? `CCS: ${overview.avgComplianceScore}%` : undefined}
               statusColor="bg-blue-500"

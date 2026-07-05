@@ -71,62 +71,70 @@
   --elevate-1: rgba(0, 0, 0, 0.03);
   --elevate-2: rgba(0, 0, 0, 0.08);
 
-  /* ─── Marsad — Ministry of Justice Palette ─────────────────────── */
-  /* Navy #1B2A4A  →  hsl(220 47% 20%)                               */
-  /* Gold  #C9A84C →  hsl(43  49% 54%)                               */
-  /* Grey bg #F5F6FA → hsl(230 23% 97%)                              */
+  /* ─── MARSAD — Enterprise Government Palette ───────────────────── */
+  /* Navy    #0E1F42 → hsl(221 63% 16%)                              */
+  /* Accent  #2C6ED4 → hsl(214 66% 50%)  (replaces gold)            */
+  /* Bg      #F3F7FC → hsl(213 36% 97%)                              */
 
-  --background: 230 23% 97%;
-  --foreground: 220 47% 15%;
-  --border: 220 20% 88%;
-  --input: 220 20% 88%;
-  --ring: 220 47% 20%;
+  --background: 213 36% 97%;
+  --foreground: 221 63% 12%;
+  --border: 214 25% 88%;
+  --input: 214 25% 88%;
+  --ring: 221 63% 16%;
 
   --card: 0 0% 100%;
-  --card-foreground: 220 47% 15%;
-  --card-border: 220 20% 90%;
+  --card-foreground: 221 63% 12%;
+  --card-border: 214 25% 90%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 220 47% 15%;
-  --popover-border: 220 20% 88%;
+  --popover-foreground: 221 63% 12%;
+  --popover-border: 214 25% 88%;
 
-  /* Primary = MoJ Navy */
-  --primary: 220 47% 20%;
+  /* Primary = Enterprise Navy */
+  --primary: 221 63% 16%;
   --primary-foreground: 0 0% 100%;
 
   /* Secondary = soft navy wash */
-  --secondary: 220 30% 93%;
-  --secondary-foreground: 220 47% 20%;
+  --secondary: 214 30% 93%;
+  --secondary-foreground: 221 63% 16%;
 
-  --muted: 220 20% 94%;
-  --muted-foreground: 220 15% 50%;
+  --muted: 214 25% 94%;
+  --muted-foreground: 221 20% 48%;
 
-  /* Accent = gold */
-  --accent: 43 49% 54%;
-  --accent-foreground: 220 47% 10%;
+  /* Accent = Enterprise Blue (replaces gold throughout) */
+  --accent: 214 66% 50%;
+  --accent-foreground: 0 0% 100%;
 
-  /* Gold tokens for direct use */
-  --gold: 43 49% 54%;
-  --gold-foreground: 220 47% 10%;
+  /* Gold tokens remapped → accent blue for backward compatibility */
+  --gold: 214 66% 50%;
+  --gold-foreground: 0 0% 100%;
 
-  --destructive: 0 72% 51%;
+  --destructive: 0 73% 43%;
   --destructive-foreground: 0 0% 100%;
 
   /* ─── Sidebar — deep navy ────────────────────────────────────────── */
-  --sidebar: 220 52% 13%;           /* #0E1D38 — deeper navy */
-  --sidebar-foreground: 220 30% 90%;
-  --sidebar-border: 220 52% 18%;
-  --sidebar-primary: 220 47% 20%;
+  --sidebar: 221 65% 9%;            /* #0A1530 — enterprise deep navy */
+  --sidebar-foreground: 214 30% 88%;
+  --sidebar-border: 221 55% 15%;
+  --sidebar-primary: 221 63% 16%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 43 49% 54%;     /* gold active state */
-  --sidebar-accent-foreground: 220 47% 10%;
-  --sidebar-ring: 43 49% 54%;
+  --sidebar-accent: 214 66% 50%;    /* blue active state */
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-ring: 214 66% 50%;
 
-  --chart-1: 220 47% 30%;
-  --chart-2: 43 49% 54%;
+  /* Semantic tokens */
+  --success: 156 64% 29%;
+  --success-foreground: 0 0% 100%;
+  --warning: 38 100% 38%;
+  --warning-foreground: 0 0% 100%;
+  --critical: 0 73% 43%;
+  --critical-foreground: 0 0% 100%;
+
+  --chart-1: 221 63% 30%;
+  --chart-2: 214 66% 50%;
   --chart-3: 197 55% 35%;
-  --chart-4: 142 45% 40%;
-  --chart-5: 0 72% 51%;
+  --chart-4: 156 64% 29%;
+  --chart-5: 0 73% 43%;
 
   --app-font-sans: 'IBM Plex Sans Arabic', system-ui, sans-serif;
   --app-font-serif: 'Amiri', Georgia, serif;
@@ -186,20 +194,20 @@
   --destructive: 0 62.8% 40%;
   --destructive-foreground: 0 0% 100%;
 
-  --sidebar: 220 52% 7%;
-  --sidebar-foreground: 220 30% 88%;
-  --sidebar-border: 220 52% 14%;
-  --sidebar-primary: 220 47% 16%;
-  --sidebar-primary-foreground: 220 30% 95%;
-  --sidebar-accent: 43 49% 54%;
-  --sidebar-accent-foreground: 220 47% 10%;
-  --sidebar-ring: 43 49% 54%;
+  --sidebar: 221 65% 6%;
+  --sidebar-foreground: 214 25% 85%;
+  --sidebar-border: 221 55% 12%;
+  --sidebar-primary: 221 63% 13%;
+  --sidebar-primary-foreground: 214 25% 95%;
+  --sidebar-accent: 214 66% 50%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-ring: 214 66% 50%;
 
-  --chart-1: 220 30% 80%;
-  --chart-2: 43 49% 60%;
+  --chart-1: 214 40% 70%;
+  --chart-2: 214 66% 60%;
   --chart-3: 197 55% 50%;
-  --chart-4: 142 45% 50%;
-  --chart-5: 0 72% 60%;
+  --chart-4: 156 64% 45%;
+  --chart-5: 0 73% 55%;
 }
 
 @layer base {
@@ -225,18 +233,18 @@
   ::-webkit-scrollbar-thumb  { background: hsl(var(--border)); border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground)); }
 
-  /* ─── Gold divider utility ───────────────────────────────────────── */
+  /* ─── Accent divider utility ────────────────────────────────────── */
   .gold-bar {
-    background: linear-gradient(90deg, hsl(var(--gold)), hsl(43 49% 70%));
+    background: linear-gradient(90deg, hsl(var(--accent)), hsl(214 66% 65%));
   }
 }
 
 /* ─── Marsad custom utilities ────────────────────────────────────────── */
 @layer utilities {
   .nav-item-active {
-    background: linear-gradient(135deg, hsl(43 49% 54% / 0.18), hsl(43 49% 54% / 0.08));
-    color: hsl(43 49% 70%);
-    border-inline-end: 3px solid hsl(43 49% 54%);
+    background: hsl(214 66% 50% / 0.15);
+    color: hsl(0 0% 100%);
+    border-inline-end: 3px solid hsl(214 66% 50%);
   }
 
   .nav-item-hover {
@@ -252,9 +260,66 @@
   }
 
   .moj-badge-gold {
-    background: hsl(43 49% 54% / 0.15);
-    color: hsl(43 49% 35%);
-    border: 1px solid hsl(43 49% 54% / 0.3);
+    background: hsl(214 66% 50% / 0.12);
+    color: hsl(214 66% 35%);
+    border: 1px solid hsl(214 66% 50% / 0.25);
+  }
+
+  .badge-success {
+    background: hsl(156 64% 29% / 0.12);
+    color: hsl(156 64% 22%);
+    border: 1px solid hsl(156 64% 29% / 0.25);
+    border-radius: 0.25rem;
+    padding: 0.125rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .badge-warning {
+    background: hsl(38 100% 38% / 0.12);
+    color: hsl(38 100% 25%);
+    border: 1px solid hsl(38 100% 38% / 0.25);
+    border-radius: 0.25rem;
+    padding: 0.125rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .badge-critical {
+    background: hsl(0 73% 43% / 0.12);
+    color: hsl(0 73% 30%);
+    border: 1px solid hsl(0 73% 43% / 0.25);
+    border-radius: 0.25rem;
+    padding: 0.125rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .badge-navy {
+    background: hsl(221 63% 16% / 0.10);
+    color: hsl(221 63% 16%);
+    border: 1px solid hsl(221 63% 16% / 0.20);
+    border-radius: 0.25rem;
+    padding: 0.125rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      hsl(214 25% 92%) 0%,
+      hsl(214 25% 88%) 50%,
+      hsl(214 25% 92%) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+    border-radius: 0.375rem;
+  }
+
+  @keyframes skeleton-shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
   }
 
   .section-divider {

@@ -127,13 +127,9 @@ export default function DecisionsPage() {
         {/* ── Header ──────────────────────────────────────────────── */}
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs font-semibold tracking-widest uppercase text-muted-foreground">
-              <Scale className="w-3.5 h-3.5" />
-              <span>الوحدة الأولى · إطار الشامسي</span>
-            </div>
-            <h1 className="text-2xl font-bold text-foreground">القرار الإداري الذكي</h1>
+            <h1 className="text-2xl font-bold text-foreground">القرارات الإدارية</h1>
             <p className="text-sm text-muted-foreground">
-              إنشاء القرارات الإدارية وفق المنهج الدستوري لإطار الشامسي — {TOTAL_STAGES} مرحلة
+              إدارة القرارات الإدارية وتتبع مراحل التحقق الدستوري — {TOTAL_STAGES} مرحلة
             </p>
           </div>
 

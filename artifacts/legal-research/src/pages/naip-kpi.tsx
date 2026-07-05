@@ -256,7 +256,7 @@ function UaeWideTab({ headers }: { headers: Record<string, string> }) {
           <Link href="/constitutional-intelligence">
             <button className="w-full mt-2 text-xs border border-border hover:border-border/60 rounded-lg px-3 py-2 text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-1">
               <Scale className="w-3.5 h-3.5" />
-              {t('عرض لوحة CIL', 'View CIL Dashboard')}
+              {t('عرض المراجعة الدستورية', 'View Constitutional Review')}
             </button>
           </Link>
         </div>

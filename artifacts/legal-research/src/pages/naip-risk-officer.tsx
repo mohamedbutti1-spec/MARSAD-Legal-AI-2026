@@ -194,12 +194,9 @@ export default function NaipRiskOfficer() {
             <h1 className="text-xl font-bold text-foreground">
               {t('لوحة مسؤول المخاطر الوطني', 'National Risk Officer Dashboard')}
             </h1>
-            <span className="text-[10px] font-bold tracking-widest text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-950/40 px-2 py-0.5 rounded-full border border-red-200 dark:border-red-800/40">
-              NRME
-            </span>
           </div>
           <p className="text-xs text-muted-foreground max-w-lg">
-            {t('تقييم المخاطر الوطنية والدستورية وفق محرك NRME — 15 مؤشر مخاطر + 3 مؤشرات مجمعة', 'National & constitutional risk assessment via NRME — 15 indices + 3 aggregates')}
+            {t('تقييم المخاطر الوطنية والدستورية — 15 مؤشر مخاطر + 3 مؤشرات مجمعة', 'National & constitutional risk assessment — 15 indices + 3 aggregates')}
           </p>
         </div>
 
@@ -356,8 +353,8 @@ export default function NaipRiskOfficer() {
         {/* ── Quick Links ──────────────────────────────────────────────────── */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {[
-            { href: '/risk-engine', icon: <Activity className="w-5 h-5" />, label: 'محرك المخاطر الكامل', labelEn: 'Full NRME', color: 'text-red-500' },
-            { href: '/constitutional-intelligence', icon: <Scale className="w-5 h-5" />, label: 'الذكاء الدستوري', labelEn: 'CIL Dashboard', color: 'text-purple-500' },
+            { href: '/risk-engine', icon: <Activity className="w-5 h-5" />, label: 'تقييم المخاطر', labelEn: 'Risk Assessment', color: 'text-red-500' },
+            { href: '/constitutional-intelligence', icon: <Scale className="w-5 h-5" />, label: 'المراجعة الدستورية', labelEn: 'Constitutional Review', color: 'text-purple-500' },
             { href: '/decisions', icon: <FileText className="w-5 h-5" />, label: 'جميع القرارات', labelEn: 'All Decisions', color: 'text-blue-500' },
           ].map((a) => (
             <Link key={a.href} href={a.href}>

@@ -11,10 +11,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useUserContext, useT } from '@/lib/user-context';
 import { useLocation } from 'wouter';
-import {
-  AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip,
-  ResponsiveContainer, BarChart, Bar, Cell,
-} from 'recharts';
 import { LoadingGrid } from '@/components/ui/loading-card';
 import { ErrorMessage } from '@/components/ui/error-boundary';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -36,13 +32,6 @@ const ACTION_CONFIG: Record<string, { labelAr: string; labelEn: string; colorCla
   'settings.update':       { labelAr: 'تحديث الإعدادات',  labelEn: 'Settings updated',  colorClass: 'text-muted-foreground' },
 };
 
-/* Chart colours drawn from CSS vars so they respect the theme */
-const CHART_COLORS = [
-  'hsl(var(--primary))',
-  'hsl(var(--gold))',
-  'hsl(197 55% 35%)',
-  'hsl(142 45% 40%)',
-];
 
 export default function Dashboard() {
   const { data: stats, isLoading, error } = useGetDocumentStats();
@@ -68,26 +57,6 @@ export default function Dashboard() {
       .then((data) => { if (data) setDashStats(data); })
       .catch(() => {});
   }, []);
-
-  const uploadTrendData = React.useMemo(() => {
-    const s = stats as (typeof stats & { uploadsByDay?: Record<string, number> }) | undefined;
-    if (!s?.uploadsByDay) return [];
-    return Object.entries(s.uploadsByDay as Record<string, number>)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .slice(-7)
-      .map(([date, count]) => ({
-        date: new Date(date).toLocaleDateString('ar-AE', { weekday: 'short' }),
-        count,
-      }));
-  }, [stats]);
-
-  const fileTypeData = React.useMemo(() => {
-    if (!stats?.byType?.length) return [];
-    return stats.byType.map((ft: { type: string; count: number }) => ({
-      name: ft.type.toUpperCase(),
-      value: ft.count,
-    }));
-  }, [stats]);
 
   // Quick links filtered by permission
   const quickLinks = [
@@ -254,117 +223,48 @@ export default function Dashboard() {
           </>
         ) : null}
 
-        {/* ─── Charts + Activity ────────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          <Card className="lg:col-span-2 border-border">
-            <CardHeader className="px-5 pt-5 pb-3">
-              <CardTitle className="text-sm font-semibold text-foreground">
-                {t('اتجاه رفع الوثائق — آخر 7 أيام', 'Upload Trend — Last 7 Days')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-5 pb-5">
-              {uploadTrendData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={140}>
-                  <AreaChart data={uploadTrendData} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
-                    <defs>
-                      <linearGradient id="uploadGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%"  stopColor="hsl(var(--primary))" stopOpacity={0.25} />
-                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
-                    <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} width={24} />
-                    <Tooltip
-                      contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid hsl(var(--border))' }}
-                      formatter={(v: number) => [v, t('وثائق', 'docs')]}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="count"
-                      name={t('وثائق', 'docs')}
-                      stroke="hsl(var(--primary))"
-                      fill="url(#uploadGrad)"
-                      strokeWidth={2}
-                      dot={{ r: 3, fill: 'hsl(var(--primary))' }}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-36 flex items-center justify-center border border-dashed border-border rounded-lg bg-muted/20">
-                  <span className="text-sm text-muted-foreground">
-                    {t('لا توجد بيانات رفع بعد', 'No upload data yet')}
-                  </span>
-                </div>
-              )}
-
-              {fileTypeData.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-border/50">
-                  <p className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wider">
-                    {t('توزيع الأنواع', 'By File Type')}
-                  </p>
-                  <ResponsiveContainer width="100%" height={60}>
-                    <BarChart data={fileTypeData} margin={{ top: 0, right: 4, bottom: 0, left: -20 }}>
-                      <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
-                      <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} width={24} />
-                      <Tooltip
-                        contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid hsl(var(--border))' }}
-                      />
-                      <Bar dataKey="value" name={t('عدد', 'count')} radius={[4, 4, 0, 0]}>
-                        {fileTypeData.map((_: unknown, i: number) => (
-                          <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Recent activity */}
-          <Card className="border-border">
-            <CardHeader className="px-5 pt-5 pb-3">
-              <CardTitle className="text-sm font-semibold text-foreground">
-                {t('النشاط الأخير', 'Recent Activity')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-5 pb-5">
-              {canViewAudit && recentActivity.length > 0 ? (
-                <div className="space-y-1">
-                  {recentActivity.slice(0, 8).map((entry) => {
-                    const ac = ACTION_CONFIG[entry.action];
-                    return (
-                      <div
-                        key={entry.id}
-                        className="flex items-start gap-2.5 py-2 border-b border-border/40 last:border-0"
-                      >
-                        <span className={`text-xs mt-0.5 shrink-0 ${ac?.colorClass ?? 'text-muted-foreground'}`}>●</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-foreground truncate">
-                            {ac ? t(ac.labelAr, ac.labelEn) : entry.action}
-                          </p>
-                          <p className="text-[10px] text-muted-foreground mt-0.5">
-                            {new Date(entry.createdAt).toLocaleTimeString('ar-AE', { hour: '2-digit', minute: '2-digit' })}
-                            {entry.userRole && ` · ${entry.userRole}`}
-                          </p>
-                        </div>
+        {/* ─── Recent Activity ──────────────────────────────────────────────── */}
+        <Card className="border-border">
+          <CardHeader className="px-5 pt-5 pb-3">
+            <CardTitle className="text-sm font-semibold text-foreground">
+              {t('النشاط الأخير', 'Recent Activity')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-5 pb-5">
+            {canViewAudit && recentActivity.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
+                {recentActivity.slice(0, 8).map((entry) => {
+                  const ac = ACTION_CONFIG[entry.action];
+                  return (
+                    <div
+                      key={entry.id}
+                      className="flex items-start gap-2.5 py-2 border-b border-border/40 last:border-0"
+                    >
+                      <span className={`text-xs mt-0.5 shrink-0 ${ac?.colorClass ?? 'text-muted-foreground'}`}>●</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-foreground truncate">
+                          {ac ? t(ac.labelAr, ac.labelEn) : entry.action}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          {new Date(entry.createdAt).toLocaleTimeString('ar-AE', { hour: '2-digit', minute: '2-digit' })}
+                          {entry.userRole && ` · ${entry.userRole}`}
+                        </p>
                       </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="h-40 flex items-center justify-center border border-dashed border-border rounded-lg bg-muted/20">
-                  <p className="text-xs text-muted-foreground text-center px-4">
-                    {!canViewAudit
-                      ? t('سجل النشاط متاح للمشرفين والمالكين', 'Activity log available for supervisors and owners')
-                      : t('لا توجد عمليات حديثة بعد', 'No recent activity yet')}
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="h-24 flex items-center justify-center border border-dashed border-border rounded-lg bg-muted/20">
+                <p className="text-xs text-muted-foreground text-center px-4">
+                  {!canViewAudit
+                    ? t('سجل النشاط متاح للمشرفين والمالكين', 'Activity log available for supervisors and owners')
+                    : t('لا توجد عمليات حديثة بعد', 'No recent activity yet')}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* ─── Quick Navigation (permission-gated) ─────────────────────────── */}
         {quickLinks.length > 0 && (
