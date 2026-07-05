@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { apiFetch } from '@/lib/api-fetch';
 import {
-  Scale, ScrollText, Gavel, Sparkles, ShieldAlert,
-  FileCheck, PenLine, ArrowUp,
+  Scale, ScrollText, Gavel, FileCheck, PenLine,
+  ArrowUp, Mic, Paperclip, GitCompareArrows,
 } from 'lucide-react';
 import { useUserContext, useT } from '@/lib/user-context';
 import { useLocation } from 'wouter';
@@ -26,82 +26,99 @@ function getGreeting(): { ar: string; en: string } {
   return { ar: 'مساء الخير', en: 'Good evening' };
 }
 
-const QUICK_CHIPS = [
+// ─── Chip definitions ────────────────────────────────────────────────────────
+
+type FillChip = {
+  id: string;
+  icon: React.ElementType;
+  labelAr: string;
+  labelEn: string;
+  action: 'fill';
+  fill: string;
+};
+type NavChip = {
+  id: string;
+  icon: React.ElementType;
+  labelAr: string;
+  labelEn: string;
+  action: 'navigate';
+  href: string;
+};
+type QuickChip = FillChip | NavChip;
+
+const QUICK_CHIPS: QuickChip[] = [
   {
     id: 'analyze-decision',
     icon: Scale,
-    labelAr: 'تحليل قرار إداري',
-    labelEn: 'Analyze Administrative Decision',
+    labelAr: 'حلل قرار إداري',
+    labelEn: 'Analyze Decision',
     action: 'fill',
     fill: 'حلل القرار الإداري رقم ...',
   },
   {
-    id: 'review-draft',
-    icon: FileCheck,
-    labelAr: 'مراجعة مشروع قرار',
-    labelEn: 'Review Draft Decision',
-    action: 'fill',
-    fill: 'راجع مشروع القرار التالي من حيث المشروعية:',
-  },
-  {
-    id: 'draft-memo',
-    icon: PenLine,
-    labelAr: 'صياغة مذكرة قانونية',
-    labelEn: 'Draft Legal Memo',
-    action: 'fill',
-    fill: 'اصغ مذكرة قانونية بشأن:',
-  },
-  {
-    id: 'legislation',
-    icon: ScrollText,
-    labelAr: 'البحث في التشريعات',
-    labelEn: 'Search Legislation',
-    action: 'navigate',
-    href: '/legislation/uae',
-  },
-  {
     id: 'caselaw',
     icon: Gavel,
-    labelAr: 'البحث في الأحكام القضائية',
+    labelAr: 'ابحث عن حكم قضائي',
     labelEn: 'Search Case Law',
     action: 'navigate',
     href: '/caselaw/uae',
   },
   {
-    id: 'shamsi',
-    icon: Sparkles,
-    labelAr: 'تحليل وفق نظرية الشامسي',
-    labelEn: 'Shamsi Theory Analysis',
+    id: 'legislation',
+    icon: ScrollText,
+    labelAr: 'ابحث في التشريعات',
+    labelEn: 'Search Legislation',
     action: 'navigate',
-    href: '/shamsi-theory',
+    href: '/legislation/uae',
   },
   {
-    id: 'risk',
-    icon: ShieldAlert,
-    labelAr: 'تقييم المخاطر القانونية',
-    labelEn: 'Legal Risk Assessment',
-    action: 'navigate',
-    href: '/risk-engine',
+    id: 'compare-laws',
+    icon: GitCompareArrows,
+    labelAr: 'قارن بين قانونين',
+    labelEn: 'Compare Two Laws',
+    action: 'fill',
+    fill: 'قارن بين قانون ... وقانون ... من حيث:',
   },
-] as const;
+  {
+    id: 'review-memo',
+    icon: FileCheck,
+    labelAr: 'راجع مذكرة قانونية',
+    labelEn: 'Review Legal Memo',
+    action: 'fill',
+    fill: 'راجع المذكرة القانونية التالية:',
+  },
+  {
+    id: 'draft-opinion',
+    icon: PenLine,
+    labelAr: 'أنشئ رأياً قانونياً',
+    labelEn: 'Draft Legal Opinion',
+    action: 'fill',
+    fill: 'أنشئ رأياً قانونياً بشأن:',
+  },
+];
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
   const { lang } = useUserContext();
   const t = useT();
   const [, navigate] = useLocation();
 
-  const [query, setQuery] = useState('');
+  const [query, setQuery]       = useState('');
   const [dashStats, setDashStats] = useState<DashStats | null>(null);
-  const [visible, setVisible] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [visible, setVisible]   = useState(false);
+  const [listening, setListening] = useState(false);
 
-  // Fade-in on mount
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ── Fade-in on mount ───────────────────────────────────────────────────────
   useEffect(() => {
     const raf = requestAnimationFrame(() => setVisible(true));
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  // Fetch real stats — show nothing if it fails
+  // ── Real stats — show nothing if the call fails ────────────────────────────
   useEffect(() => {
     apiFetch('/api/dashboard/stats')
       .then((r) => (r.ok ? r.json() : null))
@@ -109,36 +126,63 @@ export default function Dashboard() {
       .catch(() => {});
   }, []);
 
+  // ── Textarea auto-grow ─────────────────────────────────────────────────────
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [query]);
+
+  // ── Handlers ───────────────────────────────────────────────────────────────
   function handleSend() {
-    if (!query.trim()) return;
-    sessionStorage.setItem('quickSearchQuery', query.trim());
+    const trimmed = query.trim();
+    if (!trimmed) return;
+    sessionStorage.setItem('quickSearchQuery', trimmed);
     navigate('/research');
   }
 
-  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter') handleSend();
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+    // Shift+Enter → browser default (newline)
   }
 
-  function handleChip(chip: typeof QUICK_CHIPS[number]) {
+  function handleChip(chip: QuickChip) {
     if (chip.action === 'navigate') {
       navigate(chip.href);
     } else {
       setQuery(chip.fill);
-      setTimeout(() => inputRef.current?.focus(), 0);
+      setTimeout(() => {
+        textareaRef.current?.focus();
+        // Move cursor to end
+        const el = textareaRef.current;
+        if (el) { el.selectionStart = el.selectionEnd = el.value.length; }
+      }, 0);
     }
   }
 
+  function handleMic() {
+    setListening((prev) => !prev);
+  }
+
   const greeting = getGreeting();
+  const hasText  = query.trim().length > 0;
 
   return (
     <AppLayout variant="chat">
       <div className="flex flex-col h-full overflow-y-auto bg-background">
-        {/* ── Top ambient strip ─────────────────────────────────────────── */}
-        {dashStats && (
+
+        {/* ── Top ambient stats strip ───────────────────────────────────── */}
+        {dashStats && dashStats.legalSourcesCount > 0 && (
           <div className="hidden sm:flex items-center justify-center gap-6 py-2.5 border-b border-border/40 bg-background/80 backdrop-blur-sm shrink-0">
             <span className="text-[11px] text-muted-foreground font-medium tracking-wide">
               <span className="text-foreground font-semibold">
-                {lang === 'ar' ? toArabicNumeral(dashStats.legalSourcesCount) : dashStats.legalSourcesCount.toLocaleString()}
+                {lang === 'ar'
+                  ? toArabicNumeral(dashStats.legalSourcesCount)
+                  : dashStats.legalSourcesCount.toLocaleString()}
               </span>
               {' '}
               {t('مصدر قانوني مفهرس', 'indexed legal sources')}
@@ -146,7 +190,9 @@ export default function Dashboard() {
             <span className="text-border select-none">·</span>
             <span className="text-[11px] text-muted-foreground font-medium tracking-wide">
               <span className="text-foreground font-semibold">
-                {lang === 'ar' ? toArabicNumeral(dashStats.aiQueriesThisMonth) : dashStats.aiQueriesThisMonth.toLocaleString()}
+                {lang === 'ar'
+                  ? toArabicNumeral(dashStats.aiQueriesThisMonth)
+                  : dashStats.aiQueriesThisMonth.toLocaleString()}
               </span>
               {' '}
               {t('استعلام ذكاء اصطناعي هذا الشهر', 'AI queries this month')}
@@ -157,13 +203,14 @@ export default function Dashboard() {
         {/* ── Hero center zone ──────────────────────────────────────────── */}
         <div className="flex-1 flex flex-col items-center justify-center px-4 py-10 sm:py-16">
           <div
-            className="w-full max-w-2xl flex flex-col items-center gap-8 transition-all duration-[350ms] ease-out"
+            className="w-full max-w-2xl flex flex-col items-center gap-8"
             style={{
               opacity: visible ? 1 : 0,
               transform: visible ? 'translateY(0)' : 'translateY(16px)',
+              transition: 'opacity 350ms ease-out, transform 350ms ease-out',
             }}
           >
-            {/* Greeting + brand */}
+            {/* Greeting + brand ──────────────────────────────────────── */}
             <div className="text-center space-y-2">
               <h1
                 className="text-3xl sm:text-4xl font-bold text-foreground"
@@ -176,52 +223,110 @@ export default function Dashboard() {
               </p>
             </div>
 
-            {/* Prompt input */}
+            {/* Composer card ─────────────────────────────────────────── */}
             <div className="w-full">
-              <div
-                className="relative flex items-center bg-card rounded-2xl border border-border shadow-xl"
-                style={{ minHeight: '56px' }}
-              >
+              <div className="bg-card rounded-2xl border border-border shadow-xl overflow-hidden">
+
+                {/* Textarea */}
                 <label htmlFor="home-prompt" className="sr-only">
-                  {t('اسأل مرصد أي سؤال قانوني', 'Ask MARSAD any legal question')}
+                  {t('اكتب سؤالك القانوني', 'Type your legal question')}
                 </label>
-                <input
+                <textarea
                   id="home-prompt"
-                  ref={inputRef}
-                  type="text"
+                  ref={textareaRef}
                   dir={lang === 'ar' ? 'rtl' : 'ltr'}
-                  className={`
-                    flex-1 bg-transparent px-5 py-4 text-sm sm:text-base text-foreground
-                    placeholder:text-muted-foreground/60 focus:outline-none
-                    ${lang === 'ar' ? 'text-right' : 'text-left'}
-                  `}
-                  placeholder={t('اسأل مرصد أي سؤال قانوني...', 'Ask MARSAD any legal question...')}
+                  rows={1}
+                  className={[
+                    'w-full bg-transparent resize-none overflow-y-auto',
+                    'px-5 pt-4 pb-2',
+                    'text-sm sm:text-base text-foreground',
+                    'placeholder:text-muted-foreground/55',
+                    'focus:outline-none',
+                    'max-h-40',
+                    lang === 'ar' ? 'text-right' : 'text-left',
+                  ].join(' ')}
+                  style={{ minHeight: '52px' }}
+                  placeholder={t('اكتب سؤالك القانوني...', 'Type your legal question...')}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={handleKeyDown}
                   autoComplete="off"
                   spellCheck={false}
                 />
-                <button
-                  type="button"
-                  aria-label={t('إرسال', 'Send')}
-                  onClick={handleSend}
-                  disabled={!query.trim()}
-                  className={`
-                    mx-3 w-10 h-10 rounded-full flex items-center justify-center shrink-0
-                    transition-all duration-150
-                    ${query.trim()
-                      ? 'bg-primary text-primary-foreground hover:opacity-90 cursor-pointer shadow-md'
-                      : 'bg-muted text-muted-foreground cursor-not-allowed opacity-50'}
-                  `}
-                >
-                  <ArrowUp className="w-4 h-4" aria-hidden />
-                </button>
+
+                {/* Toolbar row ──────────────────────────────────── */}
+                <div className="flex items-center gap-2 px-4 pb-3 pt-1">
+
+                  {/* Attachment */}
+                  <button
+                    type="button"
+                    aria-label={t('إرفاق ملف', 'Attach file')}
+                    onClick={() => fileInputRef.current?.click()}
+                    className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                  >
+                    <Paperclip className="w-5 h-5" aria-hidden />
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    accept=".pdf,.doc,.docx,.txt"
+                    className="hidden"
+                    aria-hidden
+                    tabIndex={-1}
+                    onChange={() => {/* UI only — no upload logic */}}
+                  />
+
+                  {/* Microphone */}
+                  <button
+                    type="button"
+                    aria-label={listening
+                      ? t('إيقاف الاستماع', 'Stop listening')
+                      : t('تسجيل صوتي', 'Voice input')}
+                    onClick={handleMic}
+                    className={[
+                      'p-2 rounded-xl transition-all',
+                      listening
+                        ? 'text-red-600 bg-red-50 ring-2 ring-red-200'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
+                    ].join(' ')}
+                  >
+                    <Mic className="w-5 h-5" aria-hidden />
+                  </button>
+
+                  {/* Spacer */}
+                  <div className="flex-1" />
+
+                  {/* Send */}
+                  <button
+                    type="button"
+                    aria-label={t('إرسال', 'Send')}
+                    onClick={handleSend}
+                    disabled={!hasText}
+                    className={[
+                      'w-9 h-9 rounded-xl flex items-center justify-center shrink-0',
+                      'transition-all duration-150',
+                      hasText
+                        ? 'bg-primary text-primary-foreground hover:opacity-90 shadow-md cursor-pointer'
+                        : 'bg-muted text-muted-foreground cursor-not-allowed opacity-50',
+                    ].join(' ')}
+                  >
+                    <ArrowUp className="w-4 h-4" aria-hidden />
+                  </button>
+                </div>
               </div>
+
+              {/* Hint */}
+              <p className="mt-2 text-center text-[11px] text-muted-foreground/50">
+                {t(
+                  'اضغط Enter للإرسال · Shift+Enter لسطر جديد',
+                  'Press Enter to send · Shift+Enter for new line',
+                )}
+              </p>
             </div>
 
-            {/* Quick-action chips */}
-            <div className="flex flex-wrap justify-center gap-2 sm:gap-3 w-full">
+            {/* Quick-action chips ─────────────────────────────────────── */}
+            <div className="flex flex-wrap justify-center gap-2 sm:gap-2.5 w-full">
               {QUICK_CHIPS.map((chip, idx) => {
                 const Icon = chip.icon;
                 return (
@@ -231,15 +336,14 @@ export default function Dashboard() {
                     onClick={() => handleChip(chip)}
                     className="
                       flex items-center gap-2 px-3.5 py-2 rounded-full
-                      border border-border bg-card text-sm text-foreground
-                      hover:-translate-y-0.5 hover:shadow-sm hover:border-primary/30
-                      transition-all duration-150 cursor-pointer
+                      border border-border bg-card text-foreground
+                      hover:-translate-y-0.5 hover:shadow-sm hover:border-primary/30 hover:bg-primary/[0.03]
+                      cursor-pointer
                     "
                     style={{
-                      transitionDelay: `${idx * 30}ms`,
                       opacity: visible ? 1 : 0,
                       transform: visible ? 'translateY(0)' : 'translateY(8px)',
-                      transition: `opacity 350ms ease-out ${idx * 30}ms, transform 350ms ease-out ${idx * 30}ms, box-shadow 150ms, border-color 150ms`,
+                      transition: `opacity 350ms ease-out ${idx * 40}ms, transform 350ms ease-out ${idx * 40}ms, box-shadow 150ms, border-color 150ms, background-color 150ms`,
                     }}
                   >
                     <Icon className="w-3.5 h-3.5 text-primary shrink-0" aria-hidden />
@@ -262,6 +366,7 @@ export default function Dashboard() {
             )}
           </p>
         </div>
+
       </div>
     </AppLayout>
   );
