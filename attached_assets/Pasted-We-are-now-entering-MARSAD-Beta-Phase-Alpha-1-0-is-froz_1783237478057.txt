@@ -1,0 +1,148 @@
+We are now entering MARSAD Beta Phase.
+
+Alpha 1.0 is frozen.
+
+DO NOT redesign the architecture.
+DO NOT rename existing modules.
+DO NOT introduce duplicate functionality.
+
+Your task is to build the Decision Replay Engine.
+
+GOAL
+
+Every administrative decision must become fully replayable from beginning to end.
+
+Think of this as "Git history" for an administrative decision.
+
+====================================================
+
+Requirements
+
+For every decision create a replay timeline.
+
+Timeline stages:
+
+1. Request Received
+2. Evidence Collection
+3. Data Validation
+4. Jurisdiction Check
+5. Legal Basis Check
+6. Cause (Reason) Analysis
+7. Subject Matter Analysis
+8. Purpose Analysis
+9. Al-Shamsi Theory Engine
+10. Legal Weight Calculation
+11. Legitimate Algorithmic Bias Assessment
+12. Legitimacy Index
+13. Human Oversight
+14. Decision Issued
+
+====================================================
+
+Each stage must contain:
+
+• timestamp
+
+• actor
+
+• AI model used
+
+• prompt hash
+
+• legal references
+
+• constitutional references
+
+• administrative law references
+
+• evidence snapshot
+
+• confidence score
+
+• audit hash
+
+• immutable log id
+
+====================================================
+
+Clicking any stage must display:
+
+Inputs
+
+Outputs
+
+Evidence used
+
+Legal articles
+
+Case law
+
+Reasoning
+
+Applied legal weight
+
+Applied Al-Shamsi dimensions
+
+Risk indicators
+
+Human intervention
+
+Audit trail
+
+====================================================
+
+Architecture
+
+Never duplicate existing tables.
+
+Reuse current decision model.
+
+Create replay entities only if necessary.
+
+Keep API REST consistent.
+
+Use existing permission model.
+
+====================================================
+
+UI
+
+Professional government style.
+
+No animations except subtle timeline transitions.
+
+Arabic first.
+
+English second.
+
+====================================================
+
+Output
+
+Deliver:
+
+• DB changes
+
+• API
+
+• frontend
+
+• permissions
+
+• audit
+
+• tests
+
+• documentation
+
+====================================================
+
+Success criteria
+
+A reviewer can replay an administrative decision step-by-step exactly as it happened.
+
+No placeholder code.
+
+No TODO comments.
+
+Production-quality implementation only.
