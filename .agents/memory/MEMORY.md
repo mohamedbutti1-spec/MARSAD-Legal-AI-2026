@@ -17,3 +17,4 @@
 - [Phase 42 — Constitutional Intelligence Layer](phase42-cil.md) — 12-principle AI assessor; CilPrincipleResult (not PrincipleResult) to avoid decisions.ts collision; warning resolve must load warning→decisionId then assertCilAccess; dashboard needs org/sealed scoping; replay_15_cil_assessment is virtual stage
 - [Phase 43 — NAIP Architecture](phase43-naip.md) — 9 pages, 8 API endpoints, 2 permission flags; /naip/stats/uae gates org-scoped roles with e403; sql.raw IDs sanitized to integers; getAccessibleDecisionIds returns null=all, []=none
 - [Phase 44 — JDT Architecture](phase44-jdt.md) — virtual replay stages need direct DB insert (not recordReplayEvent); AI prompt field names must match schema exactly; 16 Shamsi dimension keys defined in JDT_SHAMSI_DIMENSION_KEYS
+- [Version 1.0 Freeze](v1-freeze.md) — feature frozen; bug/stability/docs only; production checklist; known deferred items for v2.0

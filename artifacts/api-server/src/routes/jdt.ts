@@ -12,6 +12,7 @@
 import { Router } from "express";
 import { createHash } from "crypto";
 import { eq } from "drizzle-orm";
+import { logger } from "../lib/logger";
 import {
   db,
   decisionsTable,
@@ -283,15 +284,10 @@ router.post(
       await saveJdtSimulation(decisionId, result, aiModel);
 
       // Write JDT virtual replay stage (non-fatal) — direct insert, same pattern as CIL
+      // NOTE: unlike CIL (which skips if no prior replay events), JDT always records
+      // because a simulation run is itself an auditable event regardless of workflow stage.
       ;(async () => {
         try {
-          const existing = await db
-            .select({ id: decisionReplayEventsTable.id })
-            .from(decisionReplayEventsTable)
-            .where(eq(decisionReplayEventsTable.decisionId, decisionId))
-            .limit(1);
-          if (existing.length === 0) return; // Skip if no prior replay events exist
-
           const replayHash = createHash("sha256")
             .update(JSON.stringify({
               decisionId,
@@ -322,14 +318,14 @@ router.post(
             })
             .onConflictDoNothing();
         } catch (err) {
-          console.error("[jdt.replay.write]", err);
+          logger.error({ err }, "[jdt.replay.write]");
         }
       })();
 
       const simulation = await getJdtSimulation(decisionId);
       res.json(simulation);
     } catch (err) {
-      console.error("[jdt.simulate.post]", err);
+      logger.error({ err }, "[jdt.simulate.post]");
       await markJdtFailed(decisionId, String(err)).catch(() => {});
       e500(res, "فشل تشغيل المحاكاة القضائية الرقمية");
     }
@@ -357,7 +353,7 @@ router.get(
 
       res.json(simulation);
     } catch (err) {
-      console.error("[jdt.get]", err);
+      logger.error({ err }, "[jdt.get]");
       e500(res, "فشل تحميل المحاكاة القضائية الرقمية");
     }
   },
@@ -384,7 +380,7 @@ router.get(
 
       res.json(report);
     } catch (err) {
-      console.error("[jdt.report.get]", err);
+      logger.error({ err }, "[jdt.report.get]");
       e500(res, "فشل توليد تقرير المحاكاة القضائية الرقمية");
     }
   },
@@ -423,7 +419,7 @@ router.delete(
 
       res.json({ deleted: true, decisionId });
     } catch (err) {
-      console.error("[jdt.delete]", err);
+      logger.error({ err }, "[jdt.delete]");
       e500(res, "فشل حذف المحاكاة القضائية الرقمية");
     }
   },

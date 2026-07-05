@@ -6,7 +6,7 @@
  * Never modifies decision data, DCI, JDP, CAR, custody, evidence, or replay records.
  */
 import { createHash } from "crypto";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "./index";
 import {
   jdtSimulationsTable,
@@ -242,18 +242,25 @@ export async function markJdtRunning(
   decisionId: number,
   triggeredBy: string,
 ): Promise<void> {
-  const existing = await getJdtSimulation(decisionId);
-  const newVersion = (existing?.simulationVersion ?? 0) + 1;
-
-  if (existing) {
-    await db
-      .update(jdtSimulationsTable)
-      .set({
-        status:            "running",
+  // Atomic upsert — avoids the read-then-write race condition that could occur
+  // if two concurrent requests both read "no row exists" and then both try to insert.
+  // onConflictDoUpdate increments the version and resets all result fields atomically.
+  await db
+    .insert(jdtSimulationsTable)
+    .values({
+      decisionId,
+      status:            "running",
+      simulationVersion: 1,
+      triggeredBy,
+    })
+    .onConflictDoUpdate({
+      target: jdtSimulationsTable.decisionId,
+      set: {
+        status:                    "running",
         triggeredBy,
-        simulationVersion: newVersion,
-        reviewStages:      null,
-        shamsiDimensions:  null,
+        simulationVersion:         sql`${jdtSimulationsTable.simulationVersion} + 1`,
+        reviewStages:              null,
+        shamsiDimensions:          null,
         shamsiOverallScore:        null,
         constitutionalScore:       null,
         constitutionalOutcome:     null,
@@ -263,7 +270,7 @@ export async function markJdtRunning(
         probabilityAnnulment:      null,
         probabilityDismissal:      null,
         probabilityCorrection:     null,
-        judicialSuccessProbability:null,
+        judicialSuccessProbability: null,
         overallRiskLevel:          null,
         judicialReasoning:         null,
         strengths:                 null,
@@ -277,18 +284,7 @@ export async function markJdtRunning(
         auditHash:                 null,
         errorMessage:              null,
         updatedAt:                 new Date(),
-      })
-      .where(eq(jdtSimulationsTable.decisionId, decisionId));
-    return;
-  }
-
-  await db
-    .insert(jdtSimulationsTable)
-    .values({
-      decisionId,
-      status:            "running",
-      simulationVersion: newVersion,
-      triggeredBy,
+      },
     });
 }
 
