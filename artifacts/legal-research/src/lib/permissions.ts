@@ -92,6 +92,10 @@ export interface RolePermissions {
   /** Citizen: can look up a CAR by case number (no other access) */
   canSearchByCaseNumber: boolean;
 
+  // ── Replay access ─────────────────────────────────────────────────────────
+  /** Step through the 14-stage decision replay audit trail */
+  canReplayDecision: boolean;
+
   // ── Dashboard display ─────────────────────────────────────────────────────
   /** Access the governance hub (/governance) */
   canViewGovernanceDashboard: boolean;
@@ -111,6 +115,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canDelegateDecision: true, canRunHashVerification: true,
     seeOwnOrgOnly: false, sealedOnly: false,
     canSearchByCaseNumber: true, canViewGovernanceDashboard: true,
+    canReplayDecision: true,
   },
   supervisor: {
     canReadDecisionList: true, canReadDecisionDetail: true,
@@ -121,6 +126,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canDelegateDecision: false, canRunHashVerification: false,
     seeOwnOrgOnly: false, sealedOnly: false,
     canSearchByCaseNumber: true, canViewGovernanceDashboard: true,
+    canReplayDecision: true,
   },
   viewer: {
     canReadDecisionList: true, canReadDecisionDetail: true,
@@ -131,6 +137,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canDelegateDecision: false, canRunHashVerification: false,
     seeOwnOrgOnly: false, sealedOnly: false,
     canSearchByCaseNumber: false, canViewGovernanceDashboard: true,
+    canReplayDecision: true,
   },
 
   // ── 1. Minister — executive summary only ──────────────────────────────────
@@ -143,6 +150,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canDelegateDecision: false, canRunHashVerification: false,
     seeOwnOrgOnly: false, sealedOnly: false,
     canSearchByCaseNumber: false, canViewGovernanceDashboard: true,
+    canReplayDecision: false,
   },
 
   // ── 2. Undersecretary — decisions + delegation ────────────────────────────
@@ -155,6 +163,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canDelegateDecision: true, canRunHashVerification: false,
     seeOwnOrgOnly: false, sealedOnly: false,
     canSearchByCaseNumber: false, canViewGovernanceDashboard: true,
+    canReplayDecision: true,
   },
 
   // ── 3. Assistant Undersecretary — full stages + JDP, no CAR/audit ─────────
@@ -167,6 +176,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canDelegateDecision: false, canRunHashVerification: false,
     seeOwnOrgOnly: false, sealedOnly: false,
     canSearchByCaseNumber: false, canViewGovernanceDashboard: true,
+    canReplayDecision: true,
   },
 
   // ── 4. Director General — org-scoped, constitutional gates only ───────────
@@ -179,6 +189,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canDelegateDecision: false, canRunHashVerification: false,
     seeOwnOrgOnly: true, sealedOnly: false,
     canSearchByCaseNumber: false, canViewGovernanceDashboard: true,
+    canReplayDecision: true,
   },
 
   // ── 5. Department Director — own dept, stage status only ─────────────────
@@ -191,6 +202,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canDelegateDecision: false, canRunHashVerification: false,
     seeOwnOrgOnly: true, sealedOnly: false,
     canSearchByCaseNumber: false, canViewGovernanceDashboard: true,
+    canReplayDecision: true,
   },
 
   // ── 6. Legal Department — legal basis + full JDP ─────────────────────────
@@ -203,6 +215,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canDelegateDecision: false, canRunHashVerification: false,
     seeOwnOrgOnly: false, sealedOnly: false,
     canSearchByCaseNumber: false, canViewGovernanceDashboard: true,
+    canReplayDecision: true,
   },
 
   // ── 7. Constitutional Reviewer — all constitutional data + JDP + QVA/LSI ──
@@ -215,6 +228,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canDelegateDecision: false, canRunHashVerification: false,
     seeOwnOrgOnly: false, sealedOnly: false,
     canSearchByCaseNumber: false, canViewGovernanceDashboard: true,
+    canReplayDecision: true,
   },
 
   // ── 8. Internal Auditor — full read, no JDP strategy ─────────────────────
@@ -227,6 +241,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canDelegateDecision: false, canRunHashVerification: false,
     seeOwnOrgOnly: false, sealedOnly: false,
     canSearchByCaseNumber: false, canViewGovernanceDashboard: true,
+    canReplayDecision: true,
   },
 
   // ── 9. External Auditor — sealed decisions only + hash verification ───────
@@ -239,6 +254,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canDelegateDecision: false, canRunHashVerification: true,
     seeOwnOrgOnly: false, sealedOnly: true,
     canSearchByCaseNumber: false, canViewGovernanceDashboard: true,
+    canReplayDecision: true,
   },
 
   // ── 10. Judge — complete record except QVA raw ────────────────────────────
@@ -251,6 +267,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canDelegateDecision: false, canRunHashVerification: false,
     seeOwnOrgOnly: false, sealedOnly: false,
     canSearchByCaseNumber: true, canViewGovernanceDashboard: true,
+    canReplayDecision: true,
   },
 
   // ── 11. Citizen — CAR lookup by case number only ──────────────────────────
@@ -263,6 +280,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canDelegateDecision: false, canRunHashVerification: false,
     seeOwnOrgOnly: false, sealedOnly: true,
     canSearchByCaseNumber: true, canViewGovernanceDashboard: false,
+    canReplayDecision: false,
   },
 };
 

@@ -11,8 +11,9 @@ import {
   Shield, CheckCircle2, XCircle, Clock, ChevronLeft, ChevronDown, ChevronUp,
   Sparkles, Scale, AlertTriangle, Building2, FileText, Loader2, ArrowRight,
   Lock, Check, Fingerprint, Gavel, BookOpen, Users, Link2, HelpCircle,
-  Download, Hash, RotateCcw, UserCheck, Activity, Eye, ChevronRight,
+  Download, Hash, RotateCcw, UserCheck, Activity, Eye, ChevronRight, Play,
 } from 'lucide-react';
+import DecisionReplay from '@/components/decisions/DecisionReplay';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1940,7 +1941,7 @@ export default function DecisionWorkspace() {
 
   const decisionId = params.id ? parseInt(params.id) : null;
   const [activeStage, setActiveStage] = useState<StageKey>('administrative_request');
-  const [activeView, setActiveView] = useState<'stage' | 'dci' | 'jdp' | 'car'>('stage');
+  const [activeView, setActiveView] = useState<'stage' | 'dci' | 'jdp' | 'car' | 'replay'>('stage');
   const [formData, setFormData] = useState<Record<StageKey, Record<string, unknown>>>({} as any);
   const [aiAnalysis, setAiAnalysis] = useState<Record<StageKey, Record<string, unknown>>>({} as any);
   const [validationResults, setValidationResults] = useState<Record<StageKey, { passed: boolean; analysis: Record<string, unknown>; validationStatus: string }>>({} as any);
@@ -2159,6 +2160,16 @@ export default function DecisionWorkspace() {
               >
                 <Eye className="w-3.5 h-3.5" /> المساءلة الدستورية CAR
               </button>
+              <button
+                role="tab"
+                aria-selected={activeView === 'replay'}
+                aria-controls="panel-replay"
+                id="tab-replay"
+                onClick={() => setActiveView('replay')}
+                className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors -mb-px whitespace-nowrap ${activeView === 'replay' ? 'border-violet-500 text-violet-700 dark:text-violet-400' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+              >
+                <Play className="w-3.5 h-3.5" /> إعادة التشغيل
+              </button>
             </div>
 
             {/* ── Two-column layout ─────────────────────────────── */}
@@ -2239,6 +2250,10 @@ export default function DecisionWorkspace() {
                 ) : activeView === 'car' ? (
                   <div role="tabpanel" id="panel-car" aria-labelledby="tab-car">
                     <CarPanel decisionId={decisionId!} decision={decision} />
+                  </div>
+                ) : activeView === 'replay' ? (
+                  <div role="tabpanel" id="panel-replay" aria-labelledby="tab-replay">
+                    <DecisionReplay decisionId={decisionId!} />
                   </div>
                 ) : (
                 <div role="tabpanel" id="panel-stage" aria-labelledby="tab-stage" className="p-4 sm:p-6 lg:p-8 max-w-3xl space-y-6">

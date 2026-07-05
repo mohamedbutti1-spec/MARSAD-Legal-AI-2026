@@ -20,6 +20,14 @@ import {
   createOrUpdateMemory,
   recordMemoryEvent,
   recordEvidenceEvent,
+  recordReplayEvent,
+  decisionReplayEventsTable,
+  REPLAY_STAGE_KEYS,
+  REPLAY_STAGE_LABELS_AR,
+  judicialReviewsTable,
+  decisionMemoryTable,
+  evidenceLedgerTable,
+  PERMISSIONS,
   type CustodyEventInput,
   type DecisionStageKey,
   type DciVersion,
@@ -39,7 +47,7 @@ import {
   type JudicialQuestion,
   type ExplainabilitySection,
 } from "@workspace/db";
-import { requireAnyRole, requireSupervisorOrOwner } from "../middlewares/roleAuth";
+import { requireAnyRole, requireSupervisorOrOwner, requirePermission, requireGovernanceRead } from "../middlewares/roleAuth";
 import { logAudit } from "../middlewares/auditLog";
 import { aiRouter, TaskType } from "../ai";
 import { parseModelJson } from "../ai/providers/interface";
@@ -1138,10 +1146,310 @@ router.post("/decisions/:id/stages/:stageKey/complete", requireSupervisorOrOwner
       metadata:           { stageKey, nextStage: next },
     }).catch((e: unknown) => console.error("[evidence.stage]", e));
 
+    // ── Decision Replay Engine: write replay event after stage completion ─────
+    try {
+      const custodyCtx = getCustodyCtx(req);
+      // Collect AI analysis data for the replay record
+      const [stageForReplay] = await db
+        .select()
+        .from(decisionStagesTable)
+        .where(
+          and(
+            eq(decisionStagesTable.decisionId, decisionId),
+            eq(decisionStagesTable.stageKey, stageKey),
+          ),
+        );
+
+      const analysis = (stageForReplay?.aiAnalysis as Record<string, unknown>) ?? {};
+      const data = (stageForReplay?.stageData as Record<string, unknown>) ?? {};
+
+      // Extract Al-Shamsi dimensions from constitutional_validation stage
+      const alShamsiDimensions: Record<string, unknown> | null =
+        stageKey === "constitutional_validation"
+          ? ((analysis.principleResults as Record<string, unknown>) ?? null)
+          : null;
+
+      // Extract risk indicators
+      const riskIndicators: string[] = [
+        ...((analysis.abuseIndicators as string[]) ?? []),
+        ...((analysis.constitutionalFlags as string[]) ?? []),
+        ...((analysis.issues as string[]) ?? []).slice(0, 3),
+      ].filter(Boolean);
+
+      // Human intervention record from human_oversight stage
+      const humanInterventionRecord: Record<string, unknown> | null =
+        stageKey === "human_oversight"
+          ? {
+              officialName: data.officialName,
+              officialPosition: data.officialPosition,
+              officialOrganization: data.officialOrganization,
+              reviewedAllStages: data.reviewedAllStages,
+              humanJudgmentApplied: data.humanJudgmentApplied,
+              aiContributionAcknowledgment: data.aiContributionAcknowledgment,
+            }
+          : null;
+
+      await recordReplayEvent({
+        decisionId,
+        stageKey,
+        actor: String(userId),
+        actorRole: custodyCtx.userRole ?? undefined,
+        aiModelName: "MARSAD-CJI",
+        confidenceScore: typeof analysis.publicInterestScore === "number"
+          ? (analysis.publicInterestScore as number) / 100
+          : null,
+        reasoningNarrative: (analysis.stageSummary as string) ?? (analysis.aiContribution as string) ?? null,
+        alShamsiDimensions,
+        riskIndicators,
+        humanInterventionRecord,
+      });
+    } catch (replayErr) {
+      // Non-fatal — replay event failure must never block stage completion
+      console.error("[replay.event.failed]", replayErr);
+    }
+
     res.json({ success: true, nextStage: next, decision: updatedDecision });
   } catch (err) {
     console.error("[decisions.complete]", err);
     res.status(500).json({ error: "Failed to complete stage" });
+  }
+});
+
+// GET /decisions/:id/replay — 14-stage decision replay timeline
+// Accessible to all roles with canReplayDecision permission (mirrors canReadDecisionDetail).
+// Every access is logged to the audit trail.
+router.get("/decisions/:id/replay", requirePermission("canReplayDecision"), async (req, res): Promise<void> => {
+  try {
+    const decisionId = parseInt(req.params.id as string, 10);
+
+    const roleHeader = (Array.isArray(req.headers["x-user-role"])
+      ? req.headers["x-user-role"][0]
+      : (req.headers["x-user-role"] ?? "viewer")) as string;
+    const permissions = PERMISSIONS[roleHeader as keyof typeof PERMISSIONS] ?? PERMISSIONS.citizen;
+
+    // Governance-aware access check: honour canReadDecisionDetail + seeOwnOrgOnly
+    const [decision] = await db.select().from(decisionsTable).where(eq(decisionsTable.id, decisionId));
+    if (!decision) { res.status(404).json({ error: "Decision not found" }); return; }
+
+    // seeOwnOrgOnly roles can only access decisions from their own org unit.
+    // Deny-by-default: if the org claim is absent the role cannot be scoped, so access is denied.
+    if (permissions.seeOwnOrgOnly) {
+      const userOrg = Array.isArray(req.headers["x-user-org"])
+        ? req.headers["x-user-org"][0]
+        : (req.headers["x-user-org"] ?? "");
+      if (!userOrg || !decision.organizationUnit || decision.organizationUnit !== userOrg) {
+        res.status(403).json({ error: "Access restricted to your organisation's decisions" });
+        return;
+      }
+    }
+
+    // sealedOnly roles (external_auditor) can only access sealed decisions
+    if (permissions.sealedOnly && decision.status !== "sealed") {
+      res.status(403).json({ error: "Access restricted to sealed decisions only" });
+      return;
+    }
+
+    // Log the replay access
+    logAudit(req, "decision.replay_accessed", {
+      entityType: "decision",
+      entityId: decisionId,
+      details: { caseNumber: decision.caseNumber, role: roleHeader },
+    });
+
+    // ── Fetch all data sources in parallel ───────────────────────────────────
+    const [
+      replayEvents,
+      stages,
+      auditLogs,
+      evidenceRows,
+      judicialReview,
+      memoryRows,
+    ] = await Promise.all([
+      db.select().from(decisionReplayEventsTable)
+        .where(eq(decisionReplayEventsTable.decisionId, decisionId))
+        .orderBy(decisionReplayEventsTable.replayStageKey),
+      db.select().from(decisionStagesTable)
+        .where(eq(decisionStagesTable.decisionId, decisionId))
+        .orderBy(decisionStagesTable.stageNumber),
+      db.select().from(auditLogsTable)
+        .where(
+          and(
+            eq(auditLogsTable.entityType, "decision"),
+            eq(auditLogsTable.entityId, decisionId),
+          ),
+        )
+        .orderBy(auditLogsTable.createdAt),
+      db.select().from(evidenceLedgerTable)
+        .where(eq(evidenceLedgerTable.decisionId, decisionId))
+        .orderBy(evidenceLedgerTable.sequenceNumber),
+      db.select().from(judicialReviewsTable)
+        .where(eq(judicialReviewsTable.decisionId, decisionId))
+        .limit(1),
+      db.select().from(decisionMemoryTable)
+        .where(eq(decisionMemoryTable.decisionId, decisionId))
+        .orderBy(desc(decisionMemoryTable.decisionVersion))
+        .limit(1),
+    ]);
+
+    // Index by stageKey for fast lookup
+    const stagesByKey = Object.fromEntries(stages.map((s) => [s.stageKey, s]));
+    const replayByKey = Object.fromEntries(replayEvents.map((r) => [r.replayStageKey, r]));
+    const jr = judicialReview[0] ?? null;
+    const latestMemory = memoryRows[0] ?? null;
+
+    // Stage→audit log grouping (crude: include all logs for now)
+    const allAuditLogs = auditLogs;
+
+    // ── Stage labels for the 14-stage timeline ────────────────────────────────
+    const STAGE_EN_LABELS: Record<string, string> = {
+      replay_01_request_received:    "Request Received",
+      replay_02_evidence_collection: "Evidence Collection",
+      replay_03_data_validation:     "Data Validation",
+      replay_04_jurisdiction_check:  "Jurisdiction Check",
+      replay_05_legal_basis_check:   "Legal Basis Check",
+      replay_06_cause_analysis:      "Cause Analysis",
+      replay_07_subject_matter:      "Subject Matter Analysis",
+      replay_08_purpose_analysis:    "Purpose Analysis",
+      replay_09_alshamsi_engine:     "Al-Shamsi Theory Engine",
+      replay_10_legal_weight:        "Legal Weight Calculation",
+      replay_11_algorithmic_bias:    "Algorithmic Bias Assessment",
+      replay_12_legitimacy_index:    "Legitimacy Index",
+      replay_13_human_oversight:     "Human Oversight",
+      replay_14_decision_issued:     "Decision Issued",
+    };
+
+    // ── Source stage key → replay stage key mapping ───────────────────────────
+    const SOURCE_TO_REPLAY: Record<string, string> = {
+      administrative_request:   "replay_01_request_received",
+      facts_evidence:           "replay_02_evidence_collection",
+      legal_authority:          "replay_04_jurisdiction_check",
+      legal_basis:              "replay_05_legal_basis_check",
+      administrative_objective: "replay_06_cause_analysis",
+      discretionary_power:      "replay_07_subject_matter",
+      proportionality:          "replay_08_purpose_analysis",
+      constitutional_validation:"replay_09_alshamsi_engine",
+      human_oversight:          "replay_13_human_oversight",
+      decision_drafting:        "replay_14_decision_issued",
+      final_review:             "replay_14_decision_issued",
+    };
+
+    // ── Build the 14-stage timeline ───────────────────────────────────────────
+    const replayStageKeyList = [...REPLAY_STAGE_KEYS];
+    const replayTimeline = replayStageKeyList.map((rsk, idx) => {
+      const replayEvent = replayByKey[rsk] ?? null;
+
+      // Find the source stage for this replay key
+      const sourceStageKey = Object.entries(SOURCE_TO_REPLAY)
+        .find(([, v]) => v === rsk)?.[0] ?? null;
+      const sourceStage = sourceStageKey ? (stagesByKey[sourceStageKey] ?? null) : null;
+
+      // Determine status
+      let status: "complete" | "skipped" | "pending" = "pending";
+      if (replayEvent) {
+        status = "complete";
+      } else if (sourceStage && sourceStage.completedAt) {
+        status = "complete";
+      } else {
+        // Virtual stages (3, 10, 11, 12) derived from other data
+        if (rsk === "replay_03_data_validation") {
+          const hasValidationLogs = allAuditLogs.some((l) => l.action?.includes("validate"));
+          if (hasValidationLogs) status = "skipped";
+        } else if (rsk === "replay_10_legal_weight" && jr?.constitutionalRiskScore !== null && jr?.constitutionalRiskScore !== undefined) {
+          status = "skipped";
+        } else if (rsk === "replay_11_algorithmic_bias" && jr) {
+          status = "skipped";
+        } else if (rsk === "replay_12_legitimacy_index" && latestMemory?.lsi !== null && latestMemory?.lsi !== undefined) {
+          status = "skipped";
+        }
+      }
+
+      // Build inputs/outputs from the source stage
+      const inputs = sourceStage ? (sourceStage.stageData as Record<string, unknown>) : null;
+      const outputs = sourceStage ? (sourceStage.aiAnalysis as Record<string, unknown>) : null;
+
+      // Virtual stage inputs/outputs
+      let virtualInputs: Record<string, unknown> | null = null;
+      let virtualOutputs: Record<string, unknown> | null = null;
+      if (rsk === "replay_03_data_validation") {
+        const validationLogs = allAuditLogs.filter((l) => l.action?.includes("validate"));
+        virtualInputs = { validationLogCount: validationLogs.length };
+        virtualOutputs = { validatedStages: validationLogs.map((l) => l.details) };
+      } else if (rsk === "replay_10_legal_weight" && jr) {
+        virtualInputs = { constitutionalRiskScore: jr.constitutionalRiskScore, dimensions: jr.dimensions };
+        virtualOutputs = { legalWeightScore: jr.constitutionalRiskScore ? (100 - jr.constitutionalRiskScore) / 100 : null };
+      } else if (rsk === "replay_11_algorithmic_bias" && jr) {
+        const dims = (jr.dimensions as { dimension: string; status: string; riskScore: number }[] | null) ?? [];
+        const biasEntry = dims.find((d) => d.dimension === "algorithmic_bias");
+        virtualInputs = { dimensions: jr.dimensions };
+        virtualOutputs = biasEntry ?? { status: "not_assessed" };
+      } else if (rsk === "replay_12_legitimacy_index" && latestMemory) {
+        virtualInputs = { decisionVersion: latestMemory.decisionVersion, qva: latestMemory.qva };
+        virtualOutputs = { lsi: latestMemory.lsi, complianceStatus: latestMemory.complianceStatus };
+      }
+
+      // Al-Shamsi dimensions (from replay event or constitutional_validation stage)
+      let alShamsiDimensions: Record<string, unknown> | null = null;
+      if (replayEvent?.alShamsiDimensions) {
+        alShamsiDimensions = replayEvent.alShamsiDimensions as Record<string, unknown>;
+      } else if (rsk === "replay_09_alshamsi_engine" && outputs) {
+        alShamsiDimensions = (outputs.principleResults as Record<string, unknown>) ?? null;
+      }
+
+      // Confidence score
+      let confidenceScore: number | null = replayEvent?.confidenceScore ?? null;
+      if (confidenceScore === null && rsk === "replay_10_legal_weight" && jr?.constitutionalRiskScore !== null && jr?.constitutionalRiskScore !== undefined) {
+        confidenceScore = (100 - jr.constitutionalRiskScore) / 100;
+      }
+
+      return {
+        replayStageKey: rsk,
+        stageNumber: idx + 1,
+        labelAr: REPLAY_STAGE_LABELS_AR[rsk],
+        labelEn: STAGE_EN_LABELS[rsk] ?? rsk,
+        status,
+        timestamp: replayEvent?.recordedAt?.toISOString()
+          ?? sourceStage?.completedAt?.toISOString()
+          ?? sourceStage?.createdAt?.toISOString()
+          ?? null,
+        actor: replayEvent?.actor ?? (sourceStage ? String(sourceStage.validatedBy ?? "") : null),
+        actorRole: replayEvent?.actorRole ?? null,
+        confidenceScore,
+        inputs: replayEvent ? inputs : virtualInputs,
+        outputs: replayEvent ? outputs : virtualOutputs,
+        evidenceUsed: replayEvent?.evidenceSnapshot as unknown[] ?? evidenceRows.slice(0, 10),
+        legalArticles: (replayEvent?.legalReferences as string[]) ?? [],
+        caselaw: [],
+        constitutionalReferences: (replayEvent?.constitutionalReferences as string[]) ?? [],
+        adminLawReferences: (replayEvent?.adminLawReferences as string[]) ?? [],
+        reasoningNarrative: replayEvent?.reasoningNarrative
+          ?? (outputs ? (outputs.stageSummary as string) ?? (outputs.aiContribution as string) ?? null : null),
+        appliedLegalWeight: replayEvent?.appliedLegalWeight ?? null,
+        alShamsiDimensions,
+        riskIndicators: (replayEvent?.riskIndicators as string[]) ?? [],
+        humanInterventionRecord: replayEvent?.humanInterventionRecord as Record<string, unknown> | null ?? null,
+        auditLogEntries: allAuditLogs.filter((l) =>
+          sourceStageKey
+            ? l.action?.includes(sourceStageKey) || l.action?.includes("stage")
+            : false,
+        ).slice(0, 10),
+        aiModelName: replayEvent?.aiModelName ?? null,
+        promptHash: replayEvent?.promptHash ?? null,
+        auditHash: replayEvent?.auditHash ?? null,
+        immutableLogId: replayEvent?.immutableLogId ?? null,
+      };
+    });
+
+    res.json({
+      timeline: {
+        decisionId,
+        caseNumber: decision.caseNumber,
+        stages: replayTimeline,
+        generatedAt: new Date().toISOString(),
+      },
+    });
+  } catch (err) {
+    console.error("[decisions.replay]", err);
+    res.status(500).json({ error: "Failed to build replay timeline" });
   }
 });
 

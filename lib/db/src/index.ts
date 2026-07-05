@@ -14,6 +14,7 @@ export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 export const db = drizzle(pool, { schema });
 
 export * from "./schema";
+export { PERMISSIONS, getPermissions, ROLE_META, ALL_ROLES, GOVERNANCE_ROLES, type UserRole, type LegacyRole, type GovernanceRole, type RolePermissions } from "./permissions";
 // Phase 3 — Chain of Custody service functions
 export {
   recordCustodyEvent,
@@ -61,3 +62,11 @@ export {
   type ConstitutionalMemory,
   type MemoryIntegrityResult,
 } from "./memory-service";
+// Decision Replay Engine service functions
+export {
+  recordReplayEvent,
+  getReplayEvents,
+  verifyReplayEventHash,
+  type RecordReplayEventInput,
+  type ReplayEventRecord,
+} from "./replay-service";

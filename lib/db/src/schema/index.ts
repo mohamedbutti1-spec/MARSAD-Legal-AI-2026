@@ -28,3 +28,5 @@ export * from "./memory";
 export * from "./evidence";
 // Phase 5 — Constitutional Judicial Intelligence (CJI)
 export * from "./judicial-review";
+// Decision Replay Engine
+export * from "./replay";
