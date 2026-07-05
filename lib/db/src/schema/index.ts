@@ -41,3 +41,10 @@ export * from "./kb-documents";
 export * from "./kb-articles";
 export * from "./kb-cross-references";
 export * from "./kb-embeddings";
+// Phase 57 — Legal Research Workspace
+export * from "./research-projects";
+export * from "./research-folders";
+export * from "./research-items";
+export * from "./research-item-versions";
+export * from "./research-answer-metadata";
+export * from "./citation-refresh-status";

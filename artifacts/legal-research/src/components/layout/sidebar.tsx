@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   Search,
   Bot,
+  FolderOpen,
   ScrollText,
   Gavel,
   Landmark,
@@ -216,6 +217,14 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
       titleAr: 'أدوات البحث',
       titleEn: 'Research Tools',
       items: [
+        {
+          href: '/workspace',
+          labelAr: 'مساحة البحث',
+          labelEn: 'Research Workspace',
+          icon: <FolderOpen className="w-4.5 h-4.5" />,
+          show: canUseAi,
+          badge: 'جديد',
+        },
         {
           href: '/research',
           labelAr: 'البحث القانوني',

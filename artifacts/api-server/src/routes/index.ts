@@ -39,6 +39,8 @@ import cilRouter from "./cil";
 import jdtRouter from "./jdt";
 // NAIP — National Administrative Intelligence Platform
 import naipRouter from "./naip";
+// Phase 57 — Legal Research Workspace
+import workspaceRouter from "./workspace";
 
 const router: IRouter = Router();
 
@@ -82,5 +84,7 @@ router.use(cilRouter);
 router.use(jdtRouter);
 // NAIP — National Administrative Intelligence Platform
 router.use(naipRouter);
+// Phase 57 — Legal Research Workspace
+router.use(workspaceRouter);
 
 export default router;

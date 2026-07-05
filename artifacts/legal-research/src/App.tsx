@@ -45,6 +45,11 @@ import ConstitutionalIntelligence from '@/pages/constitutional-intelligence';
 // Phase 44 — Judicial Digital Twin (JDT)
 import JdtPage from '@/pages/jdt';
 
+// Phase 57 — Legal Research Workspace
+import WorkspaceDashboard from '@/pages/workspace-dashboard';
+import WorkspaceProject   from '@/pages/workspace-project';
+import WorkspaceItem      from '@/pages/workspace-item';
+
 // NAIP — Role-Specific Executive Dashboards
 import NaipMinister        from '@/pages/naip-minister';
 import NaipUndersecretary  from '@/pages/naip-undersecretary';
@@ -139,6 +144,23 @@ function Router() {
         <Route path="/decisions">
           <RouteGuard allow={canUseAi}>
             <Decisions />
+          </RouteGuard>
+        </Route>
+
+        {/* ── Phase 57 — Research Workspace (requires canUseAi) ────── */}
+        <Route path="/workspace/:projectId/items/:itemId">
+          <RouteGuard allow={canUseAi}>
+            <WorkspaceItem />
+          </RouteGuard>
+        </Route>
+        <Route path="/workspace/:projectId">
+          <RouteGuard allow={canUseAi}>
+            <WorkspaceProject />
+          </RouteGuard>
+        </Route>
+        <Route path="/workspace">
+          <RouteGuard allow={canUseAi}>
+            <WorkspaceDashboard />
           </RouteGuard>
         </Route>
 

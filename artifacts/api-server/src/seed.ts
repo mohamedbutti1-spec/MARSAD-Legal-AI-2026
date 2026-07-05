@@ -7,6 +7,7 @@ import {
   seedRiskCategories,
 } from "@workspace/db";
 import { logger } from "./lib/logger";
+import { migrateResearchWorkspace } from "./research-workspace/migration.js";
 
 const sampleRows = [
   {
@@ -26,6 +27,11 @@ const sampleRows = [
 ];
 
 export async function seedDatabase() {
+  // ─── Phase 57: Research Workspace tables (additive, IF NOT EXISTS) ───────────
+  await migrateResearchWorkspace().catch((err) =>
+    logger.warn({ err }, "Research workspace migration failed (non-fatal)"),
+  );
+
   // ─── Users ──────────────────────────────────────────────────────────────────
   const existingUsers = await db.select().from(usersTable);
   if (existingUsers.length === 0) {
