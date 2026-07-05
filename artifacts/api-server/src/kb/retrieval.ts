@@ -23,6 +23,12 @@ import {
 } from "@workspace/db";
 import { and, eq, gte, lte, inArray, sql } from "drizzle-orm";
 import { generateEmbedding, normaliseArabic, extractKeywordsAr, extractKeywordsEn } from "./pipeline.js";
+import {
+  verifyRetrievalHits,
+  annotateContextLine,
+  buildAuthorityInventory,
+} from "./verification.js";
+import type { VerificationReport, VerificationOptions } from "./verification.js";
 import type {
   RetrievalOptions,
   RetrievalResult,
@@ -293,33 +299,83 @@ function extractSnippet(text: string, tokens: Set<string>, maxChars: number): st
 // ─── RAG context builder (for rag.ts integration) ────────────────────────────
 
 /**
- * Build a RAG context block from KB retrieval results, formatted
- * identically to legalSourcesTable results in rag.ts's buildContext().
+ * Phase 56: Result type for buildKbContext().
+ * Includes the verification report so callers can log or surface it.
+ */
+export interface KbContextEntry {
+  tag: string;         // e.g. "SRC:34" — the raw KB document ID tag
+  contextLine: string; // Formatted context line, annotated with authority class + confidence
+  documentId: number;  // Raw kbDocumentsTable.id (before any offset)
+  titleAr: string;     // DB-confirmed Arabic title
+}
+
+export interface KbContextResult {
+  entries: KbContextEntry[];
+  report: VerificationReport;
+  inventory: string;   // Authority inventory block for pre-prompt injection
+}
+
+/**
+ * Build a RAG context block from KB retrieval results.
  *
- * Call this from buildContext() in rag.ts and append its output to `parts`.
+ * Phase 56: All hits pass through verifyRetrievalHits() before being
+ * included in the context. Rejected hits are removed and logged to the
+ * audit log. Each accepted entry is annotated with authority class and
+ * confidence so the AI can use them correctly.
  *
  * @param query    - User query text
- * @param options  - Retrieval filters (optional)
- * @returns Array of formatted context strings, one per hit
+ * @param options  - Retrieval + verification filter options
+ * @returns KbContextResult with verified entries, report, and inventory
  */
 export async function buildKbContext(
   query: string,
-  options: Omit<RetrievalOptions, "query"> = {},
-): Promise<Array<{ tag: string; contextLine: string }>> {
-  const result = await retrieveRelevant({ ...options, query, excludeRepealed: true });
+  options: Omit<RetrievalOptions, "query"> & {
+    /** Phase 56 verification options (pass-through to verifyRetrievalHits) */
+    verification?: VerificationOptions;
+  } = {},
+): Promise<KbContextResult> {
+  const { verification: verificationOpts, ...retrievalOpts } = options;
 
-  return result.hits.map((hit) => ({
-    tag: hit.ragTag,
-    contextLine:
-      `[${hit.ragTag}] ${hit.titleAr}` +
-      (hit.documentNumber ? ` (رقم ${hit.documentNumber})` : "") +
-      (hit.year ? `، ${hit.year}` : "") +
-      ` — ${hit.jurisdiction} | المستوى ${hit.hierarchyLevel} | ${hit.bindingStatus}` +
-      (hit.isRepealed ? " [ملغى]" : "") +
-      (hit.isAmended ? " [معدّل]" : "") +
+  const result = await retrieveRelevant({ ...retrievalOpts, query, excludeRepealed: true });
+
+  // ── Phase 56: Mandatory verification ──────────────────────────────────────
+  const report = await verifyRetrievalHits(result.hits, {
+    ...verificationOpts,
+    auditLog: verificationOpts?.auditLog ?? true,
+  });
+
+  // Stamp the retrieval strategy onto the report
+  report.retrievalStrategy = result.strategy;
+
+  // ── Build context entries from verified hits only ─────────────────────────
+  const verifiedMap = new Map(report.verified.map((v) => [v.documentId, v]));
+
+  const entries: KbContextEntry[] = [];
+  for (const hit of result.hits) {
+    const authority = verifiedMap.get(hit.documentId);
+    if (!authority) continue; // rejected — not included in context
+
+    const rawLine =
+      `[${hit.ragTag}] ${authority.titleAr}` +
+      (authority.documentNumber ? ` (رقم ${authority.documentNumber})` : "") +
+      (authority.year ? `، ${authority.year}` : "") +
+      ` — ${authority.jurisdiction} | المستوى ${authority.hierarchyLevel} | ${authority.bindingStatus}` +
+      (authority.isRepealed ? " [ملغى]" : "") +
+      (authority.isAmended ? " [معدّل]" : "") +
       "\n" +
-      (hit.snippet || "(لا يوجد محتوى متاح)"),
-  }));
+      (hit.snippet || "(لا يوجد محتوى متاح)");
+
+    entries.push({
+      tag:         hit.ragTag,
+      contextLine: annotateContextLine(rawLine, authority),
+      documentId:  hit.documentId,
+      titleAr:     authority.titleAr,
+    });
+  }
+
+  const inventory = buildAuthorityInventory(report);
+
+  return { entries, report, inventory };
 }
 
 // ─── Collection-scoped retrieval shortcuts ────────────────────────────────────

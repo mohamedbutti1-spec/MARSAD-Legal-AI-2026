@@ -21,3 +21,4 @@
 - [Phase 53 — KB Architecture](phase53-kb-architecture.md) — 4 tables, 17 collections, pipeline + retrieval built; no data yet; lib/db must build before api-server TS check
 - [Phase 54 — KB Ingestion](phase54-ingestion.md) — 22 docs / 12 collections live; amendment graph design; additive-column migration pattern; DO $ broken in node-pg; run-scoped report math
 - [Phase 55 — UAE Case Law Corpus](phase55-case-law.md) — uae_case_law collection; case-law-runner; citation/legislation graph design; unique index must include external_ref column or multi-external-ref edges are silently dropped
+- [Phase 56 — Retrieval Verification Layer](phase56-verification.md) — KB_ID_OFFSET=100000; inventory offset rewrite (idempotent); fabrication filter in resolveCitations; KB: prefix = raw ID; providedTagSet must use bracketed keys
