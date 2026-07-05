@@ -1543,21 +1543,28 @@ function buildCilSection(d: AdpData): string {
       <!-- 6 Score Meters -->
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">
         ${[
-          { labelAr: "الامتثال الدستوري", labelEn: "Constitutional Compliance", value: cil.constitutionalComplianceScore },
-          { labelAr: "مؤشر المخاطر الدستورية", labelEn: "Constitutional Risk Index", value: cil.constitutionalRiskIndex },
-          { labelAr: "مؤشر المساواة", labelEn: "Equality Index", value: cil.equalityIndex },
-          { labelAr: "ضمانات التقاضي", labelEn: "Due Process Index", value: cil.dueProcessIndex },
-          { labelAr: "أثر على الحقوق", labelEn: "Rights Impact Score", value: cil.rightsImpactScore },
-          { labelAr: "احتمالية الصمود القضائي", labelEn: "Judicial Survival Probability", value: cil.judicialSurvivalProbability },
-        ].map(({ labelAr, labelEn, value }) => `
+          { labelAr: "الامتثال الدستوري", labelEn: "Constitutional Compliance", value: cil.constitutionalComplianceScore, inverse: false },
+          { labelAr: "مؤشر المخاطر الدستورية", labelEn: "Constitutional Risk Index", value: cil.constitutionalRiskIndex, inverse: true },
+          { labelAr: "مؤشر المساواة", labelEn: "Equality Index", value: cil.equalityIndex, inverse: false },
+          { labelAr: "ضمانات التقاضي", labelEn: "Due Process Index", value: cil.dueProcessIndex, inverse: false },
+          { labelAr: "أثر على الحقوق", labelEn: "Rights Impact Score", value: cil.rightsImpactScore, inverse: true },
+          { labelAr: "احتمالية الصمود القضائي", labelEn: "Judicial Survival Probability", value: cil.judicialSurvivalProbability, inverse: false },
+        ].map(({ labelAr, labelEn, value, inverse }) => {
+          // For inverse metrics (risk/impact), high score = bad (red); low = good (green)
+          const v = value ?? 50;
+          const colour = inverse
+            ? (v >= 70 ? "#ef4444" : v >= 40 ? "#f59e0b" : "#10b981")
+            : barColor(v);
+          return `
         <div style="border:1px solid #e2e8f0;border-radius:8px;padding:12px;text-align:center;">
-          <div style="font-size:22pt;font-weight:bold;color:${barColor(value ?? 50)};">${score(value)}</div>
+          <div style="font-size:22pt;font-weight:bold;color:${colour};">${score(value)}</div>
           <div style="font-size:7pt;color:#1e293b;font-weight:bold;margin-top:2px;">${labelAr}</div>
           <div style="font-size:6.5pt;color:#64748b;">${labelEn}</div>
           <div style="height:4px;background:#f1f5f9;border-radius:4px;margin-top:6px;overflow:hidden;">
-            <div style="height:100%;width:${value ?? 50}%;background:${barColor(value ?? 50)};border-radius:4px;"></div>
+            <div style="height:100%;width:${v}%;background:${colour};border-radius:4px;"></div>
           </div>
-        </div>`).join("")}
+        </div>`;
+        }).join("")}
       </div>
 
       <!-- Overall Risk Level -->
@@ -1646,7 +1653,7 @@ function buildSignatureBlock(d: AdpData): string {
   <div class="page-break">
     <div class="section-header-bar">
       <div><div class="title-ar">كتلة التوقيع الرقمي وسلامة الوثيقة</div><div class="title-en">Digital Signature Block &amp; Document Integrity</div></div>
-      <div class="num">11</div>
+      <div class="num">12</div>
     </div>
     <div class="section">
       <p style="font-size:8pt;color:#64748b;font-family:'Noto Sans',sans-serif;direction:ltr;margin-bottom:16px;">

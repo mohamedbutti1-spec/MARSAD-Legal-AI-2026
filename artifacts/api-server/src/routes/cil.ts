@@ -36,7 +36,7 @@ import {
   CONSTITUTIONAL_PRINCIPLE_LABELS_AR,
   CONSTITUTIONAL_PRINCIPLE_LABELS_EN,
 } from "@workspace/db";
-import { requireGovernanceRead, requirePermission } from "../middlewares/roleAuth";
+import { requirePermission } from "../middlewares/roleAuth";
 import { e400, e403, e500 } from "../lib/sendError";
 import { aiRouter, TaskType, parseModelJson } from "../ai";
 
@@ -239,6 +239,18 @@ router.post(
       if (!decision) { e403(res, "لا توجد صلاحية الوصول لهذا القرار"); return; }
 
       const { role } = getUserInfo(req);
+
+      // Concurrency guard — reject if a run is already in progress for this decision
+      const existingAssessment = await getCilAssessment(decisionId);
+      if (existingAssessment?.status === "running") {
+        res.status(409).json({
+          message: "تقييم الذكاء الدستوري قيد التنفيذ بالفعل لهذا القرار",
+          status: "running",
+          assessmentId: existingAssessment.id,
+          pollUrl: `/api/cil/assess/${decisionId}`,
+        });
+        return;
+      }
 
       // Collect all decision data for the AI prompt
       const decisionData = await collectCilDecisionData(decisionId);
@@ -474,7 +486,7 @@ router.get(
     } catch (err) {
       console.error("[cil.report.get]", err);
       if (err instanceof Error && err.message.includes("not yet completed")) {
-        e400(res, err.message);
+        e400(res, "لم يكتمل تقييم الذكاء الدستوري بعد لهذا القرار");
         return;
       }
       e500(res, "فشل توليد تقرير الذكاء الدستوري");
