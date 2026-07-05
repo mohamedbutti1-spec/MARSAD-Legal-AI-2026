@@ -19,3 +19,4 @@
 - [Phase 44 — JDT Architecture](phase44-jdt.md) — virtual replay stages need direct DB insert (not recordReplayEvent); AI prompt field names must match schema exactly; 16 Shamsi dimension keys defined in JDT_SHAMSI_DIMENSION_KEYS
 - [Version 1.0 Freeze](v1-freeze.md) — feature frozen; bug/stability/docs only; production checklist; known deferred items for v2.0
 - [Phase 53 — KB Architecture](phase53-kb-architecture.md) — 4 tables, 17 collections, pipeline + retrieval built; no data yet; lib/db must build before api-server TS check
+- [Phase 54 — KB Ingestion](phase54-ingestion.md) — 22 docs / 12 collections live; amendment graph design; additive-column migration pattern; DO $ broken in node-pg; run-scoped report math

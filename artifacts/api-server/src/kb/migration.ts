@@ -124,16 +124,41 @@ CREATE INDEX IF NOT EXISTS kb_embeddings_entity_idx ON kb_embeddings (entity_typ
 CREATE INDEX IF NOT EXISTS kb_embeddings_lang_idx   ON kb_embeddings (language);
 `;
 
+/**
+ * Phase 54 additive column migration.
+ * ADD COLUMN IF NOT EXISTS is a no-op when the column already exists (PG 9.6+).
+ * Each statement is run individually so a pre-existing column does not abort the batch.
+ */
+const ADDITIVE_COLUMNS: string[] = [
+  // Phase 54 — new kb_documents columns
+  `ALTER TABLE kb_documents ADD COLUMN IF NOT EXISTS related_judgments   TEXT`,
+  `ALTER TABLE kb_documents ADD COLUMN IF NOT EXISTS related_legislation  TEXT`,
+  `ALTER TABLE kb_documents ADD COLUMN IF NOT EXISTS has_embedding_ar    BOOLEAN NOT NULL DEFAULT FALSE`,
+  `ALTER TABLE kb_documents ADD COLUMN IF NOT EXISTS has_embedding_en    BOOLEAN NOT NULL DEFAULT FALSE`,
+  // Phase 54 — unique constraint on cross-references to make amendment graph idempotent
+  // (source_doc, target_doc, type) — null-safe because two NULLs are not equal in PG
+  // We use a partial unique index rather than a table constraint so NULL target_document_id is handled correctly.
+  `CREATE UNIQUE INDEX IF NOT EXISTS kb_xref_unique_edge_idx
+     ON kb_cross_references (source_document_id, reference_type, COALESCE(target_document_id, -1), COALESCE(target_article_id, -1))`,
+];
+
 /** Run the KB migration. Safe to call multiple times — all statements are idempotent. */
 export async function runKbMigration(): Promise<void> {
   const client = await pool.connect();
   try {
+    // Phase 53 — create tables and indices
     await client.query("BEGIN");
     await client.query(MIGRATION_SQL);
     await client.query("COMMIT");
-    console.log("[KB migration] All 4 KB tables created (idempotent).");
+
+    // Phase 54 — add new columns to existing tables (each run individually)
+    for (const stmt of ADDITIVE_COLUMNS) {
+      await client.query(stmt);
+    }
+
+    console.log("[KB migration] All 4 KB tables + Phase 54 columns applied (idempotent).");
   } catch (err) {
-    await client.query("ROLLBACK");
+    try { await client.query("ROLLBACK"); } catch { /* ignore */ }
     throw new Error(`[KB migration] Failed: ${err instanceof Error ? err.message : String(err)}`);
   } finally {
     client.release();
