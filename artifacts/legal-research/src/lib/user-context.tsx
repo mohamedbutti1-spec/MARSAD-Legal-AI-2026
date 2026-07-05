@@ -49,6 +49,9 @@ interface UserContextType {
   canRunCilAssessment: boolean;
   canAcknowledgeCilWarnings: boolean;
   canViewCilDashboard: boolean;
+  // NAIP — National Administrative Intelligence Platform (Phase 43)
+  canViewNaipDashboard: boolean;
+  canViewNaipSearch: boolean;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -122,6 +125,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     canRunCilAssessment:             permissions.canRunCilAssessment             ?? false,
     canAcknowledgeCilWarnings:       permissions.canAcknowledgeCilWarnings       ?? false,
     canViewCilDashboard:             permissions.canViewCilDashboard             ?? false,
+    canViewNaipDashboard:            permissions.canViewNaipDashboard            ?? false,
+    canViewNaipSearch:               permissions.canViewNaipSearch               ?? false,
   };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

@@ -119,6 +119,12 @@ export interface RolePermissions {
   canAcknowledgeCilWarnings: boolean;
   /** Access the Constitutional Intelligence Dashboard at /constitutional-intelligence */
   canViewCilDashboard: boolean;
+
+  // ── NAIP — National Administrative Intelligence Platform (Phase 43) ────────
+  /** Access the unified NAIP executive homepage and all NAIP dashboards */
+  canViewNaipDashboard: boolean;
+  /** Access global search across all modules (decisions, risk, CIL, replay) */
+  canViewNaipSearch: boolean;
 }
 
 // ─── Permission Matrix ────────────────────────────────────────────────────────
@@ -140,6 +146,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canRecalculateRisk: true, canViewRiskDashboard: true,
     canReadConstitutionalAssessment: true, canRunCilAssessment: true,
     canAcknowledgeCilWarnings: true, canViewCilDashboard: true,
+    canViewNaipDashboard: true, canViewNaipSearch: true,
   },
   supervisor: {
     canReadDecisionList: true, canReadDecisionDetail: true,
@@ -155,6 +162,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canRecalculateRisk: true, canViewRiskDashboard: true,
     canReadConstitutionalAssessment: true, canRunCilAssessment: true,
     canAcknowledgeCilWarnings: true, canViewCilDashboard: true,
+    canViewNaipDashboard: true, canViewNaipSearch: true,
   },
   viewer: {
     canReadDecisionList: true, canReadDecisionDetail: true,
@@ -170,6 +178,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canRecalculateRisk: false, canViewRiskDashboard: false,
     canReadConstitutionalAssessment: false, canRunCilAssessment: false,
     canAcknowledgeCilWarnings: false, canViewCilDashboard: false,
+    canViewNaipDashboard: true, canViewNaipSearch: true,
   },
 
   // ── 1. Minister — executive summary only ──────────────────────────────────
@@ -187,6 +196,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canRecalculateRisk: false, canViewRiskDashboard: true,
     canReadConstitutionalAssessment: true, canRunCilAssessment: false,
     canAcknowledgeCilWarnings: false, canViewCilDashboard: true,
+    canViewNaipDashboard: true, canViewNaipSearch: true,
   },
 
   // ── 2. Undersecretary — decisions + delegation ────────────────────────────
@@ -204,6 +214,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canRecalculateRisk: false, canViewRiskDashboard: true,
     canReadConstitutionalAssessment: true, canRunCilAssessment: false,
     canAcknowledgeCilWarnings: false, canViewCilDashboard: true,
+    canViewNaipDashboard: true, canViewNaipSearch: true,
   },
 
   // ── 3. Assistant Undersecretary — full stages + JDP, no CAR/audit ─────────
@@ -221,6 +232,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canRecalculateRisk: true, canViewRiskDashboard: true,
     canReadConstitutionalAssessment: true, canRunCilAssessment: true,
     canAcknowledgeCilWarnings: false, canViewCilDashboard: true,
+    canViewNaipDashboard: true, canViewNaipSearch: true,
   },
 
   // ── 4. Director General — org-scoped, constitutional gates only ───────────
@@ -238,6 +250,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canRecalculateRisk: false, canViewRiskDashboard: true,
     canReadConstitutionalAssessment: true, canRunCilAssessment: false,
     canAcknowledgeCilWarnings: false, canViewCilDashboard: true,
+    canViewNaipDashboard: true, canViewNaipSearch: true,
   },
 
   // ── 5. Department Director — own dept, stage status only ─────────────────
@@ -255,6 +268,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canRecalculateRisk: false, canViewRiskDashboard: false,
     canReadConstitutionalAssessment: false, canRunCilAssessment: false,
     canAcknowledgeCilWarnings: false, canViewCilDashboard: false,
+    canViewNaipDashboard: true, canViewNaipSearch: true,
   },
 
   // ── 6. Legal Department — legal basis + full JDP ─────────────────────────
@@ -272,6 +286,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canRecalculateRisk: true, canViewRiskDashboard: true,
     canReadConstitutionalAssessment: true, canRunCilAssessment: true,
     canAcknowledgeCilWarnings: false, canViewCilDashboard: true,
+    canViewNaipDashboard: true, canViewNaipSearch: true,
   },
 
   // ── 7. Constitutional Reviewer — all constitutional data + JDP + QVA/LSI ──
@@ -289,6 +304,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canRecalculateRisk: true, canViewRiskDashboard: true,
     canReadConstitutionalAssessment: true, canRunCilAssessment: true,
     canAcknowledgeCilWarnings: true, canViewCilDashboard: true,
+    canViewNaipDashboard: true, canViewNaipSearch: true,
   },
 
   // ── 8. Internal Auditor — full read, no JDP strategy ─────────────────────
@@ -306,6 +322,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canRecalculateRisk: false, canViewRiskDashboard: true,
     canReadConstitutionalAssessment: true, canRunCilAssessment: false,
     canAcknowledgeCilWarnings: false, canViewCilDashboard: true,
+    canViewNaipDashboard: true, canViewNaipSearch: true,
   },
 
   // ── 9. External Auditor — sealed decisions only + hash verification ───────
@@ -323,6 +340,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canRecalculateRisk: false, canViewRiskDashboard: true,
     canReadConstitutionalAssessment: true, canRunCilAssessment: false,
     canAcknowledgeCilWarnings: false, canViewCilDashboard: true,
+    canViewNaipDashboard: true, canViewNaipSearch: true,
   },
 
   // ── 10. Judge — complete record except QVA raw ────────────────────────────
@@ -340,6 +358,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canRecalculateRisk: false, canViewRiskDashboard: true,
     canReadConstitutionalAssessment: true, canRunCilAssessment: false,
     canAcknowledgeCilWarnings: true, canViewCilDashboard: true,
+    canViewNaipDashboard: true, canViewNaipSearch: true,
   },
 
   // ── 11. Citizen — CAR lookup by case number only ──────────────────────────
@@ -357,6 +376,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canRecalculateRisk: false, canViewRiskDashboard: false,
     canReadConstitutionalAssessment: false, canRunCilAssessment: false,
     canAcknowledgeCilWarnings: false, canViewCilDashboard: false,
+    canViewNaipDashboard: false, canViewNaipSearch: false,
   },
 };
 

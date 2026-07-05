@@ -43,6 +43,19 @@ import RiskEngine                from '@/pages/risk-engine';
 // Phase 42 — Constitutional Intelligence Layer (CIL)
 import ConstitutionalIntelligence from '@/pages/constitutional-intelligence';
 
+// NAIP — Role-Specific Executive Dashboards
+import NaipMinister        from '@/pages/naip-minister';
+import NaipUndersecretary  from '@/pages/naip-undersecretary';
+import NaipDirectorGeneral from '@/pages/naip-director-general';
+import NaipRiskOfficer     from '@/pages/naip-risk-officer';
+import NaipJudge           from '@/pages/naip-judge';
+
+// Phase 43 — NAIP (National Administrative Intelligence Platform)
+import NaipHome      from '@/pages/naip-home';
+import NaipDashboard from '@/pages/naip-dashboard';
+import NaipKpi       from '@/pages/naip-kpi';
+import NaipSearch    from '@/pages/naip-search';
+
 // Admin
 import UserManagement     from '@/pages/user-management';
 import Settings           from '@/pages/settings';
@@ -93,6 +106,19 @@ function Router() {
 
         {/* ── Phase 42 — Constitutional Intelligence Layer (CIL) ────── */}
         <Route path="/constitutional-intelligence" component={ConstitutionalIntelligence} />
+
+        {/* ── NAIP — Role-Specific Executive Dashboards ─────────────── */}
+        <Route path="/naip/minister"        component={NaipMinister} />
+        <Route path="/naip/undersecretary"  component={NaipUndersecretary} />
+        <Route path="/naip/director-general" component={NaipDirectorGeneral} />
+        <Route path="/naip/risk-officer"    component={NaipRiskOfficer} />
+        <Route path="/naip/judge"           component={NaipJudge} />
+
+        {/* ── Phase 43 — NAIP (National Administrative Intelligence Platform) ── */}
+        <Route path="/naip"           component={NaipHome} />
+        <Route path="/naip/dashboard" component={NaipDashboard} />
+        <Route path="/naip/kpi"       component={NaipKpi} />
+        <Route path="/naip/search"    component={NaipSearch} />
 
         {/* ── Module 1 — Intelligent Administrative Decision ───────── */}
         <Route path="/decisions/new">

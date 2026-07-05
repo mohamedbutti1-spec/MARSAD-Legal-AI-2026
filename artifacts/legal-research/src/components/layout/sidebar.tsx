@@ -23,6 +23,8 @@ import {
   Sparkles,
   Shield,
   ShieldAlert,
+  Target,
+  Cpu,
 } from 'lucide-react';
 import { useUserContext } from '@/lib/user-context';
 
@@ -51,7 +53,7 @@ interface NavSection {
 
 export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: SidebarProps) {
   const [location] = useLocation();
-  const { role, lang, canManageUsers, canManageSettings, canUseAi, canViewAudit, canViewGovernanceDashboard, canViewRiskDashboard, canViewCilDashboard } = useUserContext();
+  const { role, lang, canManageUsers, canManageSettings, canUseAi, canViewAudit, canViewGovernanceDashboard, canViewRiskDashboard, canViewCilDashboard, canViewNaipDashboard, canViewNaipSearch } = useUserContext();
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
 
   const toggleSection = (id: string) => {
@@ -123,6 +125,78 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           icon: <Scale className="w-4.5 h-4.5" />,
           show: canViewCilDashboard,
           badge: 'CIL',
+        },
+      ],
+    },
+    // ── Phase 43 — National Administrative Intelligence Platform ──────────────
+    {
+      id: 'naip',
+      titleAr: 'الذكاء الإداري الوطني',
+      titleEn: 'National Admin Intelligence',
+      items: [
+        {
+          href: '/naip',
+          labelAr: 'المنصة الوطنية NAIP',
+          labelEn: 'NAIP Executive Platform',
+          icon: <Cpu className="w-4.5 h-4.5" />,
+          show: canViewNaipDashboard,
+          badge: 'NAIP',
+        },
+        {
+          href: '/naip/dashboard',
+          labelAr: 'لوحة الذكاء الوطني',
+          labelEn: 'National Intelligence Dashboard',
+          icon: <BarChart3 className="w-4.5 h-4.5" />,
+          show: canViewNaipDashboard,
+        },
+        {
+          href: '/naip/kpi',
+          labelAr: 'مركز المؤشرات الوطنية',
+          labelEn: 'National KPI Center',
+          icon: <Target className="w-4.5 h-4.5" />,
+          show: canViewNaipDashboard,
+        },
+        {
+          href: '/naip/search',
+          labelAr: 'البحث الوطني الموحد',
+          labelEn: 'Global Search',
+          icon: <Search className="w-4.5 h-4.5" />,
+          show: canViewNaipSearch,
+        },
+        {
+          href: '/naip/minister',
+          labelAr: 'لوحة الوزير',
+          labelEn: 'Minister Dashboard',
+          icon: <Users className="w-4.5 h-4.5" />,
+          show: role === 'minister' || role === 'owner' || role === 'supervisor',
+        },
+        {
+          href: '/naip/undersecretary',
+          labelAr: 'لوحة وكيل الوزارة',
+          labelEn: 'Undersecretary Dashboard',
+          icon: <Users className="w-4.5 h-4.5" />,
+          show: role === 'undersecretary' || role === 'owner' || role === 'supervisor',
+        },
+        {
+          href: '/naip/director-general',
+          labelAr: 'لوحة مدير عام',
+          labelEn: 'Director General Dashboard',
+          icon: <Users className="w-4.5 h-4.5" />,
+          show: role === 'director_general' || role === 'owner' || role === 'supervisor',
+        },
+        {
+          href: '/naip/risk-officer',
+          labelAr: 'لوحة مسؤول المخاطر',
+          labelEn: 'Risk Officer Dashboard',
+          icon: <ShieldAlert className="w-4.5 h-4.5" />,
+          show: canViewRiskDashboard,
+        },
+        {
+          href: '/naip/judge',
+          labelAr: 'لوحة القاضي',
+          labelEn: 'Judge Dashboard',
+          icon: <Gavel className="w-4.5 h-4.5" />,
+          show: role === 'judge' || role === 'owner' || role === 'supervisor',
         },
       ],
     },

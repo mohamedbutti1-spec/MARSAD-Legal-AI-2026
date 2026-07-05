@@ -35,6 +35,8 @@ import judicialReviewRouter from "./judicial-review";
 import riskRouter from "./risk";
 // Phase 42 — Constitutional Intelligence Layer (CIL)
 import cilRouter from "./cil";
+// NAIP — National Administrative Intelligence Platform
+import naipRouter from "./naip";
 
 const router: IRouter = Router();
 
@@ -74,5 +76,7 @@ router.use(judicialReviewRouter);
 router.use(riskRouter);
 // Phase 42 — Constitutional Intelligence Layer (CIL)
 router.use(cilRouter);
+// NAIP — National Administrative Intelligence Platform
+router.use(naipRouter);
 
 export default router;

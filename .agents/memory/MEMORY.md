@@ -15,3 +15,4 @@
 - [NRME — National Risk Modeling Engine](nrme-architecture.md) — 9 tables, 15 indices, 3 aggregate scores (NRI/ALI/DCS), lazy calculation, direct DB insert for virtual replay stage, sealedOnly enforced in assertDecisionAccess
 - [Sealed State Source of Truth](sealed-state-source-of-truth.md) — decisions.status has NO "sealed" value; all sealed checks must use decisionDci.isSealed via DCI lookup
 - [Phase 42 — Constitutional Intelligence Layer](phase42-cil.md) — 12-principle AI assessor; CilPrincipleResult (not PrincipleResult) to avoid decisions.ts collision; warning resolve must load warning→decisionId then assertCilAccess; dashboard needs org/sealed scoping; replay_15_cil_assessment is virtual stage
+- [Phase 43 — NAIP Architecture](phase43-naip.md) — 9 pages, 8 API endpoints, 2 permission flags; /naip/stats/uae gates org-scoped roles with e403; sql.raw IDs sanitized to integers; getAccessibleDecisionIds returns null=all, []=none
