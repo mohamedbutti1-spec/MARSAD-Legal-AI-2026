@@ -36,3 +36,8 @@ export * from "./risk";
 export * from "./cil";
 // Phase 44 — Judicial Digital Twin (JDT)
 export * from "./jdt";
+// Phase 53 — UAE Legal Knowledge Base
+export * from "./kb-documents";
+export * from "./kb-articles";
+export * from "./kb-cross-references";
+export * from "./kb-embeddings";
