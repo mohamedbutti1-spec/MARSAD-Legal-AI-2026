@@ -1,5 +1,5 @@
 /**
- * Phase 54 — UAE Legal Knowledge Base: Ingestion Runner
+ * Phase 54-55 — UAE Legal Knowledge Base: Ingestion Runner
  *
  * Orchestrates the full ingestion run in priority order:
  *   Priority 1:  UAE Constitution
@@ -10,6 +10,7 @@
  *   Priority 6:  Official Gazette
  *   Priority 7:  Supreme Court Principles
  *   Priority 8:  Explanatory Memoranda + Official Guidance
+ *   Priority 9:  UAE Case Law Corpus (Phase 55 — uae_case_law collection)
  *
  * For each document:
  *   ✦ Validates metadata
@@ -32,6 +33,7 @@
 
 import { indexDocument } from "../pipeline.js";
 import { generateIngestionReport, printReport } from "./report.js";
+import { runCaseLawIngestion } from "./case-law-runner.js";
 import type { KbDocumentInput, IndexResult } from "../types.js";
 
 // ─── Seed imports ─────────────────────────────────────────────────────────────
@@ -257,7 +259,14 @@ export async function runIngestion(
   const amendEdges = await buildAmendmentGraph(indexed);
   console.log(`[KB Ingestion] Amendment graph: ${amendEdges} edges created\n`);
 
-  // Generate and print report
+  // ── Priority 9: UAE Case Law Corpus (Phase 55) ───────────────────────────
+  if (!opts.priorities?.length || opts.priorities.includes(9)) {
+    const skipExisting = opts.skipExisting !== false;
+    await runCaseLawIngestion({ skipExisting });
+    console.log("");
+  }
+
+  // Generate and print legislation/guidance report
   const report = await generateIngestionReport(runResults, startMs);
   printReport(report);
 

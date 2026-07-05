@@ -287,6 +287,28 @@ const COLLECTIONS: Record<KbCollectionId, KbCollection> = {
       "Judgments of Ras Al Khaimah courts. Binding within RAK; " +
       "persuasive in other emirates. Includes RAKICC commercial disputes.",
   },
+
+  // ── Phase 55 — Unified Case Law Corpus ─────────────────────────────────────
+
+  uae_case_law: {
+    id: "uae_case_law",
+    nameEn: "UAE Case Law Corpus",
+    nameAr: "مجموعة الاجتهاد القضائي الإماراتي",
+    hierarchyLevel: "7a",
+    bindingStatus: "binding",
+    defaultDocType: "judgment",
+    jurisdiction: "multi",
+    authorityEn: "UAE Superior Courts (Federal Supreme Court; Courts of Cassation)",
+    authorityAr: "المحاكم العليا الإماراتية (المحكمة الاتحادية العليا؛ محاكم النقض)",
+    description:
+      "Unified corpus of officially published judicial principles and holdings from all UAE " +
+      "superior courts: the Federal Supreme Court (all chambers), Courts of Cassation " +
+      "(Dubai, Abu Dhabi, RAK), the Federal Administrative Judiciary, and the " +
+      "Constitutional Chamber. Covers the full UAE legal hierarchy. Each document " +
+      "represents a published principle digest (مجموعة مبادئ قضائية) issued by the court " +
+      "or the Federal Judiciary Authority (هيئة القضاء الاتحادي). Only officially " +
+      "published materials are indexed — no unofficial legal websites.",
+  },
 };
 
 // ─── Lookup helpers ───────────────────────────────────────────────────────────

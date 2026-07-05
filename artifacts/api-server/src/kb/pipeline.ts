@@ -342,6 +342,8 @@ export async function indexDocument(input: KbDocumentInput): Promise<IndexResult
         fullTextEn:         normEn,
         keywordsAr,
         keywordsEn,
+        relatedJudgments:   input.relatedJudgments,
+        relatedLegislation: input.relatedLegislation,
         indexStatus:        "pending",
       })
       .returning({ id: kbDocumentsTable.id });

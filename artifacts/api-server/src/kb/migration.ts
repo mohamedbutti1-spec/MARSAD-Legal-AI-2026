@@ -135,11 +135,23 @@ const ADDITIVE_COLUMNS: string[] = [
   `ALTER TABLE kb_documents ADD COLUMN IF NOT EXISTS related_legislation  TEXT`,
   `ALTER TABLE kb_documents ADD COLUMN IF NOT EXISTS has_embedding_ar    BOOLEAN NOT NULL DEFAULT FALSE`,
   `ALTER TABLE kb_documents ADD COLUMN IF NOT EXISTS has_embedding_en    BOOLEAN NOT NULL DEFAULT FALSE`,
-  // Phase 54 — unique constraint on cross-references to make amendment graph idempotent
-  // (source_doc, target_doc, type) — null-safe because two NULLs are not equal in PG
-  // We use a partial unique index rather than a table constraint so NULL target_document_id is handled correctly.
-  `CREATE UNIQUE INDEX IF NOT EXISTS kb_xref_unique_edge_idx
-     ON kb_cross_references (source_document_id, reference_type, COALESCE(target_document_id, -1), COALESCE(target_article_id, -1))`,
+  // Phase 54 / Phase 55 — unique constraint on cross-references.
+  // The index MUST include the external-ref column so that multiple external-ref
+  // edges with the same (source, type, NULL target) but different targetExternalRef
+  // values can coexist. Without it, only one external-ref edge per (source, type)
+  // is stored and subsequent onConflictDoNothing() calls silently drop the rest.
+  //
+  // Drop the overly-coarse Phase 54 index first (no-op if it was never created).
+  `DROP INDEX IF EXISTS kb_xref_unique_edge_idx`,
+  // Create the correct index that distinguishes external refs from each other.
+  `CREATE UNIQUE INDEX IF NOT EXISTS kb_xref_unique_edge_v2_idx
+     ON kb_cross_references (
+       source_document_id,
+       reference_type,
+       COALESCE(target_document_id,   -1),
+       COALESCE(target_article_id,    -1),
+       LEFT(COALESCE(target_external_ref, ''), 200)
+     )`,
 ];
 
 /** Run the KB migration. Safe to call multiple times — all statements are idempotent. */

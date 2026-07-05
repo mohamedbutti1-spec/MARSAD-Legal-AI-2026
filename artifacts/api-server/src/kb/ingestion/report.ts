@@ -188,6 +188,8 @@ export async function generateIngestionReport(
     "federal_supreme_court", "federal_admin_judiciary", "abu_dhabi_courts",
     "dubai_courts", "rak_courts", "constitutional_judgments",
     "official_gazette", "official_guidance",
+    // Phase 55 — unified case law corpus
+    "uae_case_law",
   ];
   const indexedCollections = new Set(
     byCollection.filter((c) => c.documentsIndexed > 0).map((c) => c.collectionId),

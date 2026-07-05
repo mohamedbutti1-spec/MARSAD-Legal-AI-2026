@@ -29,7 +29,9 @@ export type KbCollectionId =
   | "rak_courts"
   | "constitutional_judgments"
   | "official_gazette"
-  | "official_guidance";
+  | "official_guidance"
+  // Phase 55 — unified case law corpus
+  | "uae_case_law";
 
 export type KbHierarchyLevel = "1" | "2" | "3" | "4" | "5" | "6" | "7a" | "7b" | "7c" | "8";
 
@@ -124,6 +126,12 @@ export interface KbDocumentInput {
   // Search keywords (optional — pipeline auto-extracts if omitted)
   keywordsAr?: string[];
   keywordsEn?: string[];
+
+  // Phase 55 — case law cross-reference metadata (JSON-serialised arrays)
+  // relatedJudgments: JSON array of { court, number, year, topic? }
+  // relatedLegislation: JSON array of { title, documentNumber?, articles? }
+  relatedJudgments?: string;
+  relatedLegislation?: string;
 }
 
 export interface AmendmentEntry {
