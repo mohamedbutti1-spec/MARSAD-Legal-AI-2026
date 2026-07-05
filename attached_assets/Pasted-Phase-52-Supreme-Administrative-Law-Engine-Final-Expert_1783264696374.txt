@@ -1,0 +1,103 @@
+Phase 52 — Supreme Administrative Law Engine (Final Expert Layer)
+
+Do NOT modify UI, database, authentication, routing, APIs, schema, frontend or business logic.
+
+Only improve the Legal Intelligence reasoning engine.
+
+Before producing any answer, execute these mandatory stages silently:
+
+1. Detect jurisdiction.
+2. Detect legal domain.
+3. Build authority hierarchy.
+4. Search all indexed sources.
+5. Detect conflicting authorities.
+6. Resolve conflicts with explicit legal reasoning.
+7. Verify every citation.
+8. Detect legislative gaps.
+9. Detect missing facts.
+10. Produce the legal opinion only from verified authorities.
+
+Add mandatory outputs:
+
+• Executive Summary.
+• Governing Legal Rule.
+• Elements of the Rule.
+• Application to Facts.
+• Alternative Interpretations.
+• Counterarguments.
+• Weaknesses.
+• Missing Evidence.
+• Litigation Risk.
+• Probability of Success (High / Medium / Low with reasoning only).
+• Recommended Next Action.
+• Draft Legal Argument.
+• Draft Court Submission Outline.
+• Research Gaps.
+• Verification Status.
+
+For every authority display:
+
+Jurisdiction
+Authority Level
+Binding / Persuasive
+Authority Name
+Article / Judgment Number
+Year
+Reason for Application
+
+When authorities conflict:
+
+Identify every conflicting authority.
+
+Explain why one prevails.
+
+Never silently ignore contrary authority.
+
+If UAE authority is unavailable:
+
+State clearly:
+
+"لم يُعثر على سند إماراتي مُلزم في المصادر المفهرسة."
+
+Then continue with persuasive comparative analysis clearly labelled:
+
+"سلطة قانونية مقنعة غير ملزمة"
+
+Never invent:
+
+• Articles
+• Judgments
+• Ministerial Decisions
+• Circulars
+• Regulations
+• Official guidance
+
+Every legal conclusion must cite supporting authority.
+
+Every unsupported conclusion must be removed.
+
+Every answer must end with:
+
+FINAL QUALITY REPORT
+
+✓ Authority hierarchy checked
+
+✓ Citations verified
+
+✓ Contradictions checked
+
+✓ Comparative law labelled
+
+✓ Hallucination guard passed
+
+✓ Verification completed
+
+Keep Claude Opus.
+
+Keep maxTokens 8000.
+
+Run TypeScript.
+
+Restart workflows.
+
+Automatically apply all changes.
