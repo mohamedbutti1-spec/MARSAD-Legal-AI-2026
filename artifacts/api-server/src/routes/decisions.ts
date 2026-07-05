@@ -49,6 +49,7 @@ import {
 } from "@workspace/db";
 import { requireAnyRole, requireSupervisorOrOwner, requirePermission, requireGovernanceRead } from "../middlewares/roleAuth";
 import { logAudit } from "../middlewares/auditLog";
+import { e400, e403, e404, e500 } from "../lib/sendError";
 import { aiRouter, TaskType } from "../ai";
 import { parseModelJson } from "../ai/providers/interface";
 
@@ -2365,6 +2366,72 @@ router.get("/decisions/:id/car", requireAnyRole, async (req, res): Promise<void>
   } catch (err) {
     console.error("[car.get]", err);
     res.status(500).json({ error: "Failed to load CAR" });
+  }
+});
+
+/**
+ * GET /decisions/:id/adp/export
+ * Generate and stream an Administrative Decision Passport (ADP) PDF.
+ *
+ * The ADP is an official UAE Government audit document containing:
+ * cover page with QR code and SHA-256 hash, executive legal summary,
+ * DCI, 14-stage replay timeline, stage detail records, evidence chain,
+ * AI reasoning summary, Al-Shamsi Theory dimensions (16), indices &
+ * risk assessment, constitutional review summary, and digital signature block.
+ *
+ * Access gated on canReplayDecision — same audience as the replay view.
+ * Every generation is logged to the audit trail.
+ * No DB state is written — PDF is generated fresh on demand.
+ */
+router.get("/decisions/:id/adp/export", requirePermission("canReplayDecision"), async (req, res): Promise<void> => {
+  try {
+    const decisionId = parseInt(req.params.id as string, 10);
+    if (isNaN(decisionId)) { e400(res, "Invalid decision ID"); return; }
+
+    // Resolve permissions for org-scoped roles
+    const roleHeader = (Array.isArray(req.headers["x-user-role"])
+      ? req.headers["x-user-role"][0]
+      : (req.headers["x-user-role"] ?? "viewer")) as string;
+    const permissions = PERMISSIONS[roleHeader as keyof typeof PERMISSIONS] ?? PERMISSIONS.citizen;
+
+    const [decision] = await db.select().from(decisionsTable).where(eq(decisionsTable.id, decisionId));
+    if (!decision) { e404(res, "Decision not found"); return; }
+
+    if (permissions.seeOwnOrgOnly) {
+      const userOrg = Array.isArray(req.headers["x-user-org"])
+        ? req.headers["x-user-org"][0]
+        : (req.headers["x-user-org"] ?? "");
+      if (!userOrg || !decision.organizationUnit || decision.organizationUnit !== userOrg) {
+        e403(res, "Access restricted to your organisation's decisions");
+        return;
+      }
+    }
+
+    // Mirror the same sealedOnly guard used in the replay endpoint
+    if (permissions.sealedOnly && decision.status !== "sealed") {
+      e403(res, "Access restricted to sealed decisions only");
+      return;
+    }
+
+    logAudit(req, "decision.adp_exported", {
+      entityType: "decision",
+      entityId: decisionId,
+      details: { caseNumber: decision.caseNumber, role: roleHeader },
+    });
+
+    const { generateAdpPdf } = await import("../lib/adp-generator.js");
+    const { pdf, filename, docHash } = await generateAdpPdf(decisionId);
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.setHeader("Content-Length", pdf.length);
+    res.setHeader("X-ADP-Hash", docHash);
+    res.setHeader("X-ADP-Serial", filename.replace(".pdf", ""));
+    res.send(pdf);
+  } catch (err) {
+    console.error("[adp.export]", err);
+    const msg = err instanceof Error ? err.message : "ADP generation failed";
+    e500(res, msg);
   }
 });
 

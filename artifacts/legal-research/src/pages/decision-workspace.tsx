@@ -11,7 +11,7 @@ import {
   Shield, CheckCircle2, XCircle, Clock, ChevronLeft, ChevronDown, ChevronUp,
   Sparkles, Scale, AlertTriangle, Building2, FileText, Loader2, ArrowRight,
   Lock, Check, Fingerprint, Gavel, BookOpen, Users, Link2, HelpCircle,
-  Download, Hash, RotateCcw, UserCheck, Activity, Eye, ChevronRight, Play,
+  Download, Hash, RotateCcw, UserCheck, Activity, Eye, ChevronRight, Play, FileCheck,
 } from 'lucide-react';
 import DecisionReplay from '@/components/decisions/DecisionReplay';
 
@@ -1949,6 +1949,8 @@ export default function DecisionWorkspace() {
   const [isValidating, setIsValidating] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isExportingAdp, setIsExportingAdp] = useState(false);
+  const [adpExportError, setAdpExportError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(!decisionId);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -2064,6 +2066,44 @@ export default function DecisionWorkspace() {
       qc.invalidateQueries({ queryKey: ['dci', decisionId] });
     } catch (e: any) { alert(e.message || 'فشل إتمام المرحلة'); }
     setIsCompleting(false);
+  };
+
+  const handleExportAdp = async () => {
+    if (!decisionId) return;
+    setIsExportingAdp(true);
+    setAdpExportError(null);
+    try {
+      const role = localStorage.getItem('userRole') || 'owner';
+      const org  = localStorage.getItem('userOrg')  || '';
+      const userId = localStorage.getItem('userId') || '1';
+      const res = await fetch(`/api/decisions/${decisionId}/adp/export`, {
+        method: 'GET',
+        headers: {
+          'X-User-Role': role,
+          'X-User-Org':  org,
+          'X-User-Id':   userId,
+        },
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as any).error || res.statusText);
+      }
+      const blob = await res.blob();
+      const contentDisposition = res.headers.get('Content-Disposition') || '';
+      const filenameMatch = contentDisposition.match(/filename="([^"]+)"/);
+      const filename = filenameMatch?.[1] ?? `ADP-${decisionId}.pdf`;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e: any) {
+      setAdpExportError(e.message || 'فشل إنشاء جواز القرار');
+    }
+    setIsExportingAdp(false);
   };
 
   const currentValidation = validationResults[activeStage];
@@ -2253,6 +2293,28 @@ export default function DecisionWorkspace() {
                   </div>
                 ) : activeView === 'replay' ? (
                   <div role="tabpanel" id="panel-replay" aria-labelledby="tab-replay">
+                    {/* ── ADP Export Bar ─────────────────────────────── */}
+                    <div className="flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 pt-4 pb-2 border-b border-border/60 bg-card">
+                      <div>
+                        <p className="text-sm font-bold text-foreground">جواز القرار الإداري (ADP)</p>
+                        <p className="text-xs text-muted-foreground">وثيقة حكومية رسمية مع رمز QR وبصمة SHA-256 وجدول إعادة التشغيل الكامل</p>
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <button
+                          onClick={handleExportAdp}
+                          disabled={isExportingAdp}
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0A1628] text-[#C8A951] text-xs font-bold border border-[#C8A951]/30 hover:bg-[#1e3a5f] transition-colors disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
+                        >
+                          {isExportingAdp
+                            ? <><Loader2 className="w-4 h-4 animate-spin" /> جارٍ إنشاء الجواز...</>
+                            : <><FileCheck className="w-4 h-4" /> تصدير جواز القرار (ADP)</>
+                          }
+                        </button>
+                        {adpExportError && (
+                          <p className="text-xs text-red-500 max-w-xs text-left" dir="ltr">{adpExportError}</p>
+                        )}
+                      </div>
+                    </div>
                     <DecisionReplay decisionId={decisionId!} />
                   </div>
                 ) : (
