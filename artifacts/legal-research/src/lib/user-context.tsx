@@ -52,6 +52,9 @@ interface UserContextType {
   // NAIP — National Administrative Intelligence Platform (Phase 43)
   canViewNaipDashboard: boolean;
   canViewNaipSearch: boolean;
+  // JDT — Judicial Digital Twin (Phase 44)
+  canViewJdtSimulation: boolean;
+  canRunJdtSimulation: boolean;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -125,8 +128,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     canRunCilAssessment:             permissions.canRunCilAssessment             ?? false,
     canAcknowledgeCilWarnings:       permissions.canAcknowledgeCilWarnings       ?? false,
     canViewCilDashboard:             permissions.canViewCilDashboard             ?? false,
-    canViewNaipDashboard:            permissions.canViewNaipDashboard            ?? false,
-    canViewNaipSearch:               permissions.canViewNaipSearch               ?? false,
+    canViewNaipDashboard:   permissions.canViewNaipDashboard   ?? false,
+    canViewNaipSearch:      permissions.canViewNaipSearch      ?? false,
+    canViewJdtSimulation:   permissions.canViewJdtSimulation   ?? false,
+    canRunJdtSimulation:    permissions.canRunJdtSimulation    ?? false,
   };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

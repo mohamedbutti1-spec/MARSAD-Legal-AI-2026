@@ -45,6 +45,7 @@ export const REPLAY_STAGE_KEYS = [
   "replay_13_human_oversight",        // → human_oversight stage
   "replay_14_decision_issued",        // → decision_drafting / final_review + signed
   "replay_15_cil_assessment",         // → constitutional_assessments (virtual — Phase 42 CIL)
+  "replay_16_jdt_simulation",         // → jdt_simulations (virtual — Phase 44 JDT)
 ] as const;
 
 export type ReplayStageKey = (typeof REPLAY_STAGE_KEYS)[number];
@@ -64,7 +65,7 @@ export const STAGE_KEY_TO_REPLAY_STAGE: Record<string, ReplayStageKey> = {
   final_review:             "replay_14_decision_issued",
 };
 
-/** Arabic labels for all 15 replay stages (including Phase 42 CIL) */
+/** Arabic labels for all 16 replay stages (including Phase 42 CIL and Phase 44 JDT) */
 export const REPLAY_STAGE_LABELS_AR: Record<ReplayStageKey, string> = {
   replay_01_request_received:    "استقبال الطلب",
   replay_02_evidence_collection: "جمع الأدلة",
@@ -81,6 +82,7 @@ export const REPLAY_STAGE_LABELS_AR: Record<ReplayStageKey, string> = {
   replay_13_human_oversight:     "الرقابة البشرية",
   replay_14_decision_issued:     "إصدار القرار",
   replay_15_cil_assessment:      "تقييم الذكاء الدستوري CIL",
+  replay_16_jdt_simulation:      "المحاكاة القضائية الرقمية JDT",
 };
 
 // ─── Table ─────────────────────────────────────────────────────────────────────

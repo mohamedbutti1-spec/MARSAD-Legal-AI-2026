@@ -25,6 +25,7 @@ import {
   ShieldAlert,
   Target,
   Cpu,
+  Brain,
 } from 'lucide-react';
 import { useUserContext } from '@/lib/user-context';
 
@@ -53,7 +54,7 @@ interface NavSection {
 
 export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: SidebarProps) {
   const [location] = useLocation();
-  const { role, lang, canManageUsers, canManageSettings, canUseAi, canViewAudit, canViewGovernanceDashboard, canViewRiskDashboard, canViewCilDashboard, canViewNaipDashboard, canViewNaipSearch } = useUserContext();
+  const { role, lang, canManageUsers, canManageSettings, canUseAi, canViewAudit, canViewGovernanceDashboard, canViewRiskDashboard, canViewCilDashboard, canViewNaipDashboard, canViewNaipSearch, canViewJdtSimulation } = useUserContext();
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
 
   const toggleSection = (id: string) => {
@@ -197,6 +198,22 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           labelEn: 'Judge Dashboard',
           icon: <Gavel className="w-4.5 h-4.5" />,
           show: role === 'judge' || role === 'owner' || role === 'supervisor',
+        },
+      ],
+    },
+    // ── Phase 44 — Judicial Digital Twin ─────────────────────────────────────
+    {
+      id: 'jdt',
+      titleAr: 'التوأم القضائي الرقمي',
+      titleEn: 'Judicial Digital Twin',
+      items: [
+        {
+          href: '/decisions',
+          labelAr: 'تشغيل المحاكاة القضائية',
+          labelEn: 'Run Judicial Simulation',
+          icon: <Brain className="w-4.5 h-4.5" />,
+          show: canViewJdtSimulation,
+          badge: 'JDT',
         },
       ],
     },

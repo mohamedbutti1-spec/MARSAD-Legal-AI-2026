@@ -97,3 +97,18 @@ export {
   type CilAnalysisResult,
   type CilDashboardFilter,
 } from "./cil-service";
+// Phase 44 — Judicial Digital Twin (JDT) service functions
+export {
+  collectJdtDecisionData,
+  getJdtSimulation,
+  markJdtRunning,
+  saveJdtSimulation,
+  markJdtFailed,
+  buildJdtReport,
+  type JdtSimulation,
+  type JdtAnalysisResult,
+  type JdtReviewStageResult,
+  type JdtShamsiDimensionResult,
+  type JdtCorrectiveAction,
+  type JdtRiskLevel,
+} from "./jdt-service";

@@ -35,6 +35,8 @@ import judicialReviewRouter from "./judicial-review";
 import riskRouter from "./risk";
 // Phase 42 — Constitutional Intelligence Layer (CIL)
 import cilRouter from "./cil";
+// Phase 44 — Judicial Digital Twin (JDT)
+import jdtRouter from "./jdt";
 // NAIP — National Administrative Intelligence Platform
 import naipRouter from "./naip";
 
@@ -76,6 +78,8 @@ router.use(judicialReviewRouter);
 router.use(riskRouter);
 // Phase 42 — Constitutional Intelligence Layer (CIL)
 router.use(cilRouter);
+// Phase 44 — Judicial Digital Twin (JDT)
+router.use(jdtRouter);
 // NAIP — National Administrative Intelligence Platform
 router.use(naipRouter);
 

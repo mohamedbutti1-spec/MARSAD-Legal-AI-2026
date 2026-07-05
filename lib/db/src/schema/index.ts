@@ -34,3 +34,5 @@ export * from "./replay";
 export * from "./risk";
 // Phase 42 — Constitutional Intelligence Layer (CIL)
 export * from "./cil";
+// Phase 44 — Judicial Digital Twin (JDT)
+export * from "./jdt";

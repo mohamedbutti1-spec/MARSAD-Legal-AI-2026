@@ -42,6 +42,8 @@ import CitizenPortal             from '@/pages/citizen-portal';
 import RiskEngine                from '@/pages/risk-engine';
 // Phase 42 — Constitutional Intelligence Layer (CIL)
 import ConstitutionalIntelligence from '@/pages/constitutional-intelligence';
+// Phase 44 — Judicial Digital Twin (JDT)
+import JdtPage from '@/pages/jdt';
 
 // NAIP — Role-Specific Executive Dashboards
 import NaipMinister        from '@/pages/naip-minister';
@@ -106,6 +108,9 @@ function Router() {
 
         {/* ── Phase 42 — Constitutional Intelligence Layer (CIL) ────── */}
         <Route path="/constitutional-intelligence" component={ConstitutionalIntelligence} />
+
+        {/* ── Phase 44 — Judicial Digital Twin (JDT) ───────────────── */}
+        <Route path="/jdt/:id" component={JdtPage} />
 
         {/* ── NAIP — Role-Specific Executive Dashboards ─────────────── */}
         <Route path="/naip/minister"        component={NaipMinister} />
