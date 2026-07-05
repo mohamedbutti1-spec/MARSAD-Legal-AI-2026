@@ -138,8 +138,9 @@ export default function Dashboard() {
   function handleSend() {
     const trimmed = query.trim();
     if (!trimmed) return;
-    sessionStorage.setItem('quickSearchQuery', trimmed);
-    navigate('/research');
+    // Hand off to the full AI Legal Assistant (session-based, citations, history)
+    sessionStorage.setItem('pendingAssistantQuery', trimmed);
+    navigate('/assistant');
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {

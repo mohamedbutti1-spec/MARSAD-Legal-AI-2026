@@ -384,6 +384,14 @@ export default function AiAssistant() {
   const { toast } = useToast();
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  /** Strict-Mode guard: ensures the mount-only auto-start effect runs exactly once. */
+  const autoStartGuardRef = useRef(false);
+  /**
+   * Set to true while the home-composer auto-send flow is in flight.
+   * Prevents the [activeSession] message-fetch effect from firing a competing
+   * GET /sessions/:id/messages that would overwrite the optimistic message state.
+   */
+  const autoStartingRef = useRef(false);
 
   const [sessions, setSessions] = useState<Session[]>([]);
   const [activeSession, setActiveSession] = useState<Session | null>(null);
@@ -406,6 +414,99 @@ export default function AiAssistant() {
 
   useEffect(() => { fetchSessions(); }, [fetchSessions]);
 
+  // ── Auto-start from home composer ─────────────────────────────────────────
+  // When the user types on the home screen and presses Send, the query is
+  // stored as 'pendingAssistantQuery' and the app navigates to /assistant.
+  // On mount we read it, create a fresh session, show an optimistic user
+  // bubble, send the message, and display the assistant reply — so the user
+  // lands directly in a live conversation.
+  //
+  // Fixes applied:
+  //  • autoStartGuardRef prevents Strict Mode's double-invocation from firing
+  //    the flow twice (refs survive the Strict Mode unmount/remount cycle).
+  //  • autoStartingRef blocks the [activeSession] message-fetch effect from
+  //    issuing a competing GET that would overwrite the optimistic state.
+  //  • sessionStorage key is removed only AFTER session creation succeeds;
+  //    on failure it is restored so the user doesn't lose their query.
+  useEffect(() => {
+    // Strict Mode idempotency: refs persist across Strict Mode's synthetic
+    // unmount/remount, so this guard reliably fires the effect exactly once.
+    if (autoStartGuardRef.current) return;
+
+    const pending = sessionStorage.getItem('pendingAssistantQuery');
+    if (!pending) return;
+
+    autoStartGuardRef.current = true;
+    const query = pending.trim();
+    if (!query) {
+      sessionStorage.removeItem('pendingAssistantQuery');
+      return;
+    }
+
+    // Signal to the [activeSession] effect that we own setMessages right now.
+    autoStartingRef.current = true;
+    setSending(true);
+
+    (async () => {
+      try {
+        // 1. Create a session titled after the query
+        const title = query.length > 60 ? query.slice(0, 57) + '…' : query;
+        const sr = await apiFetch('/api/assistant/sessions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title }),
+        });
+        if (!sr.ok) {
+          // Restore the key so the user can retry after a page refresh
+          sessionStorage.setItem('pendingAssistantQuery', query);
+          toast({
+            title: t('تعذّر بدء المحادثة', 'Could not start conversation'),
+            description: t('حاول مرة أخرى', 'Please try again'),
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        // Key confirmed saved server-side — safe to remove from storage
+        sessionStorage.removeItem('pendingAssistantQuery');
+
+        const session: Session = await sr.json();
+        setSessions((prev) => [session, ...prev]);
+        // Setting activeSession would trigger the [activeSession] effect, but
+        // autoStartingRef.current === true so that effect returns immediately.
+        setActiveSession(session);
+
+        // 2. Show the user bubble optimistically
+        const tempId = Date.now();
+        const userMsg: Message = {
+          id: tempId,
+          sessionId: session.id,
+          role: 'user',
+          content: query,
+          createdAt: new Date().toISOString(),
+        };
+        setMessages([userMsg]);
+
+        // 3. Send to the assistant
+        const mr = await apiFetch(`/api/assistant/sessions/${session.id}/messages`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: query }),
+        });
+        if (mr.ok) {
+          const data = await mr.json();
+          setMessages([userMsg, data.message]);
+          fetchSessions(); // session title may have been updated by the API
+        }
+        // On send failure the user bubble stays visible so the user can retry
+      } finally {
+        autoStartingRef.current = false;
+        setSending(false);
+        setTimeout(() => inputRef.current?.focus(), 100);
+      }
+    })();
+  }, []); // intentionally mount-only — reads a one-shot sessionStorage key
+
   useEffect(() => {
     apiFetch('/api/legal-sources?limit=80')
       .then((r) => r.ok ? r.json() : null)
@@ -415,6 +516,8 @@ export default function AiAssistant() {
 
   useEffect(() => {
     if (!activeSession) { setMessages([]); return; }
+    // Skip when auto-start is in flight — it owns setMessages for this session.
+    if (autoStartingRef.current) return;
     setLoadingMessages(true);
     apiFetch(`/api/assistant/sessions/${activeSession.id}/messages`)
       .then((r) => r.ok ? r.json() : null)
