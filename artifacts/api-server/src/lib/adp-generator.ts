@@ -1606,10 +1606,11 @@ async function renderPdf(html: string, docHash: string): Promise<Buffer> {
   });
   try {
     const page = await browser.newPage();
-    // waitUntil: 'networkidle0' removed in puppeteer 25 — use domcontentloaded + delay for fonts
+    // waitUntil: 'networkidle0' removed in puppeteer 25 — use domcontentloaded + font-ready check
     await page.setContent(html, { waitUntil: "domcontentloaded", timeout: 20_000 });
-    // Allow time for Google Fonts (Noto Naskh Arabic) to load before rendering
-    await new Promise((r) => setTimeout(r, 2_500));
+    // Wait for document.fonts.ready (Google Fonts / Noto Naskh Arabic) — string form avoids Node tsconfig clash
+    await page.evaluate("document.fonts.ready").catch(() => null);
+    await new Promise((r) => setTimeout(r, 500)); // small stabilisation buffer for layout reflow
     const hashFragment = docHash.slice(0, 16) + "…";
     const pdf = await page.pdf({
       format: "A4",

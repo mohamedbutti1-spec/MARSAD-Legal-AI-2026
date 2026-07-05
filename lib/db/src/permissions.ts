@@ -166,7 +166,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canDelegateDecision: false, canRunHashVerification: false,
     seeOwnOrgOnly: false, sealedOnly: false,
     canSearchByCaseNumber: false, canViewGovernanceDashboard: true,
-    canReplayDecision: false,
+    canReplayDecision: false,  // Ministers see executive summary + dashboard only; full replay is operational detail
     canReadRiskAssessment: true, canWriteRiskTreatment: false,
     canRecalculateRisk: false, canViewRiskDashboard: true,
   },

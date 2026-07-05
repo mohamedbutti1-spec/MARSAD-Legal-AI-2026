@@ -96,7 +96,7 @@ export type RiskCategory = typeof riskCategoriesTable.$inferSelect;
 export const risksTable = pgTable("risks", {
   id:           serial("id").primaryKey(),
   decisionId:   integer("decision_id").notNull().references(() => decisionsTable.id, { onDelete: "cascade" }),
-  categoryId:   integer("category_id").references(() => riskCategoriesTable.id),
+  categoryId:   integer("category_id").references(() => riskCategoriesTable.id, { onDelete: "restrict" }),
   titleAr:      text("title_ar").notNull(),
   titleEn:      text("title_en"),
   descriptionAr: text("description_ar"),
@@ -186,6 +186,8 @@ export const riskAssessmentsTable = pgTable("risk_assessments", {
   updatedAt:    timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   uniqueIndex("risk_assessments_decision_id_uniq").on(t.decisionId),
+  // Performance: dashboard and lazy-load queries filter by status (pending/calculating/done)
+  index("risk_assessments_status_idx").on(t.status),
 ]);
 
 export type RiskAssessment = typeof riskAssessmentsTable.$inferSelect;

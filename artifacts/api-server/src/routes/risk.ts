@@ -10,6 +10,7 @@ import { eq, desc, sql, and } from "drizzle-orm";
 import {
   db,
   decisionsTable,
+  decisionDciTable,
   riskAssessmentsTable,
   riskScenariosTable,
   riskTreatmentsTable,
@@ -44,24 +45,32 @@ function getPermissions(role: string) {
   return PERMISSIONS[role as keyof typeof PERMISSIONS] ?? PERMISSIONS.citizen;
 }
 
+type DecisionWithSeal = typeof decisionsTable.$inferSelect & { dciIsSealed: boolean };
+
 async function assertDecisionAccess(
   req: import("express").Request,
   decisionId: number,
-): Promise<typeof decisionsTable.$inferSelect | null> {
-  const [decision] = await db
-    .select()
-    .from(decisionsTable)
-    .where(eq(decisionsTable.id, decisionId))
-    .limit(1);
+): Promise<DecisionWithSeal | null> {
+  // Fetch decision and DCI seal state in parallel — the real seal flag lives on DCI,
+  // not on decisions.status (which has no "sealed" value in its enum).
+  const [[decision], [dci]] = await Promise.all([
+    db.select().from(decisionsTable).where(eq(decisionsTable.id, decisionId)).limit(1),
+    db.select({ isSealed: decisionDciTable.isSealed })
+      .from(decisionDciTable)
+      .where(eq(decisionDciTable.decisionId, decisionId))
+      .limit(1),
+  ]);
   if (!decision) return null;
 
   const { role, org } = getUserInfo(req);
   const perms = getPermissions(role);
-  // sealedOnly roles (e.g. external_auditor) can only read sealed decisions
-  if (perms.sealedOnly && decision.status !== "sealed") return null;
+  const dciIsSealed = dci?.isSealed ?? false;
+
+  // sealedOnly roles (e.g. external_auditor) can only read decisions sealed in DCI
+  if (perms.sealedOnly && !dciIsSealed) return null;
   if (perms.seeOwnOrgOnly && decision.organizationUnit !== org) return null;
 
-  return decision;
+  return { ...decision, dciIsSealed };
 }
 
 // ─── GET /risk/categories ─────────────────────────────────────────────────────
@@ -93,14 +102,23 @@ router.get("/risk/assessment/:decisionId", requirePermission("canReadRiskAssessm
 
     let assessment = await getRiskAssessment(decisionId);
 
-    // Auto-initialise if missing (shouldn't happen after hook is live)
-    if (!assessment) {
+    // Sealed decisions (DCI isSealed=true) are immutable — serve the stored snapshot as-is
+    const isSealed = decision.dciIsSealed;
+
+    // Edge case: sealed decision with no assessment snapshot — integrity anomaly, surface clearly
+    if (isSealed && !assessment) {
+      res.status(404).json({ error: "مقيّمة المخاطر غير موجودة للقرار المختوم — يرجى الاتصال بالمسؤول" });
+      return;
+    }
+
+    // Auto-initialise if missing (shouldn't happen after hook is live) — skip for sealed decisions
+    if (!assessment && !isSealed) {
       await initializeRiskAssessment(decisionId, decision);
       assessment = await getRiskAssessment(decisionId);
     }
 
-    // Trigger lazy calculation for pending assessments
-    if (assessment && (assessment.status === "pending" || assessment.status === "stale")) {
+    // Trigger lazy calculation for pending assessments — skip for sealed decisions
+    if (!isSealed && assessment && (assessment.status === "pending" || assessment.status === "stale")) {
       const { role, userId } = getUserInfo(req);
       // Fire async — don't await (response returns pending status immediately)
       const { calculateRiskScores } = await import("../lib/risk-engine.js");
@@ -138,6 +156,12 @@ router.post("/risk/assessment/:decisionId/recalculate", requirePermission("canRe
 
     const decision = await assertDecisionAccess(req, decisionId);
     if (!decision) { e404(res, "Decision not found or access denied"); return; }
+
+    // Sealed decisions are immutable — risk scores cannot be changed after sealing
+    if (decision.dciIsSealed) {
+      res.status(403).json({ error: "لا يمكن إعادة احتساب المخاطر لقرار مختوم — القرار المختوم غير قابل للتعديل" });
+      return;
+    }
 
     const { role, userId } = getUserInfo(req);
 
@@ -202,6 +226,12 @@ router.post("/risk/treatment", requirePermission("canWriteRiskTreatment"), async
     const decision = await assertDecisionAccess(req, decisionId);
     if (!decision) { e404(res, "Decision not found or access denied"); return; }
 
+    // Sealed decisions are immutable — no new treatments after sealing
+    if (decision.dciIsSealed) {
+      res.status(403).json({ error: "لا يمكن إضافة معالجات لقرار مختوم — القرار المختوم غير قابل للتعديل" });
+      return;
+    }
+
     const { userId } = getUserInfo(req);
 
     const [treatment] = await db
@@ -259,6 +289,12 @@ router.put("/risk/treatment/:id", requirePermission("canWriteRiskTreatment"), as
 
     const decision = await assertDecisionAccess(req, existing.decisionId);
     if (!decision) { e403(res, "Access denied for this decision"); return; }
+
+    // Sealed decisions are immutable — no treatment updates after sealing
+    if (decision.dciIsSealed) {
+      res.status(403).json({ error: "لا يمكن تعديل معالجات لقرار مختوم — القرار المختوم غير قابل للتعديل" });
+      return;
+    }
 
     const {
       titleAr, titleEn, treatmentType, descriptionAr, descriptionEn,
@@ -331,6 +367,12 @@ router.delete("/risk/treatment/:id", requirePermission("canWriteRiskTreatment"),
     const decision = await assertDecisionAccess(req, existing.decisionId);
     if (!decision) { e403(res, "Access denied for this decision"); return; }
 
+    // Sealed decisions are immutable — no treatment deletion after sealing
+    if (decision.dciIsSealed) {
+      res.status(403).json({ error: "لا يمكن حذف معالجات لقرار مختوم — القرار المختوم غير قابل للتعديل" });
+      return;
+    }
+
     await db.delete(riskTreatmentsTable).where(eq(riskTreatmentsTable.id, treatmentId));
 
     const { userId } = getUserInfo(req);
@@ -363,6 +405,12 @@ router.post("/risk/review/:decisionId", requirePermission("canReadRiskAssessment
 
     const decision = await assertDecisionAccess(req, decisionId);
     if (!decision) { e404(res, "Decision not found or access denied"); return; }
+
+    // Sealed decisions are immutable — no new reviews after sealing
+    if (decision.dciIsSealed) {
+      res.status(403).json({ error: "لا يمكن إضافة مراجعات لقرار مختوم — القرار المختوم غير قابل للتعديل" });
+      return;
+    }
 
     const {
       reviewOutcome, reviewNarrativeAr, reviewNarrativeEn, nextReviewDate,
@@ -461,10 +509,12 @@ router.get("/risk/dashboard", requirePermission("canViewRiskDashboard"), async (
       })
       .from(riskAssessmentsTable)
       .innerJoin(decisionsTable, eq(riskAssessmentsTable.decisionId, decisionsTable.id))
+      // LEFT JOIN DCI to get the real seal flag (decisions.status has no "sealed" value in its enum)
+      .leftJoin(decisionDciTable, eq(riskAssessmentsTable.decisionId, decisionDciTable.decisionId))
       .where(
         perms.sealedOnly
           ? and(
-              eq(decisionsTable.status, "sealed"),
+              eq(decisionDciTable.isSealed, true),
               perms.seeOwnOrgOnly && org ? eq(decisionsTable.organizationUnit, org) : undefined,
             )
           : perms.seeOwnOrgOnly && org
@@ -505,10 +555,11 @@ router.get("/risk/dashboard", requirePermission("canViewRiskDashboard"), async (
 
     // Build a reusable scope filter that mirrors the assessmentRows filter
     // so ALL aggregates honour sealedOnly + seeOwnOrgOnly consistently.
+    // decisionScopeFilter uses decisionDciTable.isSealed (real seal flag) not decisions.status
     function decisionScopeFilter() {
       if (perms.sealedOnly) {
         return and(
-          eq(decisionsTable.status, "sealed"),
+          eq(decisionDciTable.isSealed, true),
           perms.seeOwnOrgOnly && org ? eq(decisionsTable.organizationUnit, org) : undefined,
         );
       }
@@ -523,6 +574,7 @@ router.get("/risk/dashboard", requirePermission("canViewRiskDashboard"), async (
       .select({ cnt: sql<number>`count(*)::int` })
       .from(riskTreatmentsTable)
       .innerJoin(decisionsTable, eq(riskTreatmentsTable.decisionId, decisionsTable.id))
+      .leftJoin(decisionDciTable, eq(riskTreatmentsTable.decisionId, decisionDciTable.decisionId))
       .where(
         and(
           eq(riskTreatmentsTable.status, "planned"),
@@ -530,11 +582,12 @@ router.get("/risk/dashboard", requirePermission("canViewRiskDashboard"), async (
         ),
       );
 
-    // Overdue reviews — join decisions so scope filter can be applied
+    // Overdue reviews — join decisions + DCI so scope filter can be applied correctly
     const overdueReviews = await db
       .select({ cnt: sql<number>`count(distinct ${riskReviewsTable.decisionId})::int` })
       .from(riskReviewsTable)
       .innerJoin(decisionsTable, eq(riskReviewsTable.decisionId, decisionsTable.id))
+      .leftJoin(decisionDciTable, eq(riskReviewsTable.decisionId, decisionDciTable.decisionId))
       .where(
         and(
           sql`${riskReviewsTable.nextReviewDate} < now()`,

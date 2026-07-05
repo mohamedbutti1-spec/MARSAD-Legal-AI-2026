@@ -23,6 +23,8 @@ import {
   index,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
+import { decisionsTable } from "./decisions";
+import { auditLogsTable } from "./audit-logs";
 
 // ─── Replay Stage Keys ────────────────────────────────────────────────────────
 // 14-stage replay lifecycle — maps to existing decision stages + derived stages.
@@ -86,8 +88,8 @@ export const decisionReplayEventsTable = pgTable(
   {
     id: serial("id").primaryKey(),
 
-    /** FK to decisions table */
-    decisionId: integer("decision_id").notNull(),
+    /** FK to decisions table — cascade delete replay events when decision is deleted */
+    decisionId: integer("decision_id").notNull().references(() => decisionsTable.id, { onDelete: "cascade" }),
 
     /** Which of the 14 replay stages this row represents */
     replayStageKey: text("replay_stage_key").notNull(),
@@ -137,7 +139,7 @@ export const decisionReplayEventsTable = pgTable(
     /** SHA-256 audit hash over the replay event content */
     auditHash: text("audit_hash").notNull(),
     /** Reference to the audit_logs row that records this stage completion */
-    immutableLogId: integer("immutable_log_id"),
+    immutableLogId: integer("immutable_log_id").references(() => auditLogsTable.id, { onDelete: "set null" }),
 
     /** Timestamp when this replay event was recorded */
     recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull().defaultNow(),
@@ -146,6 +148,8 @@ export const decisionReplayEventsTable = pgTable(
     // One row per replay stage per decision (each stage can only complete once)
     uniqueIndex("dre_decision_stage_idx").on(t.decisionId, t.replayStageKey),
     index("dre_decision_id_idx").on(t.decisionId),
+    // Performance: dashboard timeline queries order by recordedAt
+    index("dre_recorded_at_idx").on(t.recordedAt),
   ],
 );
 

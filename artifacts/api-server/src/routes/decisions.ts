@@ -1250,8 +1250,14 @@ router.get("/decisions/:id/replay", requirePermission("canReplayDecision"), asyn
       }
     }
 
-    // sealedOnly roles (external_auditor) can only access sealed decisions
-    if (permissions.sealedOnly && decision.status !== "sealed") {
+    // sealedOnly roles (external_auditor) can only access decisions sealed in DCI
+    // decisions.status has no "sealed" value — the real flag lives on decisionDci.isSealed
+    const [replaySealRow] = await db
+      .select({ isSealed: decisionDciTable.isSealed })
+      .from(decisionDciTable)
+      .where(eq(decisionDciTable.decisionId, decisionId))
+      .limit(1);
+    if (permissions.sealedOnly && !replaySealRow?.isSealed) {
       res.status(403).json({ error: "Access restricted to sealed decisions only" });
       return;
     }
@@ -2414,7 +2420,13 @@ router.get("/decisions/:id/adp/export", requirePermission("canReplayDecision"), 
     }
 
     // Mirror the same sealedOnly guard used in the replay endpoint
-    if (permissions.sealedOnly && decision.status !== "sealed") {
+    // decisions.status has no "sealed" value — the real flag lives on decisionDci.isSealed
+    const [adpSealRow] = await db
+      .select({ isSealed: decisionDciTable.isSealed })
+      .from(decisionDciTable)
+      .where(eq(decisionDciTable.decisionId, decisionId))
+      .limit(1);
+    if (permissions.sealedOnly && !adpSealRow?.isSealed) {
       e403(res, "Access restricted to sealed decisions only");
       return;
     }
