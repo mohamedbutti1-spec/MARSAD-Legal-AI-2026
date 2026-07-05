@@ -1,391 +1,267 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
-import { useGetDocumentStats, useListDocuments } from '@workspace/api-client-react';
 import { apiFetch } from '@/lib/api-fetch';
 import {
-  Library, FileText, UploadCloud, BrainCircuit, Search,
-  ArrowUpRight, Scale, ScrollText, Gavel, Bot,
-  GitCompareArrows, Quote, Globe, Landmark,
+  Scale, ScrollText, Gavel, Sparkles, ShieldAlert,
+  FileCheck, PenLine, ArrowUp,
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { useUserContext, useT } from '@/lib/user-context';
 import { useLocation } from 'wouter';
-import { LoadingGrid } from '@/components/ui/loading-card';
-import { ErrorMessage } from '@/components/ui/error-boundary';
-import { StatusBadge } from '@/components/ui/status-badge';
 
-interface AuditEntry {
-  id: number;
-  action: string;
-  entityType: string | null;
-  userRole: string | null;
-  createdAt: string;
+interface DashStats {
+  legalSourcesCount: number;
+  aiQueriesThisMonth: number;
+  activeUsers: number;
+  totalUsers: number;
 }
 
-const ACTION_CONFIG: Record<string, { labelAr: string; labelEn: string; colorClass: string }> = {
-  'document.upload':       { labelAr: 'رفع وثيقة',       labelEn: 'Document upload',   colorClass: 'text-emerald-600' },
-  'document.delete':       { labelAr: 'حذف وثيقة',       labelEn: 'Document deleted',  colorClass: 'text-red-500' },
-  'ai.search':             { labelAr: 'بحث ذكي',          labelEn: 'AI search',         colorClass: 'text-primary' },
-  'ai.literature-review':  { labelAr: 'مراجعة أدبية',     labelEn: 'Literature review', colorClass: 'text-primary' },
-  'ai.uae-france-compare': { labelAr: 'مقارنة قانونية',   labelEn: 'Law comparison',    colorClass: 'text-amber-600' },
-  'settings.update':       { labelAr: 'تحديث الإعدادات',  labelEn: 'Settings updated',  colorClass: 'text-muted-foreground' },
-};
+function toArabicNumeral(n: number): string {
+  return n.toLocaleString('ar-EG');
+}
 
+function getGreeting(): { ar: string; en: string } {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) return { ar: 'صباح الخير', en: 'Good morning' };
+  if (hour >= 12 && hour < 18) return { ar: 'مساء الخير', en: 'Good afternoon' };
+  return { ar: 'مساء الخير', en: 'Good evening' };
+}
+
+const QUICK_CHIPS = [
+  {
+    id: 'analyze-decision',
+    icon: Scale,
+    labelAr: 'تحليل قرار إداري',
+    labelEn: 'Analyze Administrative Decision',
+    action: 'fill',
+    fill: 'حلل القرار الإداري رقم ...',
+  },
+  {
+    id: 'review-draft',
+    icon: FileCheck,
+    labelAr: 'مراجعة مشروع قرار',
+    labelEn: 'Review Draft Decision',
+    action: 'fill',
+    fill: 'راجع مشروع القرار التالي من حيث المشروعية:',
+  },
+  {
+    id: 'draft-memo',
+    icon: PenLine,
+    labelAr: 'صياغة مذكرة قانونية',
+    labelEn: 'Draft Legal Memo',
+    action: 'fill',
+    fill: 'اصغ مذكرة قانونية بشأن:',
+  },
+  {
+    id: 'legislation',
+    icon: ScrollText,
+    labelAr: 'البحث في التشريعات',
+    labelEn: 'Search Legislation',
+    action: 'navigate',
+    href: '/legislation/uae',
+  },
+  {
+    id: 'caselaw',
+    icon: Gavel,
+    labelAr: 'البحث في الأحكام القضائية',
+    labelEn: 'Search Case Law',
+    action: 'navigate',
+    href: '/caselaw/uae',
+  },
+  {
+    id: 'shamsi',
+    icon: Sparkles,
+    labelAr: 'تحليل وفق نظرية الشامسي',
+    labelEn: 'Shamsi Theory Analysis',
+    action: 'navigate',
+    href: '/shamsi-theory',
+  },
+  {
+    id: 'risk',
+    icon: ShieldAlert,
+    labelAr: 'تقييم المخاطر القانونية',
+    labelEn: 'Legal Risk Assessment',
+    action: 'navigate',
+    href: '/risk-engine',
+  },
+] as const;
 
 export default function Dashboard() {
-  const { data: stats, isLoading, error } = useGetDocumentStats();
-  const { data: documents } = useListDocuments();
-  const { canUseAi, canManageUsers, canViewAudit, role } = useUserContext();
+  const { lang } = useUserContext();
   const t = useT();
   const [, navigate] = useLocation();
-  const [quickQuery, setQuickQuery] = useState('');
-  const [recentActivity, setRecentActivity] = useState<AuditEntry[]>([]);
-  const [dashStats, setDashStats] = useState<{ legalSourcesCount: number; aiQueriesThisMonth: number; activeUsers: number; totalUsers: number } | null>(null);
 
+  const [query, setQuery] = useState('');
+  const [dashStats, setDashStats] = useState<DashStats | null>(null);
+  const [visible, setVisible] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Fade-in on mount
   useEffect(() => {
-    if (!canViewAudit) return;
-    apiFetch('/api/audit?limit=8')
-      .then((r) => r.ok ? r.json() : null)
-      .then((data) => { if (data?.logs) setRecentActivity(data.logs); })
-      .catch(() => {});
-  }, [canViewAudit]);
+    const raf = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
+  // Fetch real stats — show nothing if it fails
   useEffect(() => {
     apiFetch('/api/dashboard/stats')
-      .then((r) => r.ok ? r.json() : null)
-      .then((data) => { if (data) setDashStats(data); })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: DashStats | null) => { if (data) setDashStats(data); })
       .catch(() => {});
   }, []);
 
-  // Quick links filtered by permission
-  const quickLinks = [
-    { href: '/research',        icon: Search,           labelAr: 'بحث قانوني',          labelEn: 'Legal Research',    show: canUseAi,      className: 'bg-primary/8 text-primary border-primary/15 hover:bg-primary/12' },
-    { href: '/assistant',       icon: Bot,              labelAr: 'المساعد الذكي',        labelEn: 'AI Assistant',      show: canUseAi,      className: 'bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100' },
-    { href: '/legislation/uae', icon: ScrollText,       labelAr: 'التشريعات الإماراتية', labelEn: 'UAE Legislation',   show: true,          className: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' },
-    { href: '/caselaw/uae',     icon: Gavel,            labelAr: 'الاجتهاد القضائي',    labelEn: 'UAE Case Law',      show: true,          className: 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100' },
-    { href: '/law/france',      icon: Landmark,         labelAr: 'القانون الفرنسي',      labelEn: 'French Law',        show: true,          className: 'bg-sky-50 text-sky-700 border-sky-200 hover:bg-sky-100' },
-    { href: '/law/eu',          icon: Globe,            labelAr: 'القانون الأوروبي',     labelEn: 'EU Law',            show: true,          className: 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' },
-    { href: '/citations',       icon: Quote,            labelAr: 'مولّد الاستشهادات',    labelEn: 'Citation Generator', show: true,         className: 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100' },
-    { href: '/comparison',      icon: GitCompareArrows, labelAr: 'مقارنة الوثائق',       labelEn: 'Comparison',        show: true,          className: 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100' },
-  ].filter((l) => l.show);
+  function handleSend() {
+    if (!query.trim()) return;
+    sessionStorage.setItem('quickSearchQuery', query.trim());
+    navigate('/research');
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') handleSend();
+  }
+
+  function handleChip(chip: typeof QUICK_CHIPS[number]) {
+    if (chip.action === 'navigate') {
+      navigate(chip.href);
+    } else {
+      setQuery(chip.fill);
+      setTimeout(() => inputRef.current?.focus(), 0);
+    }
+  }
+
+  const greeting = getGreeting();
 
   return (
-    <AppLayout>
-      <div className="space-y-6">
-        {/* ─── Page Header ──────────────────────────────────────────────────── */}
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-3 mb-1">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-                <Scale className="w-5 h-5 text-primary" />
-              </div>
-              <h1 className="text-2xl font-bold text-foreground">
-                {t('لوحة القيادة', 'Dashboard')}
-              </h1>
-            </div>
-            <p className="text-sm text-muted-foreground mt-1">
-              {t('مرحباً بك في مرصد — منصة البحث القانوني المتكاملة', 'Welcome to Marsad — Integrated Legal Research Platform')}
-            </p>
+    <AppLayout variant="chat">
+      <div className="flex flex-col h-full overflow-y-auto bg-background">
+        {/* ── Top ambient strip ─────────────────────────────────────────── */}
+        {dashStats && (
+          <div className="hidden sm:flex items-center justify-center gap-6 py-2.5 border-b border-border/40 bg-background/80 backdrop-blur-sm shrink-0">
+            <span className="text-[11px] text-muted-foreground font-medium tracking-wide">
+              <span className="text-foreground font-semibold">
+                {lang === 'ar' ? toArabicNumeral(dashStats.legalSourcesCount) : dashStats.legalSourcesCount.toLocaleString()}
+              </span>
+              {' '}
+              {t('مصدر قانوني مفهرس', 'indexed legal sources')}
+            </span>
+            <span className="text-border select-none">·</span>
+            <span className="text-[11px] text-muted-foreground font-medium tracking-wide">
+              <span className="text-foreground font-semibold">
+                {lang === 'ar' ? toArabicNumeral(dashStats.aiQueriesThisMonth) : dashStats.aiQueriesThisMonth.toLocaleString()}
+              </span>
+              {' '}
+              {t('استعلام ذكاء اصطناعي هذا الشهر', 'AI queries this month')}
+            </span>
           </div>
-          {canUseAi && (
-            <Button
-              size="sm"
-              className="gap-2 shrink-0"
-              onClick={() => navigate('/assistant')}
-            >
-              <Bot className="w-4 h-4" />
-              {t('المساعد الذكي', 'AI Assistant')}
-            </Button>
-          )}
-        </div>
+        )}
 
-        {/* ─── KPI Cards ────────────────────────────────────────────────────── */}
-        {isLoading ? (
-          <LoadingGrid count={4} />
-        ) : error ? (
-          <ErrorMessage message={t('تعذّر تحميل الإحصائيات', 'Failed to load statistics')} />
-        ) : stats ? (
-          <>
-            {/* Row 1 — Document KPIs */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <button
-                type="button"
-                className="text-start moj-card p-5 hover:shadow-md transition-all hover:-translate-y-0.5 group cursor-pointer"
-                onClick={() => navigate('/library')}
+        {/* ── Hero center zone ──────────────────────────────────────────── */}
+        <div className="flex-1 flex flex-col items-center justify-center px-4 py-10 sm:py-16">
+          <div
+            className="w-full max-w-2xl flex flex-col items-center gap-8 transition-all duration-[350ms] ease-out"
+            style={{
+              opacity: visible ? 1 : 0,
+              transform: visible ? 'translateY(0)' : 'translateY(16px)',
+            }}
+          >
+            {/* Greeting + brand */}
+            <div className="text-center space-y-2">
+              <h1
+                className="text-3xl sm:text-4xl font-bold text-foreground"
+                style={{ fontFamily: 'var(--app-font-serif)' }}
               >
-                <div className="flex items-center justify-between pb-2">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    {t('إجمالي الوثائق', 'Total Documents')}
-                  </span>
-                  <div className="w-8 h-8 rounded-lg bg-primary/8 flex items-center justify-center group-hover:bg-primary/12 transition-colors">
-                    <Library className="w-4 h-4 text-primary" />
-                  </div>
-                </div>
-                <div className="text-3xl font-bold text-foreground mt-1">{stats.total}</div>
-                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                  {t('وثيقة في المكتبة', 'documents in library')}
-                  <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </p>
-              </button>
+                {t(greeting.ar, greeting.en)}
+              </h1>
+              <p className="text-base sm:text-lg text-muted-foreground font-medium">
+                {t('منصة القرار الإداري الذكي', 'Intelligent Administrative Decision Platform')}
+              </p>
+            </div>
 
-              {/* Legal sources indexed */}
-              <button
-                type="button"
-                className="text-start moj-card p-5 hover:shadow-md transition-all hover:-translate-y-0.5 group cursor-pointer"
-                onClick={() => navigate('/legislation/uae')}
+            {/* Prompt input */}
+            <div className="w-full">
+              <div
+                className="relative flex items-center bg-card rounded-2xl border border-border shadow-xl"
+                style={{ minHeight: '56px' }}
               >
-                <div className="flex items-center justify-between pb-2">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    {t('المصادر القانونية', 'Legal Sources')}
-                  </span>
-                  <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
-                    <Scale className="w-4 h-4 text-amber-600" />
-                  </div>
-                </div>
-                <div className="text-3xl font-bold text-foreground mt-1">
-                  {dashStats?.legalSourcesCount ?? <span className="text-muted-foreground text-base">—</span>}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                  {t('مصدر مفهرس', 'indexed sources')}
-                  <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </p>
-              </button>
-
-              {/* AI queries this month */}
-              <div className="moj-card p-5">
-                <div className="flex items-center justify-between pb-2">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    {t('استعلامات الذكاء الاصطناعي', 'AI Queries')}
-                  </span>
-                  <div className="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center">
-                    <BrainCircuit className="w-4 h-4 text-violet-600" />
-                  </div>
-                </div>
-                <div className="text-3xl font-bold text-foreground mt-1">
-                  {dashStats?.aiQueriesThisMonth ?? <span className="text-muted-foreground text-base">—</span>}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">{t('هذا الشهر', 'this month')}</p>
-              </div>
-
-              {/* Active users */}
-              <div className="moj-card p-5">
-                <div className="flex items-center justify-between pb-2">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    {t('المستخدمون النشطون', 'Active Users')}
-                  </span>
-                  <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
-                    <UploadCloud className="w-4 h-4 text-emerald-600" />
-                  </div>
-                </div>
-                <div className="text-3xl font-bold text-foreground mt-1">
-                  {dashStats?.activeUsers ?? <span className="text-muted-foreground text-base">—</span>}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {dashStats
-                    ? t(`من أصل ${dashStats.totalUsers}`, `of ${dashStats.totalUsers} total`)
-                    : t('جارٍ التحميل…', 'loading…')}
-                </p>
+                <label htmlFor="home-prompt" className="sr-only">
+                  {t('اسأل مرصد أي سؤال قانوني', 'Ask MARSAD any legal question')}
+                </label>
+                <input
+                  id="home-prompt"
+                  ref={inputRef}
+                  type="text"
+                  dir={lang === 'ar' ? 'rtl' : 'ltr'}
+                  className={`
+                    flex-1 bg-transparent px-5 py-4 text-sm sm:text-base text-foreground
+                    placeholder:text-muted-foreground/60 focus:outline-none
+                    ${lang === 'ar' ? 'text-right' : 'text-left'}
+                  `}
+                  placeholder={t('اسأل مرصد أي سؤال قانوني...', 'Ask MARSAD any legal question...')}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+                <button
+                  type="button"
+                  aria-label={t('إرسال', 'Send')}
+                  onClick={handleSend}
+                  disabled={!query.trim()}
+                  className={`
+                    mx-3 w-10 h-10 rounded-full flex items-center justify-center shrink-0
+                    transition-all duration-150
+                    ${query.trim()
+                      ? 'bg-primary text-primary-foreground hover:opacity-90 cursor-pointer shadow-md'
+                      : 'bg-muted text-muted-foreground cursor-not-allowed opacity-50'}
+                  `}
+                >
+                  <ArrowUp className="w-4 h-4" aria-hidden />
+                </button>
               </div>
             </div>
 
-            {/* Row 2 — Storage + Recent uploads */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="moj-card p-5">
-                <div className="flex items-center justify-between pb-2">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    {t('حجم التخزين', 'Storage Used')}
-                  </span>
-                  <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
-                    <FileText className="w-4 h-4 text-amber-600" />
-                  </div>
-                </div>
-                <div className="text-3xl font-bold text-foreground mt-1">
-                  {(stats.totalSize / 1024 / 1024).toFixed(1)}
-                  <span className="text-base text-muted-foreground ms-1">MB</span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">{t('مساحة مستخدمة', 'space used')}</p>
-              </div>
-
-              <div className="moj-card p-5">
-                <div className="flex items-center justify-between pb-2">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    {t('رفع حديث', 'Recent Uploads')}
-                  </span>
-                  <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
-                    <UploadCloud className="w-4 h-4 text-emerald-600" />
-                  </div>
-                </div>
-                <div className="text-3xl font-bold text-foreground mt-1">{stats.recentUploads}</div>
-                <p className="text-xs text-muted-foreground mt-1">{t('في آخر 7 أيام', 'in last 7 days')}</p>
-              </div>
-            </div>
-          </>
-        ) : null}
-
-        {/* ─── Recent Activity ──────────────────────────────────────────────── */}
-        <Card className="border-border">
-          <CardHeader className="px-5 pt-5 pb-3">
-            <CardTitle className="text-sm font-semibold text-foreground">
-              {t('النشاط الأخير', 'Recent Activity')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-5 pb-5">
-            {canViewAudit && recentActivity.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
-                {recentActivity.slice(0, 8).map((entry) => {
-                  const ac = ACTION_CONFIG[entry.action];
-                  return (
-                    <div
-                      key={entry.id}
-                      className="flex items-start gap-2.5 py-2 border-b border-border/40 last:border-0"
-                    >
-                      <span className={`text-xs mt-0.5 shrink-0 ${ac?.colorClass ?? 'text-muted-foreground'}`}>●</span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-foreground truncate">
-                          {ac ? t(ac.labelAr, ac.labelEn) : entry.action}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">
-                          {new Date(entry.createdAt).toLocaleTimeString('ar-AE', { hour: '2-digit', minute: '2-digit' })}
-                          {entry.userRole && ` · ${entry.userRole}`}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="h-24 flex items-center justify-center border border-dashed border-border rounded-lg bg-muted/20">
-                <p className="text-xs text-muted-foreground text-center px-4">
-                  {!canViewAudit
-                    ? t('سجل النشاط متاح للمشرفين والمالكين', 'Activity log available for supervisors and owners')
-                    : t('لا توجد عمليات حديثة بعد', 'No recent activity yet')}
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* ─── Quick Navigation (permission-gated) ─────────────────────────── */}
-        {quickLinks.length > 0 && (
-          <div>
-            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">
-              {t('الوصول السريع', 'Quick Access')}
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-              {quickLinks.map((link) => {
-                const Icon = link.icon;
+            {/* Quick-action chips */}
+            <div className="flex flex-wrap justify-center gap-2 sm:gap-3 w-full">
+              {QUICK_CHIPS.map((chip, idx) => {
+                const Icon = chip.icon;
                 return (
                   <button
-                    key={link.href}
+                    key={chip.id}
                     type="button"
-                    onClick={() => navigate(link.href)}
-                    className={`flex flex-col items-center gap-2 p-3 rounded-xl border transition-all hover:shadow-md hover:-translate-y-0.5 text-center ${link.className}`}
+                    onClick={() => handleChip(chip)}
+                    className="
+                      flex items-center gap-2 px-3.5 py-2 rounded-full
+                      border border-border bg-card text-sm text-foreground
+                      hover:-translate-y-0.5 hover:shadow-sm hover:border-primary/30
+                      transition-all duration-150 cursor-pointer
+                    "
+                    style={{
+                      transitionDelay: `${idx * 30}ms`,
+                      opacity: visible ? 1 : 0,
+                      transform: visible ? 'translateY(0)' : 'translateY(8px)',
+                      transition: `opacity 350ms ease-out ${idx * 30}ms, transform 350ms ease-out ${idx * 30}ms, box-shadow 150ms, border-color 150ms`,
+                    }}
                   >
-                    <Icon className="w-5 h-5" aria-hidden />
-                    <span className="text-xs font-medium leading-tight">
-                      {t(link.labelAr, link.labelEn)}
+                    <Icon className="w-3.5 h-3.5 text-primary shrink-0" aria-hidden />
+                    <span className="font-medium whitespace-nowrap text-xs sm:text-sm">
+                      {t(chip.labelAr, chip.labelEn)}
                     </span>
                   </button>
                 );
               })}
             </div>
           </div>
-        )}
+        </div>
 
-        {/* ─── Quick AI Search (canUseAi only) ─────────────────────────────── */}
-        {canUseAi && (
-          <Card className="bg-primary text-primary-foreground border-0 shadow-md overflow-hidden">
-            <CardContent className="p-6">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <BrainCircuit className="w-5 h-5 text-gold" aria-hidden />
-                    <h3 className="font-bold text-lg">
-                      {t('بحث قانوني سريع', 'Quick Legal Search')}
-                    </h3>
-                  </div>
-                  <p className="text-sm text-primary-foreground/75">
-                    {t(
-                      'اطرح سؤالاً قانونياً وسيبحث الذكاء الاصطناعي في مكتبتك والمصادر القانونية.',
-                      'Ask a legal question and AI will search your library and legal sources.',
-                    )}
-                  </p>
-                </div>
-                <div className="w-full sm:w-80 flex gap-2">
-                  <label className="sr-only" htmlFor="quick-search-input">
-                    {t('مربع البحث القانوني السريع', 'Quick legal search input')}
-                  </label>
-                  <input
-                    id="quick-search-input"
-                    type="text"
-                    className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-primary-foreground placeholder:text-primary-foreground/50 focus:outline-none focus:ring-1 focus:ring-gold"
-                    placeholder={t('ما هي شروط إنهاء العقد؟', 'What are the contract termination conditions?')}
-                    value={quickQuery}
-                    onChange={(e) => setQuickQuery(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && quickQuery.trim()) {
-                        sessionStorage.setItem('quickSearchQuery', quickQuery);
-                        navigate('/research');
-                      }
-                    }}
-                  />
-                  <Button
-                    className="bg-gold text-gold-foreground hover:bg-gold/90 shrink-0 gap-1.5 font-semibold"
-                    onClick={() => {
-                      if (quickQuery.trim()) {
-                        sessionStorage.setItem('quickSearchQuery', quickQuery);
-                        navigate('/research');
-                      }
-                    }}
-                    disabled={!quickQuery.trim()}
-                    aria-label={t('تنفيذ البحث', 'Execute search')}
-                  >
-                    <Search className="w-4 h-4" aria-hidden />
-                    {t('بحث', 'Search')}
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* ─── Recent Documents ─────────────────────────────────────────────── */}
-        {documents && documents.length > 0 && (
-          <Card className="border-border">
-            <CardHeader className="px-5 pt-5 pb-3 flex flex-row items-center justify-between">
-              <CardTitle className="text-sm font-semibold text-foreground">
-                {t('آخر الوثائق المرفوعة', 'Recently Uploaded')}
-              </CardTitle>
-              <Button variant="ghost" size="sm" onClick={() => navigate('/library')} className="text-xs gap-1">
-                {t('عرض الكل', 'View all')}
-                <ArrowUpRight className="w-3 h-3" aria-hidden />
-              </Button>
-            </CardHeader>
-            <CardContent className="px-5 pb-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {documents.slice(0, 6).map((doc) => (
-                  <button
-                    key={doc.id}
-                    type="button"
-                    className="flex items-center gap-3 p-3 rounded-lg border border-border/60 hover:bg-muted/30 transition-colors text-start"
-                    onClick={() => navigate('/library')}
-                  >
-                    <div className="w-9 h-9 rounded-lg bg-primary/8 border border-primary/15 flex items-center justify-center shrink-0" aria-hidden>
-                      <FileText className="w-4 h-4 text-primary" />
-                    </div>
-                    <div className="overflow-hidden flex-1">
-                      <p className="text-sm font-medium truncate">{doc.originalName}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {doc.fileType.toUpperCase()} · {(doc.fileSize / 1024).toFixed(0)} KB
-                      </p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* ── Bottom privacy strip ──────────────────────────────────────── */}
+        <div className="shrink-0 py-3 px-4 text-center border-t border-border/30">
+          <p className="text-[10px] text-muted-foreground/50 select-none tracking-wide">
+            {t(
+              'مرصد يعمل على بيانات محلية آمنة — لا تُرسل بياناتك خارج المنظومة',
+              'MARSAD operates on secure local data — your data never leaves the system',
+            )}
+          </p>
+        </div>
       </div>
     </AppLayout>
   );
