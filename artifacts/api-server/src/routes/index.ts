@@ -33,6 +33,8 @@ import evidenceRouter from "./evidence";
 import judicialReviewRouter from "./judicial-review";
 // NRME — National Risk Modeling Engine
 import riskRouter from "./risk";
+// Phase 42 — Constitutional Intelligence Layer (CIL)
+import cilRouter from "./cil";
 
 const router: IRouter = Router();
 
@@ -70,5 +72,7 @@ router.use(evidenceRouter);
 router.use(judicialReviewRouter);
 // NRME — National Risk Modeling Engine
 router.use(riskRouter);
+// Phase 42 — Constitutional Intelligence Layer (CIL)
+router.use(cilRouter);
 
 export default router;

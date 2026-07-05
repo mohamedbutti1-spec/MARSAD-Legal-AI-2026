@@ -31,6 +31,7 @@ import {
   judicialReviewsTable,
   decisionMemoryTable,
   evidenceLedgerTable,
+  constitutionalAssessmentsTable,
 } from "@workspace/db";
 import type { JudicialDimension, ConstitutionalDefect } from "@workspace/db";
 
@@ -44,6 +45,7 @@ interface AdpData {
   judicialReview: typeof judicialReviewsTable.$inferSelect | null;
   memory: typeof decisionMemoryTable.$inferSelect | null;
   evidenceChain: (typeof evidenceLedgerTable.$inferSelect)[];
+  cilAssessment: typeof constitutionalAssessmentsTable.$inferSelect | null;
   generatedAt: string;
   docHash: string;
   qrDataUrl: string;
@@ -61,6 +63,7 @@ async function assembleAdpData(decisionId: number): Promise<AdpData> {
     judicialReviewRows,
     memoryRows,
     evidenceChain,
+    cilRows,
   ] = await Promise.all([
     db.select().from(decisionsTable).where(eq(decisionsTable.id, decisionId)).limit(1),
     db.select().from(decisionDciTable).where(eq(decisionDciTable.decisionId, decisionId)).limit(1),
@@ -69,6 +72,7 @@ async function assembleAdpData(decisionId: number): Promise<AdpData> {
     db.select().from(judicialReviewsTable).where(eq(judicialReviewsTable.decisionId, decisionId)).limit(1),
     db.select().from(decisionMemoryTable).where(eq(decisionMemoryTable.decisionId, decisionId)).orderBy(desc(decisionMemoryTable.decisionVersion)).limit(1),
     db.select().from(evidenceLedgerTable).where(eq(evidenceLedgerTable.decisionId, decisionId)),
+    db.select().from(constitutionalAssessmentsTable).where(and(eq(constitutionalAssessmentsTable.decisionId, decisionId), eq(constitutionalAssessmentsTable.status, "completed"))).orderBy(desc(constitutionalAssessmentsTable.assessmentVersion)).limit(1),
   ]);
 
   const decision = decisionRows[0];
@@ -78,6 +82,7 @@ async function assembleAdpData(decisionId: number): Promise<AdpData> {
   const jdp = jdpRows[0] ?? null;
   const judicialReview = judicialReviewRows[0] ?? null;
   const memory = memoryRows[0] ?? null;
+  const cilAssessment = cilRows[0] ?? null;
   const generatedAt = new Date().toISOString();
 
   // Compute document hash over key fields (deterministic)
@@ -118,6 +123,7 @@ async function assembleAdpData(decisionId: number): Promise<AdpData> {
     judicialReview,
     memory,
     evidenceChain,
+    cilAssessment,
     generatedAt,
     docHash,
     qrDataUrl,
@@ -1468,6 +1474,160 @@ function buildConstitutionalReviewSummary(d: AdpData): string {
   </div>`;
 }
 
+// ─── Section 11 — CIL Constitutional Intelligence Assessment ──────────────────
+
+function buildCilSection(d: AdpData): string {
+  const cil = d.cilAssessment;
+  if (!cil || cil.status !== "completed") {
+    return `
+  <div class="page-break">
+    <div class="section-header-bar">
+      <div><div class="title-ar">طبقة الذكاء الدستوري · تقييم المبادئ الدستورية</div><div class="title-en">Constitutional Intelligence Layer (CIL) · Phase 42</div></div>
+      <div class="num">11</div>
+    </div>
+    <div class="section">
+      <p class="not-processed">لم يُجرَ تقييم الذكاء الدستوري بعد / Constitutional Intelligence Assessment not yet completed</p>
+    </div>
+  </div>`;
+  }
+
+  const score = (v: number | null | undefined, def = "—") =>
+    v !== null && v !== undefined ? `${v}` : def;
+
+  const riskBadge = (level: string | null | undefined) => {
+    const colorMap: Record<string, "red" | "amber" | "navy" | "green" | "grey" | "blue"> = {
+      critical: "red", high: "amber", moderate: "navy", low: "green",
+    };
+    const color = colorMap[level ?? ""] ?? "grey";
+    const labels: Record<string, string> = { critical: "حرج", high: "عالٍ", moderate: "متوسط", low: "منخفض" };
+    return badge(labels[level ?? ""] ?? "—", color);
+  };
+
+  type PrincipleRow = {
+    principleKey: string;
+    labelAr: string;
+    labelEn: string;
+    complianceScore: number;
+    status: string;
+    findingAr: string;
+    isBlockingApproval: boolean;
+  };
+
+  const principles: PrincipleRow[] = Array.isArray(cil.principleResults)
+    ? (cil.principleResults as unknown as PrincipleRow[])
+    : [];
+
+  const warnings: Array<{
+    warningCode: string; severity: string; titleAr: string;
+    descriptionAr: string; constitutionalRef: string; remedyAr: string;
+  }> = Array.isArray(cil.warnings)
+    ? (cil.warnings as unknown as typeof warnings)
+    : [];
+
+  const statusLabel = (s: string) => ({
+    compliant: "ممتثل", minor_concern: "قلق طفيف",
+    significant_concern: "قلق جوهري", deficient: "ناقص",
+  }[s] ?? "لم يُقيَّم");
+
+  const barColor = (score: number) =>
+    score >= 70 ? "#10b981" : score >= 40 ? "#f59e0b" : "#ef4444";
+
+  return `
+  <div class="page-break">
+    <div class="section-header-bar">
+      <div><div class="title-ar">طبقة الذكاء الدستوري · نظرية الشامسي™</div><div class="title-en">Constitutional Intelligence Layer (CIL) · Phase 42 · Al-Shamsi Theory™</div></div>
+      <div class="num">11</div>
+    </div>
+    <div class="section">
+
+      <!-- 6 Score Meters -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">
+        ${[
+          { labelAr: "الامتثال الدستوري", labelEn: "Constitutional Compliance", value: cil.constitutionalComplianceScore },
+          { labelAr: "مؤشر المخاطر الدستورية", labelEn: "Constitutional Risk Index", value: cil.constitutionalRiskIndex },
+          { labelAr: "مؤشر المساواة", labelEn: "Equality Index", value: cil.equalityIndex },
+          { labelAr: "ضمانات التقاضي", labelEn: "Due Process Index", value: cil.dueProcessIndex },
+          { labelAr: "أثر على الحقوق", labelEn: "Rights Impact Score", value: cil.rightsImpactScore },
+          { labelAr: "احتمالية الصمود القضائي", labelEn: "Judicial Survival Probability", value: cil.judicialSurvivalProbability },
+        ].map(({ labelAr, labelEn, value }) => `
+        <div style="border:1px solid #e2e8f0;border-radius:8px;padding:12px;text-align:center;">
+          <div style="font-size:22pt;font-weight:bold;color:${barColor(value ?? 50)};">${score(value)}</div>
+          <div style="font-size:7pt;color:#1e293b;font-weight:bold;margin-top:2px;">${labelAr}</div>
+          <div style="font-size:6.5pt;color:#64748b;">${labelEn}</div>
+          <div style="height:4px;background:#f1f5f9;border-radius:4px;margin-top:6px;overflow:hidden;">
+            <div style="height:100%;width:${value ?? 50}%;background:${barColor(value ?? 50)};border-radius:4px;"></div>
+          </div>
+        </div>`).join("")}
+      </div>
+
+      <!-- Overall Risk Level -->
+      ${fieldRow("مستوى المخاطر الدستورية الكلي", "Overall Constitutional Risk Level", riskBadge(cil.overallRiskLevel))}
+      ${fieldRow("إصدار التقييم", "Assessment Version", `v${cil.assessmentVersion}`)}
+      ${cil.acknowledged ? fieldRow("حالة الإقرار", "Acknowledgement Status", badge("تم الإقرار", "green")) : ""}
+
+      <!-- Overall Reasoning -->
+      ${cil.overallReasoningAr ? `
+      <div class="avoid-break" style="margin:16px 0;">
+        ${sectionTitle("التحليل الدستوري الشامل", "Overall Constitutional Analysis")}
+        <div style="font-size:8.5pt;color:#334155;line-height:1.7;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:10px;">${esc(cil.overallReasoningAr)}</div>
+      </div>` : ""}
+
+      <!-- Recommended Action -->
+      ${cil.recommendedActionAr ? `
+      <div class="avoid-break" style="margin:16px 0;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:10px;">
+        <div style="font-size:7pt;font-weight:bold;color:#1d4ed8;text-transform:uppercase;margin-bottom:4px;">الإجراء الموصى به / Recommended Action</div>
+        <div style="font-size:8.5pt;color:#1e3a8a;line-height:1.6;">${esc(cil.recommendedActionAr)}</div>
+      </div>` : ""}
+
+      <!-- 12-Principle Summary Table -->
+      ${principles.length > 0 ? `
+      <div class="avoid-break" style="margin:16px 0;">
+        ${sectionTitle("تحليل المبادئ الدستورية الاثني عشر", "12 Constitutional Principles Analysis")}
+        <table style="width:100%;border-collapse:collapse;font-size:7.5pt;">
+          <thead>
+            <tr style="background:#1e3a5f;color:white;">
+              <th style="padding:6px 8px;text-align:right;">المبدأ</th>
+              <th style="padding:6px 8px;text-align:center;width:60px;">النتيجة</th>
+              <th style="padding:6px 8px;text-align:center;width:50px;">الحالة</th>
+              <th style="padding:6px 4px;text-align:center;width:70px;">Bar</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${principles.map((p, i) => `
+            <tr style="background:${i % 2 === 0 ? "#f8fafc" : "white"}${p.isBlockingApproval ? ";border-right:3px solid #ef4444" : ""}">
+              <td style="padding:6px 8px;">${esc(p.labelAr)}<span style="font-size:6pt;color:#94a3b8;display:block;">${esc(p.labelEn)}</span></td>
+              <td style="padding:6px 8px;text-align:center;font-weight:bold;color:${barColor(p.complianceScore)};">${p.complianceScore}</td>
+              <td style="padding:6px 8px;text-align:center;font-size:6.5pt;white-space:nowrap;">${statusLabel(p.status)}</td>
+              <td style="padding:6px 4px;">
+                <div style="height:6px;background:#f1f5f9;border-radius:4px;overflow:hidden;">
+                  <div style="height:100%;width:${p.complianceScore}%;background:${barColor(p.complianceScore)};border-radius:4px;"></div>
+                </div>
+              </td>
+            </tr>
+            <tr style="background:${i % 2 === 0 ? "#f8fafc" : "white"}">
+              <td colspan="4" style="padding:0 8px 6px 8px;font-size:7pt;color:#475569;font-style:italic;">${esc(p.findingAr)}</td>
+            </tr>`).join("")}
+          </tbody>
+        </table>
+      </div>` : ""}
+
+      <!-- Constitutional Warnings -->
+      ${warnings.length > 0 ? `
+      <div class="avoid-break" style="margin:16px 0;">
+        ${sectionTitle("التحذيرات الدستورية", "Constitutional Warnings")}
+        ${warnings.map((w) => `
+        <div style="margin-bottom:8px;padding:8px 12px;border-radius:6px;border-right:4px solid ${w.severity === "critical" ? "#ef4444" : w.severity === "warning" ? "#f97316" : "#f59e0b"};background:${w.severity === "critical" ? "#fef2f2" : w.severity === "warning" ? "#fff7ed" : "#fffbeb"};">
+          <div style="font-size:7.5pt;font-weight:bold;color:${w.severity === "critical" ? "#dc2626" : w.severity === "warning" ? "#ea580c" : "#d97706"};">${esc(w.titleAr)}</div>
+          <div style="font-size:7pt;color:#374151;margin-top:2px;">${esc(w.descriptionAr)}</div>
+          ${w.constitutionalRef ? `<div style="font-size:6.5pt;color:#6b7280;margin-top:2px;">المرجع: ${esc(w.constitutionalRef)}</div>` : ""}
+          ${w.remedyAr ? `<div style="font-size:7pt;color:#1d4ed8;margin-top:3px;">التوصية: ${esc(w.remedyAr)}</div>` : ""}
+        </div>`).join("")}
+      </div>` : ""}
+
+    </div>
+  </div>`;
+}
+
 function buildSignatureBlock(d: AdpData): string {
   const dec = d.decision;
   const dci = d.dci;
@@ -1584,6 +1744,7 @@ function buildHtml(data: AdpData): string {
   ${buildAlShamsiDimensions(data)}
   ${buildIndicesAndRisk(data)}
   ${buildConstitutionalReviewSummary(data)}
+  ${buildCilSection(data)}
   ${buildSignatureBlock(data)}
 </body>
 </html>`;

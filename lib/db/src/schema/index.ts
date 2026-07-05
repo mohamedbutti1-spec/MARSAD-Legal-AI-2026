@@ -32,3 +32,5 @@ export * from "./judicial-review";
 export * from "./replay";
 // NRME — National Risk Modeling Engine
 export * from "./risk";
+// Phase 42 — Constitutional Intelligence Layer (CIL)
+export * from "./cil";

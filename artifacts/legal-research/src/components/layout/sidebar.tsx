@@ -51,7 +51,7 @@ interface NavSection {
 
 export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: SidebarProps) {
   const [location] = useLocation();
-  const { role, lang, canManageUsers, canManageSettings, canUseAi, canViewAudit, canViewGovernanceDashboard, canViewRiskDashboard } = useUserContext();
+  const { role, lang, canManageUsers, canManageSettings, canUseAi, canViewAudit, canViewGovernanceDashboard, canViewRiskDashboard, canViewCilDashboard } = useUserContext();
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
 
   const toggleSection = (id: string) => {
@@ -115,6 +115,14 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           icon: <ShieldAlert className="w-4.5 h-4.5" />,
           show: canViewRiskDashboard,
           badge: 'NRME',
+        },
+        {
+          href: '/constitutional-intelligence',
+          labelAr: 'الذكاء الدستوري',
+          labelEn: 'Constitutional Intelligence',
+          icon: <Scale className="w-4.5 h-4.5" />,
+          show: canViewCilDashboard,
+          badge: 'CIL',
         },
       ],
     },

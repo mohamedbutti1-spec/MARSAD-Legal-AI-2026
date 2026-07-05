@@ -40,6 +40,8 @@ import GovernanceHub             from '@/pages/governance-hub';
 import CitizenPortal             from '@/pages/citizen-portal';
 // NRME — National Risk Modeling Engine
 import RiskEngine                from '@/pages/risk-engine';
+// Phase 42 — Constitutional Intelligence Layer (CIL)
+import ConstitutionalIntelligence from '@/pages/constitutional-intelligence';
 
 // Admin
 import UserManagement     from '@/pages/user-management';
@@ -88,6 +90,9 @@ function Router() {
 
         {/* ── NRME — National Risk Modeling Engine ─────────────────── */}
         <Route path="/risk-engine" component={RiskEngine} />
+
+        {/* ── Phase 42 — Constitutional Intelligence Layer (CIL) ────── */}
+        <Route path="/constitutional-intelligence" component={ConstitutionalIntelligence} />
 
         {/* ── Module 1 — Intelligent Administrative Decision ───────── */}
         <Route path="/decisions/new">

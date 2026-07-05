@@ -77,3 +77,23 @@ export {
   snapshotRiskHistory,
   seedRiskCategories,
 } from "./risk-service";
+// Phase 42 — Constitutional Intelligence Layer (CIL) service functions
+export {
+  collectCilDecisionData,
+  getCilAssessment,
+  markCilRunning,
+  saveCilAssessment,
+  markCilFailed,
+  acknowledgeCilAssessment,
+  getDecisionWarnings,
+  resolveWarning,
+  getCilDashboardStats,
+  buildCilReport,
+  type ConstitutionalAssessment,
+  type ConstitutionalWarningRecord,
+  type CilPrincipleResult,
+  type CilWarning,
+  type CilRiskLevel,
+  type CilAnalysisResult,
+  type CilDashboardFilter,
+} from "./cil-service";

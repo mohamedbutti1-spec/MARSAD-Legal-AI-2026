@@ -109,6 +109,16 @@ export interface RolePermissions {
   canRecalculateRisk: boolean;
   /** Access the NRME executive dashboard at /risk-engine */
   canViewRiskDashboard: boolean;
+
+  // ── CIL — Constitutional Intelligence Layer (Phase 42) ────────────────────
+  /** Read a constitutional assessment (12 principles + 6 scores) for a decision */
+  canReadConstitutionalAssessment: boolean;
+  /** Trigger or re-run a CIL assessment (AI-powered) */
+  canRunCilAssessment: boolean;
+  /** Acknowledge / review constitutional warnings */
+  canAcknowledgeCilWarnings: boolean;
+  /** Access the Constitutional Intelligence Dashboard at /constitutional-intelligence */
+  canViewCilDashboard: boolean;
 }
 
 // ─── Permission Matrix ────────────────────────────────────────────────────────
@@ -128,6 +138,8 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canReplayDecision: true,
     canReadRiskAssessment: true, canWriteRiskTreatment: true,
     canRecalculateRisk: true, canViewRiskDashboard: true,
+    canReadConstitutionalAssessment: true, canRunCilAssessment: true,
+    canAcknowledgeCilWarnings: true, canViewCilDashboard: true,
   },
   supervisor: {
     canReadDecisionList: true, canReadDecisionDetail: true,
@@ -141,6 +153,8 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canReplayDecision: true,
     canReadRiskAssessment: true, canWriteRiskTreatment: true,
     canRecalculateRisk: true, canViewRiskDashboard: true,
+    canReadConstitutionalAssessment: true, canRunCilAssessment: true,
+    canAcknowledgeCilWarnings: true, canViewCilDashboard: true,
   },
   viewer: {
     canReadDecisionList: true, canReadDecisionDetail: true,
@@ -154,6 +168,8 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canReplayDecision: true,
     canReadRiskAssessment: true, canWriteRiskTreatment: false,
     canRecalculateRisk: false, canViewRiskDashboard: false,
+    canReadConstitutionalAssessment: false, canRunCilAssessment: false,
+    canAcknowledgeCilWarnings: false, canViewCilDashboard: false,
   },
 
   // ── 1. Minister — executive summary only ──────────────────────────────────
@@ -169,6 +185,8 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canReplayDecision: false,  // Ministers see executive summary + dashboard only; full replay is operational detail
     canReadRiskAssessment: true, canWriteRiskTreatment: false,
     canRecalculateRisk: false, canViewRiskDashboard: true,
+    canReadConstitutionalAssessment: true, canRunCilAssessment: false,
+    canAcknowledgeCilWarnings: false, canViewCilDashboard: true,
   },
 
   // ── 2. Undersecretary — decisions + delegation ────────────────────────────
@@ -184,6 +202,8 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canReplayDecision: true,
     canReadRiskAssessment: true, canWriteRiskTreatment: true,
     canRecalculateRisk: false, canViewRiskDashboard: true,
+    canReadConstitutionalAssessment: true, canRunCilAssessment: false,
+    canAcknowledgeCilWarnings: false, canViewCilDashboard: true,
   },
 
   // ── 3. Assistant Undersecretary — full stages + JDP, no CAR/audit ─────────
@@ -199,6 +219,8 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canReplayDecision: true,
     canReadRiskAssessment: true, canWriteRiskTreatment: true,
     canRecalculateRisk: true, canViewRiskDashboard: true,
+    canReadConstitutionalAssessment: true, canRunCilAssessment: true,
+    canAcknowledgeCilWarnings: false, canViewCilDashboard: true,
   },
 
   // ── 4. Director General — org-scoped, constitutional gates only ───────────
@@ -214,6 +236,8 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canReplayDecision: true,
     canReadRiskAssessment: true, canWriteRiskTreatment: true,
     canRecalculateRisk: false, canViewRiskDashboard: true,
+    canReadConstitutionalAssessment: true, canRunCilAssessment: false,
+    canAcknowledgeCilWarnings: false, canViewCilDashboard: true,
   },
 
   // ── 5. Department Director — own dept, stage status only ─────────────────
@@ -229,6 +253,8 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canReplayDecision: true,
     canReadRiskAssessment: true, canWriteRiskTreatment: true,
     canRecalculateRisk: false, canViewRiskDashboard: false,
+    canReadConstitutionalAssessment: false, canRunCilAssessment: false,
+    canAcknowledgeCilWarnings: false, canViewCilDashboard: false,
   },
 
   // ── 6. Legal Department — legal basis + full JDP ─────────────────────────
@@ -244,6 +270,8 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canReplayDecision: true,
     canReadRiskAssessment: true, canWriteRiskTreatment: true,
     canRecalculateRisk: true, canViewRiskDashboard: true,
+    canReadConstitutionalAssessment: true, canRunCilAssessment: true,
+    canAcknowledgeCilWarnings: false, canViewCilDashboard: true,
   },
 
   // ── 7. Constitutional Reviewer — all constitutional data + JDP + QVA/LSI ──
@@ -259,6 +287,8 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canReplayDecision: true,
     canReadRiskAssessment: true, canWriteRiskTreatment: false,
     canRecalculateRisk: true, canViewRiskDashboard: true,
+    canReadConstitutionalAssessment: true, canRunCilAssessment: true,
+    canAcknowledgeCilWarnings: true, canViewCilDashboard: true,
   },
 
   // ── 8. Internal Auditor — full read, no JDP strategy ─────────────────────
@@ -274,6 +304,8 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canReplayDecision: true,
     canReadRiskAssessment: true, canWriteRiskTreatment: false,
     canRecalculateRisk: false, canViewRiskDashboard: true,
+    canReadConstitutionalAssessment: true, canRunCilAssessment: false,
+    canAcknowledgeCilWarnings: false, canViewCilDashboard: true,
   },
 
   // ── 9. External Auditor — sealed decisions only + hash verification ───────
@@ -289,6 +321,8 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canReplayDecision: true,
     canReadRiskAssessment: true, canWriteRiskTreatment: false,
     canRecalculateRisk: false, canViewRiskDashboard: true,
+    canReadConstitutionalAssessment: true, canRunCilAssessment: false,
+    canAcknowledgeCilWarnings: false, canViewCilDashboard: true,
   },
 
   // ── 10. Judge — complete record except QVA raw ────────────────────────────
@@ -304,6 +338,8 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canReplayDecision: true,
     canReadRiskAssessment: true, canWriteRiskTreatment: false,
     canRecalculateRisk: false, canViewRiskDashboard: true,
+    canReadConstitutionalAssessment: true, canRunCilAssessment: false,
+    canAcknowledgeCilWarnings: true, canViewCilDashboard: true,
   },
 
   // ── 11. Citizen — CAR lookup by case number only ──────────────────────────
@@ -319,6 +355,8 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canReplayDecision: false,
     canReadRiskAssessment: false, canWriteRiskTreatment: false,
     canRecalculateRisk: false, canViewRiskDashboard: false,
+    canReadConstitutionalAssessment: false, canRunCilAssessment: false,
+    canAcknowledgeCilWarnings: false, canViewCilDashboard: false,
   },
 };
 

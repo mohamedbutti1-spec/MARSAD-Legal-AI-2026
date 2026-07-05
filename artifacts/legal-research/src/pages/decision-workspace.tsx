@@ -1933,6 +1933,90 @@ function CreateDecisionDialog({ onCreated }: { onCreated: (id: number) => void }
   );
 }
 
+// ─── CIL Constitutional Warnings Panel ───────────────────────────────────────
+// Shown as advisory/blocking banner before approval stages (human_oversight, final_review)
+
+function CilWarningsPanel({ decisionId }: { decisionId: number }) {
+  const role   = localStorage.getItem('userRole') || 'viewer';
+  const userId = localStorage.getItem('userId')   || '1';
+  const org    = localStorage.getItem('userOrg')  || '';
+
+  const headers = {
+    'x-user-role': role, 'x-user-id': userId, 'x-user-org': org,
+  };
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['cil-warnings-workspace', decisionId],
+    queryFn: async () => {
+      const res = await fetch(`${import.meta.env.BASE_URL}api/cil/warnings/${decisionId}`, { headers });
+      if (!res.ok) return null;
+      return res.json();
+    },
+    staleTime: 60_000,
+  });
+
+  if (isLoading || !data) return null;
+
+  const warnings = (data.warnings ?? []) as Array<{
+    id: number; warningCode: string; severity: 'critical' | 'warning' | 'advisory';
+    titleAr: string; descriptionAr: string; isResolved: boolean;
+  }>;
+
+  const activeWarnings = warnings.filter((w) => !w.isResolved);
+  if (activeWarnings.length === 0) return null;
+
+  const criticalWarnings = activeWarnings.filter((w) => w.severity === 'critical');
+  const hasCritical = criticalWarnings.length > 0;
+
+  return (
+    <div className={`rounded-xl border p-4 ${
+      hasCritical
+        ? 'border-red-300 dark:border-red-800 bg-red-50/80 dark:bg-red-950/20'
+        : 'border-amber-200 dark:border-amber-800/50 bg-amber-50/60 dark:bg-amber-950/20'
+    }`}>
+      <div className="flex items-center gap-2 mb-3">
+        <Scale className={`w-4 h-4 ${hasCritical ? 'text-red-600' : 'text-amber-600'}`} />
+        <span className={`text-sm font-bold ${hasCritical ? 'text-red-700 dark:text-red-400' : 'text-amber-700 dark:text-amber-400'}`}>
+          {hasCritical
+            ? `تحذيرات دستورية حرجة — ${criticalWarnings.length} تحذير يعيق الإقرار`
+            : `تحذيرات الذكاء الدستوري — ${activeWarnings.length} تحذير نشط`}
+        </span>
+        <span className="ms-auto text-[10px] bg-muted border border-border px-1.5 py-0.5 rounded font-mono text-muted-foreground">
+          CIL Phase 42
+        </span>
+      </div>
+
+      {hasCritical && (
+        <div className="mb-3 text-xs text-red-700 dark:text-red-400 font-medium">
+          ⚠ يجب معالجة التحذيرات الحرجة قبل الإقرار النهائي بالقرار. يُنصح بمراجعة صفحة الذكاء الدستوري.
+        </div>
+      )}
+
+      <div className="space-y-2">
+        {activeWarnings.slice(0, 4).map((w) => (
+          <div
+            key={w.id}
+            className={`flex items-start gap-2.5 text-xs ${
+              w.severity === 'critical' ? 'text-red-700 dark:text-red-400' :
+              w.severity === 'warning'  ? 'text-orange-700 dark:text-orange-400' :
+              'text-amber-700 dark:text-amber-400'
+            }`}
+          >
+            {w.severity === 'critical' ? <XCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" /> : <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />}
+            <span><strong>{w.titleAr}</strong> — {w.descriptionAr}</span>
+          </div>
+        ))}
+        {activeWarnings.length > 4 && (
+          <div className="text-xs text-muted-foreground">
+            … و{activeWarnings.length - 4} تحذيرات إضافية. راجع{' '}
+            <a href="/constitutional-intelligence" className="underline font-medium">صفحة الذكاء الدستوري</a>.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Workspace ───────────────────────────────────────────────────────────
 
 export default function DecisionWorkspace() {
@@ -2345,6 +2429,11 @@ export default function DecisionWorkspace() {
                     <h2 className="text-xl font-bold text-foreground">{config.nameAr}</h2>
                     <p className="text-sm text-muted-foreground">{config.principleAr}</p>
                   </div>
+
+                  {/* CIL Constitutional Warnings — shown on approval stages */}
+                  {decisionId && (activeStage === 'human_oversight' || activeStage === 'final_review') && (
+                    <CilWarningsPanel decisionId={decisionId} />
+                  )}
 
                   {/* Stage form */}
                   <div className="rounded-xl border border-border/60 bg-card p-5 sm:p-6">

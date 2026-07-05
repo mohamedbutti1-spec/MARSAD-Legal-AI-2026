@@ -44,6 +44,11 @@ interface UserContextType {
   canWriteRiskTreatment: boolean;
   canRecalculateRisk: boolean;
   canViewRiskDashboard: boolean;
+  // CIL — Constitutional Intelligence Layer (Phase 42)
+  canReadConstitutionalAssessment: boolean;
+  canRunCilAssessment: boolean;
+  canAcknowledgeCilWarnings: boolean;
+  canViewCilDashboard: boolean;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -113,6 +118,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     canWriteRiskTreatment: permissions.canWriteRiskTreatment ?? false,
     canRecalculateRisk:    permissions.canRecalculateRisk    ?? false,
     canViewRiskDashboard:  permissions.canViewRiskDashboard  ?? false,
+    canReadConstitutionalAssessment: permissions.canReadConstitutionalAssessment ?? false,
+    canRunCilAssessment:             permissions.canRunCilAssessment             ?? false,
+    canAcknowledgeCilWarnings:       permissions.canAcknowledgeCilWarnings       ?? false,
+    canViewCilDashboard:             permissions.canViewCilDashboard             ?? false,
   };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

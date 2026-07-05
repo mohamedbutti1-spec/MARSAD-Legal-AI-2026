@@ -10,6 +10,8 @@ export enum TaskType {
   // ─── Claude tasks ─────────────────────────────────────────────────────────
   /** Semantic search over private uploaded documents (RAG). */
   DOCUMENT_SEARCH = "document_search",
+  /** Phase 42 — Constitutional Intelligence Layer assessment (12 principles, 6 scores). */
+  CONSTITUTIONAL_ASSESSMENT = "constitutional_assessment",
   /** General retrieval-augmented generation pass. */
   RAG = "rag",
   /** Comparative thesis / literature review over uploaded documents. */
@@ -43,7 +45,8 @@ export type ProviderName = "claude" | "perplexity" | "openai";
  */
 export const TASK_ROUTING: Record<TaskType, ProviderName[]> = {
   // Claude
-  [TaskType.DOCUMENT_SEARCH]:    ["claude"],
+  [TaskType.DOCUMENT_SEARCH]:          ["claude"],
+  [TaskType.CONSTITUTIONAL_ASSESSMENT]:["claude"],
   [TaskType.RAG]:                ["claude"],
   [TaskType.LITERATURE_REVIEW]:  ["claude"],
   [TaskType.CITATION]:           ["claude"],
@@ -59,7 +62,8 @@ export const TASK_ROUTING: Record<TaskType, ProviderName[]> = {
 
 /** Human-readable descriptions for the UI. */
 export const TASK_DESCRIPTIONS: Record<TaskType, string> = {
-  [TaskType.DOCUMENT_SEARCH]:    "Private document search (RAG)",
+  [TaskType.DOCUMENT_SEARCH]:          "Private document search (RAG)",
+  [TaskType.CONSTITUTIONAL_ASSESSMENT]:"Constitutional Intelligence Layer (12-principle AI assessment)",
   [TaskType.RAG]:                "Retrieval-Augmented Generation",
   [TaskType.LITERATURE_REVIEW]:  "Thesis / literature review",
   [TaskType.CITATION]:           "Citation generation",

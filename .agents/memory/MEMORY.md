@@ -14,3 +14,4 @@
 - [Decision Replay Engine](replay-engine.md) — 14-stage timeline; one table; virtual stages 3/10/11/12; PERMISSIONS exported from db index; replay failures are non-fatal
 - [NRME — National Risk Modeling Engine](nrme-architecture.md) — 9 tables, 15 indices, 3 aggregate scores (NRI/ALI/DCS), lazy calculation, direct DB insert for virtual replay stage, sealedOnly enforced in assertDecisionAccess
 - [Sealed State Source of Truth](sealed-state-source-of-truth.md) — decisions.status has NO "sealed" value; all sealed checks must use decisionDci.isSealed via DCI lookup
+- [Phase 42 — Constitutional Intelligence Layer](phase42-cil.md) — 12-principle AI assessor; CilPrincipleResult (not PrincipleResult) to avoid decisions.ts collision; warning resolve must load warning→decisionId then assertCilAccess; dashboard needs org/sealed scoping; replay_15_cil_assessment is virtual stage
