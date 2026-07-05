@@ -4,6 +4,7 @@ import {
   comparisonsTable,
   settingsTable,
   legalSourcesTable,
+  seedRiskCategories,
 } from "@workspace/db";
 import { logger } from "./lib/logger";
 
@@ -509,4 +510,8 @@ export async function seedDatabase() {
     ]);
     logger.info("Seeded legal sources: UAE legislation (12), UAE case law (12), French law (11), EU law (11) = 46 records");
   }
+
+  // ─── NRME Risk Categories ────────────────────────────────────────────────────
+  await seedRiskCategories();
+  logger.info("Seeded NRME risk categories (9 UAE gov categories — idempotent)");
 }

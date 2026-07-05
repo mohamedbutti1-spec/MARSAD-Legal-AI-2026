@@ -70,3 +70,10 @@ export {
   type RecordReplayEventInput,
   type ReplayEventRecord,
 } from "./replay-service";
+// NRME — National Risk Modeling Engine service functions
+export {
+  initializeRiskAssessment,
+  getRiskAssessment,
+  snapshotRiskHistory,
+  seedRiskCategories,
+} from "./risk-service";

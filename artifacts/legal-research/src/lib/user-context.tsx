@@ -39,6 +39,11 @@ interface UserContextType {
   // Governance
   isGovernanceRole: boolean;
   canViewGovernanceDashboard: boolean;
+  // NRME
+  canReadRiskAssessment: boolean;
+  canWriteRiskTreatment: boolean;
+  canRecalculateRisk: boolean;
+  canViewRiskDashboard: boolean;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -104,6 +109,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     canViewAudit: permissions.canReadAuditLog,
     isGovernanceRole,
     canViewGovernanceDashboard: permissions.canViewGovernanceDashboard,
+    canReadRiskAssessment: permissions.canReadRiskAssessment ?? false,
+    canWriteRiskTreatment: permissions.canWriteRiskTreatment ?? false,
+    canRecalculateRisk:    permissions.canRecalculateRisk    ?? false,
+    canViewRiskDashboard:  permissions.canViewRiskDashboard  ?? false,
   };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

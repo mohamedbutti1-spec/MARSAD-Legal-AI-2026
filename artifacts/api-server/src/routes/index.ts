@@ -31,6 +31,8 @@ import memoryRouter from "./memory";
 import evidenceRouter from "./evidence";
 // Phase 5 — Constitutional Judicial Intelligence (CJI)
 import judicialReviewRouter from "./judicial-review";
+// NRME — National Risk Modeling Engine
+import riskRouter from "./risk";
 
 const router: IRouter = Router();
 
@@ -66,5 +68,7 @@ router.use(memoryRouter);
 router.use(evidenceRouter);
 // Phase 5 — Constitutional Judicial Intelligence (CJI)
 router.use(judicialReviewRouter);
+// NRME — National Risk Modeling Engine
+router.use(riskRouter);
 
 export default router;

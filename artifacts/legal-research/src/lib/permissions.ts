@@ -99,6 +99,16 @@ export interface RolePermissions {
   // ── Dashboard display ─────────────────────────────────────────────────────
   /** Access the governance hub (/governance) */
   canViewGovernanceDashboard: boolean;
+
+  // ── NRME — National Risk Modeling Engine ──────────────────────────────────
+  /** Read the risk assessment (15 indices + 3 aggregates) for a decision */
+  canReadRiskAssessment: boolean;
+  /** Add, edit, or delete risk treatment (mitigation) actions */
+  canWriteRiskTreatment: boolean;
+  /** Trigger a full AI recalculation of risk indices */
+  canRecalculateRisk: boolean;
+  /** Access the NRME executive dashboard at /risk-engine */
+  canViewRiskDashboard: boolean;
 }
 
 // ─── Permission Matrix ────────────────────────────────────────────────────────
@@ -116,6 +126,8 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     seeOwnOrgOnly: false, sealedOnly: false,
     canSearchByCaseNumber: true, canViewGovernanceDashboard: true,
     canReplayDecision: true,
+    canReadRiskAssessment: true, canWriteRiskTreatment: true,
+    canRecalculateRisk: true, canViewRiskDashboard: true,
   },
   supervisor: {
     canReadDecisionList: true, canReadDecisionDetail: true,
@@ -127,6 +139,8 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     seeOwnOrgOnly: false, sealedOnly: false,
     canSearchByCaseNumber: true, canViewGovernanceDashboard: true,
     canReplayDecision: true,
+    canReadRiskAssessment: true, canWriteRiskTreatment: true,
+    canRecalculateRisk: true, canViewRiskDashboard: true,
   },
   viewer: {
     canReadDecisionList: true, canReadDecisionDetail: true,
@@ -138,6 +152,8 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     seeOwnOrgOnly: false, sealedOnly: false,
     canSearchByCaseNumber: false, canViewGovernanceDashboard: true,
     canReplayDecision: true,
+    canReadRiskAssessment: true, canWriteRiskTreatment: false,
+    canRecalculateRisk: false, canViewRiskDashboard: false,
   },
 
   // ── 1. Minister — executive summary only ──────────────────────────────────
@@ -151,6 +167,8 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     seeOwnOrgOnly: false, sealedOnly: false,
     canSearchByCaseNumber: false, canViewGovernanceDashboard: true,
     canReplayDecision: false,
+    canReadRiskAssessment: true, canWriteRiskTreatment: false,
+    canRecalculateRisk: false, canViewRiskDashboard: true,
   },
 
   // ── 2. Undersecretary — decisions + delegation ────────────────────────────
@@ -164,6 +182,8 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     seeOwnOrgOnly: false, sealedOnly: false,
     canSearchByCaseNumber: false, canViewGovernanceDashboard: true,
     canReplayDecision: true,
+    canReadRiskAssessment: true, canWriteRiskTreatment: true,
+    canRecalculateRisk: false, canViewRiskDashboard: true,
   },
 
   // ── 3. Assistant Undersecretary — full stages + JDP, no CAR/audit ─────────
@@ -177,6 +197,8 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     seeOwnOrgOnly: false, sealedOnly: false,
     canSearchByCaseNumber: false, canViewGovernanceDashboard: true,
     canReplayDecision: true,
+    canReadRiskAssessment: true, canWriteRiskTreatment: true,
+    canRecalculateRisk: true, canViewRiskDashboard: true,
   },
 
   // ── 4. Director General — org-scoped, constitutional gates only ───────────
@@ -190,6 +212,8 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     seeOwnOrgOnly: true, sealedOnly: false,
     canSearchByCaseNumber: false, canViewGovernanceDashboard: true,
     canReplayDecision: true,
+    canReadRiskAssessment: true, canWriteRiskTreatment: true,
+    canRecalculateRisk: false, canViewRiskDashboard: true,
   },
 
   // ── 5. Department Director — own dept, stage status only ─────────────────
@@ -203,6 +227,8 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     seeOwnOrgOnly: true, sealedOnly: false,
     canSearchByCaseNumber: false, canViewGovernanceDashboard: true,
     canReplayDecision: true,
+    canReadRiskAssessment: true, canWriteRiskTreatment: true,
+    canRecalculateRisk: false, canViewRiskDashboard: false,
   },
 
   // ── 6. Legal Department — legal basis + full JDP ─────────────────────────
@@ -216,19 +242,23 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     seeOwnOrgOnly: false, sealedOnly: false,
     canSearchByCaseNumber: false, canViewGovernanceDashboard: true,
     canReplayDecision: true,
+    canReadRiskAssessment: true, canWriteRiskTreatment: true,
+    canRecalculateRisk: true, canViewRiskDashboard: true,
   },
 
   // ── 7. Constitutional Reviewer — all constitutional data + JDP + QVA/LSI ──
   constitutional_reviewer: {
     canReadDecisionList: true, canReadDecisionDetail: true,
     canReadStageData: true, canReadAiAnalysis: false,
-    canReadJdp: true, canReadDci: true, canReadCar: false,  // JDP is the primary artefact of constitutional review
+    canReadJdp: true, canReadDci: true, canReadCar: false,
     canReadAuditLog: false, canReadAuditHashes: false,
     canReadQvaRaw: false, canReadHii: true, canReadConstitutionalGates: true,
     canDelegateDecision: false, canRunHashVerification: false,
     seeOwnOrgOnly: false, sealedOnly: false,
     canSearchByCaseNumber: false, canViewGovernanceDashboard: true,
     canReplayDecision: true,
+    canReadRiskAssessment: true, canWriteRiskTreatment: false,
+    canRecalculateRisk: true, canViewRiskDashboard: true,
   },
 
   // ── 8. Internal Auditor — full read, no JDP strategy ─────────────────────
@@ -242,6 +272,8 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     seeOwnOrgOnly: false, sealedOnly: false,
     canSearchByCaseNumber: false, canViewGovernanceDashboard: true,
     canReplayDecision: true,
+    canReadRiskAssessment: true, canWriteRiskTreatment: false,
+    canRecalculateRisk: false, canViewRiskDashboard: true,
   },
 
   // ── 9. External Auditor — sealed decisions only + hash verification ───────
@@ -255,6 +287,8 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     seeOwnOrgOnly: false, sealedOnly: true,
     canSearchByCaseNumber: false, canViewGovernanceDashboard: true,
     canReplayDecision: true,
+    canReadRiskAssessment: true, canWriteRiskTreatment: false,
+    canRecalculateRisk: false, canViewRiskDashboard: true,
   },
 
   // ── 10. Judge — complete record except QVA raw ────────────────────────────
@@ -268,6 +302,8 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     seeOwnOrgOnly: false, sealedOnly: false,
     canSearchByCaseNumber: true, canViewGovernanceDashboard: true,
     canReplayDecision: true,
+    canReadRiskAssessment: true, canWriteRiskTreatment: false,
+    canRecalculateRisk: false, canViewRiskDashboard: true,
   },
 
   // ── 11. Citizen — CAR lookup by case number only ──────────────────────────
@@ -281,6 +317,8 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     seeOwnOrgOnly: false, sealedOnly: true,
     canSearchByCaseNumber: true, canViewGovernanceDashboard: false,
     canReplayDecision: false,
+    canReadRiskAssessment: false, canWriteRiskTreatment: false,
+    canRecalculateRisk: false, canViewRiskDashboard: false,
   },
 };
 

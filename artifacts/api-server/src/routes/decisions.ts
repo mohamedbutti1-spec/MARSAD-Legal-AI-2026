@@ -20,6 +20,7 @@ import {
   createOrUpdateMemory,
   recordMemoryEvent,
   recordEvidenceEvent,
+  initializeRiskAssessment,
   recordReplayEvent,
   decisionReplayEventsTable,
   REPLAY_STAGE_KEYS,
@@ -790,6 +791,11 @@ router.post("/decisions", requireAnyRole, async (req, res): Promise<void> => {
       evidenceSummaryEn:  `Administrative decision created — ${decision.caseNumber}`,
       metadata:           { caseNumber: decision.caseNumber, jurisdiction: decision.jurisdiction, status: decision.status },
     }).catch((e: unknown) => console.error("[evidence.create]", e));
+
+    // NRME — Initialise risk assessment (status=pending; scoring is lazy on first GET)
+    initializeRiskAssessment(decision.id, decision).catch(
+      (e: unknown) => console.error("[nrme.init]", e),
+    );
 
     res.status(201).json({ decision });
   } catch (err) {

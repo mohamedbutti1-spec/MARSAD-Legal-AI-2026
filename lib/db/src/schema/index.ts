@@ -30,3 +30,5 @@ export * from "./evidence";
 export * from "./judicial-review";
 // Decision Replay Engine
 export * from "./replay";
+// NRME — National Risk Modeling Engine
+export * from "./risk";

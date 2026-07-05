@@ -38,6 +38,8 @@ import Decisions                 from '@/pages/decisions';
 import DecisionWorkspace         from '@/pages/decision-workspace';
 import GovernanceHub             from '@/pages/governance-hub';
 import CitizenPortal             from '@/pages/citizen-portal';
+// NRME — National Risk Modeling Engine
+import RiskEngine                from '@/pages/risk-engine';
 
 // Admin
 import UserManagement     from '@/pages/user-management';
@@ -83,6 +85,9 @@ function Router() {
         {/* Governance requires canViewGovernanceDashboard — enforced inside GovernanceHub */}
         <Route path="/governance" component={GovernanceHub} />
         <Route path="/citizen"    component={CitizenPortal} />
+
+        {/* ── NRME — National Risk Modeling Engine ─────────────────── */}
+        <Route path="/risk-engine" component={RiskEngine} />
 
         {/* ── Module 1 — Intelligent Administrative Decision ───────── */}
         <Route path="/decisions/new">

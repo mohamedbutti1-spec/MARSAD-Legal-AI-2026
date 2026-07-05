@@ -12,3 +12,4 @@
 - [Phase 5 — Constitutional Judicial Intelligence](phase5-cji.md) — AI in route not lib/db; trimDecisionData hard cap 20k chars; req.params.decisionId needs String() cast; ConstitutionalMemory.current.field not .field directly
 - [Alpha 1.0 Architecture Freeze](alpha-1-freeze.md) — P0/P1 fixes; dual-permissions-source lesson; CORS env gate; platform canonical name
 - [Decision Replay Engine](replay-engine.md) — 14-stage timeline; one table; virtual stages 3/10/11/12; PERMISSIONS exported from db index; replay failures are non-fatal
+- [NRME — National Risk Modeling Engine](nrme-architecture.md) — 9 tables, 15 indices, 3 aggregate scores (NRI/ALI/DCS), lazy calculation, direct DB insert for virtual replay stage, sealedOnly enforced in assertDecisionAccess

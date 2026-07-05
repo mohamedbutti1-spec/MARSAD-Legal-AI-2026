@@ -14,6 +14,7 @@ import {
   Download, Hash, RotateCcw, UserCheck, Activity, Eye, ChevronRight, Play, FileCheck,
 } from 'lucide-react';
 import DecisionReplay from '@/components/decisions/DecisionReplay';
+import { RiskPanel } from '@/components/decisions/RiskPanel';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1941,7 +1942,7 @@ export default function DecisionWorkspace() {
 
   const decisionId = params.id ? parseInt(params.id) : null;
   const [activeStage, setActiveStage] = useState<StageKey>('administrative_request');
-  const [activeView, setActiveView] = useState<'stage' | 'dci' | 'jdp' | 'car' | 'replay'>('stage');
+  const [activeView, setActiveView] = useState<'stage' | 'dci' | 'jdp' | 'car' | 'replay' | 'risk'>('stage');
   const [formData, setFormData] = useState<Record<StageKey, Record<string, unknown>>>({} as any);
   const [aiAnalysis, setAiAnalysis] = useState<Record<StageKey, Record<string, unknown>>>({} as any);
   const [validationResults, setValidationResults] = useState<Record<StageKey, { passed: boolean; analysis: Record<string, unknown>; validationStatus: string }>>({} as any);
@@ -2210,6 +2211,16 @@ export default function DecisionWorkspace() {
               >
                 <Play className="w-3.5 h-3.5" /> إعادة التشغيل
               </button>
+              <button
+                role="tab"
+                aria-selected={activeView === 'risk'}
+                aria-controls="panel-risk"
+                id="tab-risk"
+                onClick={() => setActiveView('risk')}
+                className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors -mb-px whitespace-nowrap ${activeView === 'risk' ? 'border-orange-500 text-orange-700 dark:text-orange-400' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+              >
+                <Activity className="w-3.5 h-3.5" /> مؤشرات المخاطر NRME
+              </button>
             </div>
 
             {/* ── Two-column layout ─────────────────────────────── */}
@@ -2316,6 +2327,10 @@ export default function DecisionWorkspace() {
                       </div>
                     </div>
                     <DecisionReplay decisionId={decisionId!} />
+                  </div>
+                ) : activeView === 'risk' ? (
+                  <div role="tabpanel" id="panel-risk" aria-labelledby="tab-risk">
+                    <RiskPanel decisionId={decisionId!} />
                   </div>
                 ) : (
                 <div role="tabpanel" id="panel-stage" aria-labelledby="tab-stage" className="p-4 sm:p-6 lg:p-8 max-w-3xl space-y-6">
