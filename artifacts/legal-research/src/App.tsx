@@ -49,6 +49,9 @@ import JdtPage from '@/pages/jdt';
 import WorkspaceDashboard from '@/pages/workspace-dashboard';
 import WorkspaceProject   from '@/pages/workspace-project';
 import WorkspaceItem      from '@/pages/workspace-item';
+// Phase 58 — Administrative Decision Knowledge Graph
+import AdkgDashboard from '@/pages/adkg-dashboard';
+import AdkgDetail    from '@/pages/adkg-detail';
 
 // NAIP — Role-Specific Executive Dashboards
 import NaipMinister        from '@/pages/naip-minister';
@@ -144,6 +147,18 @@ function Router() {
         <Route path="/decisions">
           <RouteGuard allow={canUseAi}>
             <Decisions />
+          </RouteGuard>
+        </Route>
+
+        {/* ── Phase 58 — ADKG (requires canUseAi) ─────────────────── */}
+        <Route path="/adkg/:id">
+          <RouteGuard allow={canUseAi}>
+            <AdkgDetail />
+          </RouteGuard>
+        </Route>
+        <Route path="/adkg">
+          <RouteGuard allow={canUseAi}>
+            <AdkgDashboard />
           </RouteGuard>
         </Route>
 

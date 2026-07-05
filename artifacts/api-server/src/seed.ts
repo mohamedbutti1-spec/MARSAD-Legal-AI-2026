@@ -8,6 +8,7 @@ import {
 } from "@workspace/db";
 import { logger } from "./lib/logger";
 import { migrateResearchWorkspace } from "./research-workspace/migration.js";
+import { migrateAdkg } from "./adkg/migration.js";
 
 const sampleRows = [
   {
@@ -30,6 +31,10 @@ export async function seedDatabase() {
   // ─── Phase 57: Research Workspace tables (additive, IF NOT EXISTS) ───────────
   await migrateResearchWorkspace().catch((err) =>
     logger.warn({ err }, "Research workspace migration failed (non-fatal)"),
+  );
+  // ─── Phase 58: ADKG tables (additive, IF NOT EXISTS) ─────────────────────
+  await migrateAdkg().catch((err) =>
+    logger.warn({ err }, "ADKG migration failed (non-fatal)"),
   );
 
   // ─── Users ──────────────────────────────────────────────────────────────────

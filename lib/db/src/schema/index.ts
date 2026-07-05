@@ -41,6 +41,11 @@ export * from "./kb-documents";
 export * from "./kb-articles";
 export * from "./kb-cross-references";
 export * from "./kb-embeddings";
+// Phase 58 — Administrative Decision Knowledge Graph
+export * from "./adkg-decisions";
+export * from "./adkg-decision-links";
+export * from "./adkg-timeline-events";
+export * from "./adkg-graph-edges";
 // Phase 57 — Legal Research Workspace
 export * from "./research-projects";
 export * from "./research-folders";

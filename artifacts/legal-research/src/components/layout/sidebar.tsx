@@ -5,6 +5,7 @@ import {
   Search,
   Bot,
   FolderOpen,
+  Network,
   ScrollText,
   Gavel,
   Landmark,
@@ -218,12 +219,19 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
       titleEn: 'Research Tools',
       items: [
         {
+          href: '/adkg',
+          labelAr: 'سجل القرارات الإدارية',
+          labelEn: 'Decision Knowledge Graph',
+          icon: <Network className="w-4.5 h-4.5" />,
+          show: canUseAi,
+          badge: 'جديد',
+        },
+        {
           href: '/workspace',
           labelAr: 'مساحة البحث',
           labelEn: 'Research Workspace',
           icon: <FolderOpen className="w-4.5 h-4.5" />,
           show: canUseAi,
-          badge: 'جديد',
         },
         {
           href: '/research',

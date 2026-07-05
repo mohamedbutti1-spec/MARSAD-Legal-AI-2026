@@ -41,6 +41,8 @@ import jdtRouter from "./jdt";
 import naipRouter from "./naip";
 // Phase 57 — Legal Research Workspace
 import workspaceRouter from "./workspace";
+// Phase 58 — Administrative Decision Knowledge Graph
+import adkgRouter from "./adkg";
 
 const router: IRouter = Router();
 
@@ -86,5 +88,7 @@ router.use(jdtRouter);
 router.use(naipRouter);
 // Phase 57 — Legal Research Workspace
 router.use(workspaceRouter);
+// Phase 58 — Administrative Decision Knowledge Graph
+router.use(adkgRouter);
 
 export default router;
