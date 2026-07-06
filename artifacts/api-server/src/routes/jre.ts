@@ -17,6 +17,7 @@ import { parseModelJson } from "../ai/providers/interface";
 import { runJudicialAnalysis } from "../utils/judicial-reasoning-engine";
 import type { JreParties } from "../utils/judicial-reasoning-engine";
 import { getUserId } from "../lib/route-helpers";
+import { aiSessionLimit, aiAnalysisLimit } from "../middlewares/rateLimits.js";
 
 const router: IRouter = Router();
 
@@ -70,7 +71,7 @@ router.get("/jre/sessions/:id", requireAnyRole, async (req, res): Promise<void> 
 });
 
 // ─── POST /jre/sessions ────────────────────────────────────────────────────────
-router.post("/jre/sessions", requireSupervisorOrOwner, async (req, res): Promise<void> => {
+router.post("/jre/sessions", requireSupervisorOrOwner, aiSessionLimit, async (req, res): Promise<void> => {
   const uid = getUserId(req);
   const {
     title,
@@ -181,7 +182,7 @@ router.post("/jre/sessions", requireSupervisorOrOwner, async (req, res): Promise
 });
 
 // ─── POST /jre/sessions/:id/follow-up ─────────────────────────────────────────
-router.post("/jre/sessions/:id/follow-up", requireAnyRole, async (req, res): Promise<void> => {
+router.post("/jre/sessions/:id/follow-up", requireAnyRole, aiAnalysisLimit, async (req, res): Promise<void> => {
   const id      = parseInt(req.params.id as string, 10);
   const uid     = getUserId(req);
   const { message } = req.body as { message?: string };

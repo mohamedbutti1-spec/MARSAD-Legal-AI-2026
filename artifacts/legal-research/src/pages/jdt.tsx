@@ -299,13 +299,13 @@ function ReviewStageCard({
             </div>
           )}
 
-          {stage.findings.length > 0 && (
+          {(stage.findings?.length ?? 0) > 0 && (
             <div>
               <div className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">
                 النتائج
               </div>
               <ul className="space-y-1">
-                {stage.findings.map((f, i) => (
+                {(stage.findings ?? []).map((f, i) => (
                   <li key={i} className="flex items-start gap-2 text-foreground/80">
                     <span className="text-amber-500 mt-0.5 shrink-0">◆</span>
                     <span>{f}</span>
@@ -315,13 +315,13 @@ function ReviewStageCard({
             </div>
           )}
 
-          {stage.uaeLegalReferences.length > 0 && (
+          {(stage.uaeLegalReferences?.length ?? 0) > 0 && (
             <div>
               <div className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">
                 المراجع القانونية الإماراتية
               </div>
               <div className="flex flex-wrap gap-1.5">
-                {stage.uaeLegalReferences.map((ref, i) => (
+                {(stage.uaeLegalReferences ?? []).map((ref, i) => (
                   <span
                     key={i}
                     className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 px-2 py-0.5 rounded font-mono"

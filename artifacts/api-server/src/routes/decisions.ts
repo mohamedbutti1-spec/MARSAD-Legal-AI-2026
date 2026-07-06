@@ -826,6 +826,7 @@ router.get("/decisions/:id", requireAnyRole, async (req, res): Promise<void> => 
 router.put("/decisions/:id/stages/:stageKey", requireAnyRole, async (req, res): Promise<void> => {
   try {
     const decisionId = parseInt(req.params.id as string, 10);
+    if (isNaN(decisionId)) { e400(res, "Invalid decision id"); return; }
     const stageKey = req.params.stageKey as DecisionStageKey;
 
     if (!DECISION_STAGE_KEYS.includes(stageKey)) {
@@ -877,6 +878,7 @@ router.put("/decisions/:id/stages/:stageKey", requireAnyRole, async (req, res): 
 router.post("/decisions/:id/stages/:stageKey/ai-assist", requireAnyRole, async (req, res): Promise<void> => {
   try {
     const decisionId = parseInt(req.params.id as string, 10);
+    if (isNaN(decisionId)) { e400(res, "Invalid decision id"); return; }
     const stageKey = req.params.stageKey as DecisionStageKey;
 
     const decision = await assertDecisionAccess(req, decisionId);
@@ -935,6 +937,7 @@ router.post("/decisions/:id/stages/:stageKey/ai-assist", requireAnyRole, async (
 router.post("/decisions/:id/stages/:stageKey/validate", requireSupervisorOrOwner, async (req, res): Promise<void> => {
   try {
     const decisionId = parseInt(req.params.id as string, 10);
+    if (isNaN(decisionId)) { e400(res, "Invalid decision id"); return; }
     const stageKey = req.params.stageKey as DecisionStageKey;
     const userId = getUserId(req);
 
@@ -1035,6 +1038,7 @@ router.post("/decisions/:id/stages/:stageKey/validate", requireSupervisorOrOwner
 router.post("/decisions/:id/stages/:stageKey/complete", requireSupervisorOrOwner, async (req, res): Promise<void> => {
   try {
     const decisionId = parseInt(req.params.id as string, 10);
+    if (isNaN(decisionId)) { e400(res, "Invalid decision id"); return; }
     const stageKey = req.params.stageKey as DecisionStageKey;
     const userId = getUserId(req);
 
@@ -1223,6 +1227,7 @@ router.post("/decisions/:id/stages/:stageKey/complete", requireSupervisorOrOwner
 router.get("/decisions/:id/replay", requirePermission("canReplayDecision"), async (req, res): Promise<void> => {
   try {
     const decisionId = parseInt(req.params.id as string, 10);
+    if (isNaN(decisionId)) { e400(res, "Invalid decision id"); return; }
 
     const roleHeader = (Array.isArray(req.headers["x-user-role"])
       ? req.headers["x-user-role"][0]
@@ -1465,6 +1470,7 @@ router.get("/decisions/:id/replay", requirePermission("canReplayDecision"), asyn
 router.get("/decisions/:id/audit", requireSupervisorOrOwner, async (req, res): Promise<void> => {
   try {
     const decisionId = parseInt(req.params.id as string, 10);
+    if (isNaN(decisionId)) { e400(res, "Invalid decision id"); return; }
 
     // Ownership check
     const decision = await assertDecisionAccess(req, decisionId);
@@ -1616,6 +1622,7 @@ CRITICAL REQUIREMENTS:
 router.post("/decisions/:id/jdp/generate", requireAnyRole, async (req, res): Promise<void> => {
   try {
     const decisionId = parseInt(req.params.id as string, 10);
+    if (isNaN(decisionId)) { e400(res, "Invalid decision id"); return; }
     const userId = getUserId(req);
 
     const decision = await assertDecisionAccess(req, decisionId);
@@ -1724,6 +1731,7 @@ router.post("/decisions/:id/jdp/generate", requireAnyRole, async (req, res): Pro
 router.get("/decisions/:id/jdp", requireAnyRole, async (req, res): Promise<void> => {
   try {
     const decisionId = parseInt(req.params.id as string, 10);
+    if (isNaN(decisionId)) { e400(res, "Invalid decision id"); return; }
     const decision = await assertDecisionAccess(req, decisionId);
     if (!decision) { res.status(403).json({ error: "Access denied" }); return; }
 
@@ -1743,6 +1751,7 @@ router.get("/decisions/:id/jdp", requireAnyRole, async (req, res): Promise<void>
 router.get("/decisions/:id/jdp/export", requireAnyRole, async (req, res): Promise<void> => {
   try {
     const decisionId = parseInt(req.params.id as string, 10);
+    if (isNaN(decisionId)) { e400(res, "Invalid decision id"); return; }
     const decision = await assertDecisionAccess(req, decisionId);
     if (!decision) { res.status(403).json({ error: "Access denied" }); return; }
 
@@ -1809,6 +1818,7 @@ router.get("/decisions/:id/jdp/export", requireAnyRole, async (req, res): Promis
 router.get("/decisions/:id/dci", requireAnyRole, async (req, res): Promise<void> => {
   try {
     const decisionId = parseInt(req.params.id as string, 10);
+    if (isNaN(decisionId)) { e400(res, "Invalid decision id"); return; }
     const decision = await assertDecisionAccess(req, decisionId);
     if (!decision) { res.status(403).json({ error: "Access denied" }); return; }
 
@@ -1850,6 +1860,7 @@ const AMENDABLE_FIELDS: Record<string, Set<string> | "text"> = {
 router.post("/decisions/:id/dci/amend", requireSupervisorOrOwner, async (req, res): Promise<void> => {
   try {
     const decisionId = parseInt(req.params.id as string, 10);
+    if (isNaN(decisionId)) { e400(res, "Invalid decision id"); return; }
     const userId = getUserId(req);
 
     const decision = await assertDecisionAccess(req, decisionId);
@@ -2031,6 +2042,7 @@ router.post("/decisions/:id/dci/amend", requireSupervisorOrOwner, async (req, re
 router.post("/decisions/:id/qva/run", requireSupervisorOrOwner, async (req, res): Promise<void> => {
   try {
     const decisionId = parseInt(req.params.id as string, 10);
+    if (isNaN(decisionId)) { e400(res, "Invalid decision id"); return; }
     const decision = await assertDecisionAccess(req, decisionId);
     if (!decision) { res.status(403).json({ error: "Access denied" }); return; }
 
@@ -2246,6 +2258,7 @@ Return a JSON object with EXACTLY these keys. All values must be in clear Arabic
 router.post("/decisions/:id/car/generate", requireAnyRole, async (req, res): Promise<void> => {
   try {
     const decisionId = parseInt(req.params.id as string, 10);
+    if (isNaN(decisionId)) { e400(res, "Invalid decision id"); return; }
     const userId = getUserId(req);
     const decision = await assertDecisionAccess(req, decisionId);
     if (!decision) { res.status(403).json({ error: "Access denied" }); return; }
@@ -2362,6 +2375,7 @@ router.post("/decisions/:id/car/generate", requireAnyRole, async (req, res): Pro
 router.get("/decisions/:id/car", requireAnyRole, async (req, res): Promise<void> => {
   try {
     const decisionId = parseInt(req.params.id as string, 10);
+    if (isNaN(decisionId)) { e400(res, "Invalid decision id"); return; }
     const decision = await assertDecisionAccess(req, decisionId);
     if (!decision) { res.status(403).json({ error: "Access denied" }); return; }
 

@@ -410,7 +410,7 @@ function DciPanel({ decisionId, decision }: { decisionId: number; decision: Deci
                     <span className="text-[10px] text-muted-foreground/50" dir="ltr">{new Date(v.changedAt).toLocaleString('ar-AE')}</span>
                   </div>
                   <p className="text-xs font-medium text-foreground/80">{v.reason}</p>
-                  <p className="text-[10px] text-muted-foreground/50">الحقول المُعدَّلة: {Object.keys(v.snapshot).join('، ')}</p>
+                  <p className="text-[10px] text-muted-foreground/50">الحقول المُعدَّلة: {Object.keys(v.snapshot ?? {}).join('، ')}</p>
                 </div>
               ))}
             </div>
@@ -1231,7 +1231,7 @@ function JdpPanel({ decisionId, decision }: { decisionId: number; decision: Deci
                         <span className="text-[10px] text-muted-foreground/50" dir="ltr">{v.changedAt.substring(0, 10)}</span>
                       </div>
                       <p className="text-xs text-foreground/80">{v.reason}</p>
-                      <p className="text-[10px] text-muted-foreground/50">الحقول: {Object.keys(v.snapshot).join('، ')}</p>
+                      <p className="text-[10px] text-muted-foreground/50">الحقول: {Object.keys(v.snapshot ?? {}).join('، ')}</p>
                     </div>
                   ))}
                 </div>
@@ -1802,7 +1802,7 @@ function AIAnalysisPanel({ analysis, stageKey }: { analysis: Record<string, unkn
             <div className="space-y-2">
               <p className="text-xs font-bold text-muted-foreground">بوابات المبادئ الدستورية العشرة</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {Object.entries(analysis.principleResults as Record<string, Record<string, unknown>>).map(([key, result]) => {
+                {Object.entries((analysis.principleResults ?? {}) as Record<string, Record<string, unknown>>).map(([key, result]) => {
                   const pr = result as { passed: boolean; gateStatus?: string; notes?: string };
                   const gateLabel = pr.passed ? 'مستوفٍ' : 'غير مستوفٍ';
                   return (

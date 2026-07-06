@@ -288,11 +288,11 @@ function PrincipleCard({
           </div>
 
           {/* Constitutional References */}
-          {principle.constitutionalReferences.length > 0 && (
+          {(principle.constitutionalReferences?.length ?? 0) > 0 && (
             <div>
               <div className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2">المراجع الدستورية</div>
               <div className="space-y-1.5">
-                {principle.constitutionalReferences.map((ref, i) => (
+                {(principle.constitutionalReferences ?? []).map((ref, i) => (
                   <div key={i} className="flex items-start gap-2 text-xs">
                     <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-1.5 py-0.5 rounded font-mono shrink-0">{ref.article}</span>
                     <span className="text-foreground/80">{ref.titleAr} — {ref.relevance}</span>
@@ -303,11 +303,11 @@ function PrincipleCard({
           )}
 
           {/* UAE Legal References */}
-          {principle.uaeLegalReferences.length > 0 && (
+          {(principle.uaeLegalReferences?.length ?? 0) > 0 && (
             <div>
               <div className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2">المراجع القانونية الإماراتية</div>
               <div className="space-y-1.5">
-                {principle.uaeLegalReferences.map((ref, i) => (
+                {(principle.uaeLegalReferences ?? []).map((ref, i) => (
                   <div key={i} className="flex items-start gap-2 text-xs">
                     <span className="bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 px-1.5 py-0.5 rounded shrink-0">{ref.law}</span>
                     <span className="text-foreground/80">{ref.article}: {ref.titleAr}</span>
@@ -318,11 +318,11 @@ function PrincipleCard({
           )}
 
           {/* Al-Shamsi Dimensions */}
-          {principle.alShamsiDimensions.length > 0 && (
+          {(principle.alShamsiDimensions?.length ?? 0) > 0 && (
             <div>
               <div className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2">أبعاد نظرية الشامسي</div>
               <div className="grid grid-cols-2 gap-2">
-                {principle.alShamsiDimensions.map((dim, i) => (
+                {(principle.alShamsiDimensions ?? []).map((dim, i) => (
                   <div key={i} className="bg-gold/5 border border-gold/20 rounded-lg p-2">
                     <div className="flex items-center justify-between mb-0.5">
                       <span className="text-xs font-medium text-gold">{dim.dimension}</span>
@@ -347,11 +347,11 @@ function PrincipleCard({
           )}
 
           {/* Replay References */}
-          {principle.replayReferences.length > 0 && (
+          {(principle.replayReferences?.length ?? 0) > 0 && (
             <div>
               <div className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2">مراحل إعادة التشغيل المرجعية</div>
               <div className="flex flex-wrap gap-1.5">
-                {principle.replayReferences.map((ref, i) => (
+                {(principle.replayReferences ?? []).map((ref, i) => (
                   <span key={i} className="text-xs bg-muted border border-border rounded px-2 py-0.5">
                     {ref.stageLabel}
                   </span>

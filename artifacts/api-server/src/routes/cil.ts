@@ -39,6 +39,7 @@ import {
 import { requirePermission } from "../middlewares/roleAuth";
 import { e400, e403, e500 } from "../lib/sendError";
 import { aiRouter, TaskType, parseModelJson } from "../ai";
+import { aiAnalysisLimit } from "../middlewares/rateLimits.js";
 
 const router = Router();
 
@@ -230,6 +231,7 @@ Ensure ALL 12 principleResults are included. Be thorough, accurate, and grounded
 router.post(
   "/cil/assess/:decisionId",
   requirePermission("canRunCilAssessment"),
+  aiAnalysisLimit,
   async (req, res): Promise<void> => {
     try {
       const decisionId = parseInt(req.params.decisionId as string, 10);

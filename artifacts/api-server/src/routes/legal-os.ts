@@ -22,6 +22,7 @@ import {
 import { ROLES, findScenario, formatAnswers, type Role, type Scenario } from "../data/legal-os-scenarios";
 import { legalOsCustomRolesTable, legalOsCustomScenariosTable } from "@workspace/db";
 import { getUserId } from "../lib/route-helpers";
+import { aiAnalysisLimit } from "../middlewares/rateLimits.js";
 
 // ─── Decision Brief validation ─────────────────────────────────────────────────
 
@@ -249,7 +250,7 @@ function buildJsonSystemPrompt(roleTitleAr: string, ragContext: string): string 
 }
 
 // ─── POST /legal-os/assess ─────────────────────────────────────────────────────
-router.post("/legal-os/assess", requireSupervisorOrOwner, async (req, res): Promise<void> => {
+router.post("/legal-os/assess", requireSupervisorOrOwner, aiAnalysisLimit, async (req, res): Promise<void> => {
   const uid = getUserId(req);
   const { roleId, scenarioId, answers } = req.body as {
     roleId: string;
@@ -433,7 +434,7 @@ ${answersText}
 });
 
 // ─── POST /legal-os/followup ───────────────────────────────────────────────────
-router.post("/legal-os/followup", requireSupervisorOrOwner, async (req, res): Promise<void> => {
+router.post("/legal-os/followup", requireSupervisorOrOwner, aiAnalysisLimit, async (req, res): Promise<void> => {
   const uid = getUserId(req);
   const { sessionId, message } = req.body as { sessionId: number; message: string };
 

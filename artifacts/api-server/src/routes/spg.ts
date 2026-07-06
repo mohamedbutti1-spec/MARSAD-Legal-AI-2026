@@ -14,6 +14,7 @@ import { db, spgSessionsTable } from "@workspace/db";
 import { requireAnyRole }       from "../middlewares/roleAuth";
 import { runSpgGuidance }       from "../utils/spg-engine";
 import { getUserId }            from "../lib/route-helpers";
+import { aiAnalysisLimit } from "../middlewares/rateLimits.js";
 
 // ─── Allowed sector / role catalogue (mirrors frontend types/spg.ts) ──────────
 const VALID_SECTORS = new Map<string, Set<string>>([
@@ -126,7 +127,7 @@ router.post("/spg/sessions", requireAnyRole, async (req, res): Promise<void> => 
 });
 
 // ─── POST /spg/sessions/:id/run ───────────────────────────────────────────────
-router.post("/spg/sessions/:id/run", requireAnyRole, async (req, res): Promise<void> => {
+router.post("/spg/sessions/:id/run", requireAnyRole, aiAnalysisLimit, async (req, res): Promise<void> => {
   const id  = parseInt(req.params.id as string, 10);
   const uid = getUserId(req);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid session id" }); return; }

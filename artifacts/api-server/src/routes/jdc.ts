@@ -15,6 +15,7 @@ import { runChamberDeliberation } from "../utils/judicial-deliberation-chamber.j
 import type { JreParties } from "../utils/judicial-reasoning-engine.js";
 import type { PanelSize } from "../utils/judicial-deliberation-chamber.js";
 import { getUserId } from "../lib/route-helpers.js";
+import { aiSessionLimit } from "../middlewares/rateLimits.js";
 
 const router = Router();
 
@@ -150,7 +151,7 @@ router.get("/jdc/chambers/:id", requireAnyRole, async (req, res): Promise<void> 
 
 // ─── POST /jdc/chambers ──────────────────────────────────────────────────────
 
-router.post("/jdc/chambers", requireSupervisorOrOwner, async (req, res): Promise<void> => {
+router.post("/jdc/chambers", requireSupervisorOrOwner, aiSessionLimit, async (req, res): Promise<void> => {
   const uid = getUserId(req);
   const {
     title,

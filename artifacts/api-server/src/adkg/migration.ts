@@ -40,6 +40,8 @@ export async function migrateAdkg(): Promise<void> {
   await db.execute(sql`CREATE INDEX IF NOT EXISTS adkg_owner_idx      ON adkg_decisions (owner_id)`);
   await db.execute(sql`CREATE INDEX IF NOT EXISTS adkg_status_idx     ON adkg_decisions (status)`);
   await db.execute(sql`CREATE INDEX IF NOT EXISTS adkg_number_idx     ON adkg_decisions (decision_number)`);
+  // Add column if table was created in an earlier migration without it
+  await db.execute(sql`ALTER TABLE adkg_decisions ADD COLUMN IF NOT EXISTS search_vector TSVECTOR`);
   await db.execute(sql`CREATE INDEX IF NOT EXISTS adkg_fts_idx        ON adkg_decisions USING GIN (search_vector)`);
 
   // ── adkg_decision_links ────────────────────────────────────────────────────

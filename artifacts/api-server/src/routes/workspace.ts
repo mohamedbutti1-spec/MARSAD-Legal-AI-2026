@@ -247,7 +247,8 @@ router.get("/research/workspace/projects/:projectId/items", async (req: Request,
   const projectId = parseInt(String(req.params.projectId), 10);
   if (!await assertProjectOwner(projectId, userId, res)) return;
 
-  const folderId  = req.query.folderId !== undefined ? parseInt(req.query.folderId as string, 10) : undefined;
+  const _rawFolderId = req.query.folderId !== undefined ? parseInt(req.query.folderId as string, 10) : undefined;
+  const folderId = _rawFolderId !== undefined && isNaN(_rawFolderId) ? undefined : _rawFolderId;
   const itemType  = req.query.itemType as string | undefined;
 
   let q = db
@@ -507,8 +508,9 @@ router.post("/research/workspace/projects/:projectId/items/:itemId/review", asyn
 router.get("/research/workspace/search", async (req: Request, res: Response): Promise<void> => {
   const userId    = getUserId(req);
   const q         = (req.query.q as string ?? "").trim();
-  const projectId = req.query.projectId ? parseInt(req.query.projectId as string, 10) : undefined;
-  const limit     = Math.min(parseInt(req.query.limit as string || "20", 10), 50);
+  const _rawProjectId = req.query.projectId ? parseInt(req.query.projectId as string, 10) : undefined;
+  const projectId = _rawProjectId !== undefined && isNaN(_rawProjectId) ? undefined : _rawProjectId;
+  const limit     = Math.min(parseInt(req.query.limit as string || "20", 10) || 20, 50);
 
   if (!q) { res.status(400).json({ error: "q is required" }); return; }
 
@@ -561,8 +563,10 @@ router.get("/research/workspace/search", async (req: Request, res: Response): Pr
 /** GET /research/workspace/xref?kbDocId=&legalSourceId= — items that cite a given KB doc or legal source */
 router.get("/research/workspace/xref", async (req: Request, res: Response): Promise<void> => {
   const userId     = getUserId(req);
-  const kbDocId    = req.query.kbDocId    ? parseInt(req.query.kbDocId    as string, 10) : null;
-  const _legalSrcId = req.query.legalSourceId ? parseInt(req.query.legalSourceId as string, 10) : null;
+  const _rawKbDocId = req.query.kbDocId ? parseInt(req.query.kbDocId as string, 10) : null;
+  const kbDocId = _rawKbDocId !== null && isNaN(_rawKbDocId) ? null : _rawKbDocId;
+  const _rawLegalSrcId = req.query.legalSourceId ? parseInt(req.query.legalSourceId as string, 10) : null;
+  const _legalSrcId = _rawLegalSrcId !== null && isNaN(_rawLegalSrcId) ? null : _rawLegalSrcId;
 
   if (!kbDocId) {
     res.status(400).json({ error: "kbDocId is required" });

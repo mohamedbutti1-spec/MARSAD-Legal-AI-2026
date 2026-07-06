@@ -39,6 +39,7 @@ import {
 import { requirePermission } from "../middlewares/roleAuth";
 import { e400, e403, e404, e500 } from "../lib/sendError";
 import { aiRouter, TaskType, parseModelJson } from "../ai";
+import { aiAnalysisLimit } from "../middlewares/rateLimits.js";
 
 const router = Router();
 
@@ -219,6 +220,7 @@ Ensure ALL 8 reviewStages and ALL 16 shamsiDimensions are included. Apply UAE la
 router.post(
   "/jdt/simulate/:decisionId",
   requirePermission("canRunJdtSimulation" as any),
+  aiAnalysisLimit,
   async (req, res): Promise<void> => {
     const decisionId = parseInt(req.params.decisionId as string, 10);
     if (isNaN(decisionId)) { e400(res, "Invalid decision ID"); return; }

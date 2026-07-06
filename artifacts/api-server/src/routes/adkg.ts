@@ -34,6 +34,7 @@ import {
 } from "../utils/admin-os-evaluator";
 import { getUserId } from "../lib/route-helpers.js";
 import { requireSupervisorOrOwner } from "../middlewares/roleAuth.js";
+import { aiAnalysisLimit } from "../middlewares/rateLimits.js";
 
 const router: IRouter = Router();
 
@@ -88,7 +89,7 @@ async function updateDecisionSearchVector(
 router.get("/adkg/decisions", async (req: Request, res: Response): Promise<void> => {
   const userId  = getUserId(req);
   const status  = req.query.status as string | undefined;
-  const limit   = Math.min(parseInt(req.query.limit as string || "50", 10), 100);
+  const limit   = Math.min(parseInt(req.query.limit as string || "50", 10) || 50, 100);
 
   let rows = await db
     .select()
@@ -477,7 +478,7 @@ router.get("/adkg/search", async (req: Request, res: Response): Promise<void> =>
   const userId = getUserId(req);
   const q      = (req.query.q as string ?? "").trim();
   const status = req.query.status as string | undefined;
-  const limit  = Math.min(parseInt(req.query.limit as string || "20", 10), 50);
+  const limit  = Math.min(parseInt(req.query.limit as string || "20", 10) || 20, 50);
 
   if (!q) { res.status(400).json({ error: "q is required" }); return; }
 
@@ -562,7 +563,7 @@ router.get("/adkg/decisions/:id/export", async (req: Request, res: Response): Pr
  * Runs the 16-pillar Al-Shamsi evaluator against the stored ADKG decision content
  * and its linked authorities. Stores the result in citedAuthorities.pillarAnalysis.
  */
-router.post("/adkg/decisions/:id/analyze", async (req: Request, res: Response): Promise<void> => {
+router.post("/adkg/decisions/:id/analyze", aiAnalysisLimit, async (req: Request, res: Response): Promise<void> => {
   const userId     = getUserId(req);
   const decisionId = parseInt(String(req.params.id), 10);
 

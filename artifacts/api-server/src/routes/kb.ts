@@ -23,6 +23,7 @@ import {
 import type { KbCollectionId, KbHierarchyLevel } from "../kb/types.js";
 import { getUserId } from "../lib/route-helpers.js";
 import { requireSupervisorOrOwner } from "../middlewares/roleAuth.js";
+import { kbSearchLimit } from "../middlewares/rateLimits.js";
 
 const router: IRouter = Router();
 
@@ -31,7 +32,7 @@ router.use(requireSupervisorOrOwner);
 
 // ─── GET /kb/search ───────────────────────────────────────────────────────────
 
-router.get("/kb/search", async (req: Request, res: Response) => {
+router.get("/kb/search", kbSearchLimit, async (req: Request, res: Response) => {
   try {
     const query = String(Array.isArray(req.query.q) ? req.query.q[0] ?? "" : req.query.q ?? "").trim();
     if (!query) {

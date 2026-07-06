@@ -102,7 +102,7 @@ export async function migratePgf(): Promise<void> {
 
   // Unique constraint: one step per (sector, profession, stage, order)
   await db.execute(sql`
-    DO $ BEGIN
+    DO $$ BEGIN
       IF NOT EXISTS (
         SELECT 1 FROM pg_constraint
         WHERE conname = 'pgf_ws_unique_step'
@@ -111,6 +111,6 @@ export async function migratePgf(): Promise<void> {
           ADD CONSTRAINT pgf_ws_unique_step
           UNIQUE (sector_id, profession_id, stage_id, "order");
       END IF;
-    END $
+    END $$
   `);
 }

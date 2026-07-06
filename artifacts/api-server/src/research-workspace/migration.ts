@@ -71,6 +71,8 @@ export async function migrateResearchWorkspace(): Promise<void> {
   await db.execute(sql`
     CREATE INDEX IF NOT EXISTS ri_type_idx ON research_items (item_type)
   `);
+  // Add column if table was created in an earlier migration without it
+  await db.execute(sql`ALTER TABLE research_items ADD COLUMN IF NOT EXISTS search_vector TSVECTOR`);
   await db.execute(sql`
     CREATE INDEX IF NOT EXISTS ri_fts_idx ON research_items USING GIN (search_vector)
   `);

@@ -212,7 +212,7 @@ export default function NaipDashboard() {
 
   const totalRisk = risk?.byLevel ? Object.values(risk.byLevel).reduce((a, b) => a + b, 0) : 0;
   const totalDecisionsByStatus = decisions?.byStatus
-    ? Object.values(decisions.byStatus).reduce((a, b) => a + b, 0)
+    ? Object.values(decisions.byStatus ?? {}).reduce((a: number, b: number) => a + b, 0)
     : 0;
 
   const statusColors: Record<string, string> = {

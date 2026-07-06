@@ -161,6 +161,7 @@ export default function Settings() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                <form onSubmit={(e) => e.preventDefault()} autoComplete="off">
                 {PROVIDERS.map((prov) => {
                   const isConfigured = keyStatus[prov.id];
                   const draftValue   = keyDraft[prov.field] ?? '';
@@ -227,11 +228,12 @@ export default function Settings() {
                 })}
 
                 <div className="flex justify-end pt-2">
-                  <Button onClick={handleSaveKeys} disabled={keySaving || Object.keys(keyDraft).length === 0} className="gap-2">
+                  <Button type="submit" onClick={handleSaveKeys} disabled={keySaving || Object.keys(keyDraft).length === 0} className="gap-2">
                     {keySaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
                     {keySaving ? 'Saving keys…' : 'Save API Keys'}
                   </Button>
                 </div>
+                </form>
               </CardContent>
             </Card>
 

@@ -27,6 +27,7 @@ import { getStageMemory, VALID_CATEGORIES, VALID_SOURCE_TYPES } from "../pgf/ins
 import { getStageWorkflow }                                      from "../pgf/workflow-steps.js";
 import type { PgfSessionAnswers }            from "../pgf/types.js";
 import { getUserId }                         from "../lib/route-helpers.js";
+import { aiAnalysisLimit } from "../middlewares/rateLimits.js";
 
 const router: IRouter = Router();
 
@@ -323,7 +324,7 @@ router.post("/pgf/sessions/:id/answer", requireAnyRole, async (req, res): Promis
 });
 
 // ─── POST /pgf/sessions/:id/finalize ─────────────────────────────────────────
-router.post("/pgf/sessions/:id/finalize", requireAnyRole, async (req, res): Promise<void> => {
+router.post("/pgf/sessions/:id/finalize", requireAnyRole, aiAnalysisLimit, async (req, res): Promise<void> => {
   const id  = parseInt(req.params.id as string, 10);
   const uid = getUserId(req);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid session id" }); return; }
