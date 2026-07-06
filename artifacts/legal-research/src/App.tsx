@@ -63,6 +63,9 @@ import JdcChamber from '@/pages/jdc-chamber';
 // SPG — Smart Professional Guidance
 import SpgPage    from '@/pages/spg';
 import SpgSession from '@/pages/spg-session';
+// PGF — Professional Guidance Framework
+import PgfPage    from '@/pages/pgf';
+import PgfSession from '@/pages/pgf-session';
 
 // NAIP — Role-Specific Executive Dashboards
 import NaipMinister        from '@/pages/naip-minister';
@@ -313,6 +316,18 @@ function Router() {
         <Route path="/spg">
           <RouteGuard allow={canUseAi}>
             <SpgPage />
+          </RouteGuard>
+        </Route>
+
+        {/* PGF — Professional Guidance Framework */}
+        <Route path="/pgf/:id">
+          <RouteGuard allow={canUseAi}>
+            <PgfSession />
+          </RouteGuard>
+        </Route>
+        <Route path="/pgf">
+          <RouteGuard allow={canUseAi}>
+            <PgfPage />
           </RouteGuard>
         </Route>
 

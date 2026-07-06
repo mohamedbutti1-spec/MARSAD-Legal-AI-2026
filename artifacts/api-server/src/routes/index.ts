@@ -51,6 +51,8 @@ import jreRouter from "./jre";
 import jdcRouter from "./jdc";
 // SPG — Smart Professional Guidance
 import spgRouter from "./spg";
+// PGF — Professional Guidance Framework
+import pgfRouter from "./pgf";
 
 const router: IRouter = Router();
 
@@ -106,5 +108,7 @@ router.use(jreRouter);
 router.use(jdcRouter);
 // SPG — Smart Professional Guidance
 router.use(spgRouter);
+// PGF — Professional Guidance Framework
+router.use(pgfRouter);
 
 export default router;

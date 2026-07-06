@@ -214,6 +214,14 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           show: canUseAi,
           badge: 'جديد',
         },
+        {
+          href: '/pgf',
+          labelAr: 'الإطار الاحترافي الموجَّه',
+          labelEn: 'Professional Guidance Framework',
+          icon: <BookOpenText className="w-4.5 h-4.5" />,
+          show: canUseAi,
+          badge: 'جديد',
+        },
       ],
     },
     {

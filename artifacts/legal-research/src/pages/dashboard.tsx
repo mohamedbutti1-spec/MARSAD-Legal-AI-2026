@@ -3,7 +3,7 @@ import { AppLayout } from '@/components/layout/app-layout';
 import { apiFetch } from '@/lib/api-fetch';
 import {
   Scale, ScrollText, Gavel, FileCheck, PenLine,
-  ArrowUp, Mic, Paperclip, GitCompareArrows, Compass,
+  ArrowUp, Mic, Paperclip, GitCompareArrows, Compass, BookOpen,
 } from 'lucide-react';
 import { useUserContext, useT } from '@/lib/user-context';
 import { useLocation } from 'wouter';
@@ -102,6 +102,14 @@ const QUICK_CHIPS: QuickChip[] = [
     labelEn: 'Smart Professional Guidance',
     action: 'navigate',
     href: '/spg',
+  },
+  {
+    id: 'pgf',
+    icon: BookOpen,
+    labelAr: 'الإطار الاحترافي الموجَّه',
+    labelEn: 'Professional Guidance Framework',
+    action: 'navigate',
+    href: '/pgf',
   },
 ];
 

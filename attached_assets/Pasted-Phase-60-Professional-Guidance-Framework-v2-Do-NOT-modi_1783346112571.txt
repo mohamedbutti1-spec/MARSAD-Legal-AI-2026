@@ -1,0 +1,110 @@
+Phase 60 — Professional Guidance Framework v2
+
+Do NOT modify any existing modules.
+
+Do NOT change Judicial Reasoning Engine.
+
+Do NOT change Theory Mode.
+
+Do NOT change ADKG.
+
+Do NOT change RAG.
+
+Do NOT change the database except additive migrations.
+
+Build a completely configurable Professional Guidance Framework.
+
+Architecture:
+
+Professional Guidance
+    ├── Sector
+    ├── Profession
+    ├── Workflow
+    ├── Decision Trees
+    ├── Checklists
+    ├── Best Practices
+    ├── Common Mistakes
+    ├── Professional Reasoning
+    ├── Practical Guidance
+    └── Final Assessment
+
+The framework must be configuration-driven.
+
+Every profession is defined by configuration only.
+
+Each profession contains:
+
+- Name
+- Description
+- Responsibilities
+- Required Competencies
+- Required Authorities
+- Required References
+- Workflow Stages
+- Decision Tree
+- Required Documents
+- Common Mistakes
+- Risk Indicators
+- Escalation Rules
+- Best Practices
+- Professional Thinking Model
+- Final Checklist
+- Final Assessment
+
+Support unlimited professions.
+
+Initial sectors:
+
+1. Judiciary
+2. Public Prosecution
+3. Police
+4. Government Administration
+5. Legal Affairs
+6. Internal Audit
+7. Governance
+8. Compliance
+9. Risk Management
+10. Strategy
+11. Performance Management
+12. Human Resources
+13. Procurement
+14. Finance
+15. Taxation
+16. Quality
+17. ISO
+18. Cybersecurity
+19. Artificial Intelligence Governance
+20. Academic Research
+
+Each profession must execute an interactive workflow.
+
+The assistant must never jump directly to conclusions.
+
+It must guide the professional step-by-step.
+
+Each stage asks questions.
+
+Each answer determines the next stage.
+
+Every workflow produces:
+
+• Required actions
+• Missing actions
+• Required documents
+• Risks
+• Applicable legislation
+• Applicable regulations
+• Best practices
+• Common mistakes
+• Escalation recommendation
+• Professional confidence score
+
+Professional Guidance must be completely independent from Judicial Reasoning.
+
+Run regression tests.
+
+Run TypeScript.
+
+Restart workflows.
+
+Automatically apply changes.
