@@ -21,6 +21,17 @@ import {
 } from "@workspace/db";
 import { logAudit } from "../middlewares/auditLog.js";
 import { exportAdkgAsPdf, exportAdkgAsDocx, exportAdkgAsMarkdown } from "../utils/adkg-export.js";
+import { aiRouter, TaskType } from "../ai";
+import { parseModelJson } from "../ai/providers/interface";
+import { buildContext } from "../utils/rag";
+import {
+  buildAdkgEvaluatorPrompt,
+  validateAdminBrief,
+  computeLegalityScore,
+  computeRiskScore,
+  type AdminDecisionBriefData,
+  type DimensionResult,
+} from "../utils/admin-os-evaluator";
 
 const router: IRouter = Router();
 
@@ -542,6 +553,161 @@ router.get("/adkg/decisions/:id/export", async (req: Request, res: Response): Pr
     req.log.error({ err }, "ADKG export failed");
     res.status(500).json({ error: "Export failed" });
   }
+});
+
+// ─── Pillar Analysis ──────────────────────────────────────────────────────────
+
+/**
+ * POST /adkg/decisions/:id/analyze
+ * Runs the 16-pillar Al-Shamsi evaluator against the stored ADKG decision content
+ * and its linked authorities. Stores the result in citedAuthorities.pillarAnalysis.
+ */
+router.post("/adkg/decisions/:id/analyze", async (req: Request, res: Response): Promise<void> => {
+  const userId     = getUserId(req);
+  const decisionId = parseInt(String(req.params.id), 10);
+
+  const [decision] = await db
+    .select()
+    .from(adkgDecisionsTable)
+    .where(and(eq(adkgDecisionsTable.id, decisionId), eq(adkgDecisionsTable.ownerId, userId)))
+    .limit(1);
+  if (!decision) { res.status(404).json({ error: "Decision not found" }); return; }
+
+  const links = await db
+    .select()
+    .from(adkgDecisionLinksTable)
+    .where(eq(adkgDecisionLinksTable.decisionId, decisionId));
+
+  const content = parseJson<Record<string, unknown>>(decision.content, {});
+  const bodyAr  = String(content.bodyAr ?? content.body ?? "");
+  const bodyEn  = String(content.body ?? "");
+
+  // Build RAG context from decision text
+  const semanticQuery = [decision.titleAr, decision.title, decision.subjectAr ?? "", bodyAr].join(" ").slice(0, 1000);
+  let provider;
+  try {
+    provider = await aiRouter.routeFor(TaskType.RAG);
+  } catch (err: unknown) {
+    res.status(503).json({ error: (err as Error).message });
+    return;
+  }
+
+  const { context: ragContext } = await buildContext(semanticQuery, userId, [], []);
+
+  const { systemPrompt, userPrompt } = buildAdkgEvaluatorPrompt({
+    decisionNumber: decision.decisionNumber,
+    titleAr: decision.titleAr,
+    titleEn: decision.title,
+    issuerOrg: decision.issuerOrg,
+    issuerOrgAr: decision.issuerOrgAr,
+    bodyAr,
+    bodyEn,
+    linkedAuthorities: links.map((l) => ({
+      titleAr: l.titleAr,
+      titleEn: l.titleEn,
+      linkType: l.linkType,
+      authorityClass: l.authorityClass,
+      linkedEntityRef: l.linkedEntityRef,
+    })),
+    ragContext,
+  });
+
+  let brief: AdminDecisionBriefData;
+  try {
+    const aiResult = await provider.complete({
+      taskType: TaskType.RAG,
+      prompt: userPrompt,
+      systemPrompt,
+      maxTokens: 9000,
+    });
+
+    const cleaned = aiResult.text.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+    const parseResult = parseModelJson<Record<string, unknown>>(cleaned);
+    if (!parseResult.ok) {
+      req.log.error({ raw: parseResult.raw }, "Failed to parse ADKG pillar analysis JSON");
+      res.status(500).json({ error: "Failed to parse AI response. Please try again." });
+      return;
+    }
+
+    const validationError = validateAdminBrief(parseResult.data);
+    if (validationError) {
+      req.log.warn({ validationError }, "ADKG pillar analysis failed validation");
+      res.status(422).json({ error: "AI response incomplete. Please try again.", detail: validationError });
+      return;
+    }
+
+    brief = parseResult.data as unknown as AdminDecisionBriefData;
+  } catch (err) {
+    req.log.error({ err }, "ADKG pillar analysis AI call failed");
+    res.status(500).json({ error: "AI analysis failed. Please try again." });
+    return;
+  }
+
+  // Compute scores from the 16 pillars
+  const dims: Record<string, DimensionResult> = {
+    jurisdiction: brief.jurisdiction,
+    competence: brief.competence,
+    form: brief.form,
+    cause: brief.cause,
+    subjectMatter: brief.subjectMatter,
+    purpose: brief.purpose,
+    humanWill: brief.humanWill,
+    digitalWillFormation: brief.digitalWillFormation,
+    algorithmicWeight: brief.algorithmicWeight,
+    algorithmicBias: brief.algorithmicBias,
+    explainability: brief.explainability,
+    humanOversight: brief.humanOversight,
+    judicialReviewReadiness: brief.judicialReviewReadiness,
+    proportionality: brief.proportionality,
+    transparency: brief.transparency,
+    accountability: brief.accountability,
+  };
+
+  const legalityScore = computeLegalityScore(dims);
+  const riskScore = computeRiskScore(dims, "medium", legalityScore);
+
+  // Upsert pillarAnalysis into metadata (citedAuthorities remains an array for export compatibility)
+  const existingMetadata = parseJson<Record<string, unknown>>(decision.metadata, {});
+  const updatedMetadata = {
+    ...existingMetadata,
+    pillarAnalysis: {
+      ...brief,
+      legalityScore,
+      riskScore,
+      analyzedAt: new Date().toISOString(),
+      decisionId,
+    },
+  };
+
+  await db
+    .update(adkgDecisionsTable)
+    .set({ metadata: JSON.stringify(updatedMetadata), updatedAt: new Date() })
+    .where(eq(adkgDecisionsTable.id, decisionId));
+
+  await logAudit(req, "adkg.decision.analyze", { details: { decisionId, legalityScore, riskScore } });
+  res.json({ ok: true, legalityScore, riskScore, analysis: updatedMetadata.pillarAnalysis });
+});
+
+/**
+ * GET /adkg/decisions/:id/analyze
+ * Returns the stored pillar analysis result from citedAuthorities.pillarAnalysis.
+ */
+router.get("/adkg/decisions/:id/analyze", async (req: Request, res: Response): Promise<void> => {
+  const userId     = getUserId(req);
+  const decisionId = parseInt(String(req.params.id), 10);
+
+  const [decision] = await db
+    .select({ metadata: adkgDecisionsTable.metadata })
+    .from(adkgDecisionsTable)
+    .where(and(eq(adkgDecisionsTable.id, decisionId), eq(adkgDecisionsTable.ownerId, userId)))
+    .limit(1);
+
+  if (!decision) { res.status(404).json({ error: "Decision not found" }); return; }
+
+  const meta = parseJson<Record<string, unknown>>(decision.metadata, {});
+  const analysis = meta.pillarAnalysis ?? null;
+
+  res.json({ analysis });
 });
 
 export default router;

@@ -1,22 +1,30 @@
 /**
- * Al-Shamsi 12-Dimension Administrative Decision Evaluator
+ * Al-Shamsi 16-Pillar Administrative Decision Evaluator
  *
  * Builds the AI prompt, validates the structured response, and
  * computes Legality Score + Risk Score.
  *
- * Dimension weights (must sum to 100):
- *   Jurisdiction          20%
- *   Cause                 15%
- *   Form                  10%
- *   Subject Matter        10%
- *   Purpose               10%
- *   Human Will             8%
- *   Digital Will           5%
- *   Algorithmic Weight     5%
- *   Algorithmic Bias       5%
- *   Explainability         4%
- *   Human Oversight        4%
- *   Judicial Review        4%
+ * Traditional Administrative Law Pillars (6):
+ *   Jurisdiction (Institutional)  14%
+ *   Competence (Issuer Capacity)   8%
+ *   Form                           7%
+ *   Cause                         12%
+ *   Subject Matter                 7%
+ *   Purpose                        7%
+ *
+ * AI / Digital Decision Pillars (10):
+ *   Human Will                     7%
+ *   Digital Will Formation         5%
+ *   Algorithmic Legal Weight       5%
+ *   Algorithmic Bias               4%
+ *   Explainability                 4%
+ *   Human Oversight                4%
+ *   Judicial Review Readiness      4%
+ *   Proportionality                5%
+ *   Transparency                   4%
+ *   Accountability                 3%
+ *
+ * Total: 100%
  */
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -34,12 +42,16 @@ export interface DimensionResult {
 }
 
 export interface AdminDecisionBriefData {
-  // 12 Al-Shamsi dimensions
+  // ── Traditional Administrative Law Pillars (6) ────────────────────
   jurisdiction: DimensionResult;
+  /** Legal capacity/rank of the issuing official — distinct from institutional jurisdiction */
+  competence: DimensionResult;
   form: DimensionResult;
   cause: DimensionResult;
   subjectMatter: DimensionResult;
   purpose: DimensionResult;
+
+  // ── AI / Digital Decision Pillars (10) ────────────────────────────
   humanWill: DimensionResult;
   digitalWillFormation: DimensionResult;
   algorithmicWeight: DimensionResult;
@@ -47,6 +59,12 @@ export interface AdminDecisionBriefData {
   explainability: DimensionResult;
   humanOversight: DimensionResult;
   judicialReviewReadiness: DimensionResult;
+  /** Whether the decision measure is proportionate to its stated objective */
+  proportionality: DimensionResult;
+  /** Adequate disclosure of reasoning and process to affected parties */
+  transparency: DimensionResult;
+  /** Existence of an identifiable human decision-maker who can be held liable */
+  accountability: DimensionResult;
 
   // Top-level brief fields
   legalityScore: number;
@@ -98,21 +116,27 @@ export interface AdminDecisionBriefData {
   citations?: unknown[];
 }
 
-// ─── Dimension weights ─────────────────────────────────────────────────────────
+// ─── Pillar weights ────────────────────────────────────────────────────────────
 
 const DIMENSION_WEIGHTS: Record<string, number> = {
-  jurisdiction:          20,
-  cause:                 15,
-  form:                  10,
-  subjectMatter:         10,
-  purpose:               10,
-  humanWill:              8,
-  digitalWillFormation:   5,
-  algorithmicWeight:      5,
-  algorithmicBias:        5,
-  explainability:         4,
-  humanOversight:         4,
+  // Traditional (6) — sum: 55
+  jurisdiction:           14,
+  competence:              8,
+  form:                    7,
+  cause:                  12,
+  subjectMatter:           7,
+  purpose:                 7,
+  // AI / Digital (10) — sum: 45
+  humanWill:               7,
+  digitalWillFormation:    5,
+  algorithmicWeight:       5,
+  algorithmicBias:         4,
+  explainability:          4,
+  humanOversight:          4,
   judicialReviewReadiness: 4,
+  proportionality:         5,
+  transparency:            4,
+  accountability:          3,
 };
 
 export const DIMENSION_KEYS = Object.keys(DIMENSION_WEIGHTS) as Array<keyof typeof DIMENSION_WEIGHTS>;
@@ -125,7 +149,6 @@ export function computeLegalityScore(dims: Record<string, DimensionResult>): num
     const dim = dims[key];
     if (!dim) continue;
     const weight = DIMENSION_WEIGHTS[key] ?? 0;
-    // Use the dimension's own score (0–100), weighted
     weighted += (dim.score / 100) * weight;
   }
   return Math.round(Math.max(0, Math.min(100, weighted)));
@@ -136,10 +159,8 @@ export function computeRiskScore(
   inherentRiskLevel: string,
   legalityScore: number,
 ): number {
-  // Base risk from legality inversion
   const base = 100 - legalityScore;
 
-  // Penalty for each non-compliant dimension (weighted by dimension importance)
   let penalty = 0;
   for (const key of DIMENSION_KEYS) {
     const dim = dims[key];
@@ -147,11 +168,9 @@ export function computeRiskScore(
     const weight = DIMENSION_WEIGHTS[key] ?? 0;
     if (dim.status === "non-compliant") penalty += weight * 0.5;
     else if (dim.status === "partial") penalty += weight * 0.15;
-    // Missing requirements add fractional penalty
     penalty += dim.missingRequirements.length * 0.8;
   }
 
-  // Inherent risk level multiplier
   const multipliers: Record<string, number> = {
     low: 0.7,
     medium: 1.0,
@@ -185,14 +204,12 @@ export function validateAdminBrief(r: unknown): string | null {
   if (typeof r !== "object" || r === null) return "Response is not an object";
   const obj = r as Record<string, unknown>;
 
-  // Check all 12 dimensions exist and are valid
   for (const dim of REQUIRED_DIMENSIONS) {
     const d = obj[dim];
     if (typeof d !== "object" || d === null) return `Missing dimension: ${dim}`;
     const dObj = d as Record<string, unknown>;
     if (!VALID_STATUSES.has(dObj.status as string)) return `Invalid status in dimension ${dim}: ${dObj.status}`;
     if (typeof dObj.score !== "number") return `Missing numeric score in dimension: ${dim}`;
-    // Enforce score bounds 0–100
     if ((dObj.score as number) < 0 || (dObj.score as number) > 100)
       return `Score out of range in dimension ${dim}: ${dObj.score}`;
     if (typeof dObj.explanationAr !== "string" || !(dObj.explanationAr as string).length)
@@ -203,7 +220,6 @@ export function validateAdminBrief(r: unknown): string | null {
     if (!Array.isArray(dObj.applicableLaw)) return `Missing applicableLaw array in dimension: ${dim}`;
   }
 
-  // Check top-level required fields
   if (!VALID_CAN_ISSUE.has(obj.canIssueToday as string)) return `Invalid canIssueToday: ${obj.canIssueToday}`;
   if (typeof obj.canIssueTodayRationale !== "string" || !(obj.canIssueTodayRationale as string).length)
     return "Missing canIssueTodayRationale";
@@ -220,24 +236,14 @@ export function validateAdminBrief(r: unknown): string | null {
 
 // ─── Prompt builder ────────────────────────────────────────────────────────────
 
-// ─── Role context for prompt injection ────────────────────────────────────────
-
 export interface RolePromptContext {
-  /** Role key, e.g. "minister" */
   roleKey: string;
-  /** Arabic role title */
   titleAr: string;
-  /** English role title */
   titleEn: string;
-  /** Competence ceiling key */
   competenceCeiling: string;
-  /** Nature of involvement sentence (from getRoleInvolvementContext) */
   involvementAr: string;
-  /** Legal basis grounding this role's authority */
   legalBasisAr: string;
-  /** Whether this role is challenging/appealing (shifts analysis to rights-focused) */
   isChallenging: boolean;
-  /** Whether this role is judicially reviewing (shifts analysis to JR readiness) */
   isJudicialReview: boolean;
 }
 
@@ -251,10 +257,7 @@ export function buildEvaluatorPrompt(params: {
   applicableLaws: Array<{ lawAr: string; referenceNumber: string; articles?: string[] }>;
   answers: Record<string, string>;
   ragContext: string;
-  /** Phase 2: optional role context block for role-specific analysis framing */
   roleContext?: RolePromptContext;
-  /** Phase 4: jurisdiction-specific legal framework context from the jurisdiction plugin.
-   *  When provided, replaces the default UAE legal framework section. */
   jurisdictionContext?: string;
 }): { systemPrompt: string; userPrompt: string } {
   const { role, roleAr, decisionTypeAr, decisionTypeEn, jurisdiction, inherentRiskLevel, applicableLaws, answers, ragContext, roleContext, jurisdictionContext } = params;
@@ -267,7 +270,6 @@ export function buildEvaluatorPrompt(params: {
     .map(([k, v]) => `- ${k}: ${v}`)
     .join("\n");
 
-  // ── Role-specific analysis framing block ───────────────────────────────────
   let roleFramingBlock = "";
   if (roleContext) {
     const { titleAr, titleEn, involvementAr, legalBasisAr, isChallenging, isJudicialReview } = roleContext;
@@ -301,31 +303,56 @@ ${isChallenging ? `
 
   const expertIntro = jurisdictionContext
     ? `أنت خبير قانوني متخصص في القانون الإداري المقارن ونظرية الشامسي للقرارات الإدارية.
-مهمتك: تقييم القرار الإداري المعروض عبر اثني عشر بُعداً قانونياً وفق نظرية الشامسي، مع تطبيق الإطار القانوني الخاص بالنظام القانوني المحدد في سياق النظام القانوني أدناه.`
+مهمتك: تقييم القرار الإداري المعروض عبر ستة عشر عموداً قانونياً وفق نظرية الشامسي، مع تطبيق الإطار القانوني الخاص بالنظام القانوني المحدد في سياق النظام القانوني أدناه.`
     : `أنت خبير قانوني متخصص في القانون الإداري الإماراتي ونظرية الشامسي للقرارات الإدارية.
-مهمتك: تقييم القرار الإداري المعروض عبر اثني عشر بُعداً قانونياً وفق نظرية الشامسي، وإصدار تقرير موضوعي ودقيق.`;
+مهمتك: تقييم القرار الإداري المعروض عبر ستة عشر عموداً قانونياً وفق نظرية الشامسي، وإصدار تقرير موضوعي ودقيق.`;
 
   const systemPrompt = `${expertIntro}
 ${roleFramingBlock}
-الأبعاد الاثنا عشر لنظرية الشامسي:
-1. الاختصاص (Jurisdiction / Competence) — هل الجهة المُصدِرة تملك الصلاحية القانونية؟
-2. الشكل (Form) — هل القرار مستوفٍ للشكل القانوني المطلوب (كتابة، توقيع، تسبيب، تبليغ)؟
-3. السبب (Cause) — هل ثمة واقعة أو حالة قانونية مشروعة تسوّغ القرار؟
-4. المحل (Subject Matter) — هل موضوع القرار مشروع وممكن وغير مخالف للنظام العام؟
-5. الغاية (Purpose) — هل القرار يستهدف المصلحة العامة وليس أغراضاً شخصية؟
-6. الإرادة الإنسانية (Human Will) — هل القرار صادر عن إرادة إنسانية حرة وواعية؟
-7. تكوين الإرادة الرقمية (Digital Will Formation) — هل الأنظمة الرقمية المستخدمة معتمدة قانونياً؟
-8. الوزن القانوني الخوارزمي (Algorithmic Legal Weight) — ما مقدار تأثير التوصية الخوارزمية على القرار؟
-9. التحيز الخوارزمي المشروع (Legitimate Algorithmic Bias) — هل الخوارزمية خضعت للتقييم والمراجعة؟
-10. قابلية التفسير (Explainability) — هل يمكن شرح القرار للمتأثر بوضوح؟
-11. الإشراف البشري (Human Oversight) — هل ثمة رقابة بشرية كافية على تنفيذ القرار؟
-12. الجاهزية للمراجعة القضائية (Judicial Review Readiness) — هل القرار قادر على الصمود أمام الرقابة القضائية؟
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+الأعمدة التقليدية للقانون الإداري (6 أعمدة):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. الاختصاص المؤسسي (Jurisdiction) — هل الجهة المُصدِرة تملك الصلاحية القانونية لإصدار هذا النوع من القرارات؟
+2. أهلية المُصدِر (Competence) — هل الموظف/المسؤول الموقِّع على القرار يملك الأهلية القانونية والمستوى الوظيفي المطلوب؟ (هذا الركن مستقل عن الاختصاص المؤسسي)
+3. الشكل (Form) — هل القرار مستوفٍ للشكل القانوني المطلوب (كتابة، توقيع، تسبيب، تبليغ)؟
+4. السبب (Cause) — هل ثمة واقعة أو حالة قانونية مشروعة تسوّغ القرار؟
+5. المحل (Subject Matter) — هل موضوع القرار مشروع وممكن وغير مخالف للنظام العام؟
+6. الغاية (Purpose) — هل القرار يستهدف المصلحة العامة وليس أغراضاً شخصية؟
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+أعمدة القرارات الرقمية / الذكاء الاصطناعي (10 أعمدة):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+7.  الإرادة الإنسانية (Human Will) — هل القرار صادر عن إرادة إنسانية حرة وواعية؟
+8.  تكوين الإرادة الرقمية (Digital Will Formation) — هل الأنظمة الرقمية المستخدمة معتمدة قانونياً وفق المرسوم بقانون اتحادي 21/2021؟
+9.  الوزن القانوني الخوارزمي (Algorithmic Legal Weight) — ما مقدار تأثير التوصية الخوارزمية على القرار؟
+10. التحيز الخوارزمي (Algorithmic Bias) — هل الخوارزمية خضعت للتقييم وفحص التحيز والمراجعة الدورية؟
+11. قابلية التفسير (Explainability) — هل يمكن شرح القرار للمتأثر بوضوح وفق حق الاطلاع؟
+12. الإشراف البشري (Human Oversight) — هل ثمة رقابة بشرية كافية على عملية اتخاذ القرار وتنفيذه؟
+13. الجاهزية للمراجعة القضائية (Judicial Review Readiness) — هل القرار موثق بما يكفي للصمود أمام الطعن القضائي؟
+14. التناسب (Proportionality) — هل الإجراء الإداري متناسب مع الهدف المُعلن ولا يتجاوز ما هو ضروري لتحقيق الغرض؟
+15. الشفافية (Transparency) — هل تم الإفصاح بشكل كافٍ عن أسباب القرار وعملية صنعه للأطراف المتأثرة؟
+16. المساءلة (Accountability) — هل ثمة إنسان مسؤول ومحدد الهوية يمكن مساءلته قانونياً وإدارياً عن هذا القرار؟
 
 ${jurisdictionContext
   ? `${jurisdictionContext}\n\nالمراجع القانونية الخاصة بهذا القرار:\n${lawsList}`
   : `القوانين الإماراتية المرجعية لهذا القرار:\n${lawsList}`}
 
 ${ragContext ? `السياق القانوني من قاعدة البيانات:\n${ragContext}` : "لا توجد مصادر إضافية في قاعدة البيانات."}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+قواعد توثيق المصادر — MANDATORY AUTHORITY LABELLING:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+لكل ركن من الأركان الستة عشر، يجب أن تحتوي قائمة applicableLaw على مصدر قانوني واحد على الأقل مُصنَّف بإحدى العلامتين:
+• [UAE Binding] — للمصادر الإماراتية الملزِمة (الدساتير، المراسيم بقوانين، القرارات الاتحادية، أحكام المحاكم الإماراتية)
+• [Comparative Persuasive] — للمصادر المقارنة الاسترشادية (مبادئ مجلس الدولة الفرنسي، الفقه الإداري المقارن، أحكام محاكم أجنبية)
+أي ركن بدون مصدر مُصنَّف يُعدّ تقييماً منقوصاً.
+
+مثال صحيح:
+"applicableLaw": [
+  "المادة 11 من المرسوم بقانون اتحادي رقم 21 لسنة 2021 [UAE Binding]",
+  "مبدأ التناسب في قرارات مجلس الدولة الفرنسي [Comparative Persuasive]"
+]
 
 قواعد الإجابة:
 - أجب حصراً بـJSON دقيق ومكتمل وفق الهيكل المحدد أدناه، مسبوقاً بتفكير داخلي موجز بين علامات <think></think>
@@ -345,8 +372,9 @@ ${ragContext ? `السياق القانوني من قاعدة البيانات:\
     "explanationAr": "...",
     "explanationEn": "...",
     "missingRequirements": ["..."],
-    "applicableLaw": ["نص المادة القانونية"]
+    "applicableLaw": ["النص القانوني [UAE Binding]"]
   },
+  "competence": { ... },
   "form": { ... },
   "cause": { ... },
   "subjectMatter": { ... },
@@ -358,6 +386,9 @@ ${ragContext ? `السياق القانوني من قاعدة البيانات:\
   "explainability": { ... },
   "humanOversight": { ... },
   "judicialReviewReadiness": { ... },
+  "proportionality": { ... },
+  "transparency": { ... },
+  "accountability": { ... },
   "canIssueToday": "yes|no|conditional",
   "canIssueTodayRationale": "إجابة مباشرة في 2-3 جمل",
   "governmentAuthority": {
@@ -366,7 +397,7 @@ ${ragContext ? `السياق القانوني من قاعدة البيانات:\
     "department": "...",
     "website": "https://... أو null",
     "phone": "... أو null",
-    "competenceBasis": "النص القانوني الذي يمنح هذه الجهة الصلاحية"
+    "competenceBasis": "النص القانوني الذي يمنح هذه الجهة الصلاحية [UAE Binding]"
   },
   "applicableLegislation": [
     {
@@ -412,7 +443,119 @@ ${ragContext ? `السياق القانوني من قاعدة البيانات:\
 إجابات الاستبيان:
 ${answersText}
 
-قدّم التقييم الإداري الشامل وفق نظرية الشامسي الاثني عشر أبعاداً${roleContext?.isChallenging ? " من منظور حقوق المتأثر بالقرار" : roleContext?.isJudicialReview ? " من منظور الرقابة القضائية" : ""}.`;
+قدّم التقييم الإداري الشامل وفق نظرية الشامسي الستة عشر عموداً${roleContext?.isChallenging ? " من منظور حقوق المتأثر بالقرار" : roleContext?.isJudicialReview ? " من منظور الرقابة القضائية" : ""}.`;
+
+  return { systemPrompt, userPrompt };
+}
+
+// ─── ADKG Decision Prompt Builder ─────────────────────────────────────────────
+// Builds the evaluator prompt for a stored ADKG decision (content-based, not interview-based).
+
+export function buildAdkgEvaluatorPrompt(params: {
+  decisionNumber: string;
+  titleAr: string;
+  titleEn: string;
+  issuerOrg: string | null | undefined;
+  issuerOrgAr: string | null | undefined;
+  bodyAr: string;
+  bodyEn: string;
+  linkedAuthorities: Array<{
+    titleAr: string | null | undefined;
+    titleEn: string | null | undefined;
+    linkType: string;
+    authorityClass: string;
+    linkedEntityRef: string | null | undefined;
+  }>;
+  ragContext: string;
+}): { systemPrompt: string; userPrompt: string } {
+  const { decisionNumber, titleAr, titleEn, issuerOrg, issuerOrgAr, bodyAr, bodyEn, linkedAuthorities, ragContext } = params;
+
+  const authoritiesList = linkedAuthorities.length > 0
+    ? linkedAuthorities
+        .map((a) => `• ${a.titleAr ?? a.titleEn ?? a.linkedEntityRef ?? "—"} (${a.linkType}) [${a.authorityClass}]`)
+        .join("\n")
+    : "لا توجد سلطات مستشهد بها مسجّلة.";
+
+  const systemPrompt = `أنت خبير قانوني متخصص في القانون الإداري الإماراتي ونظرية الشامسي الستة عشر عموداً.
+مهمتك: تقييم القرار الإداري المُخزَّن في قاعدة بيانات المعرفة الإدارية (ADKG) عبر الستة عشر عموداً القانونية، واستخراج نتائج موضوعية مبنية على النص الفعلي للقرار والمصادر المرتبطة به.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+الأعمدة التقليدية للقانون الإداري (6 أعمدة):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. الاختصاص المؤسسي (Jurisdiction) — هل الجهة المُصدِرة تملك الصلاحية القانونية؟
+2. أهلية المُصدِر (Competence) — هل الموظف الموقِّع يملك الأهلية القانونية والمستوى الوظيفي المطلوب؟
+3. الشكل (Form) — هل القرار مستوفٍ للشكل القانوني (كتابة، توقيع، تسبيب، تبليغ)؟
+4. السبب (Cause) — هل ثمة سبب قانوني مشروع يسوّغ القرار؟
+5. المحل (Subject Matter) — هل موضوع القرار مشروع وممكن؟
+6. الغاية (Purpose) — هل القرار يستهدف المصلحة العامة؟
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+أعمدة القرارات الرقمية (10 أعمدة):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+7.  الإرادة الإنسانية (Human Will) — هل القرار صادر عن إرادة إنسانية حرة؟
+8.  تكوين الإرادة الرقمية (Digital Will Formation) — هل الأنظمة الرقمية معتمدة قانونياً؟
+9.  الوزن القانوني الخوارزمي (Algorithmic Legal Weight) — ما مدى تأثير التوصية الخوارزمية؟
+10. التحيز الخوارزمي (Algorithmic Bias) — هل خضع الذكاء الاصطناعي للتقييم والمراجعة؟
+11. قابلية التفسير (Explainability) — هل القرار قابل للشرح للمتأثرين؟
+12. الإشراف البشري (Human Oversight) — هل توجد رقابة بشرية كافية؟
+13. الجاهزية للمراجعة القضائية (Judicial Review Readiness) — هل القرار موثق بشكل كافٍ؟
+14. التناسب (Proportionality) — هل الإجراء متناسب مع الهدف المُعلن؟
+15. الشفافية (Transparency) — هل أُفصح عن الأسباب للأطراف المتأثرة؟
+16. المساءلة (Accountability) — هل ثمة إنسان مسؤول يمكن مساءلته قانونياً؟
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+قاعدة تصنيف المصادر الإلزامية:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+لكل ركن، يجب أن تتضمن قائمة applicableLaw مصدراً واحداً على الأقل مُصنَّفاً بإحدى العلامتين:
+• [UAE Binding]  — للمصادر الإماراتية الملزِمة (مراسيم، قرارات، أحكام محاكم إماراتية)
+• [Comparative Persuasive] — للمصادر المقارنة الاسترشادية (مجلس الدولة الفرنسي، فقه مقارن)
+أي ركن بدون تصنيف مصدر = تقييم منقوص.
+
+${ragContext ? `السياق القانوني من قاعدة البيانات:\n${ragContext}` : "لا توجد مصادر إضافية."}
+
+الهيكل الإلزامي للإجابة (JSON فقط، مسبوقاً بـ <think></think>):
+{
+  "jurisdiction": { "status": "compliant|partial|non-compliant|unknown", "score": 0-100, "explanationAr": "...", "explanationEn": "...", "missingRequirements": [], "applicableLaw": ["... [UAE Binding]"] },
+  "competence": { ... },
+  "form": { ... },
+  "cause": { ... },
+  "subjectMatter": { ... },
+  "purpose": { ... },
+  "humanWill": { ... },
+  "digitalWillFormation": { ... },
+  "algorithmicWeight": { ... },
+  "algorithmicBias": { ... },
+  "explainability": { ... },
+  "humanOversight": { ... },
+  "judicialReviewReadiness": { ... },
+  "proportionality": { ... },
+  "transparency": { ... },
+  "accountability": { ... },
+  "canIssueToday": "yes|no|conditional",
+  "canIssueTodayRationale": "...",
+  "governmentAuthority": { "nameAr": "...", "nameEn": "...", "department": "...", "website": null, "phone": null, "competenceBasis": "... [UAE Binding]" },
+  "applicableLegislation": [{ "token": null, "articleAr": "...", "relevanceAr": "..." }],
+  "courtPrecedents": null,
+  "requiredDocuments": [{ "nameAr": "...", "descriptionAr": "...", "mandatory": true }],
+  "timeline": { "steps": [{ "step": 1, "titleAr": "...", "duration": "...", "actor": "..." }] },
+  "appealStrategy": { "routes": [{ "routeAr": "...", "deadlineAr": "...", "procedureAr": "..." }], "recommendationAr": "..." },
+  "algorithmExplanation": "...",
+  "humanInterventionPoints": ["..."]
+}`;
+
+  const userPrompt = `القرار الإداري للتقييم:
+رقم القرار: ${decisionNumber}
+العنوان: ${titleAr}
+Title (EN): ${titleEn}
+الجهة المُصدِرة: ${issuerOrgAr ?? issuerOrg ?? "غير محدد"}
+
+نص القرار:
+${bodyAr || bodyEn || "(لا يوجد نص)"}
+
+السلطات المستشهد بها المرتبطة بهذا القرار:
+${authoritiesList}
+
+قدّم التقييم الشامل للقرار وفق نظرية الشامسي الستة عشر عموداً. إذا كان نص القرار غير مكتمل، اعتمد على المعطيات المتاحة وحدد الأركان "unknown" حيث لا معطيات كافية.`;
 
   return { systemPrompt, userPrompt };
 }

@@ -470,20 +470,24 @@ router.post("/admin-os/assess", requireSupervisorOrOwner, async (req, res): Prom
     return;
   }
 
-  // Extract dimension results for score computation
+  // Extract dimension results for score computation (16 pillars)
   const dims: Record<string, DimensionResult> = {
-    jurisdiction:           brief.jurisdiction,
-    form:                   brief.form,
-    cause:                  brief.cause,
-    subjectMatter:          brief.subjectMatter,
-    purpose:                brief.purpose,
-    humanWill:              brief.humanWill,
-    digitalWillFormation:   brief.digitalWillFormation,
-    algorithmicWeight:      brief.algorithmicWeight,
-    algorithmicBias:        brief.algorithmicBias,
-    explainability:         brief.explainability,
-    humanOversight:         brief.humanOversight,
+    jurisdiction:            brief.jurisdiction,
+    competence:              brief.competence,
+    form:                    brief.form,
+    cause:                   brief.cause,
+    subjectMatter:           brief.subjectMatter,
+    purpose:                 brief.purpose,
+    humanWill:               brief.humanWill,
+    digitalWillFormation:    brief.digitalWillFormation,
+    algorithmicWeight:       brief.algorithmicWeight,
+    algorithmicBias:         brief.algorithmicBias,
+    explainability:          brief.explainability,
+    humanOversight:          brief.humanOversight,
     judicialReviewReadiness: brief.judicialReviewReadiness,
+    proportionality:         brief.proportionality,
+    transparency:            brief.transparency,
+    accountability:          brief.accountability,
   };
 
   const legalityScore = computeLegalityScore(dims);

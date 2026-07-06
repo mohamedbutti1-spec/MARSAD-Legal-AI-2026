@@ -12,18 +12,27 @@ import {
 } from '@/components/ui/dialog';
 import {
   ChevronLeft, Loader2, Download, Network, Link2,
-  Clock, BarChart3, FileText, Plus, Trash2,
+  Clock, BarChart3, FileText, Plus, Trash2, RefreshCw, ShieldCheck,
 } from 'lucide-react';
 import { DecisionGraph } from '@/components/adkg/decision-graph';
 import { DecisionTimeline } from '@/components/adkg/decision-timeline';
 import { AddLinkDialog, type LinkFormData } from '@/components/adkg/add-link-dialog';
+import {
+  TRADITIONAL_PILLARS,
+  AI_DECISION_PILLARS,
+  PILLAR_STATUS_COLORS,
+  AUTHORITY_LABEL_COLORS,
+  type PillarMeta,
+} from '@/components/adkg/pillar-constants';
 
 interface Decision {
   id: number; decisionNumber: string; title: string; titleAr: string;
   issuerOrg?: string | null; issuerOrgAr?: string | null;
   subject?: string | null; subjectAr?: string | null;
   status: string; issuedDate?: string | null; effectiveDate?: string | null; expiryDate?: string | null;
-  content: Record<string, unknown>; citedAuthorities: unknown[];
+  content: Record<string, unknown>;
+  citedAuthorities: unknown[];
+  metadata: Record<string, unknown>;
 }
 interface Link {
   id: number; linkType: string; linkedEntityType: string;
@@ -39,8 +48,24 @@ interface GraphData {
   nodes: Array<{ id: string; type: string; label: string; labelAr: string; status?: string; authorityClass?: string; linkType?: string }>;
   edges: Array<{ source: string; target: string; type: string; label: string }>;
 }
+interface PillarResult {
+  status: 'compliant' | 'partial' | 'non-compliant' | 'unknown';
+  score: number;
+  explanationAr: string;
+  explanationEn: string;
+  missingRequirements: string[];
+  applicableLaw: string[];
+}
+interface PillarAnalysis {
+  legalityScore: number;
+  riskScore: number;
+  canIssueToday: 'yes' | 'no' | 'conditional';
+  canIssueTodayRationale: string;
+  analyzedAt?: string;
+  [key: string]: unknown;
+}
 
-type TabId = 'overview' | 'relationships' | 'timeline' | 'graph';
+type TabId = 'overview' | 'relationships' | 'timeline' | 'graph' | 'analysis';
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; labelAr: string; labelEn: string }> = {
   draft:{ bg:'#f1f5f9',text:'#475569',labelAr:'مسودة',labelEn:'Draft' },
@@ -53,11 +78,114 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; labelAr: string;
   executed:{ bg:'#eff6ff',text:'#1e40af',labelAr:'منفّذ',labelEn:'Executed' },
 };
 
-const AUTH_COLORS: Record<string, string> = { binding:'bg-green-100 text-green-800', persuasive:'bg-blue-100 text-blue-800', non_binding:'bg-gray-100 text-gray-700' };
-const LINK_LABELS: Record<string, string> = { legislation:'تشريع', exec_regulation:'لائحة تنفيذية', cabinet_decision:'قرار مجلس الوزراء', ministerial_decision:'قرار وزاري', case_law:'قضاء', legal_principle:'مبدأ قانوني', legal_opinion:'رأي قانوني', research_project:'مشروع بحثي', other_decision:'قرار آخر', other:'أخرى' };
+const AUTH_COLORS: Record<string, string> = {
+  binding:'bg-green-100 text-green-800',
+  persuasive:'bg-blue-100 text-blue-800',
+  non_binding:'bg-gray-100 text-gray-700',
+};
+const LINK_LABELS: Record<string, string> = {
+  legislation:'تشريع', exec_regulation:'لائحة تنفيذية', cabinet_decision:'قرار مجلس الوزراء',
+  ministerial_decision:'قرار وزاري', case_law:'قضاء', legal_principle:'مبدأ قانوني',
+  legal_opinion:'رأي قانوني', research_project:'مشروع بحثي', other_decision:'قرار آخر', other:'أخرى',
+};
 
 const EVENT_TYPES = ['draft','issued','challenged','suspended','amended','revoked','annulled','executed','appeal_filed','appeal_dismissed','appeal_upheld','court_referral','publication','custom'];
 const REL_TYPES = ['amends','challenged_by','suspended_by','revoked_by','annulled_by','executes','references','replaces','implements','appeals'];
+
+// ── Pillar analysis sub-components ───────────────────────────────────────────
+
+function ScoreBar({ score, colorClass }: { score: number; colorClass: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+        <div className={`h-full rounded-full transition-all ${colorClass}`} style={{ width: `${score}%` }} />
+      </div>
+      <span className="text-xs font-mono text-gray-600 w-8 text-right">{score}</span>
+    </div>
+  );
+}
+
+function AuthorityLabel({ text }: { text: string }) {
+  for (const [tag, colors] of Object.entries(AUTHORITY_LABEL_COLORS)) {
+    if (text.includes(tag)) {
+      return (
+        <span className="inline-flex items-center text-[10px] font-semibold px-1.5 py-0.5 rounded border"
+          style={{ background: colors.bg, color: colors.text }}>
+          {tag}
+        </span>
+      );
+    }
+  }
+  return null;
+}
+
+function PillarCard({ pillar, result, t }: { pillar: PillarMeta; result: PillarResult; t: (ar: string, en: string) => string }) {
+  const [expanded, setExpanded] = useState(false);
+  const style = PILLAR_STATUS_COLORS[result.status] ?? PILLAR_STATUS_COLORS.unknown;
+  const barColor = result.status === 'compliant' ? 'bg-green-500'
+    : result.status === 'partial' ? 'bg-amber-400'
+    : result.status === 'non-compliant' ? 'bg-red-500'
+    : 'bg-gray-300';
+
+  return (
+    <div className="rounded-lg border overflow-hidden" style={{ borderColor: style.border }}>
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full px-4 py-3 flex items-start gap-3 text-right hover:bg-gray-50/50 transition-colors"
+      >
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <span className="text-sm font-semibold text-gray-800">{t(pillar.labelAr, pillar.labelEn)}</span>
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded border"
+              style={{ background: style.bg, color: style.text, borderColor: style.border }}>
+              {t(style.labelAr, style.label)}
+            </span>
+            <span className="text-[10px] text-gray-400">{pillar.weight}%</span>
+          </div>
+          <ScoreBar score={result.score} colorClass={barColor} />
+        </div>
+        <span className="text-gray-400 text-xs mt-1 shrink-0">{expanded ? '▲' : '▼'}</span>
+      </button>
+
+      {expanded && (
+        <div className="px-4 pb-4 space-y-3 border-t bg-white">
+          <p className="text-sm text-gray-700 mt-3 leading-relaxed" dir="rtl">{result.explanationAr}</p>
+          <p className="text-xs text-gray-500 italic">{result.explanationEn}</p>
+
+          {result.applicableLaw.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-gray-500 mb-1.5">{t('الأسس القانونية', 'Legal Basis')}</p>
+              <ul className="space-y-1">
+                {result.applicableLaw.map((law, i) => (
+                  <li key={i} className="text-xs text-gray-700 flex items-start gap-2">
+                    <span className="text-blue-400 shrink-0 mt-0.5">•</span>
+                    <span className="flex-1">{law.replace(/\[(UAE Binding|Comparative Persuasive)\]/g, '').trim()}</span>
+                    <AuthorityLabel text={law} />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {result.missingRequirements.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-red-600 mb-1.5">{t('متطلبات مفقودة', 'Missing Requirements')}</p>
+              <ul className="space-y-1">
+                {result.missingRequirements.map((req, i) => (
+                  <li key={i} className="text-xs text-red-700 flex items-start gap-1.5">
+                    <span className="shrink-0 mt-0.5">⚠</span>{req}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
 
 export default function AdkgDetail() {
   const t = useT();
@@ -94,6 +222,27 @@ export default function AdkgDetail() {
     queryFn: () => apiFetch(`/api/adkg/decisions/${decisionId}/graph`).then((r) => r.json()) as Promise<GraphData>,
     enabled: activeTab === 'graph' || activeTab === 'relationships',
   });
+
+  const { data: analysisData, refetch: refetchAnalysis } = useQuery({
+    queryKey: ['adkg.analysis', decisionId],
+    queryFn: () => apiFetch(`/api/adkg/decisions/${decisionId}/analyze`).then((r) => r.json()) as Promise<{ analysis: PillarAnalysis | null }>,
+    enabled: activeTab === 'analysis',
+  });
+
+  const [analyzing, setAnalyzing] = useState(false);
+
+  async function runAnalysis() {
+    setAnalyzing(true);
+    try {
+      const r = await apiFetch(`/api/adkg/decisions/${decisionId}/analyze`, { method: 'POST' });
+      if (r.ok) {
+        await refetchAnalysis();
+        qc.invalidateQueries({ queryKey: ['adkg.decision', decisionId] });
+      }
+    } finally {
+      setAnalyzing(false);
+    }
+  }
 
   const addLinkMut = useMutation({
     mutationFn: (body: LinkFormData) => apiFetch(`/api/adkg/decisions/${decisionId}/links`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then((r) => r.json()),
@@ -150,11 +299,15 @@ export default function AdkgDetail() {
   const authorities = decision.citedAuthorities as Array<Record<string, unknown>>;
   const body = (decision.content.bodyAr as string) || (decision.content.body as string) || '';
 
+  // Pillar analysis is stored in metadata.pillarAnalysis (not citedAuthorities)
+  const cachedAnalysis: PillarAnalysis | undefined = decision.metadata?.pillarAnalysis as PillarAnalysis | undefined;
+
   const TABS: { id: TabId; labelAr: string; labelEn: string; icon: React.ReactNode }[] = [
     { id: 'overview',       labelAr: 'نظرة عامة',     labelEn: 'Overview',       icon: <FileText className="w-4 h-4" /> },
     { id: 'relationships',  labelAr: 'العلاقات',      labelEn: 'Relationships',   icon: <Link2 className="w-4 h-4" /> },
     { id: 'timeline',       labelAr: 'الجدول الزمني', labelEn: 'Timeline',        icon: <Clock className="w-4 h-4" /> },
     { id: 'graph',          labelAr: 'الرسم البياني', labelEn: 'Graph',           icon: <Network className="w-4 h-4" /> },
+    { id: 'analysis',       labelAr: 'تحليل الأعمدة', labelEn: 'Pillar Analysis', icon: <ShieldCheck className="w-4 h-4" /> },
   ];
 
   return (
@@ -174,6 +327,19 @@ export default function AdkgDetail() {
                 <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: status.bg, color: status.text }}>
                   {t(status.labelAr, status.labelEn)}
                 </span>
+                {/* Score badge if analysis exists */}
+                {cachedAnalysis && (
+                  <button
+                    onClick={() => setActiveTab('analysis')}
+                    className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-white/15 hover:bg-white/25 transition-colors border border-white/20"
+                    title={t('انتقل إلى تحليل الأعمدة', 'Go to Pillar Analysis')}
+                  >
+                    <ShieldCheck className="w-3 h-3" />
+                    <span className="text-green-300">{t('المشروعية', 'Legality')} {cachedAnalysis.legalityScore}</span>
+                    <span className="text-white/40">|</span>
+                    <span className="text-amber-300">{t('الخطر', 'Risk')} {cachedAnalysis.riskScore}</span>
+                  </button>
+                )}
               </div>
               <h1 className="text-xl font-bold leading-snug">{decision.titleAr}</h1>
               <p className="text-sm opacity-70 mt-0.5">{decision.title}</p>
@@ -205,6 +371,9 @@ export default function AdkgDetail() {
               {tab.icon}{t(tab.labelAr, tab.labelEn)}
               {tab.id === 'relationships' && links.length > 0 && <span className="text-xs bg-blue-100 text-blue-700 rounded-full px-1.5 py-0.5">{links.length}</span>}
               {tab.id === 'timeline' && timeline.length > 0 && <span className="text-xs bg-blue-100 text-blue-700 rounded-full px-1.5 py-0.5">{timeline.length}</span>}
+              {tab.id === 'analysis' && cachedAnalysis && (
+                <span className="text-xs bg-green-100 text-green-700 rounded-full px-1.5 py-0.5">✓</span>
+              )}
             </button>
           ))}
         </div>
@@ -222,16 +391,16 @@ export default function AdkgDetail() {
                 {t('لا يوجد نص محتوى بعد', 'No body content yet')}
               </div>
             )}
-            {authorities.length > 0 && (
+            {Array.isArray(authorities) && authorities.length > 0 && (
               <div className="rounded-lg border p-4">
                 <h3 className="text-sm font-semibold text-blue-900 mb-3">{t('مصادر الاستشهاد الآلية', 'AI-Verified Cited Authorities')}</h3>
                 <ul className="space-y-1.5">
                   {authorities.map((a, i) => {
-                    const cls = a.authorityClass as string ?? 'persuasive';
-                    const conf = typeof a.confidenceScore === 'number' ? `${Math.round(a.confidenceScore * 100)}%` : '—';
+                    const cls = (a as Record<string, unknown>).authorityClass as string ?? 'persuasive';
+                    const conf = typeof (a as Record<string, unknown>).confidenceScore === 'number' ? `${Math.round(((a as Record<string, unknown>).confidenceScore as number) * 100)}%` : '—';
                     return (
                       <li key={i} className="flex items-center gap-2 text-xs">
-                        <span className="flex-1 text-gray-800">{a.titleAr as string}</span>
+                        <span className="flex-1 text-gray-800">{(a as Record<string, unknown>).titleAr as string}</span>
                         <span className={`text-xs px-1.5 py-0.5 rounded border ${AUTH_COLORS[cls] ?? AUTH_COLORS.persuasive}`}>{cls}</span>
                         <span className="text-muted-foreground">{conf}</span>
                       </li>
@@ -331,6 +500,17 @@ export default function AdkgDetail() {
             )}
           </div>
         )}
+
+        {/* Tab: Pillar Analysis */}
+        {activeTab === 'analysis' && (
+          <PillarAnalysisTab
+            decisionId={decisionId}
+            cachedAnalysis={cachedAnalysis ?? analysisData?.analysis ?? null}
+            analyzing={analyzing}
+            onRunAnalysis={runAnalysis}
+            t={t}
+          />
+        )}
       </div>
 
       {/* Add Link Dialog */}
@@ -394,5 +574,158 @@ export default function AdkgDetail() {
         </DialogContent>
       </Dialog>
     </AppLayout>
+  );
+}
+
+// ── Pillar Analysis Tab ───────────────────────────────────────────────────────
+
+function PillarAnalysisTab({
+  decisionId,
+  cachedAnalysis,
+  analyzing,
+  onRunAnalysis,
+  t,
+}: {
+  decisionId: number;
+  cachedAnalysis: PillarAnalysis | null;
+  analyzing: boolean;
+  onRunAnalysis: () => void;
+  t: (ar: string, en: string) => string;
+}) {
+  const analysis = cachedAnalysis;
+
+  const canIssueBadge = analysis?.canIssueToday === 'yes'
+    ? { bg: '#f0fdf4', text: '#15803d', label: t('يمكن إصداره', 'Can Issue') }
+    : analysis?.canIssueToday === 'no'
+    ? { bg: '#fef2f2', text: '#991b1b', label: t('لا يمكن إصداره', 'Cannot Issue') }
+    : { bg: '#fffbeb', text: '#92400e', label: t('مشروط', 'Conditional') };
+
+  return (
+    <div className="space-y-5">
+      {/* Header / action row */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h3 className="text-sm font-semibold text-gray-800">
+            {t('تحليل الأعمدة القانونية الستة عشر', '16-Pillar Legal Analysis')}
+          </h3>
+          {analysis?.analyzedAt && (
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {t('آخر تحليل:', 'Last analyzed:')} {new Date(analysis.analyzedAt).toLocaleString()}
+            </p>
+          )}
+        </div>
+        <Button
+          onClick={onRunAnalysis}
+          disabled={analyzing}
+          className="bg-[#1e3a5f] hover:bg-[#2d5a8f] text-white gap-2"
+          size="sm"
+        >
+          {analyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+          {analyzing
+            ? t('جارٍ التحليل…', 'Analyzing…')
+            : analysis
+            ? t('إعادة التحليل', 'Re-analyze')
+            : t('تشغيل التحليل', 'Run Analysis')}
+        </Button>
+      </div>
+
+      {/* No analysis yet */}
+      {!analysis && !analyzing && (
+        <div className="rounded-xl border bg-muted/10 p-10 text-center space-y-3">
+          <ShieldCheck className="w-10 h-10 text-muted-foreground/40 mx-auto" />
+          <p className="text-sm font-medium text-gray-700">
+            {t('لم يتم تحليل هذا القرار بعد', 'This decision has not been analyzed yet')}
+          </p>
+          <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+            {t(
+              'اضغط "تشغيل التحليل" لتقييم القرار عبر الستة عشر عموداً القانونية لنظرية الشامسي.',
+              'Click "Run Analysis" to evaluate this decision across the 16 Al-Shamsi pillars.',
+            )}
+          </p>
+        </div>
+      )}
+
+      {/* Loading state */}
+      {analyzing && (
+        <div className="rounded-xl border bg-blue-50/50 p-10 text-center space-y-3">
+          <Loader2 className="w-8 h-8 text-blue-400 mx-auto animate-spin" />
+          <p className="text-sm font-medium text-gray-700">{t('جارٍ تقييم الأعمدة القانونية…', 'Evaluating legal pillars…')}</p>
+          <p className="text-xs text-muted-foreground">{t('قد يستغرق التحليل دقيقة واحدة.', 'Analysis may take about a minute.')}</p>
+        </div>
+      )}
+
+      {/* Results */}
+      {analysis && !analyzing && (
+        <>
+          {/* Score summary cards */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-lg border p-4 text-center">
+              <p className="text-xs text-muted-foreground mb-1">{t('درجة المشروعية', 'Legality Score')}</p>
+              <p className={`text-3xl font-bold ${analysis.legalityScore >= 70 ? 'text-green-600' : analysis.legalityScore >= 50 ? 'text-amber-500' : 'text-red-600'}`}>
+                {analysis.legalityScore}
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">/100</p>
+            </div>
+            <div className="rounded-lg border p-4 text-center">
+              <p className="text-xs text-muted-foreground mb-1">{t('درجة الخطر', 'Risk Score')}</p>
+              <p className={`text-3xl font-bold ${analysis.riskScore <= 30 ? 'text-green-600' : analysis.riskScore <= 60 ? 'text-amber-500' : 'text-red-600'}`}>
+                {analysis.riskScore}
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">/100</p>
+            </div>
+            <div className="rounded-lg border p-4 text-center">
+              <p className="text-xs text-muted-foreground mb-1">{t('إمكانية الإصدار', 'Can Issue?')}</p>
+              <span className="inline-block text-xs font-semibold px-2.5 py-1 rounded-full mt-1"
+                style={{ background: canIssueBadge.bg, color: canIssueBadge.text }}>
+                {canIssueBadge.label}
+              </span>
+            </div>
+          </div>
+
+          {analysis.canIssueTodayRationale && (
+            <div className="rounded-lg border p-4 bg-slate-50">
+              <p className="text-xs font-semibold text-gray-500 mb-1">{t('المبرر القانوني', 'Legal Rationale')}</p>
+              <p className="text-sm text-gray-800 leading-relaxed" dir="rtl">{analysis.canIssueTodayRationale as string}</p>
+            </div>
+          )}
+
+          {/* Traditional pillars */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-3 h-3 rounded-full bg-[#1e3a5f]" />
+              <h4 className="text-sm font-semibold text-gray-800">
+                {t('الأعمدة التقليدية للقانون الإداري', 'Traditional Administrative Law Pillars')}
+                <span className="ml-2 text-xs font-normal text-muted-foreground">(6 {t('أعمدة', 'pillars')} • 55%)</span>
+              </h4>
+            </div>
+            <div className="space-y-2">
+              {TRADITIONAL_PILLARS.map((pillar) => {
+                const result = analysis[pillar.key] as PillarResult | undefined;
+                if (!result) return null;
+                return <PillarCard key={pillar.key} pillar={pillar} result={result} t={t} />;
+              })}
+            </div>
+          </div>
+
+          {/* AI/Digital pillars */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-3 h-3 rounded-full bg-purple-600" />
+              <h4 className="text-sm font-semibold text-gray-800">
+                {t('أعمدة القرارات الرقمية والذكاء الاصطناعي', 'AI & Digital Decision Pillars')}
+                <span className="ml-2 text-xs font-normal text-muted-foreground">(10 {t('أعمدة', 'pillars')} • 45%)</span>
+              </h4>
+            </div>
+            <div className="space-y-2">
+              {AI_DECISION_PILLARS.map((pillar) => {
+                const result = analysis[pillar.key] as PillarResult | undefined;
+                if (!result) return null;
+                return <PillarCard key={pillar.key} pillar={pillar} result={result} t={t} />;
+              })}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
   );
 }
