@@ -10,6 +10,7 @@ import { eq, and } from "drizzle-orm";
 import { z } from "zod";
 import { db, libraryItemsTable, documentsTable, legalSourcesTable } from "@workspace/db";
 import { requireAnyRole } from "../middlewares/roleAuth";
+import { getUserId } from "../lib/route-helpers";
 
 // ─── Zod schemas ─────────────────────────────────────────────────────────────
 
@@ -32,12 +33,6 @@ const LibraryPatchBody = z.object({
 });
 
 const router: IRouter = Router();
-
-function getUserId(req: import("express").Request): number {
-  const h = req.headers["x-user-id"];
-  if (!h) return 1;
-  return parseInt(Array.isArray(h) ? h[0] : h);
-}
 
 router.get("/library", requireAnyRole, async (req, res): Promise<void> => {
   const uid = getUserId(req);

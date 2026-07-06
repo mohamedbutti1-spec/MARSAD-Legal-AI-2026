@@ -21,13 +21,9 @@ import {
   resolveAmendmentChain,
 } from "../kb/retrieval.js";
 import type { KbCollectionId, KbHierarchyLevel } from "../kb/types.js";
+import { getUserId } from "../lib/route-helpers.js";
 
 const router: IRouter = Router();
-
-function getUserId(req: Request): number {
-  const id = parseInt(req.headers["x-user-id"] as string, 10);
-  return Number.isFinite(id) ? id : 1;
-}
 
 // ─── GET /kb/search ───────────────────────────────────────────────────────────
 

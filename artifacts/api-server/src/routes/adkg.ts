@@ -32,17 +32,11 @@ import {
   type AdminDecisionBriefData,
   type DimensionResult,
 } from "../utils/admin-os-evaluator";
+import { getUserId } from "../lib/route-helpers.js";
 
 const router: IRouter = Router();
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function getUserId(req: Request): number {
-  const id = parseInt(req.headers["x-user-id"] as string, 10);
-  // Return -1 (impossible DB id) when header is absent/invalid so ownership
-  // queries return no rows rather than accidentally exposing user-1 data.
-  return Number.isFinite(id) ? id : -1;
-}
 
 function parseJson<T = unknown>(raw: string | null | undefined, fallback: T): T {
   if (!raw) return fallback;

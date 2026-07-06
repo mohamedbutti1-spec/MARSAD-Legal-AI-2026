@@ -22,22 +22,17 @@ import {
   verifyCustodyChain,
 } from "@workspace/db";
 import { getPermissions, ALL_ROLES } from "@workspace/db/permissions";
+import { getValidatedRole } from "../lib/route-helpers";
 
 const router: IRouter = Router();
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function getRole(req: Request): string {
-  const h = req.headers["x-user-role"];
-  const r = Array.isArray(h) ? h[0] : (h ?? "citizen");
-  return ALL_ROLES.includes(r as never) ? r : "citizen";
-}
-
 // Chain read: any role with audit-log or hash-verification access.
 // Deliberately excludes roles that only have canViewGovernanceDashboard
 // (e.g. minister, viewer) — they must not see IP addresses / device context.
 function requireCustodyAccess(req: Request, res: Response, next: NextFunction): void {
-  const perms = getPermissions(getRole(req));
+  const perms = getPermissions(getValidatedRole(req));
   if (!perms.canReadAuditLog && !perms.canRunHashVerification) {
     res.status(403).json({
       error: "Chain of Custody requires Audit Log or Hash Verification permission (internal/external auditor, owner, or supervisor)",
@@ -49,7 +44,7 @@ function requireCustodyAccess(req: Request, res: Response, next: NextFunction): 
 
 // Verify: only full hash-verification roles (external_auditor, owner).
 function requireHashVerification(req: Request, res: Response, next: NextFunction): void {
-  const perms = getPermissions(getRole(req));
+  const perms = getPermissions(getValidatedRole(req));
   if (!perms.canRunHashVerification) {
     res.status(403).json({
       error: "Hash verification requires External Auditor or Platform Owner role",
@@ -79,7 +74,7 @@ router.get("/custody/:decisionId", requireCustodyAccess, async (req, res): Promi
     if (!decision) { res.status(404).json({ error: "Decision not found" }); return; }
 
     const chain = await getDecisionCustody(id);
-    const perms = getPermissions(getRole(req));
+    const perms = getPermissions(getValidatedRole(req));
 
     // Strip HMAC signature for roles without full audit access
     const sanitised = chain.map((r) => ({
@@ -203,7 +198,7 @@ router.post("/custody/test/tamper-detect", requireCustodyAccess, async (req, res
   const id = body.decisionId;
   if (!id || isNaN(id)) { res.status(400).json({ error: "decisionId required" }); return; }
 
-  const perms = getPermissions(getRole(req));
+  const perms = getPermissions(getValidatedRole(req));
   if (!perms.canRunHashVerification && !perms.canViewGovernanceDashboard) {
     res.status(403).json({ error: "Tamper detection tests require External Auditor or Platform Owner" });
     return;
@@ -274,7 +269,7 @@ router.post("/custody/test/replay", requireCustodyAccess, async (req, res): Prom
   const id = body.decisionId;
   if (!id || isNaN(id)) { res.status(400).json({ error: "decisionId required" }); return; }
 
-  const perms = getPermissions(getRole(req));
+  const perms = getPermissions(getValidatedRole(req));
   if (!perms.canRunHashVerification && !perms.canViewGovernanceDashboard) {
     res.status(403).json({ error: "Replay verification requires External Auditor or Platform Owner" });
     return;

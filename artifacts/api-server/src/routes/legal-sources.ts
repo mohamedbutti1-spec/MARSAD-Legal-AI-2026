@@ -17,12 +17,6 @@ import { aiRouter, TaskType } from "../ai";
 
 const router: IRouter = Router();
 
-function userId(req: import("express").Request): number {
-  const h = req.headers["x-user-id"];
-  if (!h) return 1;
-  return parseInt(Array.isArray(h) ? h[0] : h);
-}
-
 // ─── List ──────────────────────────────────────────────────────────────────────
 router.get("/legal-sources", requireAnyRole, async (req, res): Promise<void> => {
   const { jurisdiction, docType, year, q, limit = "50", offset = "0" } = req.query as Record<string, string>;

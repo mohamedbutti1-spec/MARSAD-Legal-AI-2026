@@ -53,14 +53,9 @@ import {
 } from "../utils/admin-os-interview";
 import { getJurisdictionPlugin } from "../ai/jurisdictions";
 import type { InterviewModifiers } from "@workspace/db";
+import { getUserId } from "../lib/route-helpers";
 
 const router: IRouter = Router();
-
-function getUserId(req: import("express").Request): number {
-  const h = req.headers["x-user-id"];
-  if (!h) return 1;
-  return parseInt(Array.isArray(h) ? h[0] : h, 10);
-}
 
 // ─── GET /admin-os/jurisdictions ──────────────────────────────────────────────
 /**

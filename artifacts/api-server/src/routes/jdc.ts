@@ -14,16 +14,11 @@ import { requireAnyRole, requireSupervisorOrOwner } from "../middlewares/roleAut
 import { runChamberDeliberation } from "../utils/judicial-deliberation-chamber.js";
 import type { JreParties } from "../utils/judicial-reasoning-engine.js";
 import type { PanelSize } from "../utils/judicial-deliberation-chamber.js";
+import { getUserId } from "../lib/route-helpers.js";
 
 const router = Router();
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function getUserId(req: import("express").Request): number {
-  const h  = req.headers["x-user-id"];
-  const id = parseInt(Array.isArray(h) ? h[0] : h ?? "", 10);
-  return Number.isFinite(id) ? id : -1;
-}
 
 // Drizzle doesn't have a generated table for jdc_chambers (dynamic migration),
 // so we use raw sql helpers that mirror the JRE pattern.

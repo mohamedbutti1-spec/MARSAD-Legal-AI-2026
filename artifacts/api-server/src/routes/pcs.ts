@@ -21,16 +21,9 @@ import { requireAnyRole }                    from "../middlewares/roleAuth.js";
 import { findScenario }                      from "../pcs/config.js";
 import { evaluateStep, buildFinalReport }    from "../pcs/ai-evaluator.js";
 import { migratePcs }                        from "../pcs/migration.js";
+import { getUserId }                         from "../lib/route-helpers.js";
 
 const router: IRouter = Router();
-
-// ─── Auth helper (mirrors PGF pattern) ───────────────────────────────────────
-function getUserId(req: import("express").Request): number {
-  const h = req.headers["x-user-id"];
-  const v = Array.isArray(h) ? h[0] : h;
-  const n = parseInt(v ?? "0", 10);
-  return isNaN(n) ? 0 : n;
-}
 
 // ─── Lazy migration ───────────────────────────────────────────────────────────
 let migrated = false;

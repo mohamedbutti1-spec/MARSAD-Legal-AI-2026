@@ -268,6 +268,13 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           badge: 'جديد',
         },
         {
+          href: '/kb-search',
+          labelAr: 'بحث قاعدة المعرفة',
+          labelEn: 'Knowledge Base Search',
+          icon: <Search className="w-4.5 h-4.5" />,
+          show: canUseAi,
+        },
+        {
           href: '/workspace',
           labelAr: 'مساحة البحث',
           labelEn: 'Research Workspace',

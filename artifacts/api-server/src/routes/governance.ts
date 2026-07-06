@@ -23,21 +23,11 @@ import {
   recordEvidenceEvent,
 } from "@workspace/db";
 import { getPermissions, ALL_ROLES } from "@workspace/db/permissions";
+import { getUserId, getValidatedRole } from "../lib/route-helpers";
 
 const router: IRouter = Router();
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function getRole(req: Request): string {
-  const h = req.headers["x-user-role"];
-  const r = Array.isArray(h) ? h[0] : (h ?? "citizen");
-  return ALL_ROLES.includes(r as never) ? r : "citizen";
-}
-
-function getUserId(req: Request): number {
-  const h = req.headers["x-user-id"];
-  return parseInt(Array.isArray(h) ? h[0] : (h ?? "1"), 10) || 1;
-}
 
 function getUserOrg(req: Request): string | null {
   const h = req.headers["x-user-org"];
@@ -47,7 +37,7 @@ function getUserOrg(req: Request): string | null {
 
 /** Middleware: allow all registered roles (including governance + citizen) */
 function allowAnyGovernanceRole(req: Request, res: Response, next: NextFunction): void {
-  const role = getRole(req);
+  const role = getValidatedRole(req);
   const perms = getPermissions(role);
   if (!perms.canViewGovernanceDashboard && !perms.canSearchByCaseNumber) {
     res.status(403).json({ error: "Access denied for this role" });
@@ -60,7 +50,7 @@ function allowAnyGovernanceRole(req: Request, res: Response, next: NextFunction)
 // Returns role-appropriate aggregated statistics.
 
 router.get("/governance/dashboard", allowAnyGovernanceRole, async (req, res) => {
-  const role = getRole(req);
+  const role = getValidatedRole(req);
   const perms = getPermissions(role);
 
   if (!perms.canReadDecisionList) {
@@ -199,7 +189,7 @@ router.get("/governance/dashboard", allowAnyGovernanceRole, async (req, res) => 
 // Returns role-scoped decisions list with DCI summary fields.
 
 router.get("/governance/decisions", allowAnyGovernanceRole, async (req, res) => {
-  const role = getRole(req);
+  const role = getValidatedRole(req);
   const perms = getPermissions(role);
 
   if (!perms.canReadDecisionList) {
@@ -298,7 +288,7 @@ router.get(
   "/governance/decisions/:id/permitted",
   allowAnyGovernanceRole,
   async (req, res) => {
-    const role = getRole(req);
+    const role = getValidatedRole(req);
     const perms = getPermissions(role);
     const id = parseInt(req.params["id"] as string, 10);
 
@@ -455,7 +445,7 @@ router.get(
   "/governance/decisions/:id/hash-verify",
   allowAnyGovernanceRole,
   async (req, res) => {
-    const role = getRole(req);
+    const role = getValidatedRole(req);
     const perms = getPermissions(role);
     const id = parseInt(req.params["id"] as string, 10);
 
@@ -519,7 +509,7 @@ router.post(
   "/governance/decisions/:id/delegate",
   allowAnyGovernanceRole,
   async (req, res) => {
-    const role = getRole(req);
+    const role = getValidatedRole(req);
     const perms = getPermissions(role);
     const id = parseInt(req.params["id"] as string, 10);
     const userId = getUserId(req);
@@ -617,7 +607,7 @@ router.post(
   "/governance/decisions/:id/undelegate",
   allowAnyGovernanceRole,
   async (req, res) => {
-    const role = getRole(req);
+    const role = getValidatedRole(req);
     const perms = getPermissions(role);
     const id = parseInt(req.params["id"] as string, 10);
 

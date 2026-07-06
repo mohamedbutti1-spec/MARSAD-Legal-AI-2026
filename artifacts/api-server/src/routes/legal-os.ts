@@ -21,6 +21,7 @@ import {
 } from "../utils/rag";
 import { ROLES, findScenario, formatAnswers, type Role, type Scenario } from "../data/legal-os-scenarios";
 import { legalOsCustomRolesTable, legalOsCustomScenariosTable } from "@workspace/db";
+import { getUserId } from "../lib/route-helpers";
 
 // ─── Decision Brief validation ─────────────────────────────────────────────────
 
@@ -58,12 +59,6 @@ function validateBrief(r: unknown): string | null {
 }
 
 const router: IRouter = Router();
-
-function getUserId(req: import("express").Request): number {
-  const h = req.headers["x-user-id"];
-  if (!h) return 1;
-  return parseInt(Array.isArray(h) ? h[0] : h, 10);
-}
 
 // ─── Shared catalog helper ─────────────────────────────────────────────────────
 /**

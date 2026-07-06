@@ -13,6 +13,7 @@ import { eq, desc, and }        from "drizzle-orm";
 import { db, spgSessionsTable } from "@workspace/db";
 import { requireAnyRole }       from "../middlewares/roleAuth";
 import { runSpgGuidance }       from "../utils/spg-engine";
+import { getUserId }            from "../lib/route-helpers";
 
 // ─── Allowed sector / role catalogue (mirrors frontend types/spg.ts) ──────────
 const VALID_SECTORS = new Map<string, Set<string>>([
@@ -33,13 +34,6 @@ function validateSectorRole(sectorId: string, roleId: string): boolean {
 }
 
 const router: IRouter = Router();
-
-function getUserId(req: import("express").Request): number {
-  const h  = req.headers["x-user-id"];
-  if (!h) return -1;
-  const id = parseInt(Array.isArray(h) ? h[0] : h, 10);
-  return Number.isFinite(id) ? id : -1;
-}
 
 function safeJsonParse<T>(s: string | null | undefined, fallback: T): T {
   if (!s) return fallback;

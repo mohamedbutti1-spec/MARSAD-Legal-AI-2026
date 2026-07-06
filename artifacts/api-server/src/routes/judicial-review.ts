@@ -18,6 +18,7 @@ import {
 import { eq } from "drizzle-orm";
 import { db, decisionsTable } from "@workspace/db";
 import { getPermissions, ALL_ROLES } from "@workspace/db/permissions";
+import { getValidatedRole } from "../lib/route-helpers";
 import {
   getJudicialReview,
   markJudicialReviewRunning,
@@ -50,15 +51,9 @@ function getAnthropic(): Anthropic {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function getRole(req: Request): string {
-  const h = req.headers["x-user-role"];
-  const r = (Array.isArray(h) ? (h[0] ?? "citizen") : (h ?? "citizen")) as string;
-  return ALL_ROLES.includes(r as never) ? r : "citizen";
-}
-
 /** Judicial Intelligence is strictly judge-only. */
 function requireJudge(req: Request, res: Response, next: NextFunction): void {
-  if (getRole(req) !== "judge") {
+  if (getValidatedRole(req) !== "judge") {
     res.status(403).json({
       error: "الذكاء القضائي الدستوري — الوصول مقتصر على القضاة فقط",
     });
@@ -361,7 +356,7 @@ router.post(
         return;
       }
 
-      const role   = getRole(req);
+      const role   = getValidatedRole(req);
       const review = await runAiReview(decision.id, role);
 
       // Audit: judicial review triggered (fire-and-forget)

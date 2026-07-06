@@ -30,21 +30,16 @@ import {
   getDecisionCustody,
 } from "@workspace/db";
 import { getPermissions, ALL_ROLES } from "@workspace/db/permissions";
+import { getValidatedRole } from "../lib/route-helpers";
 
 const router: IRouter = Router();
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function getRole(req: Request): string {
-  const h = req.headers["x-user-role"];
-  const r = Array.isArray(h) ? h[0] : (h ?? "citizen");
-  return ALL_ROLES.includes(r as never) ? r : "citizen";
-}
-
 // Evidence read: audit log readers, hash verifiers, or judges
 function requireEvidenceRead(req: Request, res: Response, next: NextFunction): void {
-  const perms = getPermissions(getRole(req));
-  const role  = getRole(req);
+  const perms = getPermissions(getValidatedRole(req));
+  const role  = getValidatedRole(req);
   if (!perms.canReadAuditLog && !perms.canRunHashVerification && role !== "judge") {
     res.status(403).json({
       error: "سجل الأدلة يتطلب صلاحية سجل التدقيق أو التحقق من الهاش أو دور القاضي",
@@ -56,8 +51,8 @@ function requireEvidenceRead(req: Request, res: Response, next: NextFunction): v
 
 // Judicial export: judges and hash-verification roles (external_auditor, owner)
 function requireJudicialAccess(req: Request, res: Response, next: NextFunction): void {
-  const perms = getPermissions(getRole(req));
-  const role  = getRole(req);
+  const perms = getPermissions(getValidatedRole(req));
+  const role  = getValidatedRole(req);
   if (!perms.canRunHashVerification && role !== "judge") {
     res.status(403).json({
       error: "التصدير القضائي يتطلب دور القاضي أو المدقق الخارجي أو مالك المنصة",
@@ -202,7 +197,7 @@ router.get(
       framework:      "Al-Shamsi Constitutional Decision Framework™",
       exportedAt,
       exportedBy:     req.headers["x-user-id"] ?? "system",
-      exportedByRole: getRole(req),
+      exportedByRole: getValidatedRole(req),
       decisionId:     id,
 
       // ── Constitutional passport ──────────────────────────────────────────

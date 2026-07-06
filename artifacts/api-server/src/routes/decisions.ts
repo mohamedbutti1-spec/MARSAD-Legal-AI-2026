@@ -53,16 +53,11 @@ import { logAudit } from "../middlewares/auditLog";
 import { e400, e403, e404, e500 } from "../lib/sendError";
 import { aiRouter, TaskType } from "../ai";
 import { parseModelJson } from "../ai/providers/interface";
+import { getUserId } from "../lib/route-helpers";
 
 const router: IRouter = Router();
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function getUserId(req: import("express").Request): number {
-  const h = req.headers["x-user-id"];
-  if (!h) return 1;
-  return parseInt(Array.isArray(h) ? h[0] : h, 10) || 1;
-}
 
 /** Phase 3 — Extract custody context from request headers. Fire-and-forget safe. */
 function getCustodyCtx(req: import("express").Request): Pick<CustodyEventInput, "userId" | "userRole" | "organization" | "deviceInfo" | "ipAddress"> {

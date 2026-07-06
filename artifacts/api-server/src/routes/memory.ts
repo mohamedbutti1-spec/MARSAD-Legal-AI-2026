@@ -24,16 +24,11 @@ import {
   getMemoryHistory,
 } from "@workspace/db";
 import { getPermissions, ALL_ROLES } from "@workspace/db/permissions";
+import { getValidatedRole } from "../lib/route-helpers";
 
 const router: IRouter = Router();
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function getRole(req: Request): string {
-  const h = req.headers["x-user-role"];
-  const r = Array.isArray(h) ? h[0] : (h ?? "citizen");
-  return ALL_ROLES.includes(r as never) ? r : "citizen";
-}
 
 function getUserId(req: Request): string {
   const h = req.headers["x-user-id"];
@@ -47,8 +42,8 @@ function getOrg(req: Request): string {
 
 // Full memory read: audit log readers, hash verifiers, or judges
 function requireMemoryRead(req: Request, res: Response, next: NextFunction): void {
-  const perms = getPermissions(getRole(req));
-  if (!perms.canReadAuditLog && !perms.canRunHashVerification && getRole(req) !== "judge") {
+  const perms = getPermissions(getValidatedRole(req));
+  if (!perms.canReadAuditLog && !perms.canRunHashVerification && getValidatedRole(req) !== "judge") {
     res.status(403).json({
       error:
         "الذاكرة الدستورية تتطلب صلاحية سجل التدقيق أو التحقق من الهاش أو دور القاضي",
@@ -60,7 +55,7 @@ function requireMemoryRead(req: Request, res: Response, next: NextFunction): voi
 
 // Archive: owner or supervisor only
 function requireArchiveAccess(req: Request, res: Response, next: NextFunction): void {
-  const role = getRole(req);
+  const role = getValidatedRole(req);
   if (role !== "owner" && role !== "supervisor") {
     res.status(403).json({
       error: "الأرشفة تتطلب صلاحية المالك أو المشرف",
@@ -72,7 +67,7 @@ function requireArchiveAccess(req: Request, res: Response, next: NextFunction): 
 
 // Governance dashboard: any role with canViewGovernanceDashboard
 function requireGovernanceView(req: Request, res: Response, next: NextFunction): void {
-  const perms = getPermissions(getRole(req));
+  const perms = getPermissions(getValidatedRole(req));
   if (!perms.canViewGovernanceDashboard) {
     res.status(403).json({ error: "لوحة الحوكمة مقيدة بالمستخدمين المعتمدين" });
     return;
@@ -82,7 +77,7 @@ function requireGovernanceView(req: Request, res: Response, next: NextFunction):
 
 // Verify: only hash-verification roles (external_auditor, owner)
 function requireHashVerification(req: Request, res: Response, next: NextFunction): void {
-  const perms = getPermissions(getRole(req));
+  const perms = getPermissions(getValidatedRole(req));
   if (!perms.canRunHashVerification) {
     res.status(403).json({
       error: "التحقق من الهاش يتطلب دور المدقق الخارجي أو مالك المنصة",
@@ -186,7 +181,7 @@ router.post(
       eventSummaryAr: "تم التحقق من سلامة الذاكرة الدستورية",
       eventSummaryEn: "Constitutional memory integrity verified",
       actorId: getUserId(req),
-      actorRole: getRole(req),
+      actorRole: getValidatedRole(req),
       actorOrg: getOrg(req),
       payload: {
         valid: memory.integrity.valid,
@@ -217,7 +212,7 @@ router.post(
     const { decisionId } = req.body as { decisionId?: number };
     if (!decisionId) { res.status(400).json({ error: "decisionId مطلوب" }); return; }
 
-    const result = await archiveMemory(decisionId, getUserId(req), getRole(req));
+    const result = await archiveMemory(decisionId, getUserId(req), getValidatedRole(req));
     if (!result) {
       res.status(404).json({ error: "لا توجد ذاكرة دستورية لهذا القرار", decisionId });
       return;

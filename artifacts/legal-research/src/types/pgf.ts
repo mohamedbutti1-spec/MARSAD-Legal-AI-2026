@@ -8,41 +8,10 @@ export interface PgfLegalReference {
   binding:   boolean;
 }
 
-export interface PgfRequiredDocument {
-  name:          string;
-  description?:  string;
-  mandatory:     boolean;
-  whenRequired?: string;
-}
-
 export interface PgfCommonMistake {
   mistake:     string;
   consequence: string;
   remedy:      string;
-}
-
-export interface PgfRiskIndicator {
-  indicator: string;
-  severity:  'high' | 'medium' | 'low';
-  flag:      string;
-}
-
-export interface PgfEscalationRule {
-  condition:  string;
-  escalateTo: string;
-  mandatory:  boolean;
-}
-
-export interface PgfThinkingStep {
-  step:     string;
-  question: string;
-}
-
-export interface PgfFinalChecklistItem {
-  id:       string;
-  item:     string;
-  category: 'legal' | 'procedural' | 'documentation' | 'risk' | 'quality';
-  mandatory: boolean;
 }
 
 export interface PgfWorkflowQuestion {

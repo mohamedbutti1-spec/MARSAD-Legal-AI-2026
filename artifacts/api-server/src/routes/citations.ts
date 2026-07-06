@@ -8,14 +8,9 @@ import { Router, type IRouter } from "express";
 import { eq, desc } from "drizzle-orm";
 import { db, documentsTable, legalSourcesTable, citationsLogTable } from "@workspace/db";
 import { requireAnyRole } from "../middlewares/roleAuth";
+import { getUserId } from "../lib/route-helpers";
 
 const router: IRouter = Router();
-
-function getUserId(req: import("express").Request): number {
-  const h = req.headers["x-user-id"];
-  if (!h) return 1;
-  return parseInt(Array.isArray(h) ? h[0] : h);
-}
 
 function formatHarvard(title: string, author: string, year: number, publisher: string, url?: string): string {
   let c = `${author} (${year}) '${title}'`;

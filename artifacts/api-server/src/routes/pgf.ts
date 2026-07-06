@@ -26,17 +26,11 @@ import { runPgfAssessment }                 from "../pgf/engine.js";
 import { getStageMemory, VALID_CATEGORIES, VALID_SOURCE_TYPES } from "../pgf/institutional-memory.js";
 import { getStageWorkflow }                                      from "../pgf/workflow-steps.js";
 import type { PgfSessionAnswers }            from "../pgf/types.js";
+import { getUserId }                         from "../lib/route-helpers.js";
 
 const router: IRouter = Router();
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function getUserId(req: import("express").Request): number {
-  const h = req.headers["x-user-id"];
-  if (!h) return -1;
-  const id = parseInt(Array.isArray(h) ? h[0] : h, 10);
-  return Number.isFinite(id) ? id : -1;
-}
 
 function safe<T>(s: string | null | undefined, fallback: T): T {
   if (!s) return fallback;

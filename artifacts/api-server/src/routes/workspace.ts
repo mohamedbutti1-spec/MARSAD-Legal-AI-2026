@@ -31,15 +31,11 @@ import {
   type ExportItem,
 } from "../utils/research-export.js";
 import { logAudit } from "../middlewares/auditLog.js";
+import { getUserId } from "../lib/route-helpers.js";
 
 const router: IRouter = Router();
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function getUserId(req: Request): number {
-  const id = parseInt(req.headers["x-user-id"] as string, 10);
-  return Number.isFinite(id) ? id : 1;
-}
 
 function parseJson<T = unknown>(raw: string, fallback: T): T {
   try { return JSON.parse(raw) as T; } catch { return fallback; }
