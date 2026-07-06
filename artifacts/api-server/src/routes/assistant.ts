@@ -7,7 +7,8 @@
  * DELETE /assistant/sessions/:id           — delete session
  * GET    /assistant/sessions/:id/messages  — load messages
  * POST   /assistant/sessions/:id/messages  — send message, get AI reply
- *   Body: { content, documentIds?: number[], legalSourceIds?: number[] }
+ *   Body: { content, documentIds?: number[], legalSourceIds?: number[],
+ *           theoryLensId?: string, customTheoryText?: string }
  * POST   /assistant/cite                   — on-demand citation formats for a source
  *   Body: { sourceType: "document"|"legal_source", sourceId: number }
  */
@@ -30,6 +31,7 @@ import {
   makeDocCitations,
   makeSrcCitations,
 } from "../utils/rag";
+import { buildTheoryPromptSuffix, parseTheoryResponse } from "../utils/theory-lenses.js";
 
 const router: IRouter = Router();
 
@@ -138,6 +140,12 @@ router.post("/assistant/sessions/:id/messages", requireSupervisorOrOwner, async 
   const pinnedSrcIds: number[] = Array.isArray(req.body.legalSourceIds)
     ? (req.body.legalSourceIds as unknown[]).map(Number).filter((n) => !isNaN(n as number))
     : [];
+
+  // Theory lens — optional overlay that appends a named analytical framework
+  const theoryLensId: string = ((req.body.theoryLensId as string) ?? "uae_only").trim() || "uae_only";
+  const customTheoryText: string = ((req.body.customTheoryText as string) ?? "").trim();
+  const { suffix: theorySuffix, markerLabel: theoryMarkerLabel } =
+    buildTheoryPromptSuffix(theoryLensId, customTheoryText);
 
   // Save the user's message first
   await db.insert(chatMessagesTable).values({ sessionId, role: "user", content });
@@ -462,7 +470,7 @@ router.post("/assistant/sessions/:id/messages", requireSupervisorOrOwner, async 
 ${ragContext
   ? `═══════════════════════════════════════════════════════════════════\nالمصادر المتاحة للاستشهاد\n═══════════════════════════════════════════════════════════════════\n${ragContext}`
   : "تنبيه: لا توجد وثائق مفهرسة في هذه الجلسة. قدّم رأياً قانونياً معمّقاً بناءً على معرفتك بالقانون الإماراتي مع بيان هذا القيد في كل قسم. طبّق مستوى الثقة (محدودة أو تقديرية) على كل حكم في غياب سند مفهرس. أدرج جميع الأقسام 1–17. نفّذ جولة التحقق الذاتي ⑥ كاملةً. اختم بالقسم 17 (تقرير الجودة النهائي). لا تخترع مواد أو أحكام أو لوائح."
-}`;
+}${theorySuffix ? "\n\n" + theorySuffix : ""}`;
 
   // Build conversation thread for multi-turn context (oldest first)
   const thread = [...history]
@@ -486,6 +494,11 @@ ${ragContext
       maxTokens: 8000,
     });
 
+    // Parse theory overlay sections (when a theory lens is active the model
+    // emits a ---THEORY LENS: {label}--- marker splitting binding from theory).
+    const { bindingAnalysis, theoryAnalysis, theoryLabel } =
+      parseTheoryResponse(aiResult.text);
+
     // Resolve citation tokens — two batched IN queries, not N+1 individual queries
     // Pass uid to scope DOC lookups to this user's documents only.
     const rawTokens = extractCitationTokens(aiResult.text);
@@ -494,6 +507,7 @@ ${ragContext
     const [assistantMsg] = await db.insert(chatMessagesTable).values({
       sessionId,
       role: "assistant",
+      // Store full text (binding + theory) — frontend splits via parseTheoryResponse
       content: aiResult.text,
       meta: {
         provider: aiResult.provider,
@@ -501,6 +515,10 @@ ${ragContext
         inputTokens: aiResult.usage?.inputTokens,
         outputTokens: aiResult.usage?.outputTokens,
         citations,
+        // Theory lens metadata for frontend rendering
+        theoryLensId: theoryLensId !== "uae_only" ? theoryLensId : undefined,
+        theoryLabel:  theoryLabel ?? undefined,
+        hasTheorySection: !!theoryAnalysis,
       },
     }).returning();
 

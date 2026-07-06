@@ -6,10 +6,11 @@ import { useListDocuments } from '@workspace/api-client-react';
 import {
   Bot, Plus, Trash2, Send, Loader2, MessageSquare, Sparkles,
   FileText, BookOpen, Copy, Check, ChevronDown, ChevronUp,
-  X, Pin, PinOff, Scale, Menu, ChevronRight,
+  X, Pin, PinOff, Scale, Menu, ChevronRight, FlaskConical,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { TheoryLensSelector, TheoryLensBadge, type TheoryLensState } from '@/components/research/theory-lens-selector';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -29,6 +30,10 @@ interface MessageMeta {
   inputTokens?: number;
   outputTokens?: number;
   citations?: Citation[];
+  // Theory lens fields (populated when a non-UAE-only lens was active)
+  theoryLensId?: string;
+  theoryLabel?: string;
+  hasTheorySection?: boolean;
 }
 
 interface Message {
@@ -182,19 +187,29 @@ function parseCitationTokens(text: string, citations: Citation[], keyPrefix: str
   return parts;
 }
 
-/**
- * Render a structured (multi-section) or plain assistant response.
- * Structured = at least one ## N. header detected.
- */
-function AssistantContent({ content, citations }: { content: string; citations: Citation[] }) {
-  const segments = segmentResponse(content);
+// ─── Theory response parser ───────────────────────────────────────────────────
+
+const THEORY_MARKER_RE = /^---THEORY LENS:\s*(.+?)---$/m;
+
+function splitTheoryContent(text: string): { binding: string; theory?: string; label?: string } {
+  const match = THEORY_MARKER_RE.exec(text);
+  if (!match) return { binding: text.trim() };
+  const label = match[1].trim();
+  const binding = text.slice(0, match.index).trim();
+  const theory = text.slice(match.index + match[0].length).trim();
+  return { binding, theory, label };
+}
+
+// ─── Structured response body ─────────────────────────────────────────────────
+
+function StructuredBody({ text, citations, prefix }: { text: string; citations: Citation[]; prefix: string }) {
+  const segments = segmentResponse(text);
   const isStructured = segments.some((s) => s.kind === 'header');
 
   if (!isStructured) {
-    // Legacy / short answer — plain whitespace-aware rendering
     return (
       <p className="whitespace-pre-wrap break-words leading-7 text-sm">
-        {parseCitationTokens(content, citations, 'plain')}
+        {parseCitationTokens(text, citations, `${prefix}-plain`)}
       </p>
     );
   }
@@ -217,18 +232,12 @@ function AssistantContent({ content, citations }: { content: string; citations: 
             </div>
           );
         }
-        // Text block — split on newlines, render inline content per line.
-        // Label-style bolding (e.g. "قوة المركز القانوني:") is applied only
-        // inside section 9 to avoid false-positives in article references.
         const isSection9 = seg.sectionNum === '9';
         const lines = seg.content.split('\n');
         return (
           <div key={idx} className="pt-2 pb-1 space-y-1">
             {lines.map((line, li) => {
-              // Skip blank lines — avoids stacked empty <p> elements
               if (!line.trim()) return null;
-
-              // Bold "Label: value" lines — only in section 9 (Practical Opinion)
               if (isSection9) {
                 const colonIdx = line.indexOf(':');
                 const isLabelLine =
@@ -242,21 +251,55 @@ function AssistantContent({ content, citations }: { content: string; citations: 
                   return (
                     <p key={li} className="text-sm leading-7 break-words">
                       <span className="font-semibold text-foreground">{label}</span>
-                      {parseCitationTokens(rest, citations, `${idx}-${li}`)}
+                      {parseCitationTokens(rest, citations, `${prefix}-${idx}-${li}`)}
                     </p>
                   );
                 }
               }
-
               return (
                 <p key={li} className="text-sm leading-7 break-words whitespace-pre-wrap">
-                  {parseCitationTokens(line, citations, `${idx}-${li}`)}
+                  {parseCitationTokens(line, citations, `${prefix}-${idx}-${li}`)}
                 </p>
               );
             })}
           </div>
         );
       })}
+    </div>
+  );
+}
+
+/**
+ * Render a structured (multi-section) or plain assistant response.
+ * When a theory lens was active the model emits a ---THEORY LENS: {label}---
+ * separator. We detect it and render two visually distinct blocks:
+ *   1. UAE Binding Analysis (normal style)
+ *   2. Theory Lens section (distinct left-border card)
+ */
+function AssistantContent({ content, citations }: { content: string; citations: Citation[] }) {
+  const { binding, theory, label } = splitTheoryContent(content);
+
+  return (
+    <div className="space-y-3">
+      {/* ── UAE Binding Analysis ── */}
+      <StructuredBody text={binding} citations={citations} prefix="binding" />
+
+      {/* ── Theory Lens section ── */}
+      {theory && (
+        <div className="mt-4 border-l-4 border-violet-400 pl-3 rounded-r-lg bg-violet-50/60 py-2 pr-2 space-y-1">
+          {/* Header */}
+          <div className="flex items-center gap-1.5 mb-2">
+            <FlaskConical className="w-3.5 h-3.5 text-violet-600 shrink-0" />
+            <span className="text-[11px] font-bold text-violet-700 uppercase tracking-wide">
+              {label ?? 'Theory Lens'}
+            </span>
+            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-violet-200 text-violet-700 font-semibold border border-violet-300">
+              Non-Binding
+            </span>
+          </div>
+          <StructuredBody text={theory} citations={citations} prefix="theory" />
+        </div>
+      )}
     </div>
   );
 }
@@ -316,11 +359,18 @@ function MessageBubble({ msg }: { msg: Message }) {
           </div>
         )}
 
-        {!isUser && msg.meta?.provider && (
-          <p className="text-[9px] text-muted-foreground/50 mt-1 ms-1">
-            {msg.meta.provider} · {msg.meta.model}
-            {msg.meta.outputTokens ? ` · ${msg.meta.outputTokens} tokens` : ''}
-          </p>
+        {!isUser && (msg.meta?.theoryLensId || msg.meta?.provider) && (
+          <div className="flex items-center gap-1.5 mt-1 ms-1 flex-wrap">
+            {msg.meta?.theoryLensId && (
+              <TheoryLensBadge lensId={msg.meta.theoryLensId} />
+            )}
+            {msg.meta?.provider && (
+              <p className="text-[9px] text-muted-foreground/50">
+                {msg.meta.provider} · {msg.meta.model}
+                {msg.meta.outputTokens ? ` · ${msg.meta.outputTokens} tokens` : ''}
+              </p>
+            )}
+          </div>
         )}
       </div>
 
@@ -520,6 +570,8 @@ export default function AiAssistant() {
   const [pinnedDocs, setPinnedDocs] = useState<number[]>([]);
   const [pinnedSrcs, setPinnedSrcs] = useState<number[]>([]);
   const [legalSources, setLegalSources] = useState<LegalSource[]>([]);
+  /** Theory Lens — persists for the duration of the research session (session-only in v1). */
+  const [theoryLens, setTheoryLens] = useState<TheoryLensState>({ lensId: 'uae_only', customText: '' });
 
   const { data: documents } = useListDocuments();
 
@@ -689,6 +741,8 @@ export default function AiAssistant() {
           content: text,
           documentIds: pinnedDocs.length > 0 ? pinnedDocs : undefined,
           legalSourceIds: pinnedSrcs.length > 0 ? pinnedSrcs : undefined,
+          theoryLensId: theoryLens.lensId !== 'uae_only' ? theoryLens.lensId : undefined,
+          customTheoryText: theoryLens.lensId === 'custom' ? theoryLens.customText : undefined,
         }),
       });
       if (r.ok) {
@@ -714,6 +768,14 @@ export default function AiAssistant() {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   }
 
+  /** Reset theory lens (and pins) whenever the user switches or creates a session. */
+  function switchSession(s: Session) {
+    setActiveSession(s);
+    setPinnedDocs([]);
+    setPinnedSrcs([]);
+    setTheoryLens({ lensId: 'uae_only', customText: '' });
+  }
+
   const toggleDoc = (id: number) =>
     setPinnedDocs((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
   const toggleSrc = (id: number) =>
@@ -727,7 +789,7 @@ export default function AiAssistant() {
         open={showSessionsDrawer}
         sessions={sessions}
         activeId={activeSession?.id}
-        onSelect={(s) => { setActiveSession(s); setPinnedDocs([]); setPinnedSrcs([]); }}
+        onSelect={(s) => { switchSession(s); setShowSessionsDrawer(false); }}
         onDelete={deleteSession}
         onCreate={async () => { await createSession(); setShowSessionsDrawer(false); }}
         onClose={() => setShowSessionsDrawer(false)}
@@ -764,7 +826,7 @@ export default function AiAssistant() {
               >
                 <button
                   type="button"
-                  onClick={() => { setActiveSession(s); setPinnedDocs([]); setPinnedSrcs([]); }}
+                  onClick={() => switchSession(s)}
                   className={`flex-1 text-start px-2.5 py-2 flex items-center gap-2 min-w-0 ${
                     activeSession?.id === s.id ? 'text-foreground' : 'text-muted-foreground'
                   }`}
@@ -966,6 +1028,18 @@ export default function AiAssistant() {
                 onClose={() => setShowPinPanel(false)}
                 t={t}
               />
+            )}
+
+            {/* Theory Lens Selector */}
+            {activeSession && (
+              <div className="mb-2">
+                <TheoryLensSelector
+                  value={theoryLens}
+                  onChange={setTheoryLens}
+                  arabic={true}
+                  disabled={sending || !canUseAi}
+                />
+              </div>
             )}
 
             {/* Pinned badges */}
