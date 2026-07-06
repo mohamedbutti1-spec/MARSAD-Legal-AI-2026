@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, AlertTriangle, Info, ShieldAlert } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, ShieldAlert } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { AuthorityHierarchy } from './authority-hierarchy';
 import type { JudgmentOutput } from '@/types/jre';
@@ -74,19 +74,9 @@ export function JudgmentView({ judgment }: JudgmentViewProps) {
         </div>
       </section>
 
-      {/* ── Theory disclaimer (if theory was applied) ─────────────────────── */}
-      {judgment.theoryAnalysis.applied && (
-        <div className="border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 rounded-lg p-4">
-          <div className="flex items-start gap-2">
-            <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
-            <div className="text-sm text-amber-800 dark:text-amber-300">
-              <strong>التحليل النظري غير المُلزِم — {judgment.theoryAnalysis.lensName}:</strong>
-              <div className="mt-2 leading-relaxed whitespace-pre-wrap">{judgment.theoryAnalysis.analysisAr}</div>
-              <div className="mt-3 text-xs opacity-80">{judgment.theoryAnalysis.disclaimer}</div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Theory content intentionally excluded from judgment view.
+          It lives in the per-stage inline sections and the التحليل النظري tab.
+          The judgment must contain only binding UAE legal analysis. */}
 
       {/* ── Holding ───────────────────────────────────────────────────────── */}
       <section>
