@@ -1,0 +1,86 @@
+Phase 61 — Professional Mentor Engine (PME)
+
+Build on top of the existing Professional Guidance Framework v2.
+
+Do NOT modify Judicial Reasoning Engine.
+Do NOT modify Theory Mode.
+Do NOT modify ADKG.
+Do NOT modify RAG.
+Do NOT break existing SPG/PGF workflows.
+All changes must be additive and configuration-driven.
+
+Goal:
+Transform Professional Guidance from step-by-step workflow guidance into an expert mentorship engine.
+
+For every profession and every workflow stage, add a mentor layer that answers:
+
+1. What should the professional do now?
+2. Why is this step important?
+3. What happens if this step is missed?
+4. What is the most common mistake at this stage?
+5. What would an experienced expert do first?
+6. What warning signs should the user notice?
+7. What documents or evidence must be checked before proceeding?
+8. When should the matter be escalated?
+
+Add configuration fields to each profession/stage:
+
+- mentorPrompt
+- expertReasoning
+- whyThisMatters
+- commonMistakes
+- warningSigns
+- escalationTriggers
+- expertFirstActions
+- doNotDo
+- bestPracticeNotes
+- professionalJudgmentNotes
+
+Add UI sections inside each stage:
+
+🧭 إرشاد الخبير
+⚠️ تنبيهات مهنية
+✅ ماذا تفعل الآن
+❌ ما يجب تجنبه
+📄 المستندات المطلوبة
+📌 متى يتم التصعيد؟
+🧠 كيف يفكر الخبير؟
+
+Add a button:
+
+"ماذا سيفعل الخبير؟"
+"What would the expert do?"
+
+When clicked, show the top 5 expert actions for that role and stage.
+
+Final output must include:
+
+- Professional guidance
+- Expert reasoning
+- Common mistakes
+- Risk warnings
+- Escalation recommendation
+- Best-practice checklist
+- Professional confidence score
+- Verification status
+
+Safeguards:
+- Never replace the competent authority.
+- Never issue binding legal decisions.
+- Distinguish legal requirements from best practices.
+- Preserve citation verification.
+- Preserve anti-hallucination rules.
+- If authority is missing, say so clearly.
+- Keep UAE law first when legal analysis is involved.
+- Theory Mode remains separate and non-binding.
+
+Testing:
+- Verify all 20 professions still load.
+- Verify each workflow starts at stage 1.
+- Verify users cannot jump stages.
+- Verify finalize cannot run before all stages are complete.
+- Verify JRE unaffected.
+- Verify Decisions page unaffected.
+- Run TypeScript checks.
+- Restart workflows.
+- Apply changes automatically only after all checks pass.

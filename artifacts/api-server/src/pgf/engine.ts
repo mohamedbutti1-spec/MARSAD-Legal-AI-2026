@@ -1,9 +1,9 @@
 /**
- * PGF AI Engine
+ * PGF AI Engine — Phase 61: Professional Mentor Engine
  *
  * Runs the final AI assessment after all workflow stages are complete.
- * Produces a PgfAssessmentOutput with 10+ fields including a professional
- * confidence score (0-100).
+ * Produces a PgfAssessmentOutput with all mentor fields including
+ * expertReasoning and verificationStatus.
  *
  * Rules:
  *   1. Never fabricates legislation references.
@@ -11,6 +11,8 @@
  *   3. Clearly marks binding vs. best-practice requirements.
  *   4. Confidence score reflects answer completeness and triggered risk flags.
  *   5. Arabic is the primary language throughout.
+ *   6. Never replaces the competent authority or issues binding decisions.
+ *   7. Distinguish legal requirements from best practices at all times.
  */
 
 import { aiRouter, TaskType }       from "../ai/index.js";
@@ -37,6 +39,21 @@ function buildAnswersSummary(
     }
   }
   return lines.join("\n\n");
+}
+
+// ─── Build stage mentor context ───────────────────────────────────────────────
+
+function buildMentorContext(config: ProfessionConfig): string {
+  const parts: string[] = [];
+  for (const stage of config.workflowStages) {
+    if (stage.expertReasoning || stage.commonMistakesAtStage?.length || stage.warningSigns?.length) {
+      parts.push(`### مرحلة: ${stage.title}`);
+      if (stage.expertReasoning) parts.push(`تفكير الخبير: ${stage.expertReasoning}`);
+      if (stage.warningSigns?.length) parts.push(`تحذيرات: ${stage.warningSigns.join(" / ")}`);
+      if (stage.commonMistakesAtStage?.length) parts.push(`أخطاء شائعة: ${stage.commonMistakesAtStage.join(" / ")}`);
+    }
+  }
+  return parts.length > 0 ? `\n## إرشاد الخبير عبر المراحل\n${parts.join("\n")}` : "";
 }
 
 // ─── Main engine function ─────────────────────────────────────────────────────
@@ -70,8 +87,9 @@ export async function runPgfAssessment(params: {
   const commonMistakesText = config.commonMistakes
     .map((m) => `• الخطأ: ${m.mistake}\n  العواقب: ${m.consequence}\n  العلاج: ${m.remedy}`)
     .join("\n");
+  const mentorContext = buildMentorContext(config);
 
-  const systemPrompt = `أنت مستشار مهني متخصص يُقدم تقييماً احترافياً شاملاً ودقيقاً للمتخصصين الإماراتيين.
+  const systemPrompt = `أنت مستشار مهني خبير يُقدم تقييماً احترافياً شاملاً ودقيقاً للمتخصصين الإماراتيين.
 
 ## دور المستخدم
 **المهنة**: ${config.professionNameAr} (${config.professionNameEn})
@@ -93,17 +111,20 @@ ${riskIndicatorsText}
 
 ## الأخطاء الشائعة في هذه المهنة
 ${commonMistakesText}
+${mentorContext}
 
 ## قائمة التحقق النهائية
 ${checklistText}
 
-## قواعد صارمة
+## قواعد صارمة لا استثناء فيها
 1. لا تُلفق أرقام مواد أو قوانين أو أحكام قضائية — استند فقط للمراجع المذكورة أعلاه.
 2. ميّز بوضوح بين المتطلبات الإلزامية (binding: true) والممارسات الموصى بها (binding: false).
 3. درجة الثقة المهنية (0-100) تعكس: اكتمال الإجابات، المخاطر المُثارة، وسلامة الإجراءات.
-4. درجة ثقة عالية (>80) = موقف واضح وإجراءات سليمة. متوسطة (60-80) = بعض الفجوات. منخفضة (<60) = مخاطر جوهرية أو معلومات ناقصة.
+4. درجة ثقة عالية (>80) = موقف واضح وإجراءات سليمة. متوسطة (60-80) = بعض الفجوات. منخفضة (<60) = مخاطر جوهرية.
 5. العربية هي اللغة الأساسية لجميع المحتوى.
-6. هذا التقييم إرشادي فقط ولا يُعدّ قراراً مهنياً ملزماً.`;
+6. هذا التقييم إرشادي فقط ولا يُعدّ قراراً مهنياً ملزماً ولا يحلّ محل الجهة المختصة.
+7. ميّز دائماً بين المتطلبات القانونية الإلزامية وأفضل الممارسات الاختيارية.
+8. إذا كانت الصلاحية غائبة أو غير واضحة — قلها صراحةً ولا تتجاهلها.`;
 
   const answersSummary = buildAnswersSummary(config, answers);
 
@@ -165,6 +186,8 @@ ${triggeredFlagsText}
   "escalationRecommendation": "متى ولمن ينبغي تصعيد هذا الأمر — أو null إذا لم يكن ضرورياً",
   "confidenceScore": 85,
   "confidenceRationale": "شرح موجز لدرجة الثقة: ما يدعمها وما يخفضها",
+  "expertReasoning": "كيف يُحلل الخبير المتمرس هذا الموقف المهني بعيون ناقدة — ما القوة في الموقف وأين تكمن الثغرات وما الرأي المهني الشامل",
+  "verificationStatus": "أحد ثلاثة قيم فقط: verified (الإجراءات صحيحة ومكتملة) أو needs_review (ثمة فجوات تحتاج معالجة) أو flagged (مخاطر جوهرية تستدعي انتباهاً فورياً)",
   "finalChecklist": [
     {
       "id": "fc1",
@@ -182,7 +205,7 @@ ${triggeredFlagsText}
     taskType:     TaskType.RAG,
     prompt:       userPrompt,
     systemPrompt: systemPrompt,
-    maxTokens:    6000,
+    maxTokens:    7000,
   });
 
   const parsed = parseModelJson<PgfAssessmentOutput>(raw.text);

@@ -3,6 +3,8 @@
  *
  * Every profession is declared as a ProfessionConfig. The framework reads
  * configs at runtime — no code changes are needed to add new professions.
+ *
+ * Phase 61 — Professional Mentor Engine (PME) fields are marked accordingly.
  */
 
 // ─── Reference types ──────────────────────────────────────────────────────────
@@ -71,6 +73,30 @@ export interface PgfWorkflowStage {
   icon?:               string;     // emoji
   questions:           PgfWorkflowQuestion[];
   defaultNextStageId?: string;     // next stage if no decision tree match
+
+  // ── PME — Professional Mentor Engine fields ────────────────────────────────
+  /** One-sentence mentor guidance shown at the top of the stage */
+  mentorPrompt?:              string;
+  /** How an experienced expert thinks about this stage */
+  expertReasoning?:           string;
+  /** Why this step matters — consequence of skipping */
+  whyThisMatters?:            string;
+  /** Common mistakes specific to this stage (not profession-level) */
+  commonMistakesAtStage?:     string[];
+  /** Warning signs the professional should watch for at this stage */
+  warningSigns?:              string[];
+  /** Conditions that should trigger escalation before or during this stage */
+  escalationTriggers?:        string[];
+  /** Top 5 actions an expert takes first — shown in "ماذا سيفعل الخبير؟" panel */
+  expertFirstActions?:        string[];
+  /** Things to strictly avoid at this stage */
+  doNotDo?:                   string[];
+  /** Stage-specific best practice notes */
+  bestPracticeNotes?:         string[];
+  /** How to exercise professional judgment at this stage */
+  professionalJudgmentNotes?: string;
+  /** Documents that must be available before proceeding past this stage */
+  requiredDocumentsAtStage?:  string[];
 }
 
 /**
@@ -162,6 +188,11 @@ export interface PgfAssessmentOutput {
   confidenceRationale:      string;
   finalChecklist:           PgfFinalChecklistResult[];
   disclaimer:               string;
+  // ── PME additions ─────────────────────────────────────────────────────────
+  /** Narrative expert reasoning about the overall professional situation */
+  expertReasoning?:    string;
+  /** How the professional can verify their approach is correct */
+  verificationStatus?: string;
 }
 
 // ─── Registry helpers ─────────────────────────────────────────────────────────

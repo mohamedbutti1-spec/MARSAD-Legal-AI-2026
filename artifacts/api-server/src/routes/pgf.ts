@@ -66,6 +66,26 @@ router.get("/pgf/catalogue", requireAnyRole, (_req, res) => {
   res.json({ sectors: getSectorSummaries() });
 });
 
+// ─── GET /pgf/professions/:sectorId/:professionId/stages/:stageId/expert-actions ──
+router.get(
+  "/pgf/professions/:sectorId/:professionId/stages/:stageId/expert-actions",
+  requireAnyRole,
+  (req, res): void => {
+    const { sectorId, professionId, stageId } = req.params as Record<string, string>;
+    const config = findProfession(sectorId, professionId);
+    if (!config) { res.status(404).json({ error: "Profession not found" }); return; }
+    const stage = config.workflowStages.find((s) => s.id === stageId);
+    if (!stage) { res.status(404).json({ error: "Stage not found" }); return; }
+    res.json({
+      stageId:            stage.id,
+      stageTitle:         stage.title,
+      expertFirstActions: stage.expertFirstActions ?? [],
+      mentorPrompt:       stage.mentorPrompt ?? null,
+      whyThisMatters:     stage.whyThisMatters ?? null,
+    });
+  },
+);
+
 // ─── GET /pgf/professions/:sectorId/:professionId ─────────────────────────────
 router.get("/pgf/professions/:sectorId/:professionId", requireAnyRole, (req, res): void => {
   const { sectorId, professionId } = req.params as { sectorId: string; professionId: string };

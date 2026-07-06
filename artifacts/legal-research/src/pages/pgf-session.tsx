@@ -1,6 +1,6 @@
 /**
  * PGF — Professional Guidance Framework — Session Page
- * Interactive step-by-step workflow + AI assessment output
+ * Interactive step-by-step workflow + AI assessment output + PME mentor panels
  */
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation }  from 'wouter';
@@ -9,6 +9,7 @@ import {
   BookOpen, Loader2, AlertCircle, CheckCircle2, ChevronLeft,
   Info, AlertTriangle, Shield, XCircle, ArrowRight, ArrowLeft,
   Send, Star, BarChart3, ChevronRight, FileWarning, BookMarked,
+  ChevronDown, ChevronUp, Brain, Zap, X,
 } from 'lucide-react';
 import { AppLayout }  from '@/components/layout/app-layout';
 import { apiFetch }   from '@/lib/api-fetch';
@@ -27,6 +28,14 @@ import type {
 
 interface ProfessionDetail {
   stages: PgfWorkflowStage[];
+}
+
+interface ExpertActionsResponse {
+  stageId:            string;
+  stageTitle:         string;
+  expertFirstActions: string[];
+  mentorPrompt:       string | null;
+  whyThisMatters:     string | null;
 }
 
 // ─── Question renderer ────────────────────────────────────────────────────────
@@ -121,85 +130,337 @@ function isAnswerValid(q: PgfWorkflowQuestion, val: string | string[] | boolean 
   return true;
 }
 
+// ─── Mentor Panel ─────────────────────────────────────────────────────────────
+
+interface MentorAccordionProps {
+  icon:     string;
+  title:    string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+  colorClass?: string;
+}
+
+function MentorAccordion({ icon, title, children, defaultOpen = false, colorClass = 'border-primary/20 bg-primary/5' }: MentorAccordionProps) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className={`rounded-xl border overflow-hidden ${colorClass}`} dir="rtl">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-foreground"
+      >
+        <span className="flex items-center gap-2">
+          <span className="text-base">{icon}</span>
+          {title}
+        </span>
+        {open ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+      </button>
+      {open && (
+        <div className="px-4 pb-4 text-sm leading-relaxed text-foreground/85 space-y-1.5">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MentorPanel({ stage }: { stage: PgfWorkflowStage }) {
+  const hasMentorContent =
+    stage.mentorPrompt || stage.expertReasoning || stage.warningSigns?.length ||
+    stage.doNotDo?.length || stage.requiredDocumentsAtStage?.length ||
+    stage.escalationTriggers?.length || stage.professionalJudgmentNotes;
+
+  if (!hasMentorContent) return null;
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs text-muted-foreground font-medium px-1">📘 إرشادات المرشد المهني</p>
+
+      {/* 🧭 Mentor context + expert reasoning */}
+      {(stage.mentorPrompt || stage.expertReasoning) && (
+        <MentorAccordion
+          icon="🧭"
+          title="السياق المهني"
+          defaultOpen
+          colorClass="border-primary/20 bg-primary/5"
+        >
+          {stage.mentorPrompt && (
+            <p className="italic text-primary/80 border-r-2 border-primary/30 pr-3 mb-2">{stage.mentorPrompt}</p>
+          )}
+          {stage.expertReasoning && <p>{stage.expertReasoning}</p>}
+        </MentorAccordion>
+      )}
+
+      {/* ⚠️ Warning signs */}
+      {stage.warningSigns && stage.warningSigns.length > 0 && (
+        <MentorAccordion icon="⚠️" title="علامات التحذير" colorClass="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/10">
+          <ul className="space-y-1">
+            {stage.warningSigns.map((w, i) => (
+              <li key={i} className="flex items-start gap-2 text-amber-800 dark:text-amber-300">
+                <span className="shrink-0 mt-0.5">•</span>{w}
+              </li>
+            ))}
+          </ul>
+        </MentorAccordion>
+      )}
+
+      {/* ✅ What to do / description already shown in header — skip to avoid duplication */}
+
+      {/* ❌ Do not do */}
+      {stage.doNotDo && stage.doNotDo.length > 0 && (
+        <MentorAccordion icon="❌" title="لا تفعل" colorClass="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/10">
+          <ul className="space-y-1">
+            {stage.doNotDo.map((d, i) => (
+              <li key={i} className="flex items-start gap-2 text-red-700 dark:text-red-400">
+                <span className="shrink-0 mt-0.5">✗</span>{d}
+              </li>
+            ))}
+          </ul>
+        </MentorAccordion>
+      )}
+
+      {/* 📄 Required documents */}
+      {stage.requiredDocumentsAtStage && stage.requiredDocumentsAtStage.length > 0 && (
+        <MentorAccordion icon="📄" title="المستندات المطلوبة في هذه المرحلة" colorClass="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/10">
+          <ul className="space-y-1">
+            {stage.requiredDocumentsAtStage.map((doc, i) => (
+              <li key={i} className="flex items-start gap-2 text-blue-700 dark:text-blue-300">
+                <span className="shrink-0 mt-0.5">📋</span>{doc}
+              </li>
+            ))}
+          </ul>
+        </MentorAccordion>
+      )}
+
+      {/* 📌 Escalation triggers */}
+      {stage.escalationTriggers && stage.escalationTriggers.length > 0 && (
+        <MentorAccordion icon="📌" title="متى تُصعّد؟" colorClass="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-900/10">
+          <ul className="space-y-1">
+            {stage.escalationTriggers.map((t, i) => (
+              <li key={i} className="flex items-start gap-2 text-orange-700 dark:text-orange-300">
+                <span className="shrink-0 mt-0.5">↑</span>{t}
+              </li>
+            ))}
+          </ul>
+        </MentorAccordion>
+      )}
+
+      {/* 🧠 Professional judgment notes */}
+      {stage.professionalJudgmentNotes && (
+        <MentorAccordion icon="🧠" title="الحكم المهني" colorClass="border-violet-200 bg-violet-50 dark:border-violet-800 dark:bg-violet-900/10">
+          <p className="text-violet-700 dark:text-violet-300">{stage.professionalJudgmentNotes}</p>
+        </MentorAccordion>
+      )}
+    </div>
+  );
+}
+
+// ─── Expert Actions Slide-in ──────────────────────────────────────────────────
+
+function ExpertActionsPanel({
+  sectorId, professionId, stage, onClose,
+}: {
+  sectorId:     string;
+  professionId: string;
+  stage:        PgfWorkflowStage;
+  onClose:      () => void;
+}) {
+  const { data, isLoading } = useQuery<ExpertActionsResponse>({
+    queryKey: ['pgf-expert-actions', sectorId, professionId, stage.id],
+    queryFn:  async () => {
+      const res = await apiFetch(`/api/pgf/professions/${sectorId}/${professionId}/stages/${stage.id}/expert-actions`);
+      if (!res.ok) throw new Error('Not found');
+      return res.json();
+    },
+  });
+
+  return (
+    <div className="fixed inset-0 z-50 flex" dir="rtl">
+      {/* Backdrop */}
+      <div className="flex-1 bg-black/40" onClick={onClose} />
+      {/* Panel — slides in from the right (RTL: right side = start) */}
+      <div className="w-full max-w-sm bg-background border-l shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b bg-amber-50 dark:bg-amber-900/20">
+          <div className="flex items-center gap-2">
+            <Zap className="w-4 h-4 text-amber-600" />
+            <span className="font-bold text-amber-900 dark:text-amber-200 text-sm">ماذا سيفعل الخبير؟</span>
+          </div>
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-800/40">
+            <X className="w-4 h-4 text-amber-600" />
+          </button>
+        </div>
+
+        {/* Stage title */}
+        <div className="px-4 py-3 border-b">
+          <p className="text-xs text-muted-foreground">المرحلة الحالية</p>
+          <p className="text-sm font-semibold">{stage.icon} {stage.title}</p>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {isLoading && (
+            <div className="flex justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+            </div>
+          )}
+
+          {data && (
+            <>
+              {/* Why this matters */}
+              {data.whyThisMatters && (
+                <div className="p-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-xl">
+                  <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-1">لماذا هذا يهمّ؟</p>
+                  <p className="text-sm text-amber-800 dark:text-amber-300 leading-relaxed">{data.whyThisMatters}</p>
+                </div>
+              )}
+
+              {/* Mentor prompt quote */}
+              {data.mentorPrompt && (
+                <blockquote className="border-r-4 border-primary/40 pr-3 py-1 italic text-sm text-muted-foreground">
+                  {data.mentorPrompt}
+                </blockquote>
+              )}
+
+              {/* Expert first actions */}
+              {data.expertFirstActions.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-foreground mb-2">الإجراءات الأولى للخبير:</p>
+                  <ol className="space-y-2">
+                    {data.expertFirstActions.slice(0, 5).map((action, i) => (
+                      <li key={i} className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg text-sm">
+                        <span className="w-5 h-5 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center shrink-0 text-xs">
+                          {i + 1}
+                        </span>
+                        <span>{action}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        <div className="p-4 border-t">
+          <Button variant="outline" size="sm" className="w-full" onClick={onClose}>
+            إغلاق
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Stage form ───────────────────────────────────────────────────────────────
 
 function StageForm({
   stage, completedStages, totalStages, stageIndex,
+  sectorId, professionId,
   onSubmit, isSubmitting,
 }: {
   stage:           PgfWorkflowStage;
   completedStages: string[];
   totalStages:     number;
   stageIndex:      number;
+  sectorId:        string;
+  professionId:    string;
   onSubmit:        (answers: Record<string, string | string[] | boolean>) => void;
   isSubmitting:    boolean;
 }) {
   const [answers, setAnswers] = useState<Record<string, string | string[] | boolean>>({});
+  const [showExpert, setShowExpert] = useState(false);
 
   const allValid = stage.questions
     .filter((q) => q.required)
     .every((q) => isAnswerValid(q, answers[q.id]));
 
   return (
-    <div className="bg-card border rounded-2xl p-6 space-y-6">
-      {/* Stage progress */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 flex-wrap" dir="rtl">
-          {Array.from({ length: totalStages }).map((_, i) => (
-            <div
-              key={i}
-              className={`h-1.5 flex-1 rounded-full min-w-6 ${
-                i < stageIndex ? 'bg-primary' : i === stageIndex ? 'bg-primary/60' : 'bg-muted'
-              }`}
-            />
+    <div className="space-y-4">
+      {/* Expert actions slide-in */}
+      {showExpert && (
+        <ExpertActionsPanel
+          sectorId={sectorId}
+          professionId={professionId}
+          stage={stage}
+          onClose={() => setShowExpert(false)}
+        />
+      )}
+
+      <div className="bg-card border rounded-2xl p-6 space-y-6">
+        {/* Stage progress */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 flex-wrap" dir="rtl">
+            {Array.from({ length: totalStages }).map((_, i) => (
+              <div
+                key={i}
+                className={`h-1.5 flex-1 rounded-full min-w-6 ${
+                  i < stageIndex ? 'bg-primary' : i === stageIndex ? 'bg-primary/60' : 'bg-muted'
+                }`}
+              />
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground text-right">
+            المرحلة {stageIndex + 1} من {totalStages}
+          </p>
+        </div>
+
+        {/* Stage header */}
+        <div className="border-b pb-4" dir="rtl">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-2 mb-1">
+              {stage.icon && <span className="text-xl">{stage.icon}</span>}
+              <h2 className="text-lg font-bold text-foreground">{stage.title}</h2>
+            </div>
+            {/* Expert actions button — only show if data exists */}
+            {(stage.expertFirstActions?.length || stage.mentorPrompt) && (
+              <button
+                onClick={() => setShowExpert(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-xs font-medium hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors shrink-0"
+              >
+                <Zap className="w-3.5 h-3.5" />
+                ماذا سيفعل الخبير؟
+              </button>
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground" dir="rtl">{stage.description}</p>
+        </div>
+
+        {/* Questions */}
+        <div className="space-y-6">
+          {stage.questions.map((q) => (
+            <div key={q.id} className="space-y-2" dir="rtl">
+              <Label className="text-sm font-semibold leading-snug">
+                {q.text}
+                {q.required && <span className="text-destructive ml-1">*</span>}
+              </Label>
+              {q.hint && <p className="text-xs text-muted-foreground">{q.hint}</p>}
+              <QuestionField
+                question={q}
+                value={answers[q.id]}
+                onChange={(v) => setAnswers((prev) => ({ ...prev, [q.id]: v }))}
+              />
+            </div>
           ))}
         </div>
-        <p className="text-xs text-muted-foreground text-right">
-          المرحلة {stageIndex + 1} من {totalStages}
-        </p>
-      </div>
 
-      {/* Stage header */}
-      <div className="border-b pb-4" dir="rtl">
-        <div className="flex items-center gap-2 mb-1">
-          {stage.icon && <span className="text-xl">{stage.icon}</span>}
-          <h2 className="text-lg font-bold text-foreground">{stage.title}</h2>
+        {/* Navigation */}
+        <div className="flex items-center justify-end pt-2">
+          <Button
+            onClick={() => onSubmit(answers)}
+            disabled={!allValid || isSubmitting}
+            className="gap-2"
+          >
+            {isSubmitting ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> جارٍ الحفظ…</>
+            ) : (
+              <>التالي <ArrowLeft className="w-4 h-4" /></>
+            )}
+          </Button>
         </div>
-        <p className="text-sm text-muted-foreground">{stage.description}</p>
       </div>
 
-      {/* Questions */}
-      <div className="space-y-6">
-        {stage.questions.map((q) => (
-          <div key={q.id} className="space-y-2" dir="rtl">
-            <Label className="text-sm font-semibold leading-snug">
-              {q.text}
-              {q.required && <span className="text-destructive ml-1">*</span>}
-            </Label>
-            {q.hint && <p className="text-xs text-muted-foreground">{q.hint}</p>}
-            <QuestionField
-              question={q}
-              value={answers[q.id]}
-              onChange={(v) => setAnswers((prev) => ({ ...prev, [q.id]: v }))}
-            />
-          </div>
-        ))}
-      </div>
-
-      {/* Navigation */}
-      <div className="flex items-center justify-end pt-2">
-        <Button
-          onClick={() => onSubmit(answers)}
-          disabled={!allValid || isSubmitting}
-          className="gap-2"
-        >
-          {isSubmitting ? (
-            <><Loader2 className="w-4 h-4 animate-spin" /> جارٍ الحفظ…</>
-          ) : (
-            <>التالي <ArrowLeft className="w-4 h-4" /></>
-          )}
-        </Button>
-      </div>
+      {/* Mentor panel — below the stage card */}
+      <MentorPanel stage={stage} />
     </div>
   );
 }
@@ -329,6 +590,31 @@ function AssessmentView({
       <ConfidenceGauge score={output.confidenceScore} />
       {output.confidenceRationale && (
         <p className="text-sm text-muted-foreground -mt-3 px-1">{output.confidenceRationale}</p>
+      )}
+
+      {/* Expert reasoning (PME field) */}
+      {output.expertReasoning && (
+        <section className="p-4 bg-violet-50 dark:bg-violet-900/10 border border-violet-200 dark:border-violet-800 rounded-xl">
+          <SectionTitle icon={<Brain className="w-4.5 h-4.5 text-violet-500" />}>
+            تفكير الخبير
+          </SectionTitle>
+          <p className="text-sm leading-loose text-violet-900 dark:text-violet-200 whitespace-pre-wrap">{output.expertReasoning}</p>
+        </section>
+      )}
+
+      {/* Verification status (PME field) */}
+      {output.verificationStatus && (
+        <div className={`flex items-center gap-3 p-3 rounded-xl border text-sm font-medium ${
+          output.verificationStatus === 'verified'
+            ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300'
+            : output.verificationStatus === 'needs_review'
+            ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300'
+            : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300'
+        }`}>
+          {output.verificationStatus === 'verified'   && <><CheckCircle2 className="w-4 h-4 shrink-0" /> مُتحقَّق منه</>}
+          {output.verificationStatus === 'needs_review' && <><AlertTriangle className="w-4 h-4 shrink-0" /> يحتاج مراجعة</>}
+          {output.verificationStatus === 'flagged'    && <><AlertCircle className="w-4 h-4 shrink-0" /> مُشار إليه للمتابعة</>}
+        </div>
       )}
 
       {/* Summary */}
@@ -637,6 +923,8 @@ export default function PgfSessionPage() {
             completedStages={session.completedStages ?? []}
             totalStages={totalStages}
             stageIndex={currentIdx >= 0 ? currentIdx : 0}
+            sectorId={session.sectorId}
+            professionId={session.professionId}
             onSubmit={handleStageSubmit}
             isSubmitting={answerMutation.isPending}
           />

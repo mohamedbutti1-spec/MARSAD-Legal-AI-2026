@@ -63,6 +63,18 @@ export interface PgfWorkflowStage {
   icon?:               string;
   questions:           PgfWorkflowQuestion[];
   defaultNextStageId?: string;
+  // ── PME — Professional Mentor Engine ─────────────────────────────────
+  mentorPrompt?:              string;
+  expertReasoning?:           string;
+  whyThisMatters?:            string;
+  commonMistakesAtStage?:     string[];
+  warningSigns?:              string[];
+  escalationTriggers?:        string[];
+  expertFirstActions?:        string[];
+  doNotDo?:                   string[];
+  bestPracticeNotes?:         string[];
+  professionalJudgmentNotes?: string;
+  requiredDocumentsAtStage?:  string[];
 }
 
 export interface PgfProfessionSummary {
@@ -113,6 +125,9 @@ export interface PgfAssessmentOutput {
   confidenceRationale:      string;
   finalChecklist:           PgfFinalChecklistResult[];
   disclaimer:               string;
+  // ── PME additions ──────────────────────────────────────────────────
+  expertReasoning?:    string;
+  verificationStatus?: string;
 }
 
 // ─── Session ──────────────────────────────────────────────────────────────────
@@ -138,7 +153,7 @@ export interface PgfSession {
 // ─── API response shapes ───────────────────────────────────────────────────────
 
 export interface PgfAnswerResponse {
-  nextStageId: string | null;   // null = workflow complete, ready to finalize
+  nextStageId: string | null;
   isComplete:  boolean;
   addedFlag:   string | null;
   session:     PgfSession;

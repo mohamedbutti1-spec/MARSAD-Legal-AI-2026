@@ -32,3 +32,4 @@
 - [Theory Mode Inline Refactor](theory-mode-inline.md) — Stage 5→per-stage JreStageTheory[]; Stage 6 gets zero theory; JDC theory via Phase 3b Promise.all enrichment (never in judge binding prompt)
 - [SPG — Smart Professional Guidance](spg-architecture.md) — 9 sectors, wizard→GuidanceOutput; TaskType.RAG; parseModelJson ok/data pattern; server-side sector/role validation
 - [PGF — Professional Guidance Framework](pgf-architecture.md) — 20 professions/7 sectors; config-driven; decision tree routing; finalize guards (draft-only, all-stages-required, idempotent-on-complete)
+- [PME — Professional Mentor Engine](pme-architecture.md) — 11 optional stage fields; verificationStatus must be enum not free text; expert-actions route before profession detail route
