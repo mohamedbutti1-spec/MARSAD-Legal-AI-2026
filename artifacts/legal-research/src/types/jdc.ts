@@ -12,6 +12,7 @@ import type {
   JreAiDimensionFinding,
   JreAuthorityEntry,
   JreVerificationStatus,
+  JreStageTheory,
 } from "@/types/jre";
 
 export type PanelSize       = 1 | 3 | 5;
@@ -35,7 +36,10 @@ export interface JudgeAnalysis {
   principles:            JrePrinciple[];
   proportionality:       JreProportionality;
   aiDecisionAnalysis:    { dimensions: JreAiDimensionFinding[]; overallNote: string } | null;
-  theoryNote:            string | null;
+  /** @deprecated Use stageTheory for sessions created after the inline-theory refactor. */
+  theoryNote:   string | null;
+  /** Inline per-stage theory — populated when a theory lens is active. */
+  stageTheory:  JreStageTheory[] | null;
 
   legalityAssessment: { score: number; findingAr: string };
   disposalPosition:   DisposalPosition;

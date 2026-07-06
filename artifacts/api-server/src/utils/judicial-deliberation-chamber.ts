@@ -32,7 +32,9 @@ import type {
   JreAiDimensionFinding,
   JreAuthorityEntry,
   JreVerificationStatus,
+  JreStageTheory,
 } from "./judicial-reasoning-engine.js";
+import { THEORY_LENSES } from "./judicial-reasoning-engine.js";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -66,7 +68,10 @@ export interface JudgeAnalysis {
   principles:            JrePrinciple[];
   proportionality:       JreProportionality;
   aiDecisionAnalysis:    { dimensions: JreAiDimensionFinding[]; overallNote: string } | null;
-  theoryNote:            string | null;  // always non-binding
+  /** @deprecated Use stageTheory for new sessions. Kept for backward compat. */
+  theoryNote:   string | null;
+  /** Inline per-stage theory analysis. Populated after Phase 3 enrichment when a theory lens is active. */
+  stageTheory:  JreStageTheory[] | null;
 
   // Individual conclusion
   legalityAssessment:  { score: number; findingAr: string };
@@ -326,7 +331,6 @@ function buildJudgeSystem(judge: JudgeProfile, hasAiDecision: boolean): string {
     ],
     "overallNote": "..."
   }` : "null"},
-  "theoryNote": "ملاحظة مقارنة غير مُلزِمة أو null — ضع [غير مُلزِم] في كل موضع",
   "legalityAssessment": {
     "score": 75,
     "findingAr": "تقييم مشروعية القرار"
@@ -506,7 +510,8 @@ ${caseContext.contextBlock}`;
     principles:            d.principles ?? [],
     proportionality:       d.proportionality,
     aiDecisionAnalysis:    d.aiDecisionAnalysis ?? null,
-    theoryNote:            d.theoryNote ?? null,
+    theoryNote:            null,   // always null in Phase 3; populated only by Phase 3b enrichment
+    stageTheory:           null,   // populated by enrichJudgeWithTheory() after Phase 3
 
     legalityAssessment: d.legalityAssessment,
     disposalPosition:   d.disposalPosition ?? "dismiss",
@@ -517,6 +522,82 @@ ${caseContext.contextBlock}`;
     opinionType: null,   // set in determineMajority()
     verificationStatus,
   };
+}
+
+// ─── Per-Judge Theory Enrichment ─────────────────────────────────────────────
+// Run AFTER Phase 3 (binding judge analysis). Produces inline per-stage theory
+// objects without contaminating the judge's binding analysis.
+
+async function enrichJudgeWithTheory(
+  judge:       JudgeAnalysis,
+  theoryLensId: string,
+  lensName:    string,
+  userId:      number,
+): Promise<JudgeAnalysis> {
+  const lensConfig  = THEORY_LENSES[theoryLensId as keyof typeof THEORY_LENSES];
+  const promptBlock = lensConfig?.promptBlock ?? "";
+  const isFrenchLens = theoryLensId === "comparative_french";
+
+  const includeProportionality = judge.proportionality?.applicable === true;
+  const includeAiReview        = !!(judge.aiDecisionAnalysis?.dimensions?.length);
+
+  const stagesRequested = [
+    "- legislation (التشريعات المنطبقة) — إلزامي",
+    "- precedents (السوابق القضائية) — إلزامي",
+    "- principles (مبادئ القانون الإداري) — إلزامي",
+    ...(includeProportionality ? ["- proportionality (التناسب) — مطلوب"] : []),
+    ...(includeAiReview        ? ["- ai_review (القرار الرقمي) — مطلوب"]   : []),
+  ].join("\n");
+
+  const system = `أنت باحث قانوني أكاديمي متخصص في القانون الإداري المقارن. مهمتك تحليل استقلالي لرأي قاضٍ وفق منظور "${lensName}".
+
+⚠️ هذا التحليل أكاديمي غير مُلزِم تماماً. لا يُعدِّل رأي القاضي القانوني الملزم. ضَع [غير مُلزِم] في كل موضع.
+
+${promptBlock}
+
+لكل مرحلة مطلوبة أنتِج:
+1. stageId — بالإنجليزية
+2. stageNameAr — بالعربية
+3. uaeBindingAnalysis — ملخص موجز (2-3 جمل) للقانون الإماراتي الملزم في هذه المرحلة
+4. theoryLensAnalysis — منظور "${lensName}" [غير مُلزِم] (2-3 جمل)
+5. frenchComparative — ${isFrenchLens ? "المقارن الفرنسي (2-3 جمل)" : "للتناسب فحسب، أو null"}
+6. agreement — توافق (جملة واحدة)
+7. difference — اختلاف (جملة واحدة)
+8. addedValue — قيمة مضافة [غير مُلزِم] (جملة واحدة)
+9. disclaimer — "هذا التحليل النظري غير مُلزِم قانونياً"
+
+المراحل:
+${stagesRequested}
+
+أجب بـJSON: { "stageTheory": [...] }`;
+
+  const userPrompt = `رأي القاضي ${judge.nameAr}:
+التشريعات: ${JSON.stringify(judge.applicableLegislation?.slice(0, 5) ?? [], null, 2)}
+السوابق: ${JSON.stringify(judge.precedents?.slice(0, 5) ?? [], null, 2)}
+المبادئ: ${JSON.stringify(judge.principles?.slice(0, 5) ?? [], null, 2)}
+${includeProportionality ? `التناسب:\n${JSON.stringify(judge.proportionality, null, 2)}\n` : ""}
+${includeAiReview ? `القرار الرقمي:\n${JSON.stringify(judge.aiDecisionAnalysis, null, 2)}\n` : ""}
+الخلاصة: ${judge.holding}`;
+
+  try {
+    const provider = await aiRouter.routeFor(TaskType.RAG);
+    const raw = await provider.complete({
+      taskType:     TaskType.RAG,
+      systemPrompt: system,
+      prompt:       userPrompt,
+      maxTokens:    3000,
+    });
+
+    const cleaned = raw.text.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+    const parse   = parseModelJson<{ stageTheory: JreStageTheory[] }>(cleaned);
+
+    if (parse.ok && Array.isArray(parse.data.stageTheory)) {
+      return { ...judge, stageTheory: parse.data.stageTheory };
+    }
+  } catch {
+    // Non-fatal; leave stageTheory as null
+  }
+  return judge;
 }
 
 // ─── Majority Determination ──────────────────────────────────────────────────
@@ -666,16 +747,30 @@ ${disputeSummary}
     ),
   );
 
+  // ── Phase 3b: Theory Enrichment (per-judge, parallel, non-blocking) ──────────
+  // Runs AFTER all binding judge analyses are complete. Adds inline per-stage
+  // theory objects without touching any binding analysis fields.
+  let enrichedJudges: JudgeAnalysis[] = judgeAnalyses;
+  if (params.theoryLensId) {
+    const lensConfig = THEORY_LENSES[params.theoryLensId as keyof typeof THEORY_LENSES];
+    const lensName   = lensConfig?.nameAr ?? params.theoryLensId;
+    enrichedJudges   = await Promise.all(
+      judgeAnalyses.map((j) =>
+        enrichJudgeWithTheory(j, params.theoryLensId!, lensName, userId),
+      ),
+    );
+  }
+
   // ── Majority Determination ──────────────────────────────────────────────────
   const {
     majorityPosition,
     majorityJudgeIds,
     dissentingJudgeIds,
     concurringJudgeIds,
-  } = determineMajority(judgeAnalyses, panelSize);
+  } = determineMajority(enrichedJudges, panelSize);
 
   // Tag each judge's opinion type
-  for (const j of judgeAnalyses) {
+  for (const j of enrichedJudges) {
     if (majorityJudgeIds.includes(j.judgeId)) {
       j.opinionType = "majority";
     } else if (concurringJudgeIds.includes(j.judgeId)) {
@@ -686,14 +781,14 @@ ${disputeSummary}
   }
 
   // ── Phase 4: Panel Synthesis ────────────────────────────────────────────────
-  const majorityJudges   = judgeAnalyses.filter((j) => majorityJudgeIds.includes(j.judgeId));
-  const dissentingJudges = judgeAnalyses.filter((j) => dissentingJudgeIds.includes(j.judgeId));
-  const concurringJudges = judgeAnalyses.filter((j) => concurringJudgeIds.includes(j.judgeId));
+  const majorityJudges   = enrichedJudges.filter((j) => majorityJudgeIds.includes(j.judgeId));
+  const dissentingJudges = enrichedJudges.filter((j) => dissentingJudgeIds.includes(j.judgeId));
+  const concurringJudges = enrichedJudges.filter((j) => concurringJudgeIds.includes(j.judgeId));
 
   const synthUserPrompt = `قضية: ${intake.caseTitle}
 
 تحليلات القضاة الفردية:
-${judgeAnalyses.map((j) => `
+${enrichedJudges.map((j) => `
 ## ${j.nameAr} (القاضي ${j.judgeId})
 المنطوق الفردي: ${j.disposalPosition.toUpperCase()} — ${j.holding}
 الأسباب: ${j.reasons.slice(0, 800)}
@@ -764,7 +859,7 @@ ${judgeAnalyses.map((j) => `
   });
 
   // ── Aggregate Verification Report ──────────────────────────────────────────
-  const perJudge = judgeAnalyses.map((j) => ({
+  const perJudge = enrichedJudges.map((j) => ({
     judgeId:   j.judgeId,
     verified:  j.verificationStatus.verifiedCount,
     fabricated: j.verificationStatus.fabricatedCitationsFiltered,
@@ -811,7 +906,7 @@ ${judgeAnalyses.map((j) => `
   // ── Assemble Final Deliberation ─────────────────────────────────────────────
   return {
     panelSize,
-    judges: judgeAnalyses,
+    judges: enrichedJudges,
 
     // Always use deterministic vote math; never trust synthesis AI to re-compute these.
     majorityPosition,

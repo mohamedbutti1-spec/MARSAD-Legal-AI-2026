@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { DISPUTE_TYPE_LABELS } from '@/types/jre';
+import { DISPUTE_TYPE_LABELS, THEORY_LENS_OPTIONS, type JreStageTheory } from '@/types/jre';
 import {
   PANEL_SIZE_CONFIG, DISPOSAL_POSITION_CONFIG, OPINION_TYPE_CONFIG, STATUS_CONFIG,
   type JdcChamber, type JudgeAnalysis, type PanelSize, type OpinionType,
@@ -48,9 +48,72 @@ function PanelIcon({ size }: { size: PanelSize }) {
   return <Scale className="w-4 h-4" />;
 }
 
+// ─── Inline Theory Section (per-judge) ───────────────────────────────────────
+
+function InlineJudgeTheory({ stageTheory, lensName, chamberLensId }: {
+  stageTheory: JreStageTheory[];
+  lensName?: string;
+  chamberLensId?: string | null;
+}) {
+  const [openStage, setOpenStage] = useState<string | null>(null);
+  if (stageTheory.length === 0) return null;
+  const lens = lensName ?? 'التحليل النظري';
+
+  return (
+    <div className="mt-4 pt-3 border-t border-dashed border-amber-200 dark:border-amber-800/60 space-y-2">
+      <p className="text-xs font-medium text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+        <Sparkles className="w-3.5 h-3.5 shrink-0" />
+        {lens} — التحليل النظري [غير مُلزِم]
+      </p>
+      {stageTheory.map((s) => (
+        <div key={s.stageId} className="border border-amber-100 dark:border-amber-900/40 rounded-lg overflow-hidden">
+          <button
+            onClick={() => setOpenStage(openStage === s.stageId ? null : s.stageId)}
+            className="w-full flex items-center justify-between px-3 py-2 text-xs text-right hover:bg-amber-50/50 dark:hover:bg-amber-900/10 transition-colors"
+          >
+            <span className="font-medium">{s.stageNameAr}</span>
+            {openStage === s.stageId ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+          </button>
+          {openStage === s.stageId && (
+            <div className="px-3 pb-3 space-y-2 text-xs border-t border-amber-100 dark:border-amber-900/40">
+              <div className="border-r-2 border-emerald-500 pr-2 pt-2">
+                <p className="font-semibold text-emerald-700 dark:text-emerald-400 mb-0.5">القانون الإماراتي الملزم</p>
+                <p className="leading-relaxed">{s.uaeBindingAnalysis}</p>
+              </div>
+              {s.theoryLensAnalysis && (
+                <div className="border-r-2 border-amber-400 pr-2">
+                  <p className="font-semibold text-amber-600 dark:text-amber-400 mb-0.5">{lens} [غير مُلزِم]</p>
+                  <p className="leading-relaxed">{s.theoryLensAnalysis}</p>
+                </div>
+              )}
+              {s.frenchComparative && (
+                <div className="border-r-2 border-blue-400 pr-2">
+                  <p className="font-semibold text-blue-600 dark:text-blue-400 mb-0.5">القانون الفرنسي المقارن [غير مُلزِم]</p>
+                  <p className="leading-relaxed">{s.frenchComparative}</p>
+                </div>
+              )}
+              <div className="grid grid-cols-3 gap-1.5 pt-1">
+                <div className="bg-emerald-50 dark:bg-emerald-900/10 rounded p-1.5">
+                  <span className="font-semibold text-emerald-700 dark:text-emerald-400">توافق: </span>{s.agreement}
+                </div>
+                <div className="bg-orange-50 dark:bg-orange-900/10 rounded p-1.5">
+                  <span className="font-semibold text-orange-700 dark:text-orange-400">اختلاف: </span>{s.difference}
+                </div>
+                <div className="bg-indigo-50 dark:bg-indigo-900/10 rounded p-1.5">
+                  <span className="font-semibold text-indigo-700 dark:text-indigo-400">قيمة: </span>{s.addedValue}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── Judge Card ───────────────────────────────────────────────────────────────
 
-function JudgeCard({ judge, isMajority }: { judge: JudgeAnalysis; isMajority: boolean }) {
+function JudgeCard({ judge, isMajority, chamberLensId, chamberLensName }: { judge: JudgeAnalysis; isMajority: boolean; chamberLensId?: string | null; chamberLensName?: string | null }) {
   const [open, setOpen] = useState(false);
   const dispConf    = DISPOSAL_POSITION_CONFIG[judge.disposalPosition];
   const opinConf    = judge.opinionType ? OPINION_TYPE_CONFIG[judge.opinionType] : null;
@@ -186,8 +249,10 @@ function JudgeCard({ judge, isMajority }: { judge: JudgeAnalysis; isMajority: bo
               </div>
             )}
 
-            {/* Theory note */}
-            {judge.theoryNote && (
+            {/* Per-stage theory (new) or legacy theoryNote */}
+            {judge.stageTheory && judge.stageTheory.length > 0 ? (
+              <InlineJudgeTheory stageTheory={judge.stageTheory} lensName={chamberLensName ?? undefined} chamberLensId={chamberLensId} />
+            ) : judge.theoryNote ? (
               <div className="bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800 rounded-lg p-3">
                 <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-400 mb-1 flex items-center gap-1">
                   <Sparkles className="w-3 h-3" /> ملاحظة نظرية — غير مُلزِمة
@@ -196,7 +261,7 @@ function JudgeCard({ judge, isMajority }: { judge: JudgeAnalysis; isMajority: bo
                   {judge.theoryNote.slice(0, 300)}{judge.theoryNote.length > 300 ? '...' : ''}
                 </p>
               </div>
-            )}
+            ) : null}
 
             {/* Individual holding */}
             <div className="bg-muted/40 rounded-lg p-3">
@@ -428,6 +493,8 @@ export default function JdcChamberPage() {
                 key={judge.judgeId}
                 judge={judge}
                 isMajority={del.majorityJudgeIds.includes(judge.judgeId)}
+                chamberLensId={chamber.theoryLensId}
+                chamberLensName={chamber.theoryLensId ? (THEORY_LENS_OPTIONS.find(o => o.value === chamber.theoryLensId)?.label ?? chamber.theoryLensId) : null}
               />
             ))}
           </TabsContent>

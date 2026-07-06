@@ -70,6 +70,22 @@ export interface JreTheoryAnalysis {
   disclaimer:  string;
 }
 
+/**
+ * Per-stage inline theory — one object per major analytical stage.
+ * UAE binding analysis is always listed first; theory is non-binding.
+ */
+export interface JreStageTheory {
+  stageId:   "legislation" | "precedents" | "principles" | "proportionality" | "ai_review";
+  stageNameAr: string;
+  uaeBindingAnalysis: string;
+  theoryLensAnalysis: string | null;
+  frenchComparative:  string | null;
+  agreement:  string;
+  difference: string;
+  addedValue: string;
+  disclaimer: string;
+}
+
 export interface JreAuthorityEntry {
   rank:           number;
   authorityClass: "binding" | "persuasive" | "non_binding";
@@ -112,7 +128,8 @@ export interface JudgmentOutput {
   principles:       JrePrinciple[];
   proportionality:  JreProportionality;
   aiDecisionReview: JreAiDecisionReview;
-  theoryAnalysis:   JreTheoryAnalysis;
+  theoryAnalysis:   JreTheoryAnalysis;  // backward-compat derived field
+  stageTheory:      JreStageTheory[];
 
   reasons:  string;
   holding:  string;

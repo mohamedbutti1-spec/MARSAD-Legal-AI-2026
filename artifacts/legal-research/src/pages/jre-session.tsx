@@ -4,7 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import {
   Gavel, ArrowRight, Loader2, AlertCircle, CheckCircle2, XCircle,
   Bot, Sparkles, Scale, BookOpen, FileText, BarChart2, Shield,
-  ScrollText, Send, Info,
+  ScrollText, Send, Info, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,7 @@ import { AuthorityHierarchy } from '@/components/jre/authority-hierarchy';
 import {
   DISPUTE_TYPE_LABELS, type JreSession, type JudgmentOutput,
   type JreLegislationItem, type JrePrecedentItem, type JrePrinciple,
-  type JreProportionality, type JreAiDimensionFinding,
+  type JreProportionality, type JreAiDimensionFinding, type JreStageTheory,
 } from '@/types/jre';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -38,6 +38,75 @@ const AUTHORITY_BADGE = (cls: string) =>
   cls === 'binding'
     ? <span className="text-[10px] px-1.5 py-0.5 rounded border bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800 font-medium">مُلزِم</span>
     : <span className="text-[10px] px-1.5 py-0.5 rounded border bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800 font-medium">مرجعي</span>;
+
+// ─── Inline Theory Section ────────────────────────────────────────────────────
+// Collapsible per-stage theory annotation. UAE binding analysis is always shown
+// first; theory lens content is clearly marked [غير مُلزِم].
+
+function InlineTheorySection({ theory, lensName }: { theory: JreStageTheory; lensName: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mt-4 pt-3 border-t border-dashed border-amber-200 dark:border-amber-800/60" dir="rtl">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 text-xs w-full text-right text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors"
+      >
+        <Sparkles className="w-3.5 h-3.5 shrink-0" />
+        <span className="font-medium">{lensName}</span>
+        <span className="text-muted-foreground">[غير مُلزِم]</span>
+        <span className="mr-auto">{open ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}</span>
+      </button>
+
+      {open && (
+        <div className="mt-3 space-y-3 text-sm">
+          {/* UAE binding — always first */}
+          <div className="border-r-2 border-emerald-500 pr-3 py-0.5">
+            <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 mb-1">القانون الإماراتي الملزم</p>
+            <p className="leading-relaxed">{theory.uaeBindingAnalysis}</p>
+          </div>
+
+          {/* Theory lens */}
+          {theory.theoryLensAnalysis && (
+            <div className="border-r-2 border-amber-400 pr-3 py-0.5">
+              <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 mb-1">
+                {lensName} <span className="font-normal text-muted-foreground">[غير مُلزِم]</span>
+              </p>
+              <p className="leading-relaxed">{theory.theoryLensAnalysis}</p>
+            </div>
+          )}
+
+          {/* French comparative (optional) */}
+          {theory.frenchComparative && (
+            <div className="border-r-2 border-blue-400 pr-3 py-0.5">
+              <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 mb-1">
+                القانون الفرنسي المقارن <span className="font-normal text-muted-foreground">[غير مُلزِم]</span>
+              </p>
+              <p className="leading-relaxed">{theory.frenchComparative}</p>
+            </div>
+          )}
+
+          {/* Agreement / Difference / Added value */}
+          <div className="grid grid-cols-3 gap-2 text-xs pt-1">
+            <div className="bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/40 rounded-lg p-2">
+              <p className="font-semibold text-emerald-700 dark:text-emerald-400 mb-1">توافق</p>
+              <p className="text-foreground/80">{theory.agreement}</p>
+            </div>
+            <div className="bg-orange-50 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-900/40 rounded-lg p-2">
+              <p className="font-semibold text-orange-700 dark:text-orange-400 mb-1">اختلاف</p>
+              <p className="text-foreground/80">{theory.difference}</p>
+            </div>
+            <div className="bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/40 rounded-lg p-2">
+              <p className="font-semibold text-indigo-700 dark:text-indigo-400 mb-1">قيمة مضافة</p>
+              <p className="text-foreground/80">{theory.addedValue}</p>
+            </div>
+          </div>
+
+          <p className="text-[11px] text-muted-foreground/70 italic">{theory.disclaimer}</p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ─── Tab IDs ──────────────────────────────────────────────────────────────────
 
@@ -130,7 +199,7 @@ function IssuesTab({ judgment }: { judgment: JudgmentOutput }) {
   );
 }
 
-function LegislationTab({ legislation }: { legislation: JreLegislationItem[] }) {
+function LegislationTab({ legislation, stageTheory, lensName }: { legislation: JreLegislationItem[]; stageTheory?: JreStageTheory; lensName?: string }) {
   return (
     <div className="space-y-3" dir="rtl">
       {legislation.length === 0 ? (
@@ -165,11 +234,12 @@ function LegislationTab({ legislation }: { legislation: JreLegislationItem[] }) 
           </div>
         ))
       )}
+      {stageTheory && <InlineTheorySection theory={stageTheory} lensName={lensName ?? 'التحليل النظري'} />}
     </div>
   );
 }
 
-function PrecedentsTab({ precedents }: { precedents: JrePrecedentItem[] }) {
+function PrecedentsTab({ precedents, stageTheory, lensName }: { precedents: JrePrecedentItem[]; stageTheory?: JreStageTheory; lensName?: string }) {
   return (
     <div className="space-y-3" dir="rtl">
       {precedents.length === 0 ? (
@@ -190,11 +260,12 @@ function PrecedentsTab({ precedents }: { precedents: JrePrecedentItem[] }) {
           </div>
         ))
       )}
+      {stageTheory && <InlineTheorySection theory={stageTheory} lensName={lensName ?? 'التحليل النظري'} />}
     </div>
   );
 }
 
-function PrinciplesTab({ principles }: { principles: JrePrinciple[] }) {
+function PrinciplesTab({ principles, stageTheory, lensName }: { principles: JrePrinciple[]; stageTheory?: JreStageTheory; lensName?: string }) {
   return (
     <div className="space-y-3" dir="rtl">
       {principles.length === 0 ? (
@@ -214,11 +285,12 @@ function PrinciplesTab({ principles }: { principles: JrePrinciple[] }) {
           </div>
         ))
       )}
+      {stageTheory && <InlineTheorySection theory={stageTheory} lensName={lensName ?? 'التحليل النظري'} />}
     </div>
   );
 }
 
-function ProportionalityTab({ prop }: { prop: JreProportionality }) {
+function ProportionalityTab({ prop, stageTheory, lensName }: { prop: JreProportionality; stageTheory?: JreStageTheory; lensName?: string }) {
   if (!prop.applicable) {
     return (
       <div className="text-center text-muted-foreground py-12">
@@ -266,11 +338,12 @@ function ProportionalityTab({ prop }: { prop: JreProportionality }) {
           <div className="text-sm">{data.finding}</div>
         </div>
       ))}
+      {stageTheory && <InlineTheorySection theory={stageTheory} lensName={lensName ?? 'التحليل النظري'} />}
     </div>
   );
 }
 
-function AiReviewTab({ review, visible }: { review: JudgmentOutput['aiDecisionReview']; visible: boolean }) {
+function AiReviewTab({ review, visible, stageTheory, lensName }: { review: JudgmentOutput['aiDecisionReview']; visible: boolean; stageTheory?: JreStageTheory; lensName?: string }) {
   if (!visible || !review.applicable) {
     return (
       <div className="text-center py-12 text-muted-foreground space-y-2">
@@ -299,14 +372,62 @@ function AiReviewTab({ review, visible }: { review: JudgmentOutput['aiDecisionRe
           {d.basis && <p className="text-xs text-muted-foreground mt-1 border-t pt-1">{d.basis}</p>}
         </div>
       ))}
+      {stageTheory && <InlineTheorySection theory={stageTheory} lensName={lensName ?? 'التحليل النظري'} />}
     </div>
   );
 }
 
-function TheoryTab({ theory }: { theory: JudgmentOutput['theoryAnalysis'] }) {
+function TheoryTab({ theory, stageTheory }: { theory: JudgmentOutput['theoryAnalysis']; stageTheory: JudgmentOutput['stageTheory'] }) {
+  // When per-stage theory is available, show a guide and per-stage summary.
+  // Falls back to the legacy single-block view for older sessions.
+  if (stageTheory && stageTheory.length > 0) {
+    return (
+      <div className="space-y-4" dir="rtl">
+        <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg">
+          <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+          <div>
+            <p className="text-sm text-amber-800 dark:text-amber-300 font-medium mb-1">
+              التحليل النظري مُدمَج الآن داخل كل قسم
+            </p>
+            <p className="text-xs text-amber-700 dark:text-amber-400">
+              انقر على "▾ {theory.lensName} [غير مُلزِم]" أسفل أي قسم (التشريعات، السوابق، المبادئ، التناسب، القرار الرقمي) لعرض التحليل المقارن. هذا التحليل غير مُلزِم ولا يُعدِّل الحكم القانوني.
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <h4 className="text-sm font-semibold text-foreground">ملخص المراحل المحلَّلة نظرياً</h4>
+          {stageTheory.map((s) => (
+            <div key={s.stageId} className="p-4 bg-card border rounded-lg space-y-2">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                <span className="font-medium text-sm">{s.stageNameAr}</span>
+                <Badge variant="outline" className="text-xs text-muted-foreground">غير مُلزِم</Badge>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
+                {s.theoryLensAnalysis ?? s.uaeBindingAnalysis}
+              </p>
+              <div className="grid grid-cols-3 gap-2 text-xs pt-1">
+                <div className="bg-emerald-50 dark:bg-emerald-900/10 rounded p-1.5">
+                  <span className="font-medium text-emerald-700 dark:text-emerald-400">توافق: </span>{s.agreement}
+                </div>
+                <div className="bg-orange-50 dark:bg-orange-900/10 rounded p-1.5">
+                  <span className="font-medium text-orange-700 dark:text-orange-400">اختلاف: </span>{s.difference}
+                </div>
+                <div className="bg-indigo-50 dark:bg-indigo-900/10 rounded p-1.5">
+                  <span className="font-medium text-indigo-700 dark:text-indigo-400">قيمة: </span>{s.addedValue}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Backward compat: legacy single-block view
   return (
     <div className="space-y-4" dir="rtl">
-      {/* Permanent disclaimer */}
       <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg">
         <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
         <p className="text-sm text-amber-800 dark:text-amber-300">
@@ -510,12 +631,12 @@ export default function JreSessionPage() {
           <div className="min-h-[300px]">
             {activeTab === 'facts'           && <FactsTab judgment={judgment} />}
             {activeTab === 'issues'          && <IssuesTab judgment={judgment} />}
-            {activeTab === 'legislation'     && <LegislationTab legislation={judgment.legislation} />}
-            {activeTab === 'precedents'      && <PrecedentsTab precedents={judgment.precedents} />}
-            {activeTab === 'principles'      && <PrinciplesTab principles={judgment.principles} />}
-            {activeTab === 'proportionality' && <ProportionalityTab prop={judgment.proportionality} />}
-            {activeTab === 'ai-review'       && <AiReviewTab review={judgment.aiDecisionReview} visible={session.hasAiDecision === 'true' || judgment.aiDecisionReview.applicable} />}
-            {activeTab === 'theory'          && <TheoryTab theory={judgment.theoryAnalysis} />}
+            {activeTab === 'legislation'     && <LegislationTab legislation={judgment.legislation} stageTheory={judgment.stageTheory?.find(s => s.stageId === 'legislation')} lensName={session.theoryLensName ?? undefined} />}
+            {activeTab === 'precedents'      && <PrecedentsTab precedents={judgment.precedents} stageTheory={judgment.stageTheory?.find(s => s.stageId === 'precedents')} lensName={session.theoryLensName ?? undefined} />}
+            {activeTab === 'principles'      && <PrinciplesTab principles={judgment.principles} stageTheory={judgment.stageTheory?.find(s => s.stageId === 'principles')} lensName={session.theoryLensName ?? undefined} />}
+            {activeTab === 'proportionality' && <ProportionalityTab prop={judgment.proportionality} stageTheory={judgment.stageTheory?.find(s => s.stageId === 'proportionality')} lensName={session.theoryLensName ?? undefined} />}
+            {activeTab === 'ai-review'       && <AiReviewTab review={judgment.aiDecisionReview} visible={session.hasAiDecision === 'true' || judgment.aiDecisionReview.applicable} stageTheory={judgment.stageTheory?.find(s => s.stageId === 'ai_review')} lensName={session.theoryLensName ?? undefined} />}
+            {activeTab === 'theory'          && <TheoryTab theory={judgment.theoryAnalysis} stageTheory={judgment.stageTheory ?? []} />}
             {activeTab === 'judgment'        && (
               <>
                 <JudgmentView judgment={judgment} />

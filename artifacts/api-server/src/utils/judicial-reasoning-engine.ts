@@ -95,6 +95,30 @@ export interface JreTheoryAnalysis {
   disclaimer:  string;
 }
 
+/**
+ * Per-stage inline theory — one object per major analytical stage.
+ * UAE binding analysis is always listed first; theory is non-binding and
+ * can never modify the legal conclusion.
+ */
+export interface JreStageTheory {
+  stageId:   "legislation" | "precedents" | "principles" | "proportionality" | "ai_review";
+  stageNameAr: string;
+  /** Concise summary of what UAE binding law found for this stage (always shown first). */
+  uaeBindingAnalysis: string;
+  /** Non-binding theory-lens perspective on this stage. Always labelled [غير مُلزِم]. */
+  theoryLensAnalysis: string | null;
+  /** Optional French administrative law parallel (populated for proportionality stages
+   *  and when the active lens is comparative_french). */
+  frenchComparative:  string | null;
+  /** One sentence: where UAE law and the theory framework agree. */
+  agreement:  string;
+  /** One sentence: key divergence or nuance the theory adds. */
+  difference: string;
+  /** One sentence: academic insight not surfaced by UAE analysis alone. */
+  addedValue: string;
+  disclaimer: string;
+}
+
 export interface JreAuthorityEntry {
   rank:           number;
   authorityClass: "binding" | "persuasive" | "non_binding";
@@ -137,7 +161,9 @@ export interface JudgmentOutput {
   principles:       JrePrinciple[];
   proportionality:  JreProportionality;
   aiDecisionReview: JreAiDecisionReview;
-  theoryAnalysis:   JreTheoryAnalysis;
+  theoryAnalysis:   JreTheoryAnalysis;  // backward-compat derived field
+  /** Inline per-stage theory — populated when a theory lens is active. */
+  stageTheory: JreStageTheory[];
 
   reasons:  string;
   holding:  string;
@@ -156,13 +182,13 @@ export interface JreStageData {
   stage2Retrieval?: { ragContext: string };
   stage3Analysis?:  unknown;
   stage4AiReview?:  unknown;
-  stage5Theory?:    unknown;
+  stage5Theory?:    JreStageTheory[];
   stage6Judgment?:  unknown;
 }
 
 // ─── Theory lens definitions ──────────────────────────────────────────────────
 
-const THEORY_LENSES: Record<string, { nameAr: string; promptBlock: string }> = {
+export const THEORY_LENSES: Record<string, { nameAr: string; promptBlock: string }> = {
   al_shamsi: {
     nameAr: "نظرية الشامسي",
     promptBlock: `
@@ -355,7 +381,7 @@ function buildStage6System(): string {
 - كل استشهاد يُعلَّم [مُلزِم] أو [مرجعي مقارن — غير مُلزِم]
 - لا تستشهد بسلطات غير واردة في التحليل المُقدَّم
 
-⚠️ إذا كان ثمة تحليل نظري غير مُلزِم: اذكره في قسم مستقل بعنوان "التحليل النظري غير المُلزِم" فقط. لا تدمجه أبداً في أسباب الحكم الملزمة.
+⚠️ القانون الإماراتي الملزم فحسب: اكتب الأسباب والمنطوق استناداً إلى التشريعات والسوابق والمبادئ الإماراتية الملزمة الواردة في التحليل. لا يُدرَج أي تحليل نظري مقارن في نص الحكم — التحليل النظري يُعرَض بصورة مستقلة خارج الحكم القضائي ولا يُعدِّل خلاصته أبداً.
 
 أجب بـJSON:
 {
@@ -515,7 +541,13 @@ ${ragContext || "غير متوفر"}`;
     }
   }
 
-  // ── Stage 5: Theory Mode (isolated, non-binding) ─────────────────────────────
+  // ── Stage 5: Inline Per-Stage Theory (isolated, non-binding) ────────────────
+  // Generates one JreStageTheory object per analytical stage.
+  // The synthesis (Stage 6) receives ZERO theory input — hard guarantee that
+  // theory can never modify the legal conclusion.
+  let stageTheory: JreStageTheory[] = [];
+  const THEORY_DISCLAIMER = "⚠️ هذا التحليل النظري غير مُلزِم قانونياً ولا يُشكِّل سلطة قضائية ملزمة. أحكام القانون الإماراتي الواردة في أسباب الحكم تسود دائماً عند التعارض.";
+
   let theoryAnalysis: JreTheoryAnalysis = {
     applied:    false,
     lensName:   null,
@@ -524,43 +556,111 @@ ${ragContext || "غير متوفر"}`;
   };
 
   if (theoryLensId) {
-    const lensConfig = THEORY_LENSES[theoryLensId];
-    const lensName   = theoryLensName ?? lensConfig?.nameAr ?? theoryLensId;
+    const lensConfig  = THEORY_LENSES[theoryLensId];
+    const lensName    = theoryLensName ?? lensConfig?.nameAr ?? theoryLensId;
     const promptBlock = lensConfig?.promptBlock ?? customTheoryText ?? "";
+    const isFrenchLens   = theoryLensId === "comparative_french";
 
-    const theorySystem = `أنت باحث قانوني نظري. مهمتك تحليل نزاع إداري وفق الإطار النظري المحدد.
+    const includeProportionality = s3.proportionality?.applicable === true;
+    const includeAiReview        = !!(s4 && s4.dimensions?.length);
 
-⚠️ تحذير إلزامي: هذا التحليل نظري غير مُلزِم تماماً. لا يُعوِّض عن أحكام القانون الإماراتي الملزم ولا يُقدَّم أمام المحاكم كسلطة ملزمة.
+    const stagesRequested = [
+      "- legislation (التشريعات المنطبقة) — إلزامي",
+      "- precedents (السوابق القضائية) — إلزامي",
+      "- principles (مبادئ القانون الإداري) — إلزامي",
+      ...(includeProportionality ? ["- proportionality (التناسب) — مطلوب: المحكمة طبَّقت مراجعة التناسب"] : []),
+      ...(includeAiReview        ? ["- ai_review (القرار الرقمي/الخوارزمي) — مطلوب: القرار يتضمن نظاماً رقمياً"] : []),
+    ].join("\n");
 
+    const stage5System = `أنت باحث قانوني أكاديمي متخصص في القانون الإداري المقارن. مهمتك تحليل قضية إدارية إماراتية عبر منظور "${lensName}".
+
+⚠️ تحذير إلزامي: هذا التحليل أكاديمي نظري غير مُلزِم تماماً. لا يُعدِّل الحكم القانوني الإماراتي الملزم ولا يُمثِّل سلطة قضائية. ضَع علامة [غير مُلزِم] في كل موضع.
+
+الإطار النظري:
 ${promptBlock}
 
-في كل موضع ضَع علامة [تحليل نظري — غير مُلزِم].
-أجب بنص عربي مباشر (ليس JSON)، 200-400 كلمة.`;
+لكل مرحلة من المراحل المطلوبة أدناه، أنتِج كائن JSON يحتوي على:
+1. stageId — المعرِّف المُحدَّد أدناه (بالإنجليزية)
+2. stageNameAr — اسم المرحلة بالعربية
+3. uaeBindingAnalysis — ملخص موجز (2-3 جمل) لما يقوله القانون الإماراتي الملزم في هذه المرحلة استناداً إلى التحليل المُقدَّم
+4. theoryLensAnalysis — منظور "${lensName}" النظري في هذه المرحلة [غير مُلزِم] (2-3 جمل)
+5. frenchComparative — ${isFrenchLens ? "المقارن الفرنسي لهذه المرحلة [غير مُلزِم] (2-3 جمل)" : "المقارن الفرنسي لمرحلة التناسب فحسب (إن وُجدت)، أو null لبقية المراحل"} 
+6. agreement — جملة واحدة: نقطة التوافق بين القانون الإماراتي و"${lensName}"
+7. difference — جملة واحدة: نقطة الاختلاف أو الإضافة النظرية
+8. addedValue — جملة واحدة: القيمة الأكاديمية التي لا يكشفها التحليل الإماراتي وحده [غير مُلزِم]
+9. disclaimer — "هذا التحليل النظري غير مُلزِم قانونياً"
 
-    const theoryUser = `النزاع:
-${disputeSummary}
+المراحل المطلوبة:
+${stagesRequested}
 
-الوقائع والمسائل:
-${JSON.stringify({ facts: s1.facts, legalIssues: s1.legalIssues }, null, 2)}`;
+أجب حصراً بـJSON:
+{
+  "stageTheory": [
+    {
+      "stageId": "legislation|precedents|principles|proportionality|ai_review",
+      "stageNameAr": "...",
+      "uaeBindingAnalysis": "...",
+      "theoryLensAnalysis": "... [غير مُلزِم]",
+      "frenchComparative": "... [غير مُلزِم]" ,
+      "agreement": "...",
+      "difference": "...",
+      "addedValue": "... [غير مُلزِم]",
+      "disclaimer": "هذا التحليل النظري غير مُلزِم قانونياً"
+    }
+  ]
+}`;
+
+    const stage5User = `تحليل المرحلة الثالثة (القانوني الإماراتي الملزم):
+
+التشريعات المنطبقة:
+${JSON.stringify(s3.applicableLegislation ?? [], null, 2)}
+
+السوابق القضائية:
+${JSON.stringify(s3.precedents ?? [], null, 2)}
+
+مبادئ القانون الإداري:
+${JSON.stringify(s3.principles ?? [], null, 2)}
+
+${includeProportionality ? `مراجعة التناسب:\n${JSON.stringify(s3.proportionality, null, 2)}\n` : ""}
+${includeAiReview ? `مراجعة القرار الرقمي:\n${JSON.stringify(s4, null, 2)}\n` : ""}
+الأسباب القانونية (المرحلة 3):
+${s3.reasons ?? ""}
+
+وقائع القضية:
+${s1.facts.summary}`;
 
     try {
-      const theoryRaw = await provider.complete({
+      const stage5Raw = await provider.complete({
         taskType:     TaskType.RAG,
-        systemPrompt: theorySystem,
-        prompt:       theoryUser,
-        maxTokens:    2000,
+        systemPrompt: stage5System,
+        prompt:       stage5User,
+        maxTokens:    4000,
       });
 
-      theoryAnalysis = {
-        applied:    true,
-        lensName,
-        analysisAr: theoryRaw.text.trim(),
-        disclaimer: "⚠️ هذا التحليل النظري غير مُلزِم قانونياً ولا يُشكِّل سلطة قضائية ملزمة. أحكام القانون الإماراتي الواردة في أسباب الحكم تسود دائماً عند التعارض.",
-      };
-      stageData.stage5Theory = theoryAnalysis;
+      const stage5Cleaned = stage5Raw.text.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+      const stage5Parse   = parseModelJson<{ stageTheory: JreStageTheory[] }>(stage5Cleaned);
+
+      if (stage5Parse.ok && Array.isArray(stage5Parse.data.stageTheory)) {
+        stageTheory = stage5Parse.data.stageTheory;
+        stageData.stage5Theory = stageTheory;
+      }
     } catch {
-      theoryAnalysis.disclaimer = "تعذَّر تطبيق التحليل النظري في هذه الجلسة.";
+      // Theory enrichment failure is non-fatal; stageTheory stays []
     }
+
+    // Backward-compat: derive JreTheoryAnalysis from stageTheory
+    theoryAnalysis = {
+      applied:    stageTheory.length > 0,
+      lensName,
+      analysisAr: stageTheory.length > 0
+        ? stageTheory.map((s) =>
+            `## ${s.stageNameAr}\n${s.theoryLensAnalysis ?? ""}\n\n` +
+            (s.frenchComparative ? `### القانون الفرنسي المقارن\n${s.frenchComparative}\n\n` : "") +
+            `توافق: ${s.agreement}\nاختلاف: ${s.difference}\nقيمة مضافة: ${s.addedValue}`
+          ).join("\n\n---\n\n")
+        : null,
+      disclaimer: THEORY_DISCLAIMER,
+    };
   }
 
   // ── Stage 6: Draft Judgment Synthesis ──────────────────────────────────────
@@ -583,8 +683,6 @@ ${JSON.stringify(s3.principles ?? [], null, 2)}
 ${JSON.stringify(s3.proportionality, null, 2)}
 
 ${s4 ? `مراجعة القرار الرقمي:\n${JSON.stringify(s4, null, 2)}\n` : ""}
-${theoryAnalysis.applied ? `\nالتحليل النظري غير المُلزِم (${theoryAnalysis.lensName}):\n${theoryAnalysis.analysisAr}\n\n${theoryAnalysis.disclaimer}\n` : ""}
-
 المدعي: ${parties.applicantAr || parties.applicant}
 المدعى عليه: ${parties.respondentAr || parties.respondent}
 نوع النزاع: ${disputeType}`;
@@ -690,6 +788,7 @@ ${theoryAnalysis.applied ? `\nالتحليل النظري غير المُلزِ�
     },
 
     theoryAnalysis,
+    stageTheory,
 
     reasons: stripFabricated(s6.reasons),
     holding: stripFabricated(s6.holding),
