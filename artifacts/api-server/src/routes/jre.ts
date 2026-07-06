@@ -131,54 +131,47 @@ router.post("/jre/sessions", requireAnyRole, aiSessionLimit, async (req, res): P
     updatedAt:       new Date(),
   }).returning();
 
-  // Run analysis pipeline
-  try {
-    const { judgment, stageData, legalityScore, riskScore } = await runJudicialAnalysis({
-      disputeSummary:  disputeSummary.trim(),
-      parties:         normalizedParties,
-      disputeType,
-      hasAiDecision,
-      theoryLensId:    theoryLensId || null,
-      theoryLensName:  theoryLensName || null,
-      customTheoryText: customTheoryText || null,
-      userId:          uid,
-    });
+  // Return 201 immediately — client polls GET /jre/sessions/:id for completion
+  res.status(201).json({
+    session: {
+      ...session,
+      parties: normalizedParties,
+    },
+  });
 
-    const [updated] = await db
-      .update(jreSessionsTable)
-      .set({
-        status:    "complete",
-        stageData: JSON.stringify(stageData),
-        judgment:  JSON.stringify(judgment),
-        legalityScore: legalityScore ?? null,
-        riskScore:     riskScore     ?? null,
-        updatedAt: new Date(),
-      })
-      .where(eq(jreSessionsTable.id, session.id))
-      .returning();
+  // Run analysis pipeline in background (non-blocking)
+  setImmediate(async () => {
+    try {
+      const { judgment, stageData, legalityScore, riskScore } = await runJudicialAnalysis({
+        disputeSummary:  disputeSummary.trim(),
+        parties:         normalizedParties,
+        disputeType,
+        hasAiDecision,
+        theoryLensId:    theoryLensId || null,
+        theoryLensName:  theoryLensName || null,
+        customTheoryText: customTheoryText || null,
+        userId:          uid,
+      });
 
-    res.json({
-      session: {
-        ...updated,
-        parties:   normalizedParties,
-        stageData,
-        judgment,
-      },
-    });
-  } catch (err) {
-    req.log?.error({ err }, "JRE analysis failed");
-
-    await db
-      .update(jreSessionsTable)
-      .set({ status: "error", updatedAt: new Date() })
-      .where(eq(jreSessionsTable.id, session.id));
-
-    res.status(500).json({
-      error:     "Analysis failed. Please try again.",
-      sessionId: session.id,
-      detail:    (err as Error).message,
-    });
-  }
+      await db
+        .update(jreSessionsTable)
+        .set({
+          status:    "complete",
+          stageData: JSON.stringify(stageData),
+          judgment:  JSON.stringify(judgment),
+          legalityScore: legalityScore ?? null,
+          riskScore:     riskScore     ?? null,
+          updatedAt: new Date(),
+        })
+        .where(eq(jreSessionsTable.id, session.id));
+    } catch (err) {
+      req.log?.error({ err }, "JRE background analysis failed");
+      await db
+        .update(jreSessionsTable)
+        .set({ status: "error", updatedAt: new Date() })
+        .where(eq(jreSessionsTable.id, session.id));
+    }
+  });
 });
 
 // ─── POST /jre/sessions/:id/follow-up ─────────────────────────────────────────

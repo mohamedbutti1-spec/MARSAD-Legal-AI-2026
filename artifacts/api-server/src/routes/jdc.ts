@@ -218,38 +218,33 @@ router.post("/jdc/chambers", requireAnyRole, aiSessionLimit, async (req, res): P
     status:          "deliberating",
   });
 
-  // Run full chamber deliberation
-  try {
-    const deliberation = await runChamberDeliberation({
-      disputeSummary:  disputeSummary.trim(),
-      parties:         normalizedParties,
-      disputeType,
-      panelSize:       panelSize as PanelSize,
-      hasAiDecision,
-      theoryLensId:    theoryLensId || null,
-      userId:          uid,
-    });
+  // Return 201 immediately — client polls GET /jdc/chambers/:id for completion
+  res.status(201).json({ chamber: { id: chamberId, status: "deliberating", title: chamberTitle } });
 
-    await updateChamber(chamberId, {
-      status:        "complete",
-      deliberation:  JSON.stringify(deliberation),
-      legalityScore: deliberation.legalityScore ?? null,
-      riskScore:     deliberation.riskScore     ?? null,
-    });
+  // Run full chamber deliberation in background (non-blocking)
+  setImmediate(async () => {
+    try {
+      const deliberation = await runChamberDeliberation({
+        disputeSummary:  disputeSummary.trim(),
+        parties:         normalizedParties,
+        disputeType,
+        panelSize:       panelSize as PanelSize,
+        hasAiDecision,
+        theoryLensId:    theoryLensId || null,
+        userId:          uid,
+      });
 
-    const row = await findChamber(chamberId, uid);
-    res.json({ chamber: parseChamberRow(row!) });
-  } catch (err) {
-    req.log?.error({ err }, "JDC deliberation failed");
-
-    await updateChamber(chamberId, { status: "error" });
-
-    res.status(500).json({
-      error:     "Deliberation failed. Please try again.",
-      chamberId,
-      detail:    (err as Error).message,
-    });
-  }
+      await updateChamber(chamberId, {
+        status:        "complete",
+        deliberation:  JSON.stringify(deliberation),
+        legalityScore: deliberation.legalityScore ?? null,
+        riskScore:     deliberation.riskScore     ?? null,
+      });
+    } catch (err) {
+      req.log?.error({ err }, "JDC background deliberation failed");
+      await updateChamber(chamberId, { status: "error" });
+    }
+  });
 });
 
 // ─── DELETE /jdc/chambers/:id ────────────────────────────────────────────────
