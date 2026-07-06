@@ -279,7 +279,13 @@ router.post("/legal-os/assess", requireSupervisorOrOwner, async (req, res): Prom
   }
 
   // Fetch legal context
-  const { context: ragContext, sourceIndex } = await buildContext(semanticQuery, uid, [], []);
+  let ragContext: string;
+  let sourceIndex: Map<string, { title: string; type: "document" | "legal_source" }>;
+  try {
+    ({ context: ragContext, sourceIndex } = await buildContext(semanticQuery, uid, [], []));
+  } catch (err: unknown) {
+    res.status(500).json({ error: "Failed to retrieve legal context. Please try again." }); return;
+  }
 
   const userPrompt = `دور المستخدم: ${role.titleAr} (${role.titleEn})
 السيناريو: ${scenario.titleAr} (${scenario.titleEn})
@@ -448,7 +454,13 @@ router.post("/legal-os/followup", requireSupervisorOrOwner, async (req, res): Pr
     res.status(503).json({ error: (err as Error).message }); return;
   }
 
-  const { context: ragContext, sourceIndex } = await buildContext(message, uid, [], []);
+  let ragContext: string;
+  let sourceIndex: Map<string, { title: string; type: "document" | "legal_source" }>;
+  try {
+    ({ context: ragContext, sourceIndex } = await buildContext(message, uid, [], []));
+  } catch (err: unknown) {
+    res.status(500).json({ error: "Failed to retrieve legal context. Please try again." }); return;
+  }
 
   const reportSummary = session.report
     ? `التقييم القانوني السابق للمستخدم (${session.scenarioTitleAr}):

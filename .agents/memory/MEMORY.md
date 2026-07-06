@@ -37,3 +37,4 @@
 - [PGF Institutional Memory v1](institutional-memory-pgf.md) — pgf_institutional_memory table; POST role from x-user-role header not req.user; seed always per-entry (no count shortcut); lib/db needs tsc --build after schema changes
 - [PWE — Professional Workflow Engine](pwe-architecture.md) — pgf_workflow_steps; branchRules→outcome / escalationRules→action (different fields); unique constraint on (sector,profession,stage,order); seed checks full scope including sectorId
 - [PCS — Professional Case Simulator](pcs-architecture.md) — userId-scoped sessions (IDOR-safe); criticalError computed server-side (never from model); FK+CHECK constraints; SimulatorSection on stageIndex===0 only
+- [V1.0 Validation Findings](v1-validation-findings.md) — auth missing on workspace/adkg/kb (fixed); naip-kpi null crash pattern; NAIP exec dashboard role-map mismatch; legal-os buildContext unguarded

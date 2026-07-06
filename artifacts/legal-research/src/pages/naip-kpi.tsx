@@ -167,7 +167,8 @@ function UaeWideTab({ headers }: { headers: Record<string, string> }) {
   const riskLabels: Record<string, string> = {
     critical: 'حرج', high: 'عالٍ', moderate: 'متوسط', low: 'منخفض',
   };
-  const totalRisk = Object.values(data.risk).reduce((a, b) => a + b, 0);
+  const safeRisk = data.risk ?? { critical: 0, high: 0, moderate: 0, low: 0 };
+  const totalRisk = Object.values(safeRisk).reduce((a, b) => a + b, 0);
 
   const statusColors: Record<string, string> = {
     draft: 'bg-slate-400', in_progress: 'bg-blue-500', completed: 'bg-emerald-500',
@@ -177,7 +178,9 @@ function UaeWideTab({ headers }: { headers: Record<string, string> }) {
     draft: 'مسودة', in_progress: 'قيد المعالجة', completed: 'مكتمل',
     approved: 'معتمد', rejected: 'مرفوض', pending_review: 'في انتظار المراجعة',
   };
-  const totalByStatus = Object.values(data.byStatus).reduce((a, b) => a + b, 0);
+  const safeByStatus = data.byStatus ?? {};
+  const totalByStatus = Object.values(safeByStatus).reduce((a, b) => a + b, 0);
+  const safeConstitutional = data.constitutional ?? { criticalWarnings: 0, totalWarnings: 0, avgCcs: null };
 
   return (
     <div className="space-y-6">
@@ -209,7 +212,7 @@ function UaeWideTab({ headers }: { headers: Record<string, string> }) {
             </div>
           </div>
           <div className="pt-2 border-t border-border space-y-2">
-            {Object.entries(data.byStatus).map(([s, v]) => (
+            {Object.entries(safeByStatus).map(([s, v]) => (
               <CssBar key={s} label={statusLabels[s] ?? s} value={v} total={totalByStatus} color={statusColors[s] ?? 'bg-slate-400'} />
             ))}
           </div>
@@ -220,7 +223,7 @@ function UaeWideTab({ headers }: { headers: Record<string, string> }) {
           <h3 className="text-sm font-bold text-foreground">{t('توزيع المخاطر', 'Risk Distribution')}</h3>
           <div className="grid grid-cols-2 gap-3">
             {(['critical', 'high', 'moderate', 'low'] as const).map((lvl) => {
-              const count = data.risk[lvl] ?? 0;
+              const count = safeRisk[lvl] ?? 0;
               const pct = totalRisk > 0 ? Math.round((count / totalRisk) * 100) : 0;
               const conf = riskLevelConfig(lvl);
               return (
@@ -240,17 +243,17 @@ function UaeWideTab({ headers }: { headers: Record<string, string> }) {
           <div className="space-y-3">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">{t('متوسط الامتثال', 'Avg Compliance')}</span>
-              <span className="font-bold tabular-nums text-emerald-600">{fmt(data.constitutional.avgCcs, '%')}</span>
+              <span className="font-bold tabular-nums text-emerald-600">{fmt(safeConstitutional.avgCcs, '%')}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">{t('تحذيرات حرجة', 'Critical Warnings')}</span>
-              <span className={`font-bold tabular-nums ${data.constitutional.criticalWarnings > 0 ? 'text-red-600' : 'text-foreground'}`}>
-                {data.constitutional.criticalWarnings}
+              <span className={`font-bold tabular-nums ${(safeConstitutional.criticalWarnings ?? 0) > 0 ? 'text-red-600' : 'text-foreground'}`}>
+                {safeConstitutional.criticalWarnings ?? 0}
               </span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">{t('إجمالي التحذيرات', 'Total Warnings')}</span>
-              <span className="font-bold tabular-nums text-amber-600">{data.constitutional.totalWarnings}</span>
+              <span className="font-bold tabular-nums text-amber-600">{safeConstitutional.totalWarnings ?? 0}</span>
             </div>
           </div>
           <Link href="/constitutional-intelligence">

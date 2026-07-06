@@ -210,7 +210,7 @@ export default function NaipDashboard() {
   const constitutional = kpi?.constitutional;
   const modules = kpi?.modules;
 
-  const totalRisk = risk ? Object.values(risk.byLevel).reduce((a, b) => a + b, 0) : 0;
+  const totalRisk = risk?.byLevel ? Object.values(risk.byLevel).reduce((a, b) => a + b, 0) : 0;
   const totalDecisionsByStatus = decisions?.byStatus
     ? Object.values(decisions.byStatus).reduce((a, b) => a + b, 0)
     : 0;
@@ -387,7 +387,7 @@ export default function NaipDashboard() {
               </div>
               <div className="bg-muted/30 rounded-xl p-4">
                 <div className="text-2xl font-bold tabular-nums text-foreground">
-                  {Object.values(constitutional.byRiskLevel).reduce((a, b) => a + b, 0)}
+                  {Object.values(constitutional.byRiskLevel ?? {}).reduce((a: number, b: number) => a + b, 0)}
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">{t('التقييمات الكلية', 'Total Assessments')}</div>
               </div>

@@ -795,8 +795,8 @@ export default function ConstitutionalIntelligence() {
             <div className="grid grid-cols-4 gap-3">
               {(['critical', 'high', 'moderate', 'low'] as CilRiskLevel[]).map((level) => {
                 const rc = riskLevelConfig(level);
-                const count = dashStats.byRiskLevel[level] ?? 0;
-                const total = Object.values(dashStats.byRiskLevel).reduce((a, b) => a + b, 0);
+                const count = dashStats.byRiskLevel?.[level] ?? 0;
+                const total = Object.values(dashStats.byRiskLevel ?? {}).reduce((a: number, b: number) => a + b, 0);
                 const pct = total > 0 ? Math.round((count / total) * 100) : 0;
                 return (
                   <div key={level} className={`rounded-xl border p-4 text-center ${rc.bg} ${rc.border}`}>

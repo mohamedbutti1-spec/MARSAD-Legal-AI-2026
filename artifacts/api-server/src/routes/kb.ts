@@ -22,8 +22,12 @@ import {
 } from "../kb/retrieval.js";
 import type { KbCollectionId, KbHierarchyLevel } from "../kb/types.js";
 import { getUserId } from "../lib/route-helpers.js";
+import { requireSupervisorOrOwner } from "../middlewares/roleAuth.js";
 
 const router: IRouter = Router();
+
+// KB search routes require at minimum supervisor-level access (mirrors canUseAi frontend gate).
+router.use(requireSupervisorOrOwner);
 
 // ─── GET /kb/search ───────────────────────────────────────────────────────────
 

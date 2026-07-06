@@ -960,12 +960,15 @@ router.get(
 
 // ─── GET /naip/executive-data/:dashboardType ──────────────────────────────────
 
+// owner and supervisor are platform-level admins permitted to view any executive dashboard.
+// Individual role checks are enforced for the role-specific governance routes; here
+// the intent is to allow platform admins to oversee all executive views without error.
 const DASHBOARD_TYPE_ROLE_MAP: Record<string, string[]> = {
-  minister:          ["minister"],
-  undersecretary:    ["undersecretary", "assistant_undersecretary"],
-  director_general:  ["director_general"],
+  minister:          ["minister",         "owner", "supervisor"],
+  undersecretary:    ["undersecretary", "assistant_undersecretary", "owner", "supervisor"],
+  director_general:  ["director_general", "owner", "supervisor"],
   risk_officer:      ["owner", "supervisor", "internal_auditor", "constitutional_reviewer"],
-  judge:             ["judge"],
+  judge:             ["judge",            "owner", "supervisor"],
 };
 
 router.get(
