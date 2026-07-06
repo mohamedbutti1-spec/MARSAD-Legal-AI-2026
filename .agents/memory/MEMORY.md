@@ -34,3 +34,4 @@
 - [PGF — Professional Guidance Framework](pgf-architecture.md) — 20 professions/7 sectors; config-driven; decision tree routing; finalize guards (draft-only, all-stages-required, idempotent-on-complete)
 - [PME — Professional Mentor Engine](pme-architecture.md) — 11 optional stage fields; verificationStatus must be enum not free text; expert-actions route before profession detail route
 - [PGF Institutional Memory v1](institutional-memory-pgf.md) — pgf_institutional_memory table; POST role from x-user-role header not req.user; seed always per-entry (no count shortcut); lib/db needs tsc --build after schema changes
+- [PWE — Professional Workflow Engine](pwe-architecture.md) — pgf_workflow_steps; branchRules→outcome / escalationRules→action (different fields); unique constraint on (sector,profession,stage,order); seed checks full scope including sectorId

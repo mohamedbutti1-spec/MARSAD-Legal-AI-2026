@@ -60,3 +60,5 @@ export * from "./spg-sessions";
 // PGF — Professional Guidance Framework
 export * from "./pgf-sessions";
 export * from "./pgf-institutional-memory";
+// PWE — Professional Workflow Engine
+export * from "./pgf-workflow-steps";

@@ -13,7 +13,8 @@ import { migrateJre } from "./jre/migration.js";
 import { migrateJdc } from "./jdc/migration.js";
 import { migrateSpg } from "./spg/migration.js";
 import { migratePgf }               from "./pgf/migration.js";
-import { seedInstitutionalMemory } from "./pgf/im-seed.js";
+import { seedInstitutionalMemory }    from "./pgf/im-seed.js";
+import { seedProfessionalWorkflows } from "./pgf/pwe-seed.js";
 
 const sampleRows = [
   {
@@ -66,6 +67,11 @@ export async function seedDatabase() {
     logger.warn({ err }, "PGF institutional memory seed failed (non-fatal)"),
   );
   logger.info("PGF institutional memory seed complete");
+  // ─── PWE: Professional Workflow Engine seed ─────────────────────────────────
+  await seedProfessionalWorkflows().catch((err) =>
+    logger.warn({ err }, "PWE seed failed (non-fatal)"),
+  );
+  logger.info("PWE seed complete");
 
   // ─── Users ──────────────────────────────────────────────────────────────────
   const existingUsers = await db.select().from(usersTable);

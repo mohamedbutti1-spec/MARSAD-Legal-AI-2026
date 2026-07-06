@@ -24,6 +24,7 @@ import {
 } from "../pgf/config/index.js";
 import { runPgfAssessment }                 from "../pgf/engine.js";
 import { getStageMemory, VALID_CATEGORIES, VALID_SOURCE_TYPES } from "../pgf/institutional-memory.js";
+import { getStageWorkflow }                                      from "../pgf/workflow-steps.js";
 import type { PgfSessionAnswers }            from "../pgf/types.js";
 
 const router: IRouter = Router();
@@ -123,6 +124,21 @@ router.post(
       res.status(201).json({ entry: created });
     } catch (err) {
       res.status(500).json({ error: "Failed to create entry" });
+    }
+  },
+);
+
+// ─── GET /pgf/workflow/:sectorId/:professionId/:stageId ───────────────────────
+router.get(
+  "/pgf/workflow/:sectorId/:professionId/:stageId",
+  requireAnyRole,
+  async (req, res): Promise<void> => {
+    const { sectorId, professionId, stageId } = req.params as Record<string, string>;
+    try {
+      const steps = await getStageWorkflow(sectorId, professionId, stageId);
+      res.json({ steps });
+    } catch {
+      res.status(500).json({ error: "Failed to load workflow steps" });
     }
   },
 );

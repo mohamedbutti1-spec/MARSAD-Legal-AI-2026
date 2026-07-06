@@ -23,6 +23,7 @@ import type {
   PgfAssessmentOutput, PgfLegalReference, PgfRisk,
   PgfFinalChecklistResult, PgfCommonMistake, PgfAnswerResponse,
   InstitutionalMemoryEntry, InstitutionalMemoryCategory,
+  ProfessionalWorkflowStep,
 } from '@/types/pgf';
 import {
   INSTITUTIONAL_MEMORY_LABELS,
@@ -373,6 +374,190 @@ function InstitutionalMemorySection({
   );
 }
 
+// ─── Professional Workflow Engine (PWE) Section ───────────────────────────────
+
+interface WorkflowBlockProps {
+  icon:     string;
+  label:    string;
+  children: React.ReactNode;
+  accent?:  string;
+}
+function WorkflowBlock({ icon, label, children, accent = "bg-muted/30" }: WorkflowBlockProps) {
+  return (
+    <div className={`rounded-xl p-3.5 ${accent}`} dir="rtl">
+      <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5 mb-2">
+        <span>{icon}</span>{label}
+      </p>
+      {children}
+    </div>
+  );
+}
+
+function WorkflowStep({ step }: { step: ProfessionalWorkflowStep }) {
+  return (
+    <div className="space-y-3" dir="rtl">
+      {/* Title + duration badge */}
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-sm font-bold text-foreground leading-snug">{step.title}</p>
+        <span className="shrink-0 text-xs bg-primary/10 text-primary font-medium px-2 py-0.5 rounded-full whitespace-nowrap">
+          ⏱️ {step.estimatedDuration}
+        </span>
+      </div>
+
+      {/* Objective */}
+      <WorkflowBlock icon="🎯" label="الهدف" accent="bg-blue-50 dark:bg-blue-900/10">
+        <p className="text-sm text-foreground/80 leading-relaxed">{step.objective}</p>
+      </WorkflowBlock>
+
+      {/* Next action */}
+      <WorkflowBlock icon="⚡" label="الإجراء التالي الفوري" accent="bg-amber-50 dark:bg-amber-900/10">
+        <p className="text-sm text-foreground/80 leading-relaxed">{step.nextAction}</p>
+      </WorkflowBlock>
+
+      {/* Required documents */}
+      {step.requiredDocuments.length > 0 && (
+        <WorkflowBlock icon="📄" label="المستندات المطلوبة" accent="bg-violet-50 dark:bg-violet-900/10">
+          <ul className="space-y-1">
+            {step.requiredDocuments.map((d, i) => (
+              <li key={i} className="text-xs text-foreground/75 flex items-start gap-1.5">
+                <span className="text-violet-500 mt-0.5 shrink-0">•</span>{d}
+              </li>
+            ))}
+          </ul>
+        </WorkflowBlock>
+      )}
+
+      {/* Approvals */}
+      {step.approvals.length > 0 && (
+        <WorkflowBlock icon="✅" label="الموافقات المطلوبة" accent="bg-emerald-50 dark:bg-emerald-900/10">
+          <ul className="space-y-1">
+            {step.approvals.map((a, i) => (
+              <li key={i} className="text-xs text-foreground/75 flex items-start gap-1.5">
+                <span className="text-emerald-500 mt-0.5 shrink-0">✓</span>{a}
+              </li>
+            ))}
+          </ul>
+        </WorkflowBlock>
+      )}
+
+      {/* Checkpoints */}
+      {step.checkpoints.length > 0 && (
+        <WorkflowBlock icon="🔍" label="نقاط التحقق" accent="bg-sky-50 dark:bg-sky-900/10">
+          <ul className="space-y-1">
+            {step.checkpoints.map((c, i) => (
+              <li key={i} className="text-xs text-foreground/75 flex items-start gap-1.5">
+                <span className="text-sky-500 mt-0.5 shrink-0">◇</span>{c}
+              </li>
+            ))}
+          </ul>
+        </WorkflowBlock>
+      )}
+
+      {/* Branch rules */}
+      {step.branchRules.length > 0 && (
+        <WorkflowBlock icon="🔀" label="المسارات الممكنة" accent="bg-indigo-50 dark:bg-indigo-900/10">
+          <div className="space-y-2">
+            {step.branchRules.map((b, i) => (
+              <div key={i} className="text-xs">
+                <span className="font-semibold text-indigo-700 dark:text-indigo-300">إذا: </span>
+                <span className="text-foreground/70">{b.condition}</span>
+                <br />
+                <span className="font-semibold text-indigo-700 dark:text-indigo-300">→ </span>
+                <span className="text-foreground/80">{b.outcome}</span>
+              </div>
+            ))}
+          </div>
+        </WorkflowBlock>
+      )}
+
+      {/* Escalation rules */}
+      {step.escalationRules.length > 0 && (
+        <WorkflowBlock icon="📌" label="شروط التصعيد" accent="bg-red-50 dark:bg-red-900/10">
+          <div className="space-y-2">
+            {step.escalationRules.map((e, i) => (
+              <div key={i} className="text-xs">
+                <span className="font-semibold text-red-700 dark:text-red-300">عند: </span>
+                <span className="text-foreground/70">{e.condition}</span>
+                <br />
+                <span className="font-semibold text-red-700 dark:text-red-300">→ </span>
+                <span className="text-foreground/80">{e.action}</span>
+              </div>
+            ))}
+          </div>
+        </WorkflowBlock>
+      )}
+
+      {/* Expected output */}
+      <WorkflowBlock icon="📤" label="المخرج المتوقع" accent="bg-green-50 dark:bg-green-900/10">
+        <p className="text-sm text-foreground/80 leading-relaxed">{step.expectedOutput}</p>
+      </WorkflowBlock>
+    </div>
+  );
+}
+
+function WorkflowSection({
+  sectorId, professionId, stageId,
+}: {
+  sectorId:     string;
+  professionId: string;
+  stageId:      string;
+}) {
+  const [open, setOpen] = useState(false);
+
+  const { data, isLoading } = useQuery<{ steps: ProfessionalWorkflowStep[] }>({
+    queryKey: ['pgf-workflow', sectorId, professionId, stageId],
+    queryFn:  async () => {
+      const res = await apiFetch(`/api/pgf/workflow/${sectorId}/${professionId}/${stageId}`);
+      if (!res.ok) throw new Error('Failed');
+      return res.json();
+    },
+  });
+
+  const steps = data?.steps ?? [];
+
+  // Hide entirely when no workflow exists for this stage
+  if (!isLoading && steps.length === 0) return null;
+
+  return (
+    <div className="rounded-2xl border border-dashed border-emerald-400/40 overflow-hidden" dir="rtl">
+      {/* Header */}
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-5 py-4 text-sm font-semibold text-foreground hover:bg-muted/20 transition-colors"
+      >
+        <span className="flex items-center gap-2.5">
+          <span className="text-base">⚙️</span>
+          <span>مسار العمل التنفيذي</span>
+          {!isLoading && steps.length > 0 && (
+            <span className="text-xs font-normal text-muted-foreground">
+              ({steps.length} {steps.length === 1 ? 'خطوة' : 'خطوات'})
+            </span>
+          )}
+          {isLoading && <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />}
+        </span>
+        {open
+          ? <ChevronUp   className="w-4 h-4 text-muted-foreground" />
+          : <ChevronDown className="w-4 h-4 text-muted-foreground" />
+        }
+      </button>
+
+      {/* Body */}
+      {open && (
+        <div className="px-5 pb-5 border-t border-dashed border-emerald-400/20 pt-4 space-y-6">
+          {isLoading && (
+            <div className="flex justify-center py-6">
+              <Loader2 className="w-5 h-5 animate-spin text-primary" />
+            </div>
+          )}
+          {steps.map((step) => (
+            <WorkflowStep key={step.id} step={step} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Expert Actions Slide-in ──────────────────────────────────────────────────
 
 function ExpertActionsPanel({
@@ -583,6 +768,13 @@ function StageForm({
 
       {/* Institutional Memory — below mentor panel, hidden when empty */}
       <InstitutionalMemorySection
+        sectorId={sectorId}
+        professionId={professionId}
+        stageId={stage.id}
+      />
+
+      {/* PWE — Executable workflow, hidden when no data exists for this stage */}
+      <WorkflowSection
         sectorId={sectorId}
         professionId={professionId}
         stageId={stage.id}

@@ -67,4 +67,50 @@ export async function migratePgf(): Promise<void> {
     CREATE INDEX IF NOT EXISTS pgf_im_confidence_idx
       ON pgf_institutional_memory (confidence)
   `);
+
+  // ── pgf_workflow_steps ───────────────────────────────────────────────────────
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS pgf_workflow_steps (
+      id                  SERIAL      PRIMARY KEY,
+      sector_id           VARCHAR(80) NOT NULL,
+      profession_id       VARCHAR(80) NOT NULL,
+      stage_id            VARCHAR(80) NOT NULL,
+      "order"             INTEGER     NOT NULL DEFAULT 1,
+      title               TEXT        NOT NULL,
+      objective           TEXT        NOT NULL,
+      next_action         TEXT        NOT NULL,
+      required_documents  TEXT,
+      approvals           TEXT,
+      checkpoints         TEXT,
+      branch_rules        TEXT,
+      escalation_rules    TEXT,
+      expected_output     TEXT        NOT NULL,
+      estimated_duration  VARCHAR(80) NOT NULL,
+      created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  await db.execute(sql`
+    CREATE INDEX IF NOT EXISTS pgf_ws_scope_idx
+      ON pgf_workflow_steps (sector_id, profession_id, stage_id)
+  `);
+
+  await db.execute(sql`
+    CREATE INDEX IF NOT EXISTS pgf_ws_order_idx
+      ON pgf_workflow_steps ("order")
+  `);
+
+  // Unique constraint: one step per (sector, profession, stage, order)
+  await db.execute(sql`
+    DO $ BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'pgf_ws_unique_step'
+      ) THEN
+        ALTER TABLE pgf_workflow_steps
+          ADD CONSTRAINT pgf_ws_unique_step
+          UNIQUE (sector_id, profession_id, stage_id, "order");
+      END IF;
+    END $
+  `);
 }

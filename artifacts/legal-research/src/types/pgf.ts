@@ -150,6 +150,36 @@ export interface PgfSession {
   updatedAt:        string;
 }
 
+// ─── Professional Workflow Engine (PWE) ──────────────────────────────────────
+
+export interface WorkflowBranchRule {
+  condition: string;
+  outcome:   string;
+}
+
+export interface WorkflowEscalationRule {
+  condition: string;
+  action:    string;
+}
+
+export interface ProfessionalWorkflowStep {
+  id:                number;
+  sectorId:          string;
+  professionId:      string;
+  stageId:           string;
+  order:             number;
+  title:             string;
+  objective:         string;
+  nextAction:        string;
+  requiredDocuments: string[];
+  approvals:         string[];
+  checkpoints:       string[];
+  branchRules:       WorkflowBranchRule[];
+  escalationRules:   WorkflowEscalationRule[];
+  expectedOutput:    string;
+  estimatedDuration: string;
+}
+
 // ─── Institutional Memory ─────────────────────────────────────────────────────
 
 export type InstitutionalMemoryCategory =
