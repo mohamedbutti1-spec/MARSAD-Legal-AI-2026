@@ -536,9 +536,9 @@ ${ragContext ? `السياق القانوني من قاعدة البيانات:\
   "governmentAuthority": { "nameAr": "...", "nameEn": "...", "department": "...", "website": null, "phone": null, "competenceBasis": "... [UAE Binding]" },
   "applicableLegislation": [{ "token": null, "articleAr": "...", "relevanceAr": "..." }],
   "courtPrecedents": null,
-  "requiredDocuments": [{ "nameAr": "...", "descriptionAr": "...", "mandatory": true }],
-  "timeline": { "steps": [{ "step": 1, "titleAr": "...", "duration": "...", "actor": "..." }] },
-  "appealStrategy": { "routes": [{ "routeAr": "...", "deadlineAr": "...", "procedureAr": "..." }], "recommendationAr": "..." },
+  "requiredDocuments": [{ "nameAr": "...", "mandatory": true }],
+  "timeline": { "steps": [{ "step": 1, "titleAr": "...", "duration": "..." }] },
+  "appealStrategy": { "routes": [{ "routeAr": "...", "deadlineAr": "..." }], "recommendationAr": "..." },
   "algorithmExplanation": "...",
   "humanInterventionPoints": ["..."]
 }`;

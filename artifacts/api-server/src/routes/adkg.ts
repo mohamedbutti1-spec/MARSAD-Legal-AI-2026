@@ -612,19 +612,50 @@ router.post("/adkg/decisions/:id/analyze", async (req: Request, res: Response): 
     ragContext,
   });
 
+  // ── Repair helper: close open brackets left by a truncated response ─────────
+  function repairTruncatedJson(text: string): string | null {
+    try {
+      const stack: string[] = [];
+      let inString = false;
+      let escaped   = false;
+      for (const ch of text) {
+        if (escaped)            { escaped = false; continue; }
+        if (ch === "\\" && inString) { escaped = true; continue; }
+        if (ch === '"')         { inString = !inString; continue; }
+        if (inString)           continue;
+        if (ch === "{" || ch === "[") { stack.push(ch === "{" ? "}" : "]"); }
+        else if (ch === "}" || ch === "]") { if (stack.length) stack.pop(); }
+      }
+      if (stack.length === 0) return null; // nothing to repair
+      // Close all open containers in reverse, then parse test
+      const repaired = text + stack.reverse().join("");
+      JSON.parse(repaired); // validate
+      return repaired;
+    } catch { return null; }
+  }
+
   let brief: AdminDecisionBriefData;
   try {
     const aiResult = await provider.complete({
       taskType: TaskType.RAG,
       prompt: userPrompt,
       systemPrompt,
-      maxTokens: 9000,
+      maxTokens: 16000,
     });
 
-    const cleaned = aiResult.text.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
-    const parseResult = parseModelJson<Record<string, unknown>>(cleaned);
+    const stripped = aiResult.text.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+    // Try direct parse first, then attempt truncation repair before giving up
+    let parseResult = parseModelJson<Record<string, unknown>>(stripped);
     if (!parseResult.ok) {
-      req.log.error({ raw: parseResult.raw }, "Failed to parse ADKG pillar analysis JSON");
+      const repaired = repairTruncatedJson(stripped.replace(/^```(?:json)?\s*\n?/m, "").replace(/\n?```\s*$/m, "").trim());
+      if (repaired) {
+        req.log.warn("ADKG: repaired truncated JSON response");
+        parseResult = parseModelJson<Record<string, unknown>>(repaired);
+      }
+    }
+    const cleaned = stripped; // kept for compat
+    if (!parseResult.ok) {
+      req.log.error({ rawLen: stripped.length }, "Failed to parse ADKG pillar analysis JSON after repair attempt");
       res.status(500).json({ error: "Failed to parse AI response. Please try again." });
       return;
     }
