@@ -627,13 +627,19 @@ ${theoryAnalysis.applied ? `\nالتحليل النظري غير المُلزِ�
     ).replace(/\s{2,}/g, " ").trim();
   };
 
-  // Filter authority hierarchy: remove entries whose ragTag is fabricated
-  const filteredHierarchy = (s6.authorityHierarchy ?? []).filter((entry) => {
-    if (!entry.ragTag) return true; // no tag → keep (structural entry)
-    // ragTag is the bracketed form e.g. "[SRC:100034]" or unbracketed "SRC:100034"
-    const inner = entry.ragTag.replace(/^\[|\]$/g, "");
-    return !fabricatedTagSet.has(inner);
-  });
+  // ── Filter fabricated tags from all citation-bearing structured arrays ──────
+  const filterByRagTag = <T extends { ragTag?: string | null }>(arr: T[]): T[] =>
+    arr.filter((item) => {
+      if (!item.ragTag) return true; // no tag → structural entry, keep
+      const inner = item.ragTag.replace(/^\[|\]$/g, "");
+      return !fabricatedTagSet.has(inner);
+    });
+
+  const filteredHierarchy   = filterByRagTag(s6.authorityHierarchy ?? []);
+  const filteredLegislation = filterByRagTag(s3.applicableLegislation ?? []);
+  const filteredPrecedents  = filterByRagTag(s3.precedents ?? []);
+  // JrePrinciple has no ragTag; keep principles as-is (no fabrication risk)
+  const filteredPrinciples  = s3.principles ?? [];
 
   const verificationStatus: JreVerificationStatus = {
     allAuthoritiesVerified:      fabricated.length === 0,
@@ -668,9 +674,9 @@ ${theoryAnalysis.applied ? `\nالتحليل النظري غير المُلزِ�
 
     legalIssues: (s1.legalIssues ?? []) as JudgmentOutput["legalIssues"],
 
-    legislation:  s3.applicableLegislation ?? [],
-    precedents:   s3.precedents           ?? [],
-    principles:   s3.principles           ?? [],
+    legislation:  filteredLegislation,
+    precedents:   filteredPrecedents,
+    principles:   filteredPrinciples,
 
     proportionality: s3.proportionality ?? {
       applicable: false, legitimateAim: null,

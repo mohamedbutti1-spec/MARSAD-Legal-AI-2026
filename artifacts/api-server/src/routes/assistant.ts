@@ -40,8 +40,11 @@ const SESSION_CONTEXT_MESSAGES = 12;
 
 function getUserId(req: import("express").Request): number {
   const h = req.headers["x-user-id"];
-  if (!h) return 1;
-  return parseInt(Array.isArray(h) ? h[0] : h, 10);
+  if (!h) return -1;
+  const id = parseInt(Array.isArray(h) ? h[0] : h, 10);
+  // Return -1 (impossible DB id) when header is absent/invalid so ownership
+  // queries return no rows rather than accidentally exposing user-1 data.
+  return Number.isFinite(id) ? id : -1;
 }
 
 // ─── GET /assistant/sessions ───────────────────────────────────────────────────
