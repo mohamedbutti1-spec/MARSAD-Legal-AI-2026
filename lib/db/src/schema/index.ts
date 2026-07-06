@@ -59,3 +59,4 @@ export * from "./jre-sessions";
 export * from "./spg-sessions";
 // PGF — Professional Guidance Framework
 export * from "./pgf-sessions";
+export * from "./pgf-institutional-memory";

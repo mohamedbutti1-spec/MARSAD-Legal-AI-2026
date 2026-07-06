@@ -150,6 +150,50 @@ export interface PgfSession {
   updatedAt:        string;
 }
 
+// ─── Institutional Memory ─────────────────────────────────────────────────────
+
+export type InstitutionalMemoryCategory =
+  | 'expert_practice'
+  | 'frequent_mistake'
+  | 'lesson_learned'
+  | 'recommended_sequence'
+  | 'practical_tip'
+  | 'success_indicator'
+  | 'failure_indicator';
+
+export const INSTITUTIONAL_MEMORY_LABELS: Record<InstitutionalMemoryCategory, string> = {
+  expert_practice:      'الممارسة الخبراتية الشائعة',
+  frequent_mistake:     'الأخطاء المتكررة',
+  lesson_learned:       'الدروس المستفادة',
+  recommended_sequence: 'التسلسل الموصى به',
+  practical_tip:        'نصائح عملية',
+  success_indicator:    'مؤشرات النجاح',
+  failure_indicator:    'مؤشرات الإخفاق',
+};
+
+export const INSTITUTIONAL_MEMORY_ICONS: Record<InstitutionalMemoryCategory, string> = {
+  expert_practice:      '🏛️',
+  frequent_mistake:     '⚠️',
+  lesson_learned:       '📖',
+  recommended_sequence: '🔢',
+  practical_tip:        '💡',
+  success_indicator:    '✅',
+  failure_indicator:    '🚨',
+};
+
+export interface InstitutionalMemoryEntry {
+  id:           number;
+  sectorId:     string;
+  professionId: string;
+  stageId:      string;
+  title:        string;
+  content:      string;
+  category:     InstitutionalMemoryCategory;
+  confidence:   number;
+  sourceType:   'institutional' | 'ai_generated' | 'user_contributed';
+  createdAt:    string;
+}
+
 // ─── API response shapes ───────────────────────────────────────────────────────
 
 export interface PgfAnswerResponse {

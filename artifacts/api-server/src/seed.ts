@@ -12,7 +12,8 @@ import { migrateAdkg } from "./adkg/migration.js";
 import { migrateJre } from "./jre/migration.js";
 import { migrateJdc } from "./jdc/migration.js";
 import { migrateSpg } from "./spg/migration.js";
-import { migratePgf } from "./pgf/migration.js";
+import { migratePgf }               from "./pgf/migration.js";
+import { seedInstitutionalMemory } from "./pgf/im-seed.js";
 
 const sampleRows = [
   {
@@ -60,6 +61,11 @@ export async function seedDatabase() {
     logger.warn({ err }, "PGF migration failed (non-fatal)"),
   );
   logger.info("PGF migration complete");
+  // ─── PGF Institutional Memory seed ─────────────────────────────────────────
+  await seedInstitutionalMemory().catch((err) =>
+    logger.warn({ err }, "PGF institutional memory seed failed (non-fatal)"),
+  );
+  logger.info("PGF institutional memory seed complete");
 
   // ─── Users ──────────────────────────────────────────────────────────────────
   const existingUsers = await db.select().from(usersTable);

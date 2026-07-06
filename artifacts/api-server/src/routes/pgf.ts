@@ -11,10 +11,10 @@
  * DELETE /pgf/sessions/:id           — delete session
  */
 
-import { Router, type IRouter }  from "express";
-import { eq, desc, and }         from "drizzle-orm";
-import { db, pgfSessionsTable }  from "@workspace/db";
-import { requireAnyRole }        from "../middlewares/roleAuth.js";
+import { Router, type IRouter }             from "express";
+import { eq, desc, and }                    from "drizzle-orm";
+import { db, pgfSessionsTable, pgfInstitutionalMemoryTable } from "@workspace/db";
+import { requireAnyRole }                   from "../middlewares/roleAuth.js";
 import {
   getSectorSummaries,
   findProfession,
@@ -22,8 +22,9 @@ import {
   isLastStage,
   toProfessionSummary,
 } from "../pgf/config/index.js";
-import { runPgfAssessment }      from "../pgf/engine.js";
-import type { PgfSessionAnswers } from "../pgf/types.js";
+import { runPgfAssessment }                 from "../pgf/engine.js";
+import { getStageMemory, VALID_CATEGORIES, VALID_SOURCE_TYPES } from "../pgf/institutional-memory.js";
+import type { PgfSessionAnswers }            from "../pgf/types.js";
 
 const router: IRouter = Router();
 
@@ -65,6 +66,66 @@ function sessionToApi(s: typeof pgfSessionsTable.$inferSelect) {
 router.get("/pgf/catalogue", requireAnyRole, (_req, res) => {
   res.json({ sectors: getSectorSummaries() });
 });
+
+// ─── GET /pgf/memory/:sectorId/:professionId/:stageId ────────────────────────
+router.get(
+  "/pgf/memory/:sectorId/:professionId/:stageId",
+  requireAnyRole,
+  async (req, res): Promise<void> => {
+    const { sectorId, professionId, stageId } = req.params as Record<string, string>;
+    try {
+      const entries = await getStageMemory(sectorId, professionId, stageId);
+      res.json({ entries });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to load institutional memory" });
+    }
+  },
+);
+
+// ─── POST /pgf/memory ─────────────────────────────────────────────────────────
+// Admin-only: create a new institutional memory entry
+router.post(
+  "/pgf/memory",
+  requireAnyRole,
+  async (req, res): Promise<void> => {
+    // Only owners/supervisors may create entries
+    const role = (req.headers["x-user-role"] as string | undefined) ?? "viewer";
+    if (role !== "owner" && role !== "supervisor") {
+      res.status(403).json({ error: "Insufficient permissions" });
+      return;
+    }
+
+    const { sectorId, professionId, stageId, title, content, category, confidence, sourceType } =
+      req.body as Record<string, unknown>;
+
+    if (
+      typeof sectorId !== "string" || !sectorId ||
+      typeof professionId !== "string" || !professionId ||
+      typeof stageId !== "string" || !stageId ||
+      typeof title !== "string" || !title ||
+      typeof content !== "string" || !content ||
+      typeof category !== "string" || !VALID_CATEGORIES.has(category)
+    ) {
+      res.status(400).json({ error: "Missing or invalid fields" });
+      return;
+    }
+
+    const conf = typeof confidence === "number" ? Math.max(0, Math.min(100, confidence)) : 80;
+    const src  = typeof sourceType === "string" && VALID_SOURCE_TYPES.has(sourceType)
+      ? sourceType
+      : "institutional";
+
+    try {
+      const [created] = await db
+        .insert(pgfInstitutionalMemoryTable)
+        .values({ sectorId, professionId, stageId, title, content, category, confidence: conf, sourceType: src })
+        .returning();
+      res.status(201).json({ entry: created });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to create entry" });
+    }
+  },
+);
 
 // ─── GET /pgf/professions/:sectorId/:professionId/stages/:stageId/expert-actions ──
 router.get(

@@ -22,6 +22,11 @@ import type {
   PgfSession, PgfWorkflowStage, PgfWorkflowQuestion,
   PgfAssessmentOutput, PgfLegalReference, PgfRisk,
   PgfFinalChecklistResult, PgfCommonMistake, PgfAnswerResponse,
+  InstitutionalMemoryEntry, InstitutionalMemoryCategory,
+} from '@/types/pgf';
+import {
+  INSTITUTIONAL_MEMORY_LABELS,
+  INSTITUTIONAL_MEMORY_ICONS,
 } from '@/types/pgf';
 
 // ─── Stage fetch ──────────────────────────────────────────────────────────────
@@ -254,6 +259,120 @@ function MentorPanel({ stage }: { stage: PgfWorkflowStage }) {
   );
 }
 
+// ─── Institutional Memory Section ────────────────────────────────────────────
+
+const CATEGORY_COLOR: Record<InstitutionalMemoryCategory, string> = {
+  expert_practice:      'border-violet-200 bg-violet-50 dark:border-violet-800 dark:bg-violet-900/10',
+  frequent_mistake:     'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/10',
+  lesson_learned:       'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/10',
+  recommended_sequence: 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/10',
+  practical_tip:        'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/10',
+  success_indicator:    'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/10',
+  failure_indicator:    'border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-900/10',
+};
+
+const CATEGORY_TEXT: Record<InstitutionalMemoryCategory, string> = {
+  expert_practice:      'text-violet-700 dark:text-violet-300',
+  frequent_mistake:     'text-red-700 dark:text-red-300',
+  lesson_learned:       'text-blue-700 dark:text-blue-300',
+  recommended_sequence: 'text-emerald-700 dark:text-emerald-300',
+  practical_tip:        'text-amber-700 dark:text-amber-300',
+  success_indicator:    'text-green-700 dark:text-green-300',
+  failure_indicator:    'text-orange-700 dark:text-orange-300',
+};
+
+function InstitutionalMemoryCard({ entry }: { entry: InstitutionalMemoryEntry }) {
+  const cat   = entry.category as InstitutionalMemoryCategory;
+  const label = INSTITUTIONAL_MEMORY_LABELS[cat] ?? cat;
+  const icon  = INSTITUTIONAL_MEMORY_ICONS[cat] ?? '📝';
+  const color = CATEGORY_COLOR[cat] ?? 'border-border bg-card';
+  const text  = CATEGORY_TEXT[cat]  ?? 'text-foreground';
+
+  return (
+    <div className={`p-3 rounded-xl border ${color}`} dir="rtl">
+      <div className="flex items-center gap-2 mb-1.5">
+        <span className="text-sm">{icon}</span>
+        <span className={`text-xs font-semibold ${text}`}>{label}</span>
+        {/* Confidence bar */}
+        <div className="mr-auto flex items-center gap-1">
+          <div className="h-1.5 w-12 bg-white/40 dark:bg-black/20 rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full bg-current opacity-60"
+              style={{ width: `${entry.confidence}%` }}
+            />
+          </div>
+          <span className="text-[10px] text-muted-foreground">{entry.confidence}%</span>
+        </div>
+      </div>
+      <p className={`text-sm font-semibold mb-1 ${text}`}>{entry.title}</p>
+      <p className="text-xs text-foreground/75 leading-relaxed">{entry.content}</p>
+    </div>
+  );
+}
+
+function InstitutionalMemorySection({
+  sectorId, professionId, stageId,
+}: {
+  sectorId:     string;
+  professionId: string;
+  stageId:      string;
+}) {
+  const [open, setOpen] = useState(false);
+
+  const { data, isLoading } = useQuery<{ entries: InstitutionalMemoryEntry[] }>({
+    queryKey: ['pgf-im', sectorId, professionId, stageId],
+    queryFn:  async () => {
+      const res = await apiFetch(`/api/pgf/memory/${sectorId}/${professionId}/${stageId}`);
+      if (!res.ok) throw new Error('Failed');
+      return res.json();
+    },
+  });
+
+  const entries = data?.entries ?? [];
+
+  // Hide section entirely if there are no entries (and not loading)
+  if (!isLoading && entries.length === 0) return null;
+
+  return (
+    <div className="rounded-2xl border border-dashed border-primary/30 overflow-hidden" dir="rtl">
+      {/* Header — always visible */}
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-5 py-4 text-sm font-semibold text-foreground hover:bg-muted/20 transition-colors"
+      >
+        <span className="flex items-center gap-2.5">
+          <span className="text-base">🏛️</span>
+          <span>الخبرة المؤسسية</span>
+          {!isLoading && entries.length > 0 && (
+            <span className="text-xs font-normal text-muted-foreground">
+              ({entries.length} {entries.length === 1 ? 'سجل' : 'سجلات'})
+            </span>
+          )}
+          {isLoading && <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />}
+        </span>
+        {open
+          ? <ChevronUp   className="w-4 h-4 text-muted-foreground" />
+          : <ChevronDown className="w-4 h-4 text-muted-foreground" />
+        }
+      </button>
+
+      {/* Body */}
+      {open && (
+        <div className="px-5 pb-5 space-y-3 border-t border-dashed border-primary/20 pt-4">
+          {isLoading && (
+            <div className="flex justify-center py-4">
+              <Loader2 className="w-5 h-5 animate-spin text-primary" />
+            </div>
+          )}
+          {entries.map((entry) => (
+            <InstitutionalMemoryCard key={entry.id} entry={entry} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Expert Actions Slide-in ──────────────────────────────────────────────────
 
 function ExpertActionsPanel({
@@ -461,6 +580,13 @@ function StageForm({
 
       {/* Mentor panel — below the stage card */}
       <MentorPanel stage={stage} />
+
+      {/* Institutional Memory — below mentor panel, hidden when empty */}
+      <InstitutionalMemorySection
+        sectorId={sectorId}
+        professionId={professionId}
+        stageId={stage.id}
+      />
     </div>
   );
 }
