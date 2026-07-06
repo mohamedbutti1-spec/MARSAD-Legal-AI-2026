@@ -26,3 +26,4 @@
 - [Phase 58 — ADKG Architecture](phase58-adkg.md) — 4 tables; graph-node enrichment queries must be owner-scoped (IDOR via connected-node metadata); child DELETE routes verified ownership+membership; FTS+owner-scoped search
 - [Phase 58 — Corpus Expansion](phase58-corpus-expansion.md) — Decree-Law 21/2021 + Cabinet Decision 9/2021 + Cabinet Resolution 17/2023 + 60 admin judiciary principles + FSC admin chamber seeded; runner registration pattern
 - [Phase 59 — Cross-Reference Graph Traversal](phase59-cross-ref-traversal.md) — expandWithCrossRefs/resolveAmendmentChain in retrieval; legalContextChain in RAG; GET /kb/search + /kb/document/:id/context-chain; /kb-search frontend page
+- [JRE — Judicial Reasoning Engine](phase-jre.md) — 6-stage pipeline; buildKbContext (not separate retrieveLegislation/CaseLaw); fabricated tags stripped from text+hierarchy; theory mode fully isolated; AI-review tab shows on applicable=true

@@ -54,6 +54,9 @@ import AdkgDashboard from '@/pages/adkg-dashboard';
 import AdkgDetail    from '@/pages/adkg-detail';
 // Phase 59 — KB Cross-Reference Search
 import KbSearch from '@/pages/kb-search';
+// JRE — Judicial Reasoning Engine
+import JrePage    from '@/pages/jre';
+import JreSession from '@/pages/jre-session';
 
 // NAIP — Role-Specific Executive Dashboards
 import NaipMinister        from '@/pages/naip-minister';
@@ -272,6 +275,17 @@ function Router() {
         <Route path="/analytics"   component={Analytics} />
         {/* Phase 59 — KB Cross-Reference Search */}
         <Route path="/kb-search" component={KbSearch} />
+        {/* JRE — Judicial Reasoning Engine */}
+        <Route path="/jre/:id">
+          <RouteGuard allow={canUseAi}>
+            <JreSession />
+          </RouteGuard>
+        </Route>
+        <Route path="/jre">
+          <RouteGuard allow={canUseAi}>
+            <JrePage />
+          </RouteGuard>
+        </Route>
 
         <Route component={NotFound} />
       </Switch>

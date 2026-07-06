@@ -45,6 +45,8 @@ import workspaceRouter from "./workspace";
 import adkgRouter from "./adkg";
 // Phase 59 — KB Cross-Reference Graph Traversal
 import kbRouter from "./kb";
+// JRE — Judicial Reasoning Engine
+import jreRouter from "./jre";
 
 const router: IRouter = Router();
 
@@ -94,5 +96,7 @@ router.use(workspaceRouter);
 router.use(adkgRouter);
 // Phase 59 — KB Cross-Reference Graph Traversal
 router.use(kbRouter);
+// JRE — Judicial Reasoning Engine
+router.use(jreRouter);
 
 export default router;

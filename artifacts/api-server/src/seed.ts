@@ -9,6 +9,7 @@ import {
 import { logger } from "./lib/logger";
 import { migrateResearchWorkspace } from "./research-workspace/migration.js";
 import { migrateAdkg } from "./adkg/migration.js";
+import { migrateJre } from "./jre/migration.js";
 
 const sampleRows = [
   {
@@ -36,6 +37,11 @@ export async function seedDatabase() {
   await migrateAdkg().catch((err) =>
     logger.warn({ err }, "ADKG migration failed (non-fatal)"),
   );
+  // ─── JRE: Judicial Reasoning Engine tables (additive, IF NOT EXISTS) ─────
+  await migrateJre().catch((err) =>
+    logger.warn({ err }, "JRE migration failed (non-fatal)"),
+  );
+  logger.info("JRE migration complete");
 
   // ─── Users ──────────────────────────────────────────────────────────────────
   const existingUsers = await db.select().from(usersTable);

@@ -53,3 +53,5 @@ export * from "./research-items";
 export * from "./research-item-versions";
 export * from "./research-answer-metadata";
 export * from "./citation-refresh-status";
+// JRE — Judicial Reasoning Engine
+export * from "./jre-sessions";

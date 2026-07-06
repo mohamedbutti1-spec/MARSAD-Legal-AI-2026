@@ -211,6 +211,14 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           icon: <Brain className="w-4.5 h-4.5" />,
           show: canViewJdtSimulation,
         },
+        {
+          href: '/jre',
+          labelAr: 'محرك التفكير القضائي',
+          labelEn: 'Judicial Reasoning Engine',
+          icon: <Gavel className="w-4.5 h-4.5" />,
+          show: canUseAi,
+          badge: 'جديد',
+        },
       ],
     },
     {
