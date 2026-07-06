@@ -57,6 +57,9 @@ import KbSearch from '@/pages/kb-search';
 // JRE — Judicial Reasoning Engine
 import JrePage    from '@/pages/jre';
 import JreSession from '@/pages/jre-session';
+// Phase 59 — Judicial Deliberation Chamber
+import JdcPage    from '@/pages/jdc';
+import JdcChamber from '@/pages/jdc-chamber';
 
 // NAIP — Role-Specific Executive Dashboards
 import NaipMinister        from '@/pages/naip-minister';
@@ -284,6 +287,17 @@ function Router() {
         <Route path="/jre">
           <RouteGuard allow={canUseAi}>
             <JrePage />
+          </RouteGuard>
+        </Route>
+        {/* Phase 59 — Judicial Deliberation Chamber */}
+        <Route path="/jdc/:id">
+          <RouteGuard allow={canUseAi}>
+            <JdcChamber />
+          </RouteGuard>
+        </Route>
+        <Route path="/jdc">
+          <RouteGuard allow={canUseAi}>
+            <JdcPage />
           </RouteGuard>
         </Route>
 

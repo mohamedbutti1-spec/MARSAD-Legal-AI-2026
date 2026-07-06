@@ -47,6 +47,8 @@ import adkgRouter from "./adkg";
 import kbRouter from "./kb";
 // JRE — Judicial Reasoning Engine
 import jreRouter from "./jre";
+// Phase 59 — Judicial Deliberation Chamber
+import jdcRouter from "./jdc";
 
 const router: IRouter = Router();
 
@@ -98,5 +100,7 @@ router.use(adkgRouter);
 router.use(kbRouter);
 // JRE — Judicial Reasoning Engine
 router.use(jreRouter);
+// Phase 59 — Judicial Deliberation Chamber
+router.use(jdcRouter);
 
 export default router;

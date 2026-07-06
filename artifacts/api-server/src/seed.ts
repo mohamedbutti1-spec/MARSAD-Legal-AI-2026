@@ -10,6 +10,7 @@ import { logger } from "./lib/logger";
 import { migrateResearchWorkspace } from "./research-workspace/migration.js";
 import { migrateAdkg } from "./adkg/migration.js";
 import { migrateJre } from "./jre/migration.js";
+import { migrateJdc } from "./jdc/migration.js";
 
 const sampleRows = [
   {
@@ -42,6 +43,11 @@ export async function seedDatabase() {
     logger.warn({ err }, "JRE migration failed (non-fatal)"),
   );
   logger.info("JRE migration complete");
+  // ─── JDC: Judicial Deliberation Chamber tables (additive, IF NOT EXISTS) ──
+  await migrateJdc().catch((err) =>
+    logger.warn({ err }, "JDC migration failed (non-fatal)"),
+  );
+  logger.info("JDC migration complete");
 
   // ─── Users ──────────────────────────────────────────────────────────────────
   const existingUsers = await db.select().from(usersTable);

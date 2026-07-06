@@ -219,6 +219,14 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           show: canUseAi,
           badge: 'جديد',
         },
+        {
+          href: '/jdc',
+          labelAr: 'غرفة المداولة القضائية',
+          labelEn: 'Judicial Deliberation Chamber',
+          icon: <Users className="w-4.5 h-4.5" />,
+          show: canUseAi,
+          badge: 'v2',
+        },
       ],
     },
     {
