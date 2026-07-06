@@ -232,6 +232,11 @@ export async function buildContext(
       sourceIndex.set(offsetTag, { title: entry.titleAr, type: "legal_source" });
       parts.push(offsetContextLine);
     }
+
+    // Phase 59: Include Legal Context Chain (cross-reference hierarchy)
+    if (kbResult.legalContextChain) {
+      parts.push("─".repeat(50) + "\n" + kbResult.legalContextChain);
+    }
   }
 
   return {

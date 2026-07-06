@@ -20,8 +20,9 @@ import {
   kbDocumentsTable,
   kbArticlesTable,
   kbEmbeddingsTable,
+  kbCrossReferencesTable,
 } from "@workspace/db";
-import { and, eq, gte, lte, inArray, sql } from "drizzle-orm";
+import { and, eq, gte, lte, inArray, or, sql } from "drizzle-orm";
 import { generateEmbedding, normaliseArabic, extractKeywordsAr, extractKeywordsEn } from "./pipeline.js";
 import {
   verifyRetrievalHits,
@@ -313,6 +314,8 @@ export interface KbContextResult {
   entries: KbContextEntry[];
   report: VerificationReport;
   inventory: string;   // Authority inventory block for pre-prompt injection
+  /** Phase 59: Cross-reference hierarchy block (undefined if no cross-refs found). */
+  legalContextChain?: string;
 }
 
 /**
@@ -375,7 +378,288 @@ export async function buildKbContext(
 
   const inventory = buildAuthorityInventory(report);
 
-  return { entries, report, inventory };
+  // ── Phase 59: Cross-reference expansion ───────────────────────────────────
+  let legalContextChain: string | undefined;
+
+  if (entries.length > 0) {
+    const verifiedDocIds = entries.map((e) => e.documentId);
+    const [crossRefMap, amendmentMap] = await Promise.all([
+      expandWithCrossRefs(verifiedDocIds),
+      resolveAmendmentChain(verifiedDocIds),
+    ]);
+
+    // Annotate entries that have been amended with "Current version" note
+    for (const entry of entries) {
+      const amenders = amendmentMap.get(entry.documentId);
+      if (amenders && amenders.length > 0) {
+        const amenderList = amenders
+          .map((a) =>
+            `${a.titleAr}` +
+            (a.documentNumber ? ` (رقم ${a.documentNumber})` : "") +
+            (a.year ? `، ${a.year}` : ""),
+          )
+          .join("؛ ");
+        entry.contextLine += `\n  [النص الحالي المعدَّل بواسطة: ${amenderList}]`;
+      }
+    }
+
+    // Build "Legal Context Chain" hierarchy block
+    const chainLines: string[] = [];
+    let hasChain = false;
+
+    for (const entry of entries) {
+      if (entry.documentId === 0) continue; // skip synthetic entries
+      const neighbours = crossRefMap.get(entry.documentId);
+      if (!neighbours || neighbours.length === 0) continue;
+
+      if (!hasChain) {
+        chainLines.push("[LEGAL CONTEXT CHAIN — Cross-Reference Graph]");
+        chainLines.push("Format: direction RelType: Document | Level | BindingStatus");
+        hasChain = true;
+      }
+
+      chainLines.push(`\n${entry.titleAr}:`);
+      for (const n of neighbours) {
+        const relLabel = CROSS_REF_LABELS[n.referenceType] ?? n.referenceType;
+        const dirArrow = n.direction === "outbound" ? "→" : "←";
+        chainLines.push(
+          `  ${dirArrow} ${relLabel}: ${n.titleAr}` +
+          (n.documentNumber ? ` (رقم ${n.documentNumber})` : "") +
+          (n.year ? `، ${n.year}` : "") +
+          ` | Level ${n.hierarchyLevel} | ${n.bindingStatus}` +
+          (n.isRepealed ? " [ملغى]" : ""),
+        );
+      }
+    }
+
+    if (hasChain) {
+      legalContextChain = chainLines.join("\n");
+    }
+  }
+
+  return { entries, report, inventory, legalContextChain };
+}
+
+// ─── Cross-reference labels ───────────────────────────────────────────────────
+
+const CROSS_REF_LABELS: Record<string, string> = {
+  cites:          "Cited in",
+  amends:         "Amends →",
+  repeals:        "Repeals",
+  implements:     "Implements →",
+  supplements:    "Supplements",
+  related:        "Related",
+  interpreted_by: "Interpreted by",
+  appealed_from:  "Appealed from",
+};
+
+// ─── Cross-reference expansion types ─────────────────────────────────────────
+
+export interface CrossRefNeighbour {
+  neighbourDocumentId: number;
+  titleAr: string;
+  titleEn: string;
+  hierarchyLevel: KbHierarchyLevel;
+  bindingStatus: KbBindingStatus;
+  jurisdiction: string;
+  documentNumber: string | null;
+  year: number | null;
+  isRepealed: boolean;
+  referenceType: string;
+  direction: "outbound" | "inbound";
+  description: string | null;
+}
+
+// ─── Cross-reference expansion ────────────────────────────────────────────────
+
+/**
+ * Expand a set of document IDs with their one-hop cross-reference neighbours.
+ * Fetches all outbound (source IN docIds) and inbound (target IN docIds) edges
+ * in two queries then joins with document metadata — no N+1 fetches.
+ *
+ * @returns Map: primaryDocId → list of CrossRefNeighbour (0.7× damped)
+ */
+export async function expandWithCrossRefs(
+  docIds: number[],
+): Promise<Map<number, CrossRefNeighbour[]>> {
+  if (docIds.length === 0) return new Map();
+
+  // Fetch all cross-ref edges touching these documents in one query
+  const edges = await db
+    .select({
+      id:               kbCrossReferencesTable.id,
+      sourceDocumentId: kbCrossReferencesTable.sourceDocumentId,
+      targetDocumentId: kbCrossReferencesTable.targetDocumentId,
+      referenceType:    kbCrossReferencesTable.referenceType,
+      description:      kbCrossReferencesTable.description,
+    })
+    .from(kbCrossReferencesTable)
+    .where(
+      or(
+        inArray(kbCrossReferencesTable.sourceDocumentId, docIds),
+        inArray(kbCrossReferencesTable.targetDocumentId, docIds as number[]),
+      ),
+    );
+
+  if (edges.length === 0) return new Map();
+
+  // Collect neighbour IDs (docs NOT already in the primary result set)
+  const docIdSet = new Set(docIds);
+  const neighbourIds = new Set<number>();
+  for (const edge of edges) {
+    if (edge.targetDocumentId !== null && !docIdSet.has(edge.targetDocumentId)) {
+      neighbourIds.add(edge.targetDocumentId);
+    }
+    if (!docIdSet.has(edge.sourceDocumentId)) {
+      neighbourIds.add(edge.sourceDocumentId);
+    }
+  }
+
+  if (neighbourIds.size === 0) return new Map();
+
+  // Batch-fetch neighbour metadata (indexed docs only)
+  const neighbourDocs = await db
+    .select({
+      id:             kbDocumentsTable.id,
+      titleAr:        kbDocumentsTable.titleAr,
+      title:          kbDocumentsTable.title,
+      hierarchyLevel: kbDocumentsTable.hierarchyLevel,
+      bindingStatus:  kbDocumentsTable.bindingStatus,
+      jurisdiction:   kbDocumentsTable.jurisdiction,
+      documentNumber: kbDocumentsTable.documentNumber,
+      year:           kbDocumentsTable.year,
+      isRepealed:     kbDocumentsTable.isRepealed,
+    })
+    .from(kbDocumentsTable)
+    .where(
+      and(
+        inArray(kbDocumentsTable.id, [...neighbourIds]),
+        eq(kbDocumentsTable.indexStatus, "indexed"),
+      ),
+    );
+
+  const neighbourMap = new Map(neighbourDocs.map((d) => [d.id, d]));
+
+  // Build result map: primaryDocId → neighbours
+  const result = new Map<number, CrossRefNeighbour[]>();
+
+  for (const docId of docIds) {
+    const neighbours: CrossRefNeighbour[] = [];
+
+    for (const edge of edges) {
+      let neighbourId: number | null = null;
+      let direction: "outbound" | "inbound";
+
+      if (edge.sourceDocumentId === docId && edge.targetDocumentId !== null && !docIdSet.has(edge.targetDocumentId)) {
+        neighbourId = edge.targetDocumentId;
+        direction   = "outbound";
+      } else if (edge.targetDocumentId === docId && !docIdSet.has(edge.sourceDocumentId)) {
+        neighbourId = edge.sourceDocumentId;
+        direction   = "inbound";
+      } else {
+        continue;
+      }
+
+      const doc = neighbourMap.get(neighbourId);
+      if (!doc) continue;
+
+      // Avoid duplicates within same primary doc (can occur if multiple edges between same pair)
+      if (neighbours.some((n) => n.neighbourDocumentId === doc.id && n.referenceType === edge.referenceType)) {
+        continue;
+      }
+
+      neighbours.push({
+        neighbourDocumentId: doc.id,
+        titleAr:             doc.titleAr,
+        titleEn:             doc.title,
+        hierarchyLevel:      doc.hierarchyLevel as KbHierarchyLevel,
+        bindingStatus:       doc.bindingStatus as KbBindingStatus,
+        jurisdiction:        doc.jurisdiction,
+        documentNumber:      doc.documentNumber,
+        year:                doc.year,
+        isRepealed:          doc.isRepealed,
+        referenceType:       edge.referenceType,
+        direction,
+        description:         edge.description,
+      });
+    }
+
+    if (neighbours.length > 0) {
+      result.set(docId, neighbours);
+    }
+  }
+
+  return result;
+}
+
+// ─── Amendment chain resolver ─────────────────────────────────────────────────
+
+export interface AmendingInstrument {
+  amendingDocId: number;
+  titleAr: string;
+  documentNumber: string | null;
+  year: number | null;
+}
+
+/**
+ * For a set of document IDs, find any amending instruments that reference them
+ * via an "amends" cross-ref edge (source=amending law, target=amended law).
+ *
+ * @returns Map: amendedDocId → list of amending instruments
+ */
+export async function resolveAmendmentChain(
+  docIds: number[],
+): Promise<Map<number, AmendingInstrument[]>> {
+  if (docIds.length === 0) return new Map();
+
+  const amendments = await db
+    .select({
+      sourceDocumentId: kbCrossReferencesTable.sourceDocumentId,
+      targetDocumentId: kbCrossReferencesTable.targetDocumentId,
+    })
+    .from(kbCrossReferencesTable)
+    .where(
+      and(
+        eq(kbCrossReferencesTable.referenceType, "amends"),
+        inArray(kbCrossReferencesTable.targetDocumentId, docIds as number[]),
+      ),
+    );
+
+  if (amendments.length === 0) return new Map();
+
+  const amendingIds = [...new Set(amendments.map((a) => a.sourceDocumentId))];
+  const amendingDocs = await db
+    .select({
+      id:             kbDocumentsTable.id,
+      titleAr:        kbDocumentsTable.titleAr,
+      documentNumber: kbDocumentsTable.documentNumber,
+      year:           kbDocumentsTable.year,
+    })
+    .from(kbDocumentsTable)
+    .where(inArray(kbDocumentsTable.id, amendingIds));
+
+  const amendingDocMap = new Map(amendingDocs.map((d) => [d.id, d]));
+
+  const result = new Map<number, AmendingInstrument[]>();
+
+  for (const edge of amendments) {
+    if (edge.targetDocumentId === null) continue;
+    const amender = amendingDocMap.get(edge.sourceDocumentId);
+    if (!amender) continue;
+
+    const list = result.get(edge.targetDocumentId) ?? [];
+    if (!list.some((a) => a.amendingDocId === amender.id)) {
+      list.push({
+        amendingDocId:  amender.id,
+        titleAr:        amender.titleAr,
+        documentNumber: amender.documentNumber,
+        year:           amender.year,
+      });
+    }
+    result.set(edge.targetDocumentId, list);
+  }
+
+  return result;
 }
 
 // ─── Collection-scoped retrieval shortcuts ────────────────────────────────────

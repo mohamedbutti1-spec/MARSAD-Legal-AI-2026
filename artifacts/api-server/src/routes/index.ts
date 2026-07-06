@@ -43,6 +43,8 @@ import naipRouter from "./naip";
 import workspaceRouter from "./workspace";
 // Phase 58 — Administrative Decision Knowledge Graph
 import adkgRouter from "./adkg";
+// Phase 59 — KB Cross-Reference Graph Traversal
+import kbRouter from "./kb";
 
 const router: IRouter = Router();
 
@@ -90,5 +92,7 @@ router.use(naipRouter);
 router.use(workspaceRouter);
 // Phase 58 — Administrative Decision Knowledge Graph
 router.use(adkgRouter);
+// Phase 59 — KB Cross-Reference Graph Traversal
+router.use(kbRouter);
 
 export default router;

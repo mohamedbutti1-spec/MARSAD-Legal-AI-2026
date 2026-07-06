@@ -38,6 +38,14 @@ export {
   retrieveLegislation,
   retrieveCaseLaw,
   retrieveConstitutional,
+  expandWithCrossRefs,
+  resolveAmendmentChain,
+} from "./retrieval.js";
+export type {
+  KbContextEntry,
+  KbContextResult,
+  CrossRefNeighbour,
+  AmendingInstrument,
 } from "./retrieval.js";
 
 // Types

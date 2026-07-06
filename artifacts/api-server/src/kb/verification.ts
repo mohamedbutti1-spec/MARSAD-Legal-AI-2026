@@ -727,6 +727,8 @@ export function buildTextReport(report: VerificationReport): string {
 export function annotateContextLine(
   contextLine: string,
   authority: VerifiedAuthority,
+  /** Optional cross-reference relationship, e.g. "Implements: Federal Decree-Law 21/2021" */
+  crossRefRelationship?: string,
 ): string {
   const classEmoji = {
     binding:     "★ Binding",
@@ -749,7 +751,8 @@ export function annotateContextLine(
     `${classEmoji} | Level ${authority.hierarchyLevel}` +
     ` | Confidence: ${authority.confidenceLabel} (${confidenceAr}) ${(authority.confidenceScore * 100).toFixed(0)}%` +
     ` | ${authority.jurisdiction}` +
-    (repeatFlags.length > 0 ? ` | ${repeatFlags.join(", ")}` : "");
+    (repeatFlags.length > 0 ? ` | ${repeatFlags.join(", ")}` : "") +
+    (crossRefRelationship ? ` | ${crossRefRelationship}` : "");
 
   // Insert the annotation as the second line of the context entry
   const firstNewline = contextLine.indexOf("\n");

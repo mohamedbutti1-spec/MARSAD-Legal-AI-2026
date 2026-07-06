@@ -52,6 +52,8 @@ import WorkspaceItem      from '@/pages/workspace-item';
 // Phase 58 — Administrative Decision Knowledge Graph
 import AdkgDashboard from '@/pages/adkg-dashboard';
 import AdkgDetail    from '@/pages/adkg-detail';
+// Phase 59 — KB Cross-Reference Search
+import KbSearch from '@/pages/kb-search';
 
 // NAIP — Role-Specific Executive Dashboards
 import NaipMinister        from '@/pages/naip-minister';
@@ -268,6 +270,8 @@ function Router() {
         <Route path="/comparisons" component={Comparisons} />
         <Route path="/documents"   component={Documents} />
         <Route path="/analytics"   component={Analytics} />
+        {/* Phase 59 — KB Cross-Reference Search */}
+        <Route path="/kb-search" component={KbSearch} />
 
         <Route component={NotFound} />
       </Switch>
