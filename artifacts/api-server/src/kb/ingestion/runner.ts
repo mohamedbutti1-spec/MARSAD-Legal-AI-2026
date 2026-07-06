@@ -41,6 +41,7 @@ import type { KbDocumentInput, IndexResult } from "../types.js";
 import { UAE_CONSTITUTION_SEED }     from "./seeds/uae-constitution.js";
 import { FEDERAL_DECREE_LAWS_SEED }  from "./seeds/federal-decree-laws.js";
 import { FEDERAL_LAWS_SEED }         from "./seeds/federal-laws.js";
+import { ADMIN_DISPUTES_LAW_SEED }   from "./seeds/admin-disputes-law.js";
 import { EXECUTIVE_REGULATIONS_SEED } from "./seeds/executive-regulations.js";
 import { CABINET_MINISTERIAL_SEED }  from "./seeds/cabinet-ministerial.js";
 import { OFFICIAL_GAZETTE_SEED }     from "./seeds/official-gazette.js";
@@ -59,14 +60,15 @@ const INGESTION_MANIFEST: Array<{
   label: string;
   documents: KbDocumentInput[];
 }> = [
-  { priority: 1, label: "UAE Constitution",           documents: [UAE_CONSTITUTION_SEED] },
-  { priority: 2, label: "Federal Decree-Laws",        documents: FEDERAL_DECREE_LAWS_SEED },
-  { priority: 3, label: "Federal Laws",               documents: FEDERAL_LAWS_SEED },
-  { priority: 4, label: "Executive Regulations",      documents: EXECUTIVE_REGULATIONS_SEED },
-  { priority: 5, label: "Cabinet & Ministerial",      documents: CABINET_MINISTERIAL_SEED },
-  { priority: 6, label: "Official Gazette",           documents: OFFICIAL_GAZETTE_SEED },
-  { priority: 7, label: "Court Principles",           documents: SUPREME_COURT_PRINCIPLES_SEED },
-  { priority: 8, label: "Guidance & Memoranda",       documents: OFFICIAL_GUIDANCE_SEED },
+  { priority: 1, label: "UAE Constitution",                     documents: [UAE_CONSTITUTION_SEED] },
+  { priority: 2, label: "Federal Decree-Laws",                  documents: FEDERAL_DECREE_LAWS_SEED },
+  { priority: 3, label: "Federal Laws",                         documents: FEDERAL_LAWS_SEED },
+  { priority: 3, label: "Admin Disputes Statute (Phase 58)",    documents: ADMIN_DISPUTES_LAW_SEED },
+  { priority: 4, label: "Executive Regulations",                documents: EXECUTIVE_REGULATIONS_SEED },
+  { priority: 5, label: "Cabinet & Ministerial",                documents: CABINET_MINISTERIAL_SEED },
+  { priority: 6, label: "Official Gazette",                     documents: OFFICIAL_GAZETTE_SEED },
+  { priority: 7, label: "Court Principles",                     documents: SUPREME_COURT_PRINCIPLES_SEED },
+  { priority: 8, label: "Guidance & Memoranda",                 documents: OFFICIAL_GUIDANCE_SEED },
 ];
 
 // ─── Amendment graph builder ──────────────────────────────────────────────────

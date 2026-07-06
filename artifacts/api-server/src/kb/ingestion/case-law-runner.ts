@@ -24,12 +24,13 @@ import type { KbDocumentInput, IndexResult } from "../types.js";
 
 // ─── Seed imports ─────────────────────────────────────────────────────────────
 
-import { CASE_LAW_FEDERAL_SUPREME_COURT_SEED } from "./seeds/case-law-federal-supreme-court.js";
-import { CASE_LAW_CONSTITUTIONAL_SEED }         from "./seeds/case-law-constitutional.js";
-import { CASE_LAW_DUBAI_CASSATION_SEED }        from "./seeds/case-law-dubai-cassation.js";
-import { CASE_LAW_ABU_DHABI_CASSATION_SEED }    from "./seeds/case-law-abu-dhabi-cassation.js";
-import { CASE_LAW_RAK_CASSATION_SEED }          from "./seeds/case-law-rak-cassation.js";
-import { CASE_LAW_FEDERAL_ADMIN_SEED }          from "./seeds/case-law-federal-admin.js";
+import { CASE_LAW_FEDERAL_SUPREME_COURT_SEED }    from "./seeds/case-law-federal-supreme-court.js";
+import { CASE_LAW_CONSTITUTIONAL_SEED }            from "./seeds/case-law-constitutional.js";
+import { CASE_LAW_DUBAI_CASSATION_SEED }           from "./seeds/case-law-dubai-cassation.js";
+import { CASE_LAW_ABU_DHABI_CASSATION_SEED }       from "./seeds/case-law-abu-dhabi-cassation.js";
+import { CASE_LAW_RAK_CASSATION_SEED }             from "./seeds/case-law-rak-cassation.js";
+import { CASE_LAW_FEDERAL_ADMIN_SEED }             from "./seeds/case-law-federal-admin.js";
+import { CASE_LAW_FEDERAL_ADMIN_EXPANDED_SEED }    from "./seeds/case-law-federal-admin-expanded.js";
 
 // ─── Ingestion manifest ───────────────────────────────────────────────────────
 
@@ -38,7 +39,7 @@ const CASE_LAW_MANIFEST: Array<{
   label: string;
   documents: KbDocumentInput[];
 }> = [
-  { priority: 1, label: "Federal Supreme Court (Civil / Commercial / Penal)",
+  { priority: 1, label: "Federal Supreme Court (Civil / Commercial / Penal / Labour / Administrative)",
     documents: CASE_LAW_FEDERAL_SUPREME_COURT_SEED },
   { priority: 2, label: "Federal Constitutional Decisions",
     documents: CASE_LAW_CONSTITUTIONAL_SEED },
@@ -50,6 +51,8 @@ const CASE_LAW_MANIFEST: Array<{
     documents: CASE_LAW_RAK_CASSATION_SEED },
   { priority: 6, label: "Federal Administrative Judiciary Published Principles",
     documents: CASE_LAW_FEDERAL_ADMIN_SEED },
+  { priority: 7, label: "Federal Administrative Judiciary — Expanded Corpus (Phase 58)",
+    documents: CASE_LAW_FEDERAL_ADMIN_EXPANDED_SEED },
 ];
 
 // ─── Duplicate detection ──────────────────────────────────────────────────────
@@ -409,12 +412,12 @@ function printCaseLawReport(
     `Duration:         ${(durationMs / 1000).toFixed(1)}s`,
     "",
     "Courts covered:",
-    "  ✓ Federal Supreme Court — Civil, Commercial, Penal Chambers",
+    "  ✓ Federal Supreme Court — Civil, Commercial, Penal, Labour, Administrative Chambers",
     "  ✓ Federal Supreme Court — Constitutional Chamber",
     "  ✓ Dubai Court of Cassation",
     "  ✓ Abu Dhabi Court of Cassation",
     "  ✓ Ras Al Khaimah Court of Cassation",
-    "  ✓ Federal Administrative Judiciary",
+    "  ✓ Federal Administrative Judiciary (original + expanded corpus)",
     "",
     "Courts not yet covered (no official published digests available):",
     "  ○ Sharjah Court of Cassation",
