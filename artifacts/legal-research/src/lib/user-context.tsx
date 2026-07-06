@@ -31,6 +31,7 @@ interface UserContextType {
   permissions: RolePermissions;
   // Legacy permission booleans (kept for backward compatibility)
   canUpload: boolean;
+  canCreateDecision: boolean;
   canUseAi: boolean;
   canManageUsers: boolean;
   canManageSettings: boolean;
@@ -113,7 +114,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     setLang: handleSetLang,
     permissions,
     canUpload: role === 'owner' || role === 'supervisor',
-    canUseAi: role === 'owner' || role === 'supervisor',
+    // Only owner/supervisor can create or edit administrative decisions.
+    canCreateDecision: role === 'owner' || role === 'supervisor',
+    // All roles except citizen can use AI features (SPG/PGF/JRE/JDC/KB/workspace/ADKG).
+    // Citizen users access legal-os citizen portal instead.
+    canUseAi: role !== 'citizen',
     canManageUsers: role === 'owner',
     canManageSettings: role === 'owner',
     canComment: role === 'owner' || role === 'supervisor',

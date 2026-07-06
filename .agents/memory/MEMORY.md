@@ -39,3 +39,4 @@
 - [PCS — Professional Case Simulator](pcs-architecture.md) — userId-scoped sessions (IDOR-safe); criticalError computed server-side (never from model); FK+CHECK constraints; SimulatorSection on stageIndex===0 only
 - [V1.0 Validation Findings](v1-validation-findings.md) — auth missing on workspace/adkg/kb (fixed); naip-kpi null crash pattern; NAIP exec dashboard role-map mismatch; legal-os buildContext unguarded
 - [V1.0 Production Hardening](v1-hardening.md) — rate limit pattern (auth-first order); ALTER TABLE IF NOT EXISTS before GIN index; DO $ not DO $; isNaN guard pattern; API response array null safety
+- [UAT Permission Architecture](uat-permission-architecture.md) — requireAnyRole=13 non-citizen roles; requireSupervisorOrOwner=decision mutations; canUseAi vs canCreateDecision frontend split; bare Route = citizen leak

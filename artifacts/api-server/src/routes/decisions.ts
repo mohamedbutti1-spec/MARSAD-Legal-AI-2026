@@ -48,7 +48,7 @@ import {
   type JudicialQuestion,
   type ExplainabilitySection,
 } from "@workspace/db";
-import { requireAnyRole, requireSupervisorOrOwner, requirePermission, requireGovernanceRead } from "../middlewares/roleAuth";
+import { requireAnyRole, requireSupervisorOrOwner, requirePermission } from "../middlewares/roleAuth";
 import { logAudit } from "../middlewares/auditLog";
 import { e400, e403, e404, e500 } from "../lib/sendError";
 import { aiRouter, TaskType } from "../ai";
@@ -689,8 +689,8 @@ const CreateDecisionSchema = z.object({
   issuingAuthority: z.string().max(200).optional(),
 });
 
-// POST /decisions — create a new decision case
-router.post("/decisions", requireAnyRole, async (req, res): Promise<void> => {
+// POST /decisions — create a new decision case (owner/supervisor only)
+router.post("/decisions", requireSupervisorOrOwner, async (req, res): Promise<void> => {
   try {
     const parsed = CreateDecisionSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -823,7 +823,7 @@ router.get("/decisions/:id", requireAnyRole, async (req, res): Promise<void> => 
 
 // PUT /decisions/:id/stages/:stageKey — save (upsert) stage form data
 // No auditHash here — hash is only computed at validation time (after data is final)
-router.put("/decisions/:id/stages/:stageKey", requireAnyRole, async (req, res): Promise<void> => {
+router.put("/decisions/:id/stages/:stageKey", requireSupervisorOrOwner, async (req, res): Promise<void> => {
   try {
     const decisionId = parseInt(req.params.id as string, 10);
     if (isNaN(decisionId)) { e400(res, "Invalid decision id"); return; }
@@ -874,8 +874,8 @@ router.put("/decisions/:id/stages/:stageKey", requireAnyRole, async (req, res): 
   }
 });
 
-// POST /decisions/:id/stages/:stageKey/ai-assist — AI analysis for this stage
-router.post("/decisions/:id/stages/:stageKey/ai-assist", requireAnyRole, async (req, res): Promise<void> => {
+// POST /decisions/:id/stages/:stageKey/ai-assist — AI analysis for this stage (owner/supervisor only)
+router.post("/decisions/:id/stages/:stageKey/ai-assist", requireSupervisorOrOwner, async (req, res): Promise<void> => {
   try {
     const decisionId = parseInt(req.params.id as string, 10);
     if (isNaN(decisionId)) { e400(res, "Invalid decision id"); return; }
@@ -1619,7 +1619,7 @@ CRITICAL REQUIREMENTS:
 // POST /decisions/:id/jdp/generate — generate (or regenerate) the Judicial Defense Package
 // Requires a sealed DCI. Blocks until AI generation completes (≈30–60 s).
 // Non-fatal regeneration: existing JDP is set to "generating" first so the UI can show progress.
-router.post("/decisions/:id/jdp/generate", requireAnyRole, async (req, res): Promise<void> => {
+router.post("/decisions/:id/jdp/generate", requireSupervisorOrOwner, async (req, res): Promise<void> => {
   try {
     const decisionId = parseInt(req.params.id as string, 10);
     if (isNaN(decisionId)) { e400(res, "Invalid decision id"); return; }
@@ -2255,7 +2255,7 @@ Return a JSON object with EXACTLY these keys. All values must be in clear Arabic
  * Generate the Constitutional Answer Record (CAR) for the affected party.
  * Requires a sealed DCI.
  */
-router.post("/decisions/:id/car/generate", requireAnyRole, async (req, res): Promise<void> => {
+router.post("/decisions/:id/car/generate", requireSupervisorOrOwner, async (req, res): Promise<void> => {
   try {
     const decisionId = parseInt(req.params.id as string, 10);
     if (isNaN(decisionId)) { e400(res, "Invalid decision id"); return; }

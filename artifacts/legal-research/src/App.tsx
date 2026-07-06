@@ -106,6 +106,7 @@ const queryClient = new QueryClient({
 function Router() {
   const {
     canUseAi,
+    canCreateDecision,
     canManageUsers,
     canManageSettings,
     canViewAudit,
@@ -149,7 +150,7 @@ function Router() {
 
         {/* ── Module 1 — Intelligent Administrative Decision ───────── */}
         <Route path="/decisions/new">
-          <RouteGuard allow={canUseAi}>
+          <RouteGuard allow={canCreateDecision}>
             <DecisionWorkspace />
           </RouteGuard>
         </Route>
@@ -279,11 +280,19 @@ function Router() {
             <Users />
           </RouteGuard>
         </Route>
-        <Route path="/comparisons" component={Comparisons} />
-        <Route path="/documents"   component={Documents} />
-        <Route path="/analytics"   component={Analytics} />
+        <Route path="/comparisons">
+          <RouteGuard allow={canUseAi}><Comparisons /></RouteGuard>
+        </Route>
+        <Route path="/documents">
+          <RouteGuard allow={canUseAi}><Documents /></RouteGuard>
+        </Route>
+        <Route path="/analytics">
+          <RouteGuard allow={canUseAi}><Analytics /></RouteGuard>
+        </Route>
         {/* Phase 59 — KB Cross-Reference Search */}
-        <Route path="/kb-search" component={KbSearch} />
+        <Route path="/kb-search">
+          <RouteGuard allow={canUseAi}><KbSearch /></RouteGuard>
+        </Route>
         {/* JRE — Judicial Reasoning Engine */}
         <Route path="/jre/:id">
           <RouteGuard allow={canUseAi}>

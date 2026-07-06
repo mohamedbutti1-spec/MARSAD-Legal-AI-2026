@@ -22,13 +22,14 @@ import {
 } from "../kb/retrieval.js";
 import type { KbCollectionId, KbHierarchyLevel } from "../kb/types.js";
 import { getUserId } from "../lib/route-helpers.js";
-import { requireSupervisorOrOwner } from "../middlewares/roleAuth.js";
+import { requireAnyRole } from "../middlewares/roleAuth.js";
 import { kbSearchLimit } from "../middlewares/rateLimits.js";
 
 const router: IRouter = Router();
 
 // KB search routes require at minimum supervisor-level access (mirrors canUseAi frontend gate).
-router.use(requireSupervisorOrOwner);
+// All authenticated platform users can search and use the knowledge base
+router.use(requireAnyRole);
 
 // ─── GET /kb/search ───────────────────────────────────────────────────────────
 

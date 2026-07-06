@@ -10,7 +10,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { sql, eq, desc, and } from "drizzle-orm";
-import { requireAnyRole, requireSupervisorOrOwner } from "../middlewares/roleAuth";
+import { requireAnyRole } from "../middlewares/roleAuth";
 import { runChamberDeliberation } from "../utils/judicial-deliberation-chamber.js";
 import type { JreParties } from "../utils/judicial-reasoning-engine.js";
 import type { PanelSize } from "../utils/judicial-deliberation-chamber.js";
@@ -151,7 +151,7 @@ router.get("/jdc/chambers/:id", requireAnyRole, async (req, res): Promise<void> 
 
 // ─── POST /jdc/chambers ──────────────────────────────────────────────────────
 
-router.post("/jdc/chambers", requireSupervisorOrOwner, aiSessionLimit, async (req, res): Promise<void> => {
+router.post("/jdc/chambers", requireAnyRole, aiSessionLimit, async (req, res): Promise<void> => {
   const uid = getUserId(req);
   const {
     title,
@@ -254,7 +254,7 @@ router.post("/jdc/chambers", requireSupervisorOrOwner, aiSessionLimit, async (re
 
 // ─── DELETE /jdc/chambers/:id ────────────────────────────────────────────────
 
-router.delete("/jdc/chambers/:id", requireSupervisorOrOwner, async (req, res): Promise<void> => {
+router.delete("/jdc/chambers/:id", requireAnyRole, async (req, res): Promise<void> => {
   const id  = parseInt(String(req.params.id), 10);
   const uid = getUserId(req);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid chamber id" }); return; }

@@ -169,7 +169,7 @@ function DistributionBar({ distribution, total }: { distribution: RiskDistributi
 
 export default function RiskEngine() {
   const t = useT();
-  const { role, userId, userOrg, canViewRiskDashboard } = useUserContext();
+  const { role, userId, userOrg, canViewRiskDashboard, canCreateDecision } = useUserContext();
   const headers = getHeaders(role, userId, userOrg);
 
   const { data, isLoading, isError, refetch, isFetching } = useQuery<DashboardData>({
@@ -406,12 +406,14 @@ export default function RiskEngine() {
             <p className="text-sm text-muted-foreground">
               {t('لا توجد قرارات لتقييمها بعد', 'No decisions to assess yet')}
             </p>
-            <Link href="/decisions/new">
-              <button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-foreground text-background text-xs font-semibold hover:opacity-90 transition-opacity">
-                <FileText className="w-4 h-4" />
-                {t('إنشاء قرار جديد', 'Create new decision')}
-              </button>
-            </Link>
+            {canCreateDecision && (
+              <Link href="/decisions/new">
+                <button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-foreground text-background text-xs font-semibold hover:opacity-90 transition-opacity">
+                  <FileText className="w-4 h-4" />
+                  {t('إنشاء قرار جديد', 'Create new decision')}
+                </button>
+              </Link>
+            )}
           </div>
         )}
       </div>

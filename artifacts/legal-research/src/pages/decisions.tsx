@@ -98,7 +98,7 @@ function apiFetch(path: string) {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function DecisionsPage() {
-  const { lang } = useUserContext();
+  const { lang, canCreateDecision } = useUserContext();
   const [filter, setFilter] = useState<string>('all');
 
   const { data, isLoading, error } = useQuery({
@@ -133,12 +133,14 @@ export default function DecisionsPage() {
             </p>
           </div>
 
-          <Link href="/decisions/new">
-            <button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-foreground text-background text-sm font-semibold hover:opacity-90 transition-opacity">
-              <Plus className="w-4 h-4" />
-              <span>قرار جديد</span>
-            </button>
-          </Link>
+          {canCreateDecision && (
+            <Link href="/decisions/new">
+              <button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-foreground text-background text-sm font-semibold hover:opacity-90 transition-opacity">
+                <Plus className="w-4 h-4" />
+                <span>قرار جديد</span>
+              </button>
+            </Link>
+          )}
         </div>
 
         {/* ── Stats ───────────────────────────────────────────────── */}
@@ -206,12 +208,14 @@ export default function DecisionsPage() {
                 ابدأ بإنشاء قرارك الإداري الأول وفق المنهج الدستوري
               </p>
             </div>
-            <Link href="/decisions/new">
-              <button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-foreground text-background text-sm font-semibold hover:opacity-90 transition-opacity">
-                <Plus className="w-4 h-4" />
-                إنشاء قرار جديد
-              </button>
-            </Link>
+            {canCreateDecision && (
+              <Link href="/decisions/new">
+                <button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-foreground text-background text-sm font-semibold hover:opacity-90 transition-opacity">
+                  <Plus className="w-4 h-4" />
+                  إنشاء قرار جديد
+                </button>
+              </Link>
+            )}
           </div>
         )}
 

@@ -33,13 +33,14 @@ import {
   type DimensionResult,
 } from "../utils/admin-os-evaluator";
 import { getUserId } from "../lib/route-helpers.js";
-import { requireSupervisorOrOwner } from "../middlewares/roleAuth.js";
+import { requireAnyRole } from "../middlewares/roleAuth.js";
 import { aiAnalysisLimit } from "../middlewares/rateLimits.js";
 
 const router: IRouter = Router();
 
 // All ADKG routes require at minimum supervisor-level access (mirrors canUseAi frontend gate).
-router.use(requireSupervisorOrOwner);
+// All authenticated platform users can access their own ADKG decisions (data is ownerId-scoped)
+router.use(requireAnyRole);
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

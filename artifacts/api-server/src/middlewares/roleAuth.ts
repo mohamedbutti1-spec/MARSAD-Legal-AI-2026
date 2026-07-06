@@ -41,13 +41,24 @@ export function requirePermission(flag: keyof ReturnType<typeof getPermissions>)
 
 export const requireOwner             = requireRole("owner");
 export const requireSupervisorOrOwner = requireRole("owner", "supervisor");
-export const requireAnyRole           = requireRole("owner", "supervisor", "viewer");
 
-// Convenience guards for governance roles
-export const requireGovernanceRead = requireRole(
+/**
+ * requireAnyRole — any valid platform professional (13 roles, citizen excluded).
+ * Use this as the baseline auth check for AI features, research tools,
+ * and any route where data is already scoped by ownerId/userId.
+ * Citizen users access the legal-os citizen portal; they are not granted
+ * access to the internal research and decision-management features.
+ */
+export const requireAnyRole = requireRole(
   "owner", "supervisor", "viewer",
   "minister", "undersecretary", "assistant_undersecretary",
   "director_general", "department_director", "legal_department",
   "constitutional_reviewer", "internal_auditor", "external_auditor",
   "judge",
 );
+
+/**
+ * requireGovernanceRead — alias for requireAnyRole.
+ * Kept for backwards compatibility on governance routes.
+ */
+export const requireGovernanceRead = requireAnyRole;
