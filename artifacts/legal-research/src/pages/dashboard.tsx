@@ -3,7 +3,7 @@ import { AppLayout } from '@/components/layout/app-layout';
 import { apiFetch } from '@/lib/api-fetch';
 import {
   Scale, ScrollText, Gavel, FileCheck, PenLine,
-  ArrowUp, Mic, Paperclip, GitCompareArrows,
+  ArrowUp, Mic, Paperclip, GitCompareArrows, Compass,
 } from 'lucide-react';
 import { useUserContext, useT } from '@/lib/user-context';
 import { useLocation } from 'wouter';
@@ -94,6 +94,14 @@ const QUICK_CHIPS: QuickChip[] = [
     labelEn: 'Draft Legal Opinion',
     action: 'fill',
     fill: 'أنشئ رأياً قانونياً بشأن:',
+  },
+  {
+    id: 'spg',
+    icon: Compass,
+    labelAr: 'الإرشاد المهني الذكي',
+    labelEn: 'Smart Professional Guidance',
+    action: 'navigate',
+    href: '/spg',
   },
 ];
 

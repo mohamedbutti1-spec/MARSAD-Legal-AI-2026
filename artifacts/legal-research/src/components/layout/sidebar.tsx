@@ -28,6 +28,7 @@ import {
   Target,
   Cpu,
   Brain,
+  Compass,
 } from 'lucide-react';
 import { useUserContext } from '@/lib/user-context';
 
@@ -199,6 +200,22 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
       ],
     },
     // ── Legal Decision Analysis ───────────────────────────────────────────────
+    // ── Smart Professional Guidance ───────────────────────────────────────────
+    {
+      id: 'spg',
+      titleAr: 'الإرشاد المهني',
+      titleEn: 'Professional Guidance',
+      items: [
+        {
+          href: '/spg',
+          labelAr: 'الإرشاد المهني الذكي',
+          labelEn: 'Smart Professional Guidance',
+          icon: <Compass className="w-4.5 h-4.5" />,
+          show: canUseAi,
+          badge: 'جديد',
+        },
+      ],
+    },
     {
       id: 'jdt',
       titleAr: 'التحليل القانوني',

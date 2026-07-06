@@ -30,3 +30,4 @@
 - [Phase 60 — ADKG 16-Pillar Analyzer](phase60-adkg-pillar-analyzer.md) — 16 pillars in 2 groups (6 traditional/10 AI); pillarAnalysis stored in metadata (not citedAuthorities); buildAdkgEvaluatorPrompt is ADKG-only; maxTokens must be 16000+; truncation-repair fallback added
 - [JDC — Judicial Deliberation Chamber](phase-jdc.md) — 4-phase parallel pipeline; vote IDs always from determineMajority() never synthesis AI; authorityHierarchy ragTags included in synthText for citation scan; apiFetch returns Promise<Response> (no generics)
 - [Theory Mode Inline Refactor](theory-mode-inline.md) — Stage 5→per-stage JreStageTheory[]; Stage 6 gets zero theory; JDC theory via Phase 3b Promise.all enrichment (never in judge binding prompt)
+- [SPG — Smart Professional Guidance](spg-architecture.md) — 9 sectors, wizard→GuidanceOutput; TaskType.RAG; parseModelJson ok/data pattern; server-side sector/role validation

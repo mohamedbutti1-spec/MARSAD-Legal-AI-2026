@@ -55,3 +55,5 @@ export * from "./research-answer-metadata";
 export * from "./citation-refresh-status";
 // JRE — Judicial Reasoning Engine
 export * from "./jre-sessions";
+// SPG — Smart Professional Guidance
+export * from "./spg-sessions";

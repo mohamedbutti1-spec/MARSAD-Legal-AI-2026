@@ -1,0 +1,101 @@
+Build the Smart Professional Guidance module.
+
+Add one main homepage icon and sidebar entry named:
+
+🧭 الإرشاد المهني الذكي
+Smart Professional Guidance
+
+When the user clicks it, show a dropdown/category selector with professional sectors and roles:
+
+1. القانون والقضاء
+- القاضي
+- وكيل النيابة
+- المحامي
+- المستشار القانوني
+- الباحث القانوني
+
+2. الأمن والتحقيق
+- ضابط الشرطة
+- رجل الضبط القضائي
+- المحقق الجنائي
+- الأدلة الجنائية
+- مسرح الجريمة
+
+3. الإدارة الحكومية
+- متخذ القرار الإداري
+- المحقق الإداري
+- الموارد البشرية
+- الشؤون القانونية
+
+4. الحوكمة والرقابة
+- التدقيق الداخلي
+- إدارة المخاطر
+- الامتثال
+- مكافحة الفساد
+
+5. الاستراتيجية والتطوير
+- التخطيط الاستراتيجي
+- مؤشرات الأداء
+- إدارة المشاريع
+- إدارة التغيير
+
+6. الجودة والمعايير
+- ISO
+- EFQM
+- Six Sigma
+
+7. المالية والاقتصاد
+- المالية الحكومية
+- الضرائب
+- المشتريات
+- العقود
+
+8. الذكاء الاصطناعي والتحول الرقمي
+- حوكمة الذكاء الاصطناعي
+- مراجعة الخوارزميات
+- حماية البيانات
+- الأمن السيبراني
+
+9. الأكاديميون
+- الباحث
+- المشرف العلمي
+- طالب الماجستير
+- طالب الدكتوراه
+
+For each selected role, create a guided decision-tree workflow.
+
+The module must ask the user step-by-step:
+- ما الواقعة أو المهمة؟
+- ما صفتك المهنية؟
+- ما المرحلة الحالية؟
+- ما المستندات المتوفرة؟
+- ما الإجراء المطلوب؟
+- ما المخاطر المحتملة؟
+- ما الخطوة التالية؟
+
+Each workflow must produce:
+- professional guidance
+- required actions
+- required documents
+- legal/regulatory references where applicable
+- practical warnings
+- common mistakes
+- next-step checklist
+- escalation recommendation when needed
+
+Important safeguards:
+- This module provides professional guidance only.
+- It does not replace the competent authority.
+- It does not issue binding legal decisions.
+- It must distinguish legal requirements from best practices.
+- It must preserve citation verification and anti-hallucination rules.
+- It must support Arabic-first UI with English labels where useful.
+
+Everything must be additive.
+Do not break existing modules.
+Do not alter Judicial Reasoning Engine, Theory Mode, ADKG, or v1.0-rc1 baseline.
+
+Run TypeScript.
+Run regression tests.
+Restart workflows.
+Apply changes automatically after successful verification.

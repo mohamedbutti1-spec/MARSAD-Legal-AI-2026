@@ -60,6 +60,9 @@ import JreSession from '@/pages/jre-session';
 // Phase 59 — Judicial Deliberation Chamber
 import JdcPage    from '@/pages/jdc';
 import JdcChamber from '@/pages/jdc-chamber';
+// SPG — Smart Professional Guidance
+import SpgPage    from '@/pages/spg';
+import SpgSession from '@/pages/spg-session';
 
 // NAIP — Role-Specific Executive Dashboards
 import NaipMinister        from '@/pages/naip-minister';
@@ -298,6 +301,18 @@ function Router() {
         <Route path="/jdc">
           <RouteGuard allow={canUseAi}>
             <JdcPage />
+          </RouteGuard>
+        </Route>
+
+        {/* SPG — Smart Professional Guidance */}
+        <Route path="/spg/:id">
+          <RouteGuard allow={canUseAi}>
+            <SpgSession />
+          </RouteGuard>
+        </Route>
+        <Route path="/spg">
+          <RouteGuard allow={canUseAi}>
+            <SpgPage />
           </RouteGuard>
         </Route>
 

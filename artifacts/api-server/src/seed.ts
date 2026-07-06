@@ -11,6 +11,7 @@ import { migrateResearchWorkspace } from "./research-workspace/migration.js";
 import { migrateAdkg } from "./adkg/migration.js";
 import { migrateJre } from "./jre/migration.js";
 import { migrateJdc } from "./jdc/migration.js";
+import { migrateSpg } from "./spg/migration.js";
 
 const sampleRows = [
   {
@@ -48,6 +49,11 @@ export async function seedDatabase() {
     logger.warn({ err }, "JDC migration failed (non-fatal)"),
   );
   logger.info("JDC migration complete");
+  // ─── SPG: Smart Professional Guidance tables (additive, IF NOT EXISTS) ────
+  await migrateSpg().catch((err) =>
+    logger.warn({ err }, "SPG migration failed (non-fatal)"),
+  );
+  logger.info("SPG migration complete");
 
   // ─── Users ──────────────────────────────────────────────────────────────────
   const existingUsers = await db.select().from(usersTable);

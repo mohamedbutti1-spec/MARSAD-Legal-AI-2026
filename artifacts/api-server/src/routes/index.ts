@@ -49,6 +49,8 @@ import kbRouter from "./kb";
 import jreRouter from "./jre";
 // Phase 59 — Judicial Deliberation Chamber
 import jdcRouter from "./jdc";
+// SPG — Smart Professional Guidance
+import spgRouter from "./spg";
 
 const router: IRouter = Router();
 
@@ -102,5 +104,7 @@ router.use(kbRouter);
 router.use(jreRouter);
 // Phase 59 — Judicial Deliberation Chamber
 router.use(jdcRouter);
+// SPG — Smart Professional Guidance
+router.use(spgRouter);
 
 export default router;
