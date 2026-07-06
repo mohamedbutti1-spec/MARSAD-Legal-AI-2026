@@ -53,6 +53,8 @@ import jdcRouter from "./jdc";
 import spgRouter from "./spg";
 // PGF — Professional Guidance Framework
 import pgfRouter from "./pgf";
+// PCS — Professional Case Simulator
+import pcsRouter from "./pcs";
 
 const router: IRouter = Router();
 
@@ -110,5 +112,7 @@ router.use(jdcRouter);
 router.use(spgRouter);
 // PGF — Professional Guidance Framework
 router.use(pgfRouter);
+// PCS — Professional Case Simulator
+router.use(pcsRouter);
 
 export default router;

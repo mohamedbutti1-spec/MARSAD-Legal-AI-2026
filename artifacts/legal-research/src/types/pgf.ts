@@ -150,6 +150,80 @@ export interface PgfSession {
   updatedAt:        string;
 }
 
+// ─── Professional Case Simulator (PCS) ───────────────────────────────────────
+
+export interface PcsSimStep {
+  stepIdx:           number;
+  id:                string;
+  question:          string;
+  critical:          boolean;
+  requiredDocuments: string[];
+  requiredApprovals: string[];
+  totalSteps:        number;
+}
+
+export interface PcsStepEvaluation {
+  score:            number;
+  evaluation:       string;
+  missedDocuments:  string[];
+  missedApprovals:  string[];
+  recommendation:   string;
+  criticalError:    boolean;
+}
+
+export interface PcsSession {
+  id:              number;
+  sectorId:        string;
+  professionId:    string;
+  scenarioId:      string;
+  status:          'in_progress' | 'completed';
+  currentStepIdx:  number;
+  totalScore:      number | null;
+  grade:           string | null;
+  createdAt:       string;
+  completedAt:     string | null;
+}
+
+export interface PcsTimelineEntry {
+  stepIdx:       number;
+  stepId:        string;
+  question:      string;
+  score:         number;
+  criticalError: boolean;
+}
+
+export interface PcsMistake {
+  stepIdx:    number;
+  question:   string;
+  evaluation: string;
+}
+
+export interface PcsFinalReport {
+  totalScore:      number;
+  grade:           string;
+  timeline:        PcsTimelineEntry[];
+  mistakes:        PcsMistake[];
+  missedDocuments: string[];
+  missedApprovals: string[];
+  recommendations: string[];
+  strengths:       string[];
+}
+
+export interface PcsAnswerResponse {
+  evaluation:  PcsStepEvaluation;
+  isLastStep:  boolean;
+  nextStep?:   PcsSimStep;
+  report?:     PcsFinalReport;
+  sessionId?:  number;
+}
+
+export interface PcsStartResponse {
+  session:         PcsSession;
+  currentStep:     PcsSimStep;
+  scenarioTitle:   string;
+  scenarioContext: string;
+}
+
 // ─── Professional Workflow Engine (PWE) ──────────────────────────────────────
 
 export interface WorkflowBranchRule {

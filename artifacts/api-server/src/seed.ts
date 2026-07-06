@@ -15,6 +15,7 @@ import { migrateSpg } from "./spg/migration.js";
 import { migratePgf }               from "./pgf/migration.js";
 import { seedInstitutionalMemory }    from "./pgf/im-seed.js";
 import { seedProfessionalWorkflows } from "./pgf/pwe-seed.js";
+import { migratePcs }               from "./pcs/migration.js";
 
 const sampleRows = [
   {
@@ -72,6 +73,11 @@ export async function seedDatabase() {
     logger.warn({ err }, "PWE seed failed (non-fatal)"),
   );
   logger.info("PWE seed complete");
+  // ─── PCS: Professional Case Simulator migration ───────────────────────────
+  await migratePcs().catch((err) =>
+    logger.warn({ err }, "PCS migration failed (non-fatal)"),
+  );
+  logger.info("PCS migration complete");
 
   // ─── Users ──────────────────────────────────────────────────────────────────
   const existingUsers = await db.select().from(usersTable);

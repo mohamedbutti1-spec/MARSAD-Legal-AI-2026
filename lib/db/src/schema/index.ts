@@ -62,3 +62,5 @@ export * from "./pgf-sessions";
 export * from "./pgf-institutional-memory";
 // PWE — Professional Workflow Engine
 export * from "./pgf-workflow-steps";
+// PCS — Professional Case Simulator
+export * from "./pcs";

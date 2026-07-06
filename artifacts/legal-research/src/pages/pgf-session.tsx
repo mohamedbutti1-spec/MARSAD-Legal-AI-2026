@@ -24,6 +24,8 @@ import type {
   PgfFinalChecklistResult, PgfCommonMistake, PgfAnswerResponse,
   InstitutionalMemoryEntry, InstitutionalMemoryCategory,
   ProfessionalWorkflowStep,
+  PcsSimStep, PcsStepEvaluation, PcsFinalReport,
+  PcsAnswerResponse, PcsStartResponse, PcsSession,
 } from '@/types/pgf';
 import {
   INSTITUTIONAL_MEMORY_LABELS,
@@ -558,6 +560,513 @@ function WorkflowSection({
   );
 }
 
+// ─── Professional Case Simulator (PCS) Section ───────────────────────────────
+
+type SimPhase = 'idle' | 'loading' | 'active' | 'evaluating' | 'showing_eval' | 'completed';
+
+interface StepHistoryItem {
+  step:       PcsSimStep;
+  answer:     string;
+  evaluation: PcsStepEvaluation;
+}
+
+function ScoreBadge({ score, critical }: { score: number; critical: boolean }) {
+  const color = score >= 80 ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+    : score >= 60 ? 'bg-amber-100 text-amber-800 border-amber-200'
+    : 'bg-red-100 text-red-800 border-red-200';
+  return (
+    <span className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full border ${color}`} dir="ltr">
+      {score}/100
+      {critical && score < 50 && <span className="text-red-600">⚠</span>}
+    </span>
+  );
+}
+
+function GradeBadge({ grade, score }: { grade: string; score: number }) {
+  const colors: Record<string, string> = {
+    A: 'bg-emerald-500 text-white', B: 'bg-blue-500 text-white',
+    C: 'bg-amber-500 text-white',   D: 'bg-orange-500 text-white',
+    F: 'bg-red-600 text-white',
+  };
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <div className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl font-black shadow ${colors[grade] ?? 'bg-muted'}`}>
+        {grade}
+      </div>
+      <span className="text-sm font-semibold text-foreground">{score}/100</span>
+    </div>
+  );
+}
+
+function SimFinalReportView({ report, scenarioTitle }: { report: PcsFinalReport; scenarioTitle: string }) {
+  return (
+    <div className="space-y-5 py-1" dir="rtl">
+      {/* Header */}
+      <div className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-l from-primary/5 to-transparent border border-primary/10">
+        <GradeBadge grade={report.grade} score={report.totalScore} />
+        <div>
+          <p className="text-xs text-muted-foreground mb-0.5">نتيجة المحاكاة</p>
+          <p className="text-base font-bold text-foreground">{scenarioTitle}</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {report.timeline.length} خطوات مكتملة
+            {report.mistakes.length > 0 && ` • ${report.mistakes.length} ملاحظات`}
+          </p>
+        </div>
+      </div>
+
+      {/* Timeline */}
+      <div>
+        <p className="text-xs font-semibold text-muted-foreground mb-2">المسار الزمني</p>
+        <div className="space-y-2">
+          {report.timeline.map((t) => (
+            <div key={t.stepIdx} className="flex items-center gap-2.5 text-xs" dir="rtl">
+              <span className="shrink-0 w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold">
+                {t.stepIdx + 1}
+              </span>
+              <span className="flex-1 text-foreground/80 line-clamp-1">{t.question}</span>
+              <ScoreBadge score={t.score} critical={t.criticalError} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Mistakes */}
+      {report.mistakes.length > 0 && (
+        <div>
+          <p className="text-xs font-semibold text-muted-foreground mb-2">الملاحظات والأخطاء</p>
+          <div className="space-y-2">
+            {report.mistakes.map((m, i) => (
+              <div key={i} className="p-3 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 text-xs">
+                <p className="font-semibold text-red-800 dark:text-red-300 mb-1">{m.question}</p>
+                <p className="text-foreground/70">{m.evaluation}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Missed docs & approvals */}
+      {(report.missedDocuments.length > 0 || report.missedApprovals.length > 0) && (
+        <div className="grid grid-cols-1 gap-3">
+          {report.missedDocuments.length > 0 && (
+            <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800">
+              <p className="text-xs font-semibold text-amber-800 dark:text-amber-300 mb-1.5">📄 مستندات لم تُذكر</p>
+              <ul className="space-y-0.5">
+                {report.missedDocuments.map((d, i) => (
+                  <li key={i} className="text-xs text-foreground/70 flex items-start gap-1.5">
+                    <span className="text-amber-500 shrink-0">•</span>{d}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {report.missedApprovals.length > 0 && (
+            <div className="p-3 rounded-xl bg-violet-50 dark:bg-violet-900/10 border border-violet-200 dark:border-violet-800">
+              <p className="text-xs font-semibold text-violet-800 dark:text-violet-300 mb-1.5">✅ موافقات لم تُذكر</p>
+              <ul className="space-y-0.5">
+                {report.missedApprovals.map((a, i) => (
+                  <li key={i} className="text-xs text-foreground/70 flex items-start gap-1.5">
+                    <span className="text-violet-500 shrink-0">•</span>{a}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Strengths */}
+      {report.strengths.length > 0 && (
+        <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800">
+          <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300 mb-1.5">💪 نقاط القوة</p>
+          <ul className="space-y-0.5">
+            {report.strengths.map((s, i) => (
+              <li key={i} className="text-xs text-foreground/70">{s}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Recommendations */}
+      {report.recommendations.length > 0 && (
+        <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800">
+          <p className="text-xs font-semibold text-blue-800 dark:text-blue-300 mb-1.5">📌 توصيات التطوير</p>
+          <ul className="space-y-1">
+            {report.recommendations.slice(0, 5).map((r, i) => (
+              <li key={i} className="text-xs text-foreground/70">{r}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StepEvalView({ evaluation, stepIdx, totalSteps }: { evaluation: PcsStepEvaluation; stepIdx: number; totalSteps: number }) {
+  return (
+    <div className="space-y-3 py-2" dir="rtl">
+      {/* Score header */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-muted-foreground">
+          الخطوة {stepIdx + 1} من {totalSteps}
+        </span>
+        <ScoreBadge score={evaluation.score} critical={evaluation.criticalError} />
+      </div>
+
+      {/* Evaluation */}
+      <div className={`p-3 rounded-xl text-xs leading-relaxed border ${
+        evaluation.criticalError
+          ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800 text-foreground'
+          : evaluation.score >= 80
+            ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800 text-foreground'
+            : 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800 text-foreground'
+      }`}>
+        {evaluation.criticalError && (
+          <p className="font-bold text-red-700 dark:text-red-400 mb-1">⚠️ خطأ في خطوة حرجة</p>
+        )}
+        {evaluation.evaluation}
+      </div>
+
+      {/* Missed items */}
+      {(evaluation.missedDocuments.length > 0 || evaluation.missedApprovals.length > 0) && (
+        <div className="space-y-1.5">
+          {evaluation.missedDocuments.length > 0 && (
+            <div className="text-xs text-amber-700 dark:text-amber-400">
+              <span className="font-semibold">📄 مستندات لم تُذكر: </span>
+              {evaluation.missedDocuments.join("، ")}
+            </div>
+          )}
+          {evaluation.missedApprovals.length > 0 && (
+            <div className="text-xs text-violet-700 dark:text-violet-400">
+              <span className="font-semibold">✅ موافقات لم تُذكر: </span>
+              {evaluation.missedApprovals.join("، ")}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Recommendation */}
+      <div className="p-2.5 rounded-lg bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 text-xs text-blue-800 dark:text-blue-300">
+        <span className="font-semibold">التوجيه: </span>{evaluation.recommendation}
+      </div>
+    </div>
+  );
+}
+
+function SimulatorSection({
+  sectorId, professionId,
+}: {
+  sectorId:     string;
+  professionId: string;
+}) {
+  const [open,         setOpen]         = useState(false);
+  const [phase,        setPhase]        = useState<SimPhase>('idle');
+  const [sessionId,    setSessionId]    = useState<number | null>(null);
+  const [scenarioTitle, setScenarioTitle] = useState('');
+  const [scenarioContext, setScenarioContext] = useState('');
+  const [currentStep,  setCurrentStep]  = useState<PcsSimStep | null>(null);
+  const [currentAnswer, setCurrentAnswer] = useState('');
+  const [history,      setHistory]      = useState<StepHistoryItem[]>([]);
+  const [lastEval,     setLastEval]     = useState<PcsStepEvaluation | null>(null);
+  const [finalReport,  setFinalReport]  = useState<PcsFinalReport | null>(null);
+  const [error,        setError]        = useState<string | null>(null);
+
+  // Check if a scenario exists for this profession
+  const { data: scenarioMeta, isLoading: scenarioLoading } = useQuery<{ scenarioId: string; scenarioTitle: string }>({
+    queryKey: ['pcs-scenario-check', sectorId, professionId],
+    queryFn:  async () => {
+      const res = await apiFetch(`/api/pcs/scenarios/${sectorId}/${professionId}`);
+      if (!res.ok) throw new Error('No scenario');
+      return res.json();
+    },
+    retry: false,
+  });
+
+  // Hide entirely if no scenario available for this profession
+  if (!scenarioLoading && !scenarioMeta) return null;
+
+  async function startSimulation() {
+    setPhase('loading');
+    setError(null);
+    setHistory([]);
+    setLastEval(null);
+    setFinalReport(null);
+    setCurrentAnswer('');
+    try {
+      const res = await apiFetch('/api/pcs/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sectorId, professionId }),
+      });
+      if (!res.ok) throw new Error('Failed to start simulation');
+      const data: PcsStartResponse = await res.json();
+      setSessionId(data.session.id);
+      setScenarioTitle(data.scenarioTitle);
+      setScenarioContext(data.scenarioContext);
+      setCurrentStep(data.currentStep);
+      setPhase('active');
+    } catch {
+      setError('تعذّر بدء المحاكاة. يُرجى المحاولة مجدداً.');
+      setPhase('idle');
+    }
+  }
+
+  async function submitAnswer() {
+    if (!sessionId || !currentStep || currentAnswer.trim().length < 5) return;
+    setPhase('evaluating');
+    setError(null);
+    try {
+      const res = await apiFetch(`/api/pcs/sessions/${sessionId}/answer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ answer: currentAnswer.trim() }),
+      });
+      if (!res.ok) throw new Error('Failed to submit answer');
+      const data: PcsAnswerResponse = await res.json();
+
+      // Save this step to history
+      setHistory((prev) => [...prev, { step: currentStep, answer: currentAnswer.trim(), evaluation: data.evaluation }]);
+      setLastEval(data.evaluation);
+      setCurrentAnswer('');
+
+      if (data.isLastStep && data.report) {
+        setFinalReport(data.report);
+        setPhase('completed');
+      } else {
+        setCurrentStep(data.nextStep ?? null);
+        setPhase('showing_eval');
+      }
+    } catch {
+      setError('تعذّر إرسال الإجابة. يُرجى المحاولة مجدداً.');
+      setPhase('active');
+    }
+  }
+
+  function continueToNext() {
+    setLastEval(null);
+    setPhase('active');
+  }
+
+  function reset() {
+    setPhase('idle');
+    setSessionId(null);
+    setCurrentStep(null);
+    setHistory([]);
+    setLastEval(null);
+    setFinalReport(null);
+    setCurrentAnswer('');
+    setError(null);
+  }
+
+  return (
+    <div className="rounded-2xl border border-dashed border-sky-400/40 overflow-hidden" dir="rtl">
+      {/* Header */}
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-5 py-4 text-sm font-semibold text-foreground hover:bg-muted/20 transition-colors"
+      >
+        <span className="flex items-center gap-2.5">
+          <span className="text-base">🎭</span>
+          <span>محاكاة الواقعة</span>
+          {!scenarioLoading && scenarioMeta && (
+            <span className="text-xs font-normal text-muted-foreground">
+              {scenarioMeta.scenarioTitle}
+            </span>
+          )}
+          {scenarioLoading && <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />}
+          {phase === 'completed' && finalReport && (
+            <span className="text-xs bg-emerald-100 text-emerald-700 font-semibold px-2 py-0.5 rounded-full">
+              {finalReport.grade} — {finalReport.totalScore}/100
+            </span>
+          )}
+        </span>
+        {open
+          ? <ChevronUp   className="w-4 h-4 text-muted-foreground" />
+          : <ChevronDown className="w-4 h-4 text-muted-foreground" />
+        }
+      </button>
+
+      {open && (
+        <div className="border-t border-dashed border-sky-400/20">
+
+          {/* ── IDLE ── */}
+          {phase === 'idle' && (
+            <div className="px-5 py-5 space-y-4">
+              {scenarioMeta && (
+                <div className="text-sm text-muted-foreground leading-relaxed">
+                  <span className="font-semibold text-foreground">{scenarioMeta.scenarioTitle}</span>
+                  <span> — محاكاة تفاعلية خطوة بخطوة لمهاراتك المهنية مع تقييم بالذكاء الاصطناعي.</span>
+                </div>
+              )}
+              {error && (
+                <p className="text-xs text-destructive bg-destructive/10 p-2 rounded-lg">{error}</p>
+              )}
+              <Button onClick={startSimulation} className="gap-2 w-full" variant="outline">
+                <Zap className="w-4 h-4" />
+                بدء المحاكاة
+              </Button>
+            </div>
+          )}
+
+          {/* ── LOADING ── */}
+          {phase === 'loading' && (
+            <div className="flex items-center justify-center py-10">
+              <div className="flex flex-col items-center gap-2">
+                <Loader2 className="w-7 h-7 animate-spin text-primary" />
+                <p className="text-sm text-muted-foreground">جارٍ تحضير المحاكاة…</p>
+              </div>
+            </div>
+          )}
+
+          {/* ── ACTIVE — answering current step ── */}
+          {(phase === 'active') && currentStep && (
+            <div className="px-5 py-5 space-y-4">
+              {/* Scenario context — shown only on step 0 */}
+              {currentStep.stepIdx === 0 && (
+                <div className="p-4 rounded-xl bg-muted/30 border text-xs leading-relaxed text-foreground/80 whitespace-pre-line">
+                  <p className="font-bold text-foreground mb-2">📋 وقائع القضية</p>
+                  {scenarioContext}
+                </div>
+              )}
+
+              {/* History (collapsed previous steps) */}
+              {history.length > 0 && (
+                <div className="space-y-2">
+                  {history.map((h, i) => (
+                    <div key={i} className="p-2.5 rounded-lg bg-muted/20 border border-border/50 text-xs" dir="rtl">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-semibold text-foreground/70">الخطوة {i + 1}</span>
+                        <ScoreBadge score={h.evaluation.score} critical={h.evaluation.criticalError} />
+                      </div>
+                      <p className="text-foreground/60 line-clamp-1">{h.step.question}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Progress */}
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-primary rounded-full transition-all"
+                    style={{ width: `${((currentStep.stepIdx) / currentStep.totalSteps) * 100}%` }}
+                  />
+                </div>
+                <span className="text-xs text-muted-foreground shrink-0">
+                  {currentStep.stepIdx + 1} / {currentStep.totalSteps}
+                </span>
+              </div>
+
+              {/* Question */}
+              <div className="space-y-1">
+                {currentStep.critical && (
+                  <span className="text-xs text-red-600 font-semibold flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3" /> خطوة حرجة
+                  </span>
+                )}
+                <p className="text-sm font-semibold text-foreground leading-snug">
+                  {currentStep.question}
+                </p>
+              </div>
+
+              {/* Required items hint */}
+              {(currentStep.requiredDocuments.length > 0 || currentStep.requiredApprovals.length > 0) && (
+                <div className="text-xs text-muted-foreground space-y-0.5">
+                  {currentStep.requiredDocuments.length > 0 && (
+                    <p>📄 مستندات متوقعة: {currentStep.requiredDocuments.join("، ")}</p>
+                  )}
+                  {currentStep.requiredApprovals.length > 0 && (
+                    <p>✅ موافقات متوقعة: {currentStep.requiredApprovals.join("، ")}</p>
+                  )}
+                </div>
+              )}
+
+              {/* Answer textarea */}
+              <Textarea
+                value={currentAnswer}
+                onChange={(e) => setCurrentAnswer(e.target.value)}
+                placeholder="اكتب إجابتك هنا بالتفصيل…"
+                className="min-h-[110px] text-sm resize-none"
+                dir="rtl"
+              />
+
+              {error && (
+                <p className="text-xs text-destructive bg-destructive/10 p-2 rounded-lg">{error}</p>
+              )}
+
+              <div className="flex items-center justify-between gap-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-muted-foreground"
+                  onClick={reset}
+                >
+                  <X className="w-3 h-3 ml-1" /> إعادة البدء
+                </Button>
+                <Button
+                  onClick={submitAnswer}
+                  disabled={currentAnswer.trim().length < 5}
+                  className="gap-2"
+                  size="sm"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  إرسال الإجابة
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* ── EVALUATING ── */}
+          {phase === 'evaluating' && (
+            <div className="flex items-center justify-center py-10">
+              <div className="flex flex-col items-center gap-2">
+                <Brain className="w-7 h-7 text-primary animate-pulse" />
+                <p className="text-sm text-muted-foreground">جارٍ تقييم إجابتك…</p>
+              </div>
+            </div>
+          )}
+
+          {/* ── SHOWING EVALUATION (before next step) ── */}
+          {phase === 'showing_eval' && lastEval && currentStep && (
+            <div className="px-5 py-5 space-y-4">
+              <StepEvalView
+                evaluation={lastEval}
+                stepIdx={history.length - 1}
+                totalSteps={currentStep.totalSteps}
+              />
+              <Button onClick={continueToNext} className="w-full gap-2" size="sm">
+                <ArrowLeft className="w-3.5 h-3.5" />
+                الخطوة التالية
+              </Button>
+            </div>
+          )}
+
+          {/* ── COMPLETED — final report ── */}
+          {phase === 'completed' && finalReport && (
+            <div className="px-5 py-5 space-y-4">
+              {lastEval && history.length > 0 && (
+                <StepEvalView
+                  evaluation={lastEval}
+                  stepIdx={history.length - 1}
+                  totalSteps={history.length}
+                />
+              )}
+              <div className="border-t border-dashed border-sky-400/20 pt-4">
+                <SimFinalReportView report={finalReport} scenarioTitle={scenarioTitle} />
+              </div>
+              <Button variant="outline" onClick={reset} className="w-full gap-2" size="sm">
+                <Zap className="w-3.5 h-3.5" />
+                محاكاة جديدة
+              </Button>
+            </div>
+          )}
+
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Expert Actions Slide-in ──────────────────────────────────────────────────
 
 function ExpertActionsPanel({
@@ -779,6 +1288,14 @@ function StageForm({
         professionId={professionId}
         stageId={stage.id}
       />
+
+      {/* PCS — Professional Case Simulator, shown once on the first stage only */}
+      {stageIndex === 0 && (
+        <SimulatorSection
+          sectorId={sectorId}
+          professionId={professionId}
+        />
+      )}
     </div>
   );
 }
