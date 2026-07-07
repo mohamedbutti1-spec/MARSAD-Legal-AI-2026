@@ -2454,8 +2454,27 @@ export default function AiAssistant() {
                   }
                   return next;
                 });
+              } else if (parsed.type === 'component_failed') {
+                // ARCHITECTURAL LOCK: record which mandatory component failed
+                const component = String(parsed.component ?? '');
+                if (component) {
+                  setCourtSession((prev) => {
+                    if (!prev) return prev;
+                    const existing = prev.failedComponents ?? [];
+                    if (existing.includes(component)) return prev;
+                    return { ...prev, failedComponents: [...existing, component] };
+                  });
+                }
               } else if (parsed.type === 'done') {
-                setCourtSession((prev) => prev ? { ...prev, model: String(parsed.model ?? '') } : prev);
+                // ARCHITECTURAL LOCK: sessionComplete comes from server-authoritative done event
+                const complete = parsed.complete === true;
+                const failed   = Array.isArray(parsed.failedComponents)
+                  ? (parsed.failedComponents as unknown[]).map(String)
+                  : [];
+                setCourtSession((prev) => prev
+                  ? { ...prev, model: String(parsed.model ?? ''), sessionComplete: complete, failedComponents: failed }
+                  : prev
+                );
               } else if (parsed.type === 'error') {
                 toast({ title: t('خطأ في المحاكمة', 'Court error'), description: String(parsed.message), variant: 'destructive' });
               }

@@ -16,7 +16,11 @@
  *   {"type":"section","id":"appeal",      "data":{...}}
  *   {"type":"section","id":"scores",      "data":{...}}
  *   {"type":"section","id":"asep",        "data":{...}}  ← Project A: ASEP explainability report
- *   {"type":"done","model":"..."}
+ *   {"type":"component_failed","component":"shamsi"|"asep"}  ← emitted when a mandatory component fails
+ *   {"type":"done","model":"...","complete":true|false,"failedComponents":string[]}
+ *
+ * ARCHITECTURAL LOCK: ASEP and Al-Shamsi Matrix are mandatory.
+ * If either fails, complete=false and the judgment is considered incomplete.
  */
 
 import { Router, type IRouter, type Response } from "express";
@@ -90,6 +94,9 @@ router.post(
     let capturedIssues   = '';
     let capturedShamsi   = '';
     let capturedJudgment = '';
+    // ARCHITECTURAL LOCK — mandatory component tracking
+    let shamsiOk = false;
+    let asepOk   = false;
 
     // ── Phase 1: Facts + Issues ───────────────────────────────────────────────
     try {
@@ -211,7 +218,11 @@ ${caseText}
       }
       const d3 = p3.data as Record<string, unknown>;
       if (d3.commissioner && typeof d3.commissioner === "object") writeLine(res, { type: "section", id: "commissioner", data: d3.commissioner });
-      if (Array.isArray(d3.shamsi)) { writeLine(res, { type: "section", id: "shamsi", data: d3.shamsi }); capturedShamsi = JSON.stringify(d3.shamsi).slice(0, 2000); }
+      if (Array.isArray(d3.shamsi) && d3.shamsi.length > 0) {
+        writeLine(res, { type: "section", id: "shamsi", data: d3.shamsi });
+        capturedShamsi = JSON.stringify(d3.shamsi).slice(0, 2000);
+        shamsiOk = true;
+      }
     } catch (e) {
       writeLine(res, { type: "error", message: (e as Error).message }); res.end(); return;
     }
@@ -272,7 +283,7 @@ ${caseText}
     }
 
     // ── Phase 5: ASEP — Al-Shamsi Explainability Protocol ────────────────────
-    // Non-fatal: failure does not block the done signal
+    // ARCHITECTURAL LOCK: ASEP is mandatory. Failure marks the session incomplete.
     try {
       const r5 = await provider.complete({
         taskType: TaskType.RAG,
@@ -309,11 +320,28 @@ ${caseText}
       const p5 = parseModelJson(r5.text);
       if (p5.ok && p5.data && typeof p5.data === "object") {
         writeLine(res, { type: "section", id: "asep", data: p5.data });
+        asepOk = true;
+      } else {
+        writeLine(res, { type: "component_failed", component: "asep", reason: "ASEP parse returned invalid shape" });
       }
-    } catch { /* ASEP failure is non-fatal */ }
+    } catch (e) {
+      writeLine(res, { type: "component_failed", component: "asep", reason: (e as Error).message });
+    }
 
-    await logAudit(req, "court.simulate", {});
-    writeLine(res, { type: "done", model });
+    // Emit component_failed for Al-Shamsi Matrix if it never produced data
+    if (!shamsiOk) {
+      writeLine(res, { type: "component_failed", component: "shamsi", reason: "Al-Shamsi Matrix produced no valid data in Phase 3" });
+    }
+
+    // ARCHITECTURAL LOCK — complete=true only when ALL mandatory components succeeded
+    const failedComponents: string[] = [
+      ...(!shamsiOk ? ["shamsi"] : []),
+      ...(!asepOk   ? ["asep"]   : []),
+    ];
+    const sessionComplete = failedComponents.length === 0;
+
+    await logAudit(req, "court.simulate", { details: { complete: sessionComplete, failedComponents } });
+    writeLine(res, { type: "done", model, complete: sessionComplete, failedComponents });
     res.end();
   }
 );

@@ -128,4 +128,16 @@ export interface CourtSessionData {
   model?: string;
   supremeReview?: SupremeCourtReview;
   supremeLoading?: boolean;
+  /**
+   * ARCHITECTURAL LOCK — set by the server on the `done` event.
+   * true  = ASEP + Al-Shamsi Matrix both produced valid data → judgment stands.
+   * false = one or more mandatory components failed → judgment is withheld.
+   * undefined = session still in progress.
+   */
+  sessionComplete?: boolean;
+  /**
+   * IDs of mandatory components that did not complete successfully.
+   * Possible values: "shamsi" | "asep"
+   */
+  failedComponents?: string[];
 }

@@ -346,11 +346,16 @@ function DigitalWillEngine({ session, loading }: { session: CourtSessionData; lo
       icon: <Gavel className="w-3.5 h-3.5" />,
       nameAr: 'الحكم النهائي',
       nameEn: 'Final Judgment',
-      done: !!session.asep || (!!session.scores && !!session.judgment),
-      excerpt: session.asep
-        ? `قابلية التفسير: ${session.asep.overallExplainability}%`
-        : session.scores
-        ? `مؤشر الشامسي: ${session.scores.shamsiIndex}%`
+      // ARCHITECTURAL LOCK: final stage is only done when ALL mandatory components confirmed
+      done: session.sessionComplete === true,
+      excerpt: session.sessionComplete === true
+        ? session.asep
+          ? `قابلية التفسير: ${session.asep.overallExplainability}%`
+          : session.scores
+          ? `مؤشر الشامسي: ${session.scores.shamsiIndex}%`
+          : undefined
+        : session.sessionComplete === false
+        ? 'الحكم موقوف — مكون إلزامي فشل'
         : undefined,
     },
   ];
@@ -635,7 +640,11 @@ export function CourtSessionPanel({ session, onSupremeReview, onReset, loading }
   };
 
   const completedCount = allSections.filter(s => sectionDone(s.id)).length;
-  const isComplete = completedCount === allSections.length && !!session.scores;
+  // ARCHITECTURAL LOCK — session is only complete when the server confirms all mandatory
+  // components (ASEP + Al-Shamsi Matrix) produced valid data.
+  const isComplete = session.sessionComplete === true;
+  const isIncomplete = !loading && session.sessionComplete === false;
+  const failedComponents = session.failedComponents ?? [];
 
   return (
     <div className="space-y-3 py-2" dir="rtl">
@@ -893,7 +902,58 @@ export function CourtSessionPanel({ session, onSupremeReview, onReset, loading }
         </SectionCard>
       )}
 
-      {/* Final summary card */}
+      {/* ARCHITECTURAL LOCK — Incomplete session banner */}
+      {isIncomplete && failedComponents.length > 0 && (
+        <div className="border-2 border-red-400 rounded-xl p-4 bg-red-50/60" dir="rtl">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center shrink-0 mt-0.5">
+              <AlertTriangle className="w-4 h-4 text-red-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-sm text-red-800 mb-1">جلسة غير مكتملة — الحكم موقوف</h3>
+              <p className="text-xs text-red-700 leading-relaxed mb-3">
+                فشل أحد المكونات الإلزامية أو أكثر. لا يمكن إصدار حكم نهائي إلا بعد نجاح جميع المكونات الثلاثة: مصفوفة الشامسي، وبروتوكول قابلية التفسير (ASEP)، ومحرك الإرادة الرقمية.
+              </p>
+              <div className="space-y-1.5">
+                {[
+                  { id: 'shamsi', nameAr: 'مصفوفة نظرية الشامسي', nameEn: 'Al-Shamsi Matrix' },
+                  { id: 'asep',   nameAr: 'بروتوكول قابلية التفسير', nameEn: 'ASEP' },
+                ].map(({ id, nameAr, nameEn }) => {
+                  const failed = failedComponents.includes(id);
+                  return (
+                    <div key={id} className={`flex items-center gap-2 text-xs rounded-lg px-2.5 py-1.5 border ${
+                      failed
+                        ? 'border-red-300 bg-red-100/60 text-red-800'
+                        : 'border-emerald-300 bg-emerald-50/60 text-emerald-800'
+                    }`}>
+                      <span className="font-bold">{failed ? '✗' : '✓'}</span>
+                      <span className="font-medium">{nameAr}</span>
+                      <span className="text-muted-foreground">({nameEn})</span>
+                      <span className="mr-auto font-bold">{failed ? 'فشل' : 'مكتمل'}</span>
+                    </div>
+                  );
+                })}
+                {/* Digital Will Engine is always present (pure frontend) */}
+                <div className="flex items-center gap-2 text-xs rounded-lg px-2.5 py-1.5 border border-emerald-300 bg-emerald-50/60 text-emerald-800">
+                  <span className="font-bold">✓</span>
+                  <span className="font-medium">محرك الإرادة الرقمية</span>
+                  <span className="text-muted-foreground">(Digital Will Engine)</span>
+                  <span className="mr-auto font-bold">مكتمل</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={onReset}
+                className="mt-3 w-full py-2 text-xs font-semibold bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                إعادة المحاكمة
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Final summary card — only when session is architecturally complete */}
       {isComplete && session.scores && session.operative && (
         <div className="border-2 border-amber-300 rounded-xl p-4 bg-amber-50/50" dir="rtl">
           <h3 className="font-bold text-sm text-amber-800 mb-3 flex items-center gap-2">

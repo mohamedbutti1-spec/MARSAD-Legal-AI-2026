@@ -77,3 +77,26 @@ Sidebar: no new entry needed — court mode is a toggle on the existing AI Assis
 - Pure frontend, no new AI call — maps 10 pipeline stages to session data fields
 - Rendered with open/collapsible toggle, ArrowDown connectors between stages
 - Shown whenever loading || completedCount > 0
+
+## ARCHITECTURAL LOCK (mandatory — not plugins)
+All three systems (ASEP, Al-Shamsi Matrix, Digital Will Engine) are mandatory first-class architecture.
+
+### Backend enforcement (court.ts)
+- `shamsiOk` / `asepOk` booleans track mandatory component success during streaming
+- Phase 3: `shamsiOk = true` only when `Array.isArray(d3.shamsi) && d3.shamsi.length > 0`
+- Phase 5: ASEP success → `asepOk = true`; failure → `{type:"component_failed",component:"asep"}` emitted
+- After Phase 5: if `!shamsiOk` → emit `{type:"component_failed",component:"shamsi"}`
+- `done` event carries `{complete:boolean,failedComponents:string[]}` — server-authoritative
+- logAudit third arg shape: `{ details: { complete, failedComponents } }` (not flat)
+
+### Frontend streaming handler (ai-assistant.tsx)
+- `type:"component_failed"` → append `component` string to `session.failedComponents[]`
+- `type:"done"` → set `session.sessionComplete = parsed.complete`, `session.failedComponents = parsed.failedComponents`
+
+### Panel gating (court-session-panel.tsx)
+- `isComplete = session.sessionComplete === true` (not section count)
+- `isIncomplete = !loading && session.sessionComplete === false`
+- Digital Will Engine final stage: `done = session.sessionComplete === true`
+- Final Judgment summary card: gated on `isComplete` (not rendered for incomplete sessions)
+- `IncompleteSessionBanner`: shown when `isIncomplete && failedComponents.length > 0` — lists which components failed with ✓/✗, includes retry button
+- Digital Will Engine: ONLY the pure-frontend component (Digital Will Engine) never fails — always shown as ✓ in the banner
