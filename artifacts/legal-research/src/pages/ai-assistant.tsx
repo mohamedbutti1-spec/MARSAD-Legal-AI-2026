@@ -681,7 +681,7 @@ function buildConfigPrefix(config: SessionConfig, expertMode: boolean, opts: Exp
 
 // ─── Response modes ───────────────────────────────────────────────────────────
 
-type ResponseMode = 'quick' | 'standard' | 'professional' | 'expert';
+type ResponseMode = 'quick' | 'standard' | 'professional' | 'expert' | 'scenario_builder';
 
 interface MsgDisplayMeta { mode: ResponseMode; userQuery: string; }
 
@@ -730,12 +730,65 @@ const MODE_CONFIG: Record<ResponseMode, {
     badgeClass: 'bg-amber-50 text-amber-700 border-amber-200',
     maxSections: undefined,
   },
+  scenario_builder: {
+    icon: <span aria-hidden>🧩</span>,
+    ar: 'تعليم السيناريوهات / بناء القضية',
+    en: 'Scenario Builder',
+    descAr: 'يُقيّم اكتمال السيناريو ويرشدك لبناء قضية قانونية متكاملة',
+    activeClass: 'bg-teal-600 text-white border-teal-600',
+    badgeClass: 'bg-teal-50 text-teal-700 border-teal-200',
+    maxSections: undefined,
+  },
 };
 
 // Prefix injected into the message content for Expert Opinion mode.
 // This is pure orchestration — no backend or prompt changes.
 const EXPERT_MODE_PREFIX =
   '[وضع الرأي القانوني الخبير] أنت مستشار قانوني خبير. قدّم رأيك القانوني الاحترافي بشأن ما يلي، متضمناً: الرأي القانوني الواضح، نقاط القوة، نقاط الضعف، مخاطر التقاضي، احتمالية النجاح في أي نزاع، والإجراء القانوني الموصى به. صرّح في البداية بأن هذا رأي قانوني غير ملزم.\n\n';
+
+// Prefix injected for Scenario Builder mode — educational, completeness-first.
+const SCENARIO_BUILDER_PREFIX = `\
+[وضع تعليم السيناريوهات / بناء القضية — MLOS Scenario Builder]
+
+أنت مرشد قانوني تعليمي. مهمتك ليست إصدار حكم فوري، بل تقييم مدى اكتمال السيناريو القانوني المقدَّم، ثم توجيه المستخدم لبناء قضية قانونية متكاملة وفق المعايير الإجرائية المعتمدة.
+
+قبل أي شيء، قيّم السيناريو بناءً على العناصر التسعة التالية:
+١. أطراف القضية: الجهة الإدارية + صاحب المصلحة + أي طرف ثالث مؤثر.
+٢. الوقائع: ماذا حدث؟ متى؟ أين؟ ما القرار أو التصرف محل النزاع؟
+٣. القرار الإداري: نوعه، تاريخه، الجهة المُصدِرة، شفهي أم مكتوب؟ هل تم التبليغ؟
+٤. سبب القرار: السبب المُعلن، المستندات، هل السبب حقيقي أم محل نزاع؟
+٥. الإجراءات: هل سُمع دفاع صاحب الشأن؟ هل أُنذر؟ هل مُكِّن من الرد؟ هل توجد لجنة أو محضر؟
+٦. الضرر: مالي / وظيفي / معنوي / حرمان من خدمة / إلغاء ترخيص.
+٧. الطلبات: إلغاء القرار / وقف التنفيذ / التعويض / إعادة الحال / تفسير القرار.
+٨. الإطار القانوني: الإمارات / فرنسا / مقارن / نظرية الشامسي.
+٩. إن كانت القضية تتعلق بقرار ذكي أو خوارزمي: ما النظام المستخدم؟ هل القرار آلي بالكامل؟ هل وُجد تدخل بشري؟ ما البيانات المستخدمة؟ هل شُرح سبب القرار؟ هل يمكن الاعتراض عليه؟
+
+أَخرِج إجابتك حصراً بهذا الهيكل السباعي:
+
+أ) تقييم اكتمال السيناريو
+اذكر بوضوح: [مكتمل] أو [ناقص] أو [يحتاج توضيح]، مع تبرير موجز.
+
+ب) النواقص الجوهرية
+اسرد كل عنصر مفقود أو غامض يؤثر في سلامة القضية.
+
+ج) أسئلة استكمال القضية
+اطرح على المستخدم أسئلة محددة ومرقّمة للحصول على المعلومات الناقصة.
+
+د) صياغة قانونية محسّنة للوقائع
+أعِد صياغة ما قدّمه المستخدم بأسلوب قانوني رسمي، مع الحفاظ على الوقائع كما هي.
+
+هـ) المسألة القانونية محل البحث
+حدّد المسألة القانونية الجوهرية بدقة في جملتين أو ثلاث.
+
+و) التحليل الأولي
+قدّم توجهاً قانونياً أولياً فقط — لا حكم نهائي — مع الإشارة إلى المبادئ والنصوص ذات الصلة.
+
+ز) الحكم أو النتيجة المتوقعة
+قدّم هذا القسم فقط إذا كانت الوقائع كافية وواضحة. إن كانت ناقصة، اكتفِ بـ: "يتعذر إصدار حكم دون استكمال البيانات المطلوبة أعلاه."
+
+ملاحظة: هذا الوضع تعليمي وتوجيهي. لا تُصدر حكماً نهائياً قبل اكتمال السيناريو.
+
+السيناريو المُقدَّم:\n\n`;
 
 /** Heuristic auto-detection of intent from query text. */
 function detectMode(query: string): ResponseMode {
@@ -2202,7 +2255,7 @@ export default function AiAssistant() {
   const [theoryLens, setTheoryLens] = useState<TheoryLensState>({ lensId: 'uae_only', customText: '' });
 
   /** Current response mode — auto-detected but user-overridable. */
-  const [currentMode, setCurrentMode] = useState<ResponseMode>('quick');
+  const [currentMode, setCurrentMode] = useState<ResponseMode>('standard');
   /** Whether user has manually locked the mode (overriding auto-detect). */
   const [modeLocked, setModeLocked] = useState(false);
   /** Per-assistant-message display metadata (mode + original user query). */
@@ -2322,7 +2375,7 @@ export default function AiAssistant() {
   // Auto-detect mode from input — respects user lock
   useEffect(() => {
     if (modeLocked) return;
-    if (!input.trim()) { setCurrentMode('quick'); return; }
+    if (!input.trim()) { setCurrentMode('standard'); return; }
     setCurrentMode(detectMode(input));
   }, [input, modeLocked]);
 
@@ -2365,9 +2418,13 @@ export default function AiAssistant() {
     };
     setMessages((prev) => [...prev, userMsg]);
 
-    // Build API content — config prefix + optional expert-mode instruction
+    // Build API content — config prefix + optional mode instruction
     const configPfx = buildConfigPrefix(sessionConfig, expertMode, expertOptions);
-    const content = configPfx + (mode === 'expert' ? EXPERT_MODE_PREFIX + text : text);
+    const content = configPfx + (
+      mode === 'expert'            ? EXPERT_MODE_PREFIX + text :
+      mode === 'scenario_builder'  ? SCENARIO_BUILDER_PREFIX + text :
+      text
+    );
 
     const body = JSON.stringify({
       content,
@@ -2695,7 +2752,7 @@ export default function AiAssistant() {
     setPinnedSrcs([]);
     setTheoryLens({ lensId: 'uae_only', customText: '' });
     setModeLocked(false);
-    setCurrentMode('quick');
+    setCurrentMode('standard');
   }
 
   const toggleDoc = (id: number) =>
@@ -3031,7 +3088,7 @@ export default function AiAssistant() {
                 {modeLocked && (
                   <button
                     type="button"
-                    onClick={() => { setModeLocked(false); if (input.trim()) setCurrentMode(detectMode(input)); else setCurrentMode('quick'); }}
+                    onClick={() => { setModeLocked(false); if (input.trim()) setCurrentMode(detectMode(input)); else setCurrentMode('standard'); }}
                     className="text-[9px] text-muted-foreground hover:text-foreground transition-colors shrink-0"
                   >
                     {t('كشف تلقائي', 'Auto-detect')}

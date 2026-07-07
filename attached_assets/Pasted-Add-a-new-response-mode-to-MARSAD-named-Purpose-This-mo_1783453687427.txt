@@ -1,0 +1,108 @@
+Add a new response mode to MARSAD named:
+
+"تعليم السيناريوهات / بناء القضية"
+
+Purpose:
+This mode teaches the user how to build a legally complete scenario before requesting judgment or analysis.
+
+It must guide the user to include:
+
+1. أطراف القضية:
+- الجهة الإدارية
+- صاحب المصلحة / الموظف / الشركة / الفرد
+- أي طرف ثالث مؤثر
+
+2. الوقائع:
+- ماذا حدث؟
+- متى حدث؟
+- أين حدث؟
+- ما القرار أو التصرف محل النزاع؟
+
+3. القرار الإداري:
+- نوع القرار
+- تاريخ صدوره
+- الجهة التي أصدرته
+- هل صدر مكتوباً أم شفهياً؟
+- هل تم تبليغه؟
+
+4. سبب القرار:
+- ما السبب المعلن؟
+- هل توجد مستندات أو تحقيقات؟
+- هل السبب حقيقي أم محل نزاع؟
+
+5. الإجراءات:
+- هل تم سماع دفاع صاحب الشأن؟
+- هل تم إنذاره؟
+- هل تم تمكينه من الرد؟
+- هل توجد لجنة أو محضر؟
+
+6. الضرر:
+- ما الضرر الواقع؟
+- مالي؟
+- وظيفي؟
+- معنوي؟
+- حرمان من خدمة؟
+- إلغاء ترخيص؟
+
+7. الطلبات:
+- إلغاء القرار
+- وقف التنفيذ
+- التعويض
+- إعادة الحال
+- تفسير القرار
+
+8. الإطار القانوني:
+- الإمارات
+- فرنسا
+- مقارن
+- نظرية الشامسي
+
+9. إذا كانت القضية تتعلق بقرار ذكي أو خوارزمي:
+- ما النظام المستخدم؟
+- هل كان القرار آلياً بالكامل؟
+- هل وُجد تدخل بشري؟
+- ما البيانات المستخدمة؟
+- هل تم شرح سبب القرار؟
+- هل يمكن الاعتراض عليه؟
+
+Response behavior:
+When this mode is selected, the AI should not rush to final judgment.
+It should first evaluate whether the scenario is complete.
+
+Output structure:
+
+A) تقييم اكتمال السيناريو
+- مكتمل
+- ناقص
+- يحتاج توضيح
+
+B) النواقص الجوهرية
+List missing facts or documents.
+
+C) أسئلة استكمال القضية
+Ask the user targeted questions.
+
+D) صياغة قانونية محسّنة للوقائع
+Rewrite the user's scenario in proper legal form.
+
+E) المسألة القانونية محل البحث
+Define the legal issue clearly.
+
+F) التحليل الأولي
+Give a preliminary legal direction only.
+
+G) الحكم أو النتيجة المتوقعة
+Only provide if facts are sufficient.
+
+Important:
+This mode is educational and scenario-building oriented.
+It must help students, researchers, lawyers, judges, and general users understand what a legally complete case must contain before asking for a judgment.
+
+Add this mode to the "مستوى الإجابة" dropdown.
+
+Recommended display label:
+
+"🧩 تعليم السيناريوهات / بناء القضية"
+
+Default remains:
+"معياري"
