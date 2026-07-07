@@ -6,9 +6,8 @@ import { useListDocuments } from '@workspace/api-client-react';
 import {
   Bot, Plus, Trash2, Send, Loader2, MessageSquare, Sparkles,
   FileText, BookOpen, Copy, Check, ChevronDown, ChevronUp,
-  X, Pin, PinOff, Scale, Menu, ChevronRight, FlaskConical,
-  Zap, GraduationCap, Star, Globe, Brain, FileOutput,
-  BarChart2, Gavel, BookMarked, Maximize2, Minimize2,
+  X, Pin, PinOff, Menu, FlaskConical,
+  Zap, GraduationCap, Star, Maximize2, Minimize2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -94,9 +93,9 @@ const MODE_CONFIG: Record<ResponseMode, {
   },
   expert: {
     icon: <Star className="w-3 h-3" />,
-    ar: 'رأي خبير',
-    en: 'Expert Opinion',
-    descAr: 'رأي قانوني خبير · حصري',
+    ar: 'التحليل القانوني المتخصص',
+    en: 'Specialized Legal Analysis',
+    descAr: 'تحليل قانوني متخصص · حصري',
     activeClass: 'bg-amber-500 text-white border-amber-500',
     badgeClass: 'bg-amber-50 text-amber-700 border-amber-200',
     maxSections: undefined,
@@ -473,6 +472,92 @@ function StructuredBody({
   );
 }
 
+// ─── Answer Strength Indicator ────────────────────────────────────────────────
+
+function starRating(filled: number, max = 5): React.ReactNode {
+  return (
+    <span className="inline-flex items-center gap-0.5" dir="ltr">
+      {Array.from({ length: max }).map((_, i) => (
+        <span key={i} className={i < filled ? 'text-amber-500' : 'text-muted-foreground/30'}>★</span>
+      ))}
+    </span>
+  );
+}
+
+/** Derives a naïve strength score from the assistant response text. */
+function deriveStrengths(text: string, citations: Citation[]): {
+  confidence: number;
+  legislation: number;
+  judiciary: number;
+  fiqh: number;
+  comparison: number;
+  disagreementRisk: 'منخفض' | 'متوسط' | 'مرتفع';
+} {
+  const srcCount = (text.match(/\[SRC:\d+\]/g) ?? []).length + citations.filter((c) => c.type === 'legal_source').length;
+  const docCount = (text.match(/\[DOC:\d+\]/g) ?? []).length + citations.filter((c) => c.type === 'document').length;
+  const wordCount = text.split(/\s+/).length;
+
+  // Confidence: length-weighted + citation boost
+  const rawConf = Math.min(96, 72 + Math.floor(wordCount / 50) + srcCount * 2 + docCount);
+  const confidence = Math.max(70, rawConf);
+
+  // Star ratings (1-5)
+  const legislation = Math.min(5, Math.max(3, srcCount + 3));
+  const judiciary   = Math.min(5, Math.max(3, docCount + 3));
+  const fiqh        = 4;      // No dedicated fiqh corpus yet — conservative default
+  const comparison  = /فرنس|فرنسي|مقارن|أوروب|دولي|comparative/.test(text) ? 4 : 3;
+
+  // Disagreement risk
+  const highRiskKw  = /خلاف|اختلاف|نزاع|محل جدل|غير مستقر/.test(text);
+  const midRiskKw   = /آراء|فقهاء|بعض الفقه|قيل/.test(text);
+  const disagreementRisk: 'منخفض' | 'متوسط' | 'مرتفع' = highRiskKw ? 'مرتفع' : midRiskKw ? 'متوسط' : 'منخفض';
+
+  return { confidence, legislation, judiciary, fiqh, comparison, disagreementRisk };
+}
+
+function AnswerStrengthIndicator({ text, citations }: { text: string; citations: Citation[] }) {
+  const s = deriveStrengths(text, citations);
+  const confColor =
+    s.confidence >= 90 ? 'text-emerald-600' :
+    s.confidence >= 75 ? 'text-amber-600'   : 'text-rose-600';
+  const confDot =
+    s.confidence >= 90 ? '🟢' :
+    s.confidence >= 75 ? '🟡' : '🔴';
+  const riskColor =
+    s.disagreementRisk === 'منخفض'  ? 'text-emerald-700' :
+    s.disagreementRisk === 'متوسط'  ? 'text-amber-700'   : 'text-rose-700';
+
+  return (
+    <div
+      className="mt-4 rounded-xl border border-border/50 bg-muted/20 px-3 py-2.5 text-[11px] space-y-1.5"
+      dir="rtl"
+    >
+      <p className="font-bold text-foreground text-xs tracking-wide mb-1.5">مؤشر قوة الإجابة</p>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <span className="text-muted-foreground font-medium">درجة الثقة:</span>
+        <span className={`font-bold ${confColor}`}>{confDot} {s.confidence}%</span>
+      </div>
+      {(
+        [
+          ['التشريع', s.legislation],
+          ['القضاء',  s.judiciary],
+          ['الفقه',   s.fiqh],
+          ['المقارنة', s.comparison],
+        ] as [string, number][]
+      ).map(([label, stars]) => (
+        <div key={label} className="flex items-center justify-between gap-3">
+          <span className="text-muted-foreground font-medium">{label}:</span>
+          {starRating(stars)}
+        </div>
+      ))}
+      <div className="flex items-center justify-between gap-3 pt-0.5 border-t border-border/30 mt-1">
+        <span className="text-muted-foreground font-medium">احتمال الاختلاف الفقهي:</span>
+        <span className={`font-semibold ${riskColor}`}>{s.disagreementRisk}</span>
+      </div>
+    </div>
+  );
+}
+
 // ─── AssistantContent — mode-aware ───────────────────────────────────────────
 
 function AssistantContent({
@@ -499,7 +584,7 @@ function AssistantContent({
       {mode === 'expert' && (
         <div className="flex items-center gap-2 px-2.5 py-1.5 bg-amber-50 border border-amber-200 rounded-lg mb-2">
           <Star className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-          <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wide">رأي قانوني خبير — غير ملزم</span>
+          <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wide">تحليل قانوني متخصص — غير ملزم</span>
         </div>
       )}
 
@@ -527,6 +612,11 @@ function AssistantContent({
           <StructuredBody text={theory} citations={citations} prefix="theory" />
         </div>
       )}
+
+      {/* Answer Strength Indicator — Professional & Expert only (never for expanded quick/standard) */}
+      {(mode === 'professional' || mode === 'expert') && (
+        <AnswerStrengthIndicator text={displayBinding} citations={citations} />
+      )}
     </div>
   );
 }
@@ -536,27 +626,31 @@ function AssistantContent({
 type ActionKey =
   | 'expand' | 'collapse'
   | 'legislation' | 'cases'
-  | 'french' | 'shamsi'
+  | 'fiqh' | 'ai_analysis' | 'appeal'
+  | 'french' | 'uae_compare' | 'shamsi'
   | 'memorandum'
   | 'export_pdf' | 'export_word';
 
-const ACTION_CONFIG: {
+interface QuickAction {
   key: ActionKey;
-  icon: React.ReactNode;
+  emoji: string;
   ar: string;
-  className: string;
-  hideWhenExpanded?: boolean;
-  showWhenExpanded?: boolean;
-}[] = [
-  { key: 'expand',      icon: <Maximize2 className="w-3 h-3" />,  ar: 'توسيع الإجابة',           className: 'border-primary/30 text-primary hover:bg-primary/5',          hideWhenExpanded: true },
-  { key: 'collapse',    icon: <Minimize2 className="w-3 h-3" />,  ar: 'تصغير',                   className: 'border-border text-muted-foreground hover:bg-muted/30',        showWhenExpanded: true },
-  { key: 'legislation', icon: <BookMarked className="w-3 h-3" />, ar: 'عرض التشريعات',           className: 'border-border text-muted-foreground hover:bg-muted/30' },
-  { key: 'cases',       icon: <Gavel className="w-3 h-3" />,      ar: 'عرض القضايا',             className: 'border-border text-muted-foreground hover:bg-muted/30' },
-  { key: 'french',      icon: <Globe className="w-3 h-3" />,      ar: 'مقارنة بالقانون الفرنسي', className: 'border-border text-muted-foreground hover:bg-muted/30' },
-  { key: 'shamsi',      icon: <Brain className="w-3 h-3" />,      ar: 'تحليل بنظرية الشامسي',    className: 'border-border text-muted-foreground hover:bg-muted/30' },
-  { key: 'memorandum',  icon: <FileText className="w-3 h-3" />,   ar: 'توليد مذكرة قانونية',     className: 'border-border text-muted-foreground hover:bg-muted/30' },
-  { key: 'export_pdf',  icon: <FileOutput className="w-3 h-3" />, ar: 'تصدير PDF',               className: 'border-border text-muted-foreground hover:bg-muted/30' },
-  { key: 'export_word', icon: <BarChart2 className="w-3 h-3" />,  ar: 'تصدير Word',              className: 'border-border text-muted-foreground hover:bg-muted/30' },
+  /** colour class for the button chip */
+  color: string;
+}
+
+const QUICK_ACTIONS: QuickAction[] = [
+  { key: 'legislation',  emoji: '📚', ar: 'التشريعات',                  color: 'bg-blue-50 border-blue-200 text-blue-800 hover:bg-blue-100' },
+  { key: 'cases',        emoji: '⚖',  ar: 'السوابق القضائية',           color: 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100' },
+  { key: 'fiqh',         emoji: '📚', ar: 'الفقه',                      color: 'bg-emerald-50 border-emerald-200 text-emerald-800 hover:bg-emerald-100' },
+  { key: 'french',       emoji: '🇫🇷', ar: 'مقارنة بالقانون الفرنسي',   color: 'bg-indigo-50 border-indigo-200 text-indigo-800 hover:bg-indigo-100' },
+  { key: 'uae_compare',  emoji: '🇦🇪', ar: 'مقارنة بالقانون الإماراتي', color: 'bg-green-50 border-green-200 text-green-800 hover:bg-green-100' },
+  { key: 'ai_analysis',  emoji: '🧠', ar: 'تحليل الذكاء الاصطناعي',    color: 'bg-purple-50 border-purple-200 text-purple-800 hover:bg-purple-100' },
+  { key: 'shamsi',       emoji: '⚙',  ar: 'تطبيق نظرية الشامسي',       color: 'bg-amber-50 border-amber-200 text-amber-800 hover:bg-amber-100' },
+  { key: 'memorandum',   emoji: '📝', ar: 'مذكرة قانونية',              color: 'bg-rose-50 border-rose-200 text-rose-800 hover:bg-rose-100' },
+  { key: 'appeal',       emoji: '📝', ar: 'صياغة صحيفة طعن',           color: 'bg-orange-50 border-orange-200 text-orange-800 hover:bg-orange-100' },
+  { key: 'export_word',  emoji: '📄', ar: 'Word',                       color: 'bg-muted border-border text-muted-foreground hover:bg-muted/60' },
+  { key: 'export_pdf',   emoji: '📑', ar: 'PDF',                        color: 'bg-muted border-border text-muted-foreground hover:bg-muted/60' },
 ];
 
 function ActionButtons({
@@ -571,34 +665,46 @@ function ActionButtons({
   disabled: boolean;
 }) {
   return (
-    <div className="flex flex-wrap gap-1 mt-2.5 pt-2 border-t border-border/30" dir="rtl">
-      {ACTION_CONFIG.map(({ key, icon, ar, className, hideWhenExpanded, showWhenExpanded }) => {
-        if (hideWhenExpanded && isExpanded) return null;
-        if (showWhenExpanded && !isExpanded) return null;
-        // Hide expand button for professional mode (already full)
-        if (key === 'expand' && (mode === 'professional' || mode === 'expert')) return null;
+    <div className="mt-3 pt-2.5 border-t border-border/30 space-y-2" dir="rtl">
+      {/* Expand / collapse controls for quick & standard modes */}
+      {(mode === 'quick' || mode === 'standard') && !isExpanded && (
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={onExpand}
+          className="inline-flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-lg border border-primary/30 text-primary hover:bg-primary/5 transition-colors disabled:opacity-40"
+        >
+          <Maximize2 className="w-3 h-3" />
+          توسيع الإجابة
+        </button>
+      )}
+      {isExpanded && (
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={onCollapse}
+          className="inline-flex items-center gap-1 text-[10px] font-medium px-2.5 py-1 rounded-lg border border-border text-muted-foreground hover:bg-muted/30 transition-colors disabled:opacity-40"
+        >
+          <Minimize2 className="w-3 h-3" />
+          تصغير
+        </button>
+      )}
 
-        return (
+      {/* Visual quick-actions panel */}
+      <div className="flex flex-wrap gap-1.5">
+        {QUICK_ACTIONS.map(({ key, emoji, ar, color }) => (
           <button
             key={key}
             type="button"
             disabled={disabled}
-            onClick={() => {
-              if (key === 'expand') { onExpand(); return; }
-              if (key === 'collapse') { onCollapse(); return; }
-              if (key === 'export_pdf' || key === 'export_word') {
-                onAction(key, userQuery);
-                return;
-              }
-              onAction(key, userQuery);
-            }}
-            className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-lg border transition-colors disabled:opacity-40 ${className}`}
+            onClick={() => onAction(key, userQuery)}
+            className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-lg border transition-colors disabled:opacity-40 ${color}`}
           >
-            {icon}
+            <span aria-hidden>{emoji}</span>
             {ar}
           </button>
-        );
-      })}
+        ))}
+      </div>
     </div>
   );
 }
@@ -1151,11 +1257,16 @@ export default function AiAssistant() {
       return;
     }
 
-    const queryMap: Record<string, string> = {
+    type FollowUpKey = Exclude<ActionKey, 'expand' | 'collapse' | 'export_pdf' | 'export_word'>;
+    const queryMap: Record<FollowUpKey, string> = {
       legislation: `اعرض التشريعات والمواد القانونية ذات الصلة بهذا السؤال: ${userQuery}`,
       cases:       `اعرض أبرز أحكام المحاكم والسوابق القضائية المتعلقة بـ: ${userQuery}`,
+      fiqh:        `اعرض الآراء الفقهية والمذاهب الأكاديمية والتعليقات العلمية والاتجاهات الفقهية الحديثة ذات الصلة بالمسألة التالية: ${userQuery}`,
+      ai_analysis: `حلّل الإجابة السابقة المتعلقة بـ: "${userQuery}" وافحص ما يلي بدقة: أولاً: التحيز الخوارزمي وانعكاساته القانونية. ثانياً: مواطن الغموض أو عدم الدقة في الصياغة. ثالثاً: البيانات أو الأدلة المفقودة. رابعاً: تعارض الحجج أو تناقض الاستنتاجات. خامساً: مستوى الثقة في كل استنتاج قانوني مع تبرير ذلك.`,
+      appeal:      `بناءً على المسألة التالية: "${userQuery}"، صِغ صحيفة طعن إداري رسمية تتضمن: ديباجة الطعن ومعلومات الأطراف، الوقائع والأسس الموضوعية، أوجه الطعن القانونية، الطلبات والمطالب، والخاتمة والتوقيع. يجب أن تكون الصياغة وفق المعايير القانونية الإماراتية.`,
       french:      `قارن بين موقف القانون الإماراتي والقانون الفرنسي في المسألة التالية: ${userQuery}`,
-      shamsi:      `حلّل المسألة التالية وفق نظرية الشامسي للقانون الإداري الذكي: ${userQuery}`,
+      uae_compare: `قارن بين المعالجة القانونية الحالية للمسألة التالية وفق أحدث التعديلات التشريعية الإماراتية وأحكام المحاكم الاتحادية: ${userQuery}`,
+      shamsi:      `طبّق نظرية الشامسي للقانون الإداري الذكي على المسألة التالية وحللها وفق العناصر الأحد عشر الآتية:\n١. ركن الاختصاص: من المختص قانوناً باتخاذ القرار؟\n٢. ركن الشكل والإجراءات: هل استوفت القرارات الشكل والإجراءات المقررة؟\n٣. ركن السبب: ما الوقائع المادية والقانونية التي بُني عليها القرار؟\n٤. ركن المحل: ما الأثر القانوني المترتب على القرار؟\n٥. ركن الغاية: هل تحقق الصالح العام المنشود؟\n٦. الوزن القانوني الخوارزمي: ما ترتيب الأدلة وقوتها؟\n٧. التحيز الخوارزمي المشروع: هل ثمة تفضيل مشروع في التفسير؟\n٨. التفسير الخوارزمي: كيف يفسر الذكاء الاصطناعي النصوص المتعارضة؟\n٩. الامتثال المتدرج: ما مراحل الامتثال التدريجي للقرار؟\n١٠. الطعن الإداري المسبق: ما مسارات التظلم الإداري المتاحة قبل اللجوء للقضاء؟\n١١. الرقابة القضائية: ما حدود رقابة القاضي الإداري على هذا القرار؟\n\nالمسألة: ${userQuery}`,
       memorandum:  `أعد مذكرة قانونية احترافية ومنظمة بشأن: ${userQuery}`,
     };
 

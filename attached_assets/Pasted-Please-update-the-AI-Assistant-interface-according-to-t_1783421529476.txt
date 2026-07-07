@@ -1,0 +1,84 @@
+Please update the AI Assistant interface according to the following requirements:
+
+1. Rename the Expert mode label from:
+"رأي خبير"
+to:
+"التحليل القانوني المتخصص"
+
+Keep the amber color and star icon.
+
+2. Rename the action button:
+"تحليل بنظرية الشامسي"
+to:
+"تطبيق نظرية الشامسي"
+
+3. Rename:
+"عرض القضايا"
+to:
+"السوابق القضائية"
+
+4. Add a new action button after every assistant response:
+"📚 الفقه"
+This button should send a follow-up query asking for relevant legal doctrine, juristic opinions, academic commentary, and scholarly trends related to the same answer.
+
+5. Add a new action button:
+"🧠 تحليل الذكاء الاصطناعي"
+This button should analyze the response for:
+- algorithmic bias
+- ambiguity
+- missing data
+- conflict of reasoning
+- confidence level
+
+6. Add a new action button:
+"📝 صياغة صحيفة طعن"
+This button should generate a formal administrative appeal / challenge draft based on the answer.
+
+7. Add a new “Answer Strength Indicator” block at the end of Professional and Expert responses only.
+
+The block should display:
+
+مؤشر قوة الإجابة
+
+درجة الثقة: 🟢 96%
+
+التشريع: ★★★★★
+القضاء: ★★★★☆
+الفقه: ★★★★☆
+المقارنة: ★★★★☆
+احتمال الاختلاف الفقهي: منخفض
+
+Make the values dynamic when possible, but use sensible default values if no scoring backend exists yet.
+
+8. Add a visual quick-actions panel after each assistant response with the following buttons:
+
+📚 التشريعات
+⚖ السوابق القضائية
+📚 الفقه
+🇫🇷 مقارنة بالقانون الفرنسي
+🇦🇪 مقارنة بالقانون الإماراتي
+🧠 تحليل الذكاء الاصطناعي
+⚙ تطبيق نظرية الشامسي
+📝 مذكرة قانونية
+📝 صياغة صحيفة طعن
+📄 Word
+📑 PDF
+
+9. For “تطبيق نظرية الشامسي”, the follow-up prompt must analyze the matter using these elements:
+- ركن الاختصاص
+- ركن الشكل والإجراءات
+- ركن السبب
+- ركن المحل
+- ركن الغاية
+- الوزن القانوني الخوارزمي
+- التحيز الخوارزمي المشروع
+- التفسير الخوارزمي
+- الامتثال المتدرج
+- الطعن الإداري المسبق
+- الرقابة القضائية
+
+10. Keep all existing build behavior unchanged.
+Do not break authentication, routing, existing modes, HMR, or current session history behavior.
+
+11. Run typecheck, lint if available, and build.
+Confirm the build result and summarize changed files.
