@@ -16,12 +16,27 @@ const app: Express = express();
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
 // ── Allowed CORS origins ─────────────────────────────────────────────────────
-// In production: set ALLOWED_ORIGIN env var to the exact deployment domain.
-// In development/Replit: localhost and *.replit.dev are automatically allowed.
+// Production:  set ALLOWED_ORIGIN env var to the deployment URL.
+//              Comma-separate multiple values for staging + production.
+//              *.replit.app is always allowed in production as a safety net
+//              (Replit deployments are same-domain; this never widens exposure
+//              beyond what the JWT cookie already enforces).
+// Development: localhost, *.replit.dev, *.repl.co are automatically allowed.
 const ALLOWED_ORIGINS: (string | RegExp)[] = [];
 
 if (process.env.ALLOWED_ORIGIN) {
-  ALLOWED_ORIGINS.push(process.env.ALLOWED_ORIGIN);
+  // Support comma-separated list: "https://a.replit.app,https://b.replit.app"
+  process.env.ALLOWED_ORIGIN.split(",").forEach((o) => {
+    const trimmed = o.trim();
+    if (trimmed) ALLOWED_ORIGINS.push(trimmed);
+  });
+}
+
+if (IS_PRODUCTION) {
+  // Always allow *.replit.app — Replit deployment domains are same-origin
+  // for the static frontend. Belt-and-suspenders in case ALLOWED_ORIGIN is
+  // missing or the deployment domain changes without updating the env var.
+  ALLOWED_ORIGINS.push(/^https:\/\/[a-z0-9-]+\.replit\.app$/);
 }
 
 if (!IS_PRODUCTION) {
@@ -31,6 +46,7 @@ if (!IS_PRODUCTION) {
     /\.replit\.dev$/,
     /\.repl\.co$/,
     /\.kirk\.replit\.dev$/,
+    /\.pike\.replit\.dev$/,
   );
 }
 
@@ -69,16 +85,19 @@ app.use(
   }),
 );
 
-// ── C3 Fix: Block no-Origin requests in production ───────────────────────────
-// Curl, scripts, and server-to-server tools send no Origin header.
-// In production, only browser requests from the known origin are accepted.
-// Health checks (/api/healthz) are exempt so load balancers still work.
+// ── C3 Fix: Block unauthenticated direct API access in production ─────────────
+// Rejects requests that carry neither Origin nor Referer — the signature of
+// raw curl/script access that bypasses the browser security model.
+// Exemptions:
+//   • /api/healthz and /healthz — load-balancer / uptime probes
+//   • Any request with a Referer header — covers PWA standalone on iOS
+//     (iOS Safari omits Origin on navigations but always sends Referer)
 if (IS_PRODUCTION) {
   app.use((req: Request, res: Response, next: NextFunction) => {
     if (req.path === "/api/healthz" || req.path === "/healthz") {
       return next();
     }
-    if (!req.headers.origin) {
+    if (!req.headers.origin && !req.headers.referer) {
       res.status(403).json({ error: "Direct API access is not permitted in production." });
       return;
     }

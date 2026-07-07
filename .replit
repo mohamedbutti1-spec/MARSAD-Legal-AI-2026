@@ -30,3 +30,8 @@ externalPort = 80
 [[ports]]
 localPort = 23979
 externalPort = 3001
+
+[userenv]
+
+[userenv.production]
+ALLOWED_ORIGIN = "https://legal-ai-assistant-mohamedbutti1.replit.app"
