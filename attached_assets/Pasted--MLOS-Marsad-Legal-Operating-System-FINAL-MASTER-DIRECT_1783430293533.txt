@@ -1,0 +1,321 @@
+# MLOS — Marsad Legal Operating System
+# FINAL MASTER DIRECTIVE
+# DO NOT REDESIGN. DO NOT REMOVE ANY EXISTING FEATURE.
+# ONLY ENHANCE THE SYSTEM.
+
+=========================================================
+OFFICIAL IDENTITY
+=========================================================
+
+Brand Name:
+مرصد
+
+Engineering Name:
+MLOS
+
+Full Name:
+Marsad Legal Operating System
+
+Arabic Tagline:
+"نرصد · نحلل · نحكم"
+
+English Tagline:
+"Observe. Analyse. Decide."
+
+Mission:
+Transform Marsad from a legal platform into a complete Explainable Legal Operating System.
+
+=========================================================
+CORE RULES
+=========================================================
+
+1. Preserve every existing feature.
+
+2. Never remove existing functionality.
+
+3. Never replace traditional legal analysis.
+
+4. Every enhancement must be modular.
+
+5. All new features must integrate naturally into the existing interface.
+
+=========================================================
+PRE-ANALYSIS PANEL
+=========================================================
+
+Before every new legal question display:
+
+• User Type
+(Judge / Prosecutor / Lawyer / Researcher / Professor / Government / Citizen / Company)
+
+• Response Style
+(Quick / Standard / Academic / Research / Memorandum / Appeal / Report)
+
+• Jurisdiction
+(UAE / France / Saudi / Egypt / EU / Comparative)
+
+• Sources
+
+• Citation Style
+
+• Research Depth
+
+=========================================================
+NEW RESPONSE MODE
+=========================================================
+
+Allow the user to choose before asking:
+
+⚡ إجابة سريعة
+
+📘 إجابة معيارية
+
+🎓 إجابة أكاديمية
+
+📚 بحث علمي
+
+⚖ مذكرة قانونية
+
+📝 صحيفة دعوى أو طعن
+
+📊 تقرير حكومي
+
+The selected mode must affect the entire response.
+
+=========================================================
+ADVANCED STANDARD
+=========================================================
+
+Create a PREMIUM module named:
+
+🧠 المعيار المتقدم
+(نظرية الشامسي)
+
+DO NOT call it "Theory Card".
+
+It is an independent legal analysis framework.
+
+It appears ONLY IF:
+
+• the user activates it manually
+
+OR
+
+• the question concerns:
+
+Artificial Intelligence
+
+Algorithms
+
+Digital Government
+
+Administrative AI
+
+Automated Decisions
+
+Algorithmic Governance
+
+Machine Learning
+
+Big Data
+
+Digital Administrative Decisions
+
+=========================================================
+ADVANCED STANDARD SETTINGS
+=========================================================
+
+Inside the configuration panel add:
+
+□ تطبيق المعيار المتقدم
+(نظرية الشامسي)
+
+Description:
+
+تحليل إضافي للمسائل المرتبطة
+بالذكاء الاصطناعي
+والقرارات الإدارية الذكية
+والخوارزميات.
+
+=========================================================
+ADVANCED STANDARD OUTPUT
+=========================================================
+
+Display as a premium blue card.
+
+Title:
+
+🧠 المعيار المتقدم
+
+Subtitle:
+
+يعتمد على نظرية الشامسي
+
+Inside display:
+
+Status
+
+Compliance Score
+
+Digital Administrative Will
+
+Algorithmic Legal Weight
+
+Legitimate Algorithmic Bias
+
+Explainability
+
+Transparency
+
+Human Oversight
+
+Graduated Compliance
+
+Prior Administrative Challenge
+
+Judicial Review
+
+Administrative Liability
+
+Digital Governance
+
+Final Compliance Index
+
+Then provide:
+
+📘 عرض التقرير الكامل
+
+=========================================================
+ORDER OF ANALYSIS
+=========================================================
+
+Responses shall always follow:
+
+1 Legal Analysis
+
+↓
+
+2 Judicial Analysis
+
+↓
+
+3 Doctrine
+
+↓
+
+4 Comparative Law
+
+↓
+
+5 Advanced Standard
+(Al-Shamsi Theory)
+
+↓
+
+6 Recommended Legal Actions
+
+↓
+
+7 Reliability Report
+
+=========================================================
+VIRTUAL LEGAL COUNCIL
+=========================================================
+
+Maintain the Legal Council.
+
+Members:
+
+Judge
+
+Prosecutor
+
+Lawyer
+
+Scholar
+
+Legislator
+
+Each produces an independent legal opinion.
+
+Then generate:
+
+Consensus
+
+Disagreement
+
+Majority
+
+Minority
+
+Final Resolution
+
+=========================================================
+LEGAL RELIABILITY
+=========================================================
+
+Always show:
+
+Degree of Legal Certainty
+
+Authority Level
+
+Number of Sources
+
+Latest Legislation
+
+Latest Judgment
+
+Conflict Detection
+
+Citation Integrity
+
+=========================================================
+DOCUMENT EXPORT
+=========================================================
+
+Allow export as:
+
+Word
+
+PDF
+
+Legal Memorandum
+
+Appeal
+
+Court Submission
+
+Academic Chapter
+
+Research Paper
+
+Government Report
+
+=========================================================
+DESIGN
+=========================================================
+
+Government grade.
+
+Professional.
+
+Minimal.
+
+Elegant.
+
+Responsive.
+
+Fast.
+
+Explainable.
+
+=========================================================
+FINAL PRODUCT VISION
+=========================================================
+
+MLOS is NOT a chatbot.
+
+MLOS is NOT merely a legal platform.
+
+MLOS is an Explainable Legal Operating System integrating legal reasoning, judicial analysis, legal research, comparative law, academic writing, legal drafting, AI governance, and the Advanced Standard (Al-Shamsi Theory) into one unified professional environment.

@@ -51,7 +51,7 @@ type CitFmt = 'harvard' | 'apa' | 'uaeGov';
 
 // ─── Pre-analysis config types ────────────────────────────────────────────────
 
-type UserType        = 'judge' | 'prosecutor' | 'lawyer' | 'researcher' | 'government' | 'citizen' | 'institution';
+type UserType        = 'judge' | 'prosecutor' | 'lawyer' | 'researcher' | 'professor' | 'government' | 'citizen' | 'institution';
 type ConfigAnswerMode = 'quick' | 'standard' | 'academic' | 'research' | 'memorandum' | 'lawsuit' | 'report';
 type Jurisdiction    = 'uae' | 'france' | 'saudi' | 'egypt' | 'eu' | 'comparative';
 type SourceType      = 'all' | 'legislation' | 'judicial' | 'doctrine' | 'regulations' | 'circulars' | 'international';
@@ -65,6 +65,8 @@ interface SessionConfig {
   sources: SourceType[];
   citStyle: CitStyle;
   depth: ResearchDepth;
+  /** Whether the المعيار المتقدم (Al-Shamsi Theory) is activated for this session */
+  applyAdvancedStandard: boolean;
 }
 
 interface ExpertOptions {
@@ -83,6 +85,7 @@ interface ExpertOptions {
 const DEFAULT_SESSION_CONFIG: SessionConfig = {
   userType: 'lawyer', answerMode: 'standard', jurisdiction: 'uae',
   sources: ['all'], citStyle: 'uae', depth: 'detailed',
+  applyAdvancedStandard: false,
 };
 
 const DEFAULT_EXPERT_OPTIONS: ExpertOptions = {
@@ -95,6 +98,7 @@ const USER_TYPE_CONFIG: Record<UserType, { ar: string; emoji: string }> = {
   prosecutor:  { ar: 'مدعٍ عام',                    emoji: '⚖' },
   lawyer:      { ar: 'محامٍ',                       emoji: '🧑‍⚖️' },
   researcher:  { ar: 'باحث قانوني / طالب دكتوراه', emoji: '🎓' },
+  professor:   { ar: 'أستاذ / أكاديمي',             emoji: '🏫' },
   government:  { ar: 'موظف حكومي',                  emoji: '🏛' },
   citizen:     { ar: 'مواطن',                       emoji: '👤' },
   institution: { ar: 'شركة / مؤسسة',               emoji: '🏢' },
@@ -152,9 +156,13 @@ function buildConfigPrefix(config: SessionConfig, expertMode: boolean, opts: Exp
     if (opts.actionPlan)         extras.push('خطة الإجراء القانوني الموصى بها');
   }
   const sources = config.sources.includes('all') ? SOURCE_CFG['all'] : config.sources.map((s) => SOURCE_CFG[s]).join('، ');
-  let p = `[تكوين الجلسة المتقدم]\n`;
+  let p = `[تكوين جلسة MLOS — Marsad Legal Operating System]\n`;
   p += `المستخدم: ${USER_TYPE_CONFIG[config.userType].ar} | الأسلوب: ${CONFIG_ANSWER_MODE_CFG[config.answerMode].ar} | الاختصاص: ${JURISDICTION_CFG[config.jurisdiction].ar}\n`;
   p += `العمق: ${DEPTH_CFG[config.depth]} | الاستشهاد: ${CIT_STYLE_CFG[config.citStyle]} | المصادر: ${sources}\n`;
+  p += `ترتيب الاستجابة المطلوب: ١. التحليل القانوني → ٢. التحليل القضائي → ٣. الفقه القانوني → ٤. القانون المقارن\n`;
+  if (config.applyAdvancedStandard) {
+    p += `المعيار المتقدم: تطبيق نظرية الشامسي — تحليل الإرادة الإدارية الرقمية والوزن القانوني الخوارزمي والامتثال المتدرج\n`;
+  }
   if (extras.length > 0) p += `الخيارات الخبيرة: يرجى تضمين: ${extras.join('، ')}\n`;
   return p + '\n';
 }
@@ -857,10 +865,30 @@ function PreAnalysisPanel({
             </CfgSection>
           </div>
 
+          {/* Advanced Standard (Al-Shamsi Theory) checkbox */}
+          <label htmlFor="applyAdvancedStandard" className="flex items-start gap-3 rounded-xl px-3 py-2.5 cursor-pointer"
+            style={{ background: '#EAF2FF', border: '1px solid #a8c4f0' }}
+          >
+            <input
+              type="checkbox"
+              id="applyAdvancedStandard"
+              checked={config.applyAdvancedStandard}
+              onChange={() => onChange({ ...config, applyAdvancedStandard: !config.applyAdvancedStandard })}
+              className="w-4 h-4 mt-0.5 shrink-0 accent-[#2B5F9E]"
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-bold leading-tight" style={{ color: '#1a3a6e' }}>🧠 تطبيق المعيار المتقدم</p>
+              <p className="text-[10px] font-medium" style={{ color: '#2B5F9E' }}>(نظرية الشامسي)</p>
+              <p className="text-[9px] leading-relaxed mt-1" style={{ color: '#3a6fa8' }}>
+                تحليل إضافي للمسائل المرتبطة بالذكاء الاصطناعي والقرارات الإدارية الذكية والخوارزميات.
+              </p>
+            </div>
+          </label>
+
           <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
             <div>
               <p className="text-xs font-bold text-amber-800">وضع الخبير</p>
-              <p className="text-[10px] text-amber-700">خيارات التحليل المتقدمة وتفعيل المعيار المتقدم (نظرية الشامسي)</p>
+              <p className="text-[10px] text-amber-700">خيارات التحليل المتقدمة للتحليل الاحترافي العميق</p>
             </div>
             <button type="button" onClick={onToggleExpert}
               className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors shrink-0 ${expertMode ? 'bg-amber-500' : 'bg-muted border border-border'}`}
@@ -903,6 +931,13 @@ function SessionConfigBar({ config, expertMode, onEdit }: {
       <span className="text-[10px] bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-medium">
         🔍 {DEPTH_CFG[config.depth]}
       </span>
+      {config.applyAdvancedStandard && (
+        <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
+          style={{ background: '#EAF2FF', color: '#1a3a6e', border: '1px solid #a8c4f0' }}
+        >
+          🧠 المعيار المتقدم
+        </span>
+      )}
       {expertMode && (
         <span className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-bold">
           ⭐ وضع الخبير
@@ -948,44 +983,80 @@ function ExpertOptionsPanel({ options, onChange }: {
   );
 }
 
-// ─── Al-Shamsi Theory card ────────────────────────────────────────────────────
+// ─── المعيار المتقدم (Al-Shamsi Theory) ──────────────────────────────────────
 
-const SHAMSI_ELEMENTS = [
-  'مشروعية القرار الذكي', 'الإرادة الإدارية الرقمية', 'الوزن القانوني الخوارزمي',
-  'التحيز الخوارزمي المشروع', 'قابلية التفسير الخوارزمي', 'الشفافية',
-  'الرقابة البشرية', 'الامتثال المتدرج', 'الطعن الإداري المسبق',
-  'الرقابة القضائية', 'المسؤولية الإدارية',
+const SHAMSI_DIMENSIONS: { ar: string; en: string }[] = [
+  { ar: 'الإرادة الإدارية الرقمية',    en: 'Digital Administrative Will' },
+  { ar: 'الوزن القانوني الخوارزمي',    en: 'Algorithmic Legal Weight' },
+  { ar: 'التحيز الخوارزمي المشروع',   en: 'Legitimate Algorithmic Bias' },
+  { ar: 'قابلية التفسير',              en: 'Explainability' },
+  { ar: 'الشفافية',                    en: 'Transparency' },
+  { ar: 'الرقابة البشرية',             en: 'Human Oversight' },
+  { ar: 'الامتثال المتدرج',            en: 'Graduated Compliance' },
+  { ar: 'الطعن الإداري المسبق',        en: 'Prior Administrative Challenge' },
+  { ar: 'الرقابة القضائية',            en: 'Judicial Review' },
+  { ar: 'المسؤولية الإدارية',          en: 'Administrative Liability' },
+  { ar: 'الحوكمة الرقمية',             en: 'Digital Governance' },
 ];
 
 function ShamsiTheoryCard({ onActivate, disabled }: { onActivate: () => void; disabled: boolean }) {
   return (
-    <div className="mt-3 rounded-xl border-2 p-3.5"
+    <div className="mt-3 rounded-xl border-2 overflow-hidden"
       style={{ background: '#EAF2FF', borderColor: '#2B5F9E' }}
       dir="rtl"
     >
-      <div className="flex items-start gap-2.5">
-        <span className="text-xl shrink-0 mt-0.5">🧠</span>
+      {/* Header */}
+      <div className="flex items-center gap-2.5 px-3.5 pt-3 pb-2 border-b" style={{ borderColor: '#c8dcf8' }}>
+        <span className="text-lg shrink-0">🧠</span>
         <div className="flex-1 min-w-0">
-          <p className="text-[12px] font-extrabold mb-0.5 leading-snug" style={{ color: '#1a3a6e' }}>
-            Advanced Standard (Al-Shamsi Theory)
+          <p className="text-[13px] font-extrabold leading-none" style={{ color: '#1a3a6e' }}>
+            المعيار المتقدم
           </p>
-          <p className="text-[10px] leading-relaxed mb-2.5" style={{ color: '#2B5F9E' }}>
-            إطار قانوني متقدم لتحليل القرارات الإدارية الذكية ومنظومة صنع القرار الخوارزمي والحكومة الرقمية وأنظمة الذكاء الاصطناعي وفق نظرية الشامسي لتشكيل الإرادة الإدارية الرقمية.
+          <p className="text-[10px] mt-0.5 font-medium" style={{ color: '#2B5F9E' }}>
+            يعتمد على نظرية الشامسي
           </p>
-          <div className="flex flex-wrap gap-1 mb-3">
-            {SHAMSI_ELEMENTS.map((item) => (
-              <span key={item} className="text-[9px] px-1.5 py-0.5 rounded-full font-medium"
-                style={{ background: '#c8dcf8', color: '#1a3a6e', border: '1px solid #a8c4f0' }}
-              >✓ {item}</span>
-            ))}
-          </div>
-          <button type="button" disabled={disabled} onClick={onActivate}
-            className="text-[11px] font-bold px-4 py-1.5 rounded-lg text-white transition-opacity disabled:opacity-50"
-            style={{ background: '#2B5F9E' }}
-          >
-            تطبيق المعيار المتقدم
-          </button>
         </div>
+        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full shrink-0"
+          style={{ background: '#d4e5fc', color: '#1a3a6e', border: '1px solid #a8c4f0' }}
+        >
+          قيد التقييم
+        </span>
+      </div>
+
+      {/* Compliance score bar */}
+      <div className="mx-3.5 mt-2.5 mb-2 rounded-lg px-2.5 py-2"
+        style={{ background: '#d4e5fc', border: '1px solid #a8c4f0' }}
+      >
+        <div className="flex justify-between items-center mb-1">
+          <span className="text-[10px] font-bold" style={{ color: '#1a3a6e' }}>مؤشر الامتثال النهائي</span>
+          <span className="text-[10px] font-bold" style={{ color: '#2B5F9E' }}>— / 100</span>
+        </div>
+        <div className="h-1.5 rounded-full" style={{ background: '#a8c4f0' }}>
+          <div className="h-full rounded-full" style={{ width: '0%', background: '#2B5F9E' }} />
+        </div>
+        <p className="text-[9px] mt-1" style={{ color: '#3a6fa8' }}>
+          اضغط «عرض التقرير الكامل» لتشغيل التحليل الكامل وفق المعيار المتقدم
+        </p>
+      </div>
+
+      {/* Dimensions grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1.5 px-3.5 pb-3">
+        {SHAMSI_DIMENSIONS.map(({ ar }) => (
+          <div key={ar} className="flex items-center gap-1" style={{ color: '#2B5F9E' }}>
+            <span className="w-1 h-1 rounded-full shrink-0" style={{ background: '#5b8fce' }} />
+            <span className="text-[9px] font-medium leading-tight">{ar}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* CTA button */}
+      <div className="px-3.5 pb-3.5">
+        <button type="button" disabled={disabled} onClick={onActivate}
+          className="w-full text-[11px] font-bold py-2 rounded-lg text-white transition-opacity disabled:opacity-50 flex items-center justify-center gap-1.5"
+          style={{ background: '#2B5F9E' }}
+        >
+          📘 عرض التقرير الكامل
+        </button>
       </div>
     </div>
   );
@@ -1033,19 +1104,36 @@ function ReliabilityBlock({ citations, text }: { citations: Citation[]; text: st
   const srcCount = citations.filter((c) => c.type === 'legal_source').length + (text.match(/\[SRC:\d+\]/g) ?? []).length;
   const docCount = citations.filter((c) => c.type === 'document').length   + (text.match(/\[DOC:\d+\]/g) ?? []).length;
   const total    = srcCount + docCount;
-  const authority   = srcCount >= 3 ? 'تشريعية عليا' : srcCount >= 1 ? 'قانونية مقبولة' : 'توجيهية';
-  const consistency = total  >= 3 ? 'متسق' : total >= 1 ? 'جزئي' : 'لم يُتحقق';
+
+  // Degree of legal certainty — based on source count + conflict absence
   const conflictKw  = /تعارض|تناقض|في المقابل|بينما قرر|بينما أشار/.test(text);
+  const certainty   = total >= 4 && !conflictKw ? 'عالية' : total >= 2 ? 'متوسطة' : 'منخفضة';
+  const certaintyWarn = certainty === 'منخفضة';
+
+  // Authority level
+  const authority   = srcCount >= 3 ? 'تشريعية عليا' : srcCount >= 1 ? 'قانونية مقبولة' : 'توجيهية';
+
+  // Citation integrity — flag if citations exist in text but not in resolved list
+  const tokensInText = (text.match(/\[(DOC|SRC):\d+\]/g) ?? []).length;
+  const resolved     = citations.length;
+  const integrityOk  = resolved >= tokensInText;
+
+  // Latest judgment heuristic — check for year mentions in text
+  const yearMatch = text.match(/20(?:2[0-9]|1[5-9])/g);
+  const latestYear = yearMatch ? Math.max(...yearMatch.map(Number)) : null;
+
   return (
-    <div className="mt-2 rounded-xl border border-border/40 bg-muted/15 px-3 py-2.5 text-[11px] space-y-1" dir="rtl">
-      <p className="font-bold text-foreground text-[11px] mb-1.5">لماذا هذه الإجابة موثوقة؟</p>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-        <ReliabilityRow label="عدد المصادر"   value={`${total} مصدر`} />
-        <ReliabilityRow label="مستوى السلطة"  value={authority} />
-        <ReliabilityRow label="اتساق المصادر" value={consistency} />
-        <ReliabilityRow label="أحدث تشريع"   value={`${new Date().getFullYear()}`} />
+    <div className="mt-2 rounded-xl border border-border/40 bg-muted/15 px-3 py-2.5 text-[11px] space-y-1.5" dir="rtl">
+      <p className="font-bold text-foreground text-[11px] mb-1">تقرير الموثوقية القانونية</p>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+        <ReliabilityRow label="درجة اليقين القانوني" value={certainty} warn={certaintyWarn} />
+        <ReliabilityRow label="مستوى السلطة"          value={authority} />
+        <ReliabilityRow label="عدد المصادر"            value={`${total} مصدر`} />
+        <ReliabilityRow label="أحدث تشريع"            value={`${new Date().getFullYear()}`} />
+        <ReliabilityRow label="أحدث حكم مرصود"        value={latestYear ? `${latestYear}` : '—'} />
+        <ReliabilityRow label="سلامة الاستشهاد"        value={integrityOk ? 'سليمة' : 'تحقق جزئي'} warn={!integrityOk && tokensInText > 0} />
       </div>
-      <div className="pt-1 border-t border-border/30">
+      <div className="pt-1.5 border-t border-border/30">
         <ReliabilityRow label="التعارضات المرصودة"
           value={conflictKw ? 'تم رصد تعارض محتمل' : 'لا تعارض مرصود'} warn={conflictKw} />
       </div>
@@ -1197,13 +1285,14 @@ function ResponseModeSelector({
 // ─── Message bubble ───────────────────────────────────────────────────────────
 
 function MessageBubble({
-  msg, displayMeta, onAction, actionDisabled, expertMode, onDirectSend,
+  msg, displayMeta, onAction, actionDisabled, expertMode, applyAdvancedStandard, onDirectSend,
 }: {
   msg: Message;
   displayMeta?: MsgDisplayMeta;
   onAction: (id: number, key: ActionKey, userQuery: string) => void;
   actionDisabled: boolean;
   expertMode: boolean;
+  applyAdvancedStandard: boolean;
   onDirectSend: (text: string) => void;
 }) {
   const isUser = msg.role === 'user';
@@ -1213,7 +1302,7 @@ function MessageBubble({
 
   const mode = displayMeta?.mode ?? 'professional';
   const userQuery = displayMeta?.userQuery ?? msg.content;
-  const showShamsi = !isUser && !!displayMeta && (expertMode || detectShamsiKeywords(userQuery));
+  const showShamsi = !isUser && !!displayMeta && (expertMode || applyAdvancedStandard || detectShamsiKeywords(userQuery));
 
   function handleExpand() { setIsExpanded(true); }
   function handleCollapse() { setIsExpanded(false); }
@@ -1990,6 +2079,7 @@ export default function AiAssistant() {
                     onAction={handleAction}
                     actionDisabled={sending}
                     expertMode={expertMode}
+                    applyAdvancedStandard={sessionConfig.applyAdvancedStandard}
                     onDirectSend={(text) => sendMessage(text, 'professional')}
                   />
                 ))}
