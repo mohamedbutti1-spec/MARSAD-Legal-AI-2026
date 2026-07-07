@@ -1,11 +1,12 @@
 import React from 'react';
-import { Route, Switch, Router as WouterRouter } from 'wouter';
+import { Route, Switch, Router as WouterRouter, Redirect } from 'wouter';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { UserProvider, useUserContext } from '@/lib/user-context';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { RouteGuard } from '@/components/ui/route-guard';
+import Login from '@/pages/login';
 
 // ─── Pages ────────────────────────────────────────────────────────────────────
 import NotFound           from '@/pages/not-found';
@@ -346,15 +347,39 @@ function Router() {
   );
 }
 
+// ─── AuthGate ─────────────────────────────────────────────────────────────────
+// Blocks the entire app until a valid JWT session is confirmed.
+// Unauthenticated users see the login page; authenticated users see the app.
+function AuthGate({ children }: { children: React.ReactNode }) {
+  const { isLoaded, isAuthenticated } = useUserContext();
+
+  // Still verifying the session cookie — show nothing to avoid flash
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="w-8 h-8 border-2 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Login />;
+  }
+
+  return <>{children}</>;
+}
+
 // ─── App ──────────────────────────────────────────────────────────────────────
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <UserProvider>
         <TooltipProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-            <Router />
-          </WouterRouter>
+          <AuthGate>
+            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+              <Router />
+            </WouterRouter>
+          </AuthGate>
           <Toaster />
         </TooltipProvider>
       </UserProvider>

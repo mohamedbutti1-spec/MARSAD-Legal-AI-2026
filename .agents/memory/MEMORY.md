@@ -40,3 +40,4 @@
 - [V1.0 Validation Findings](v1-validation-findings.md) — auth missing on workspace/adkg/kb (fixed); naip-kpi null crash pattern; NAIP exec dashboard role-map mismatch; legal-os buildContext unguarded
 - [V1.0 Production Hardening](v1-hardening.md) — rate limit pattern (auth-first order); ALTER TABLE IF NOT EXISTS before GIN index; DO $ not DO $; isNaN guard pattern; API response array null safety
 - [UAT Permission Architecture](uat-permission-architecture.md) — requireAnyRole=13 non-citizen roles; requireSupervisorOrOwner=decision mutations; canUseAi vs canCreateDecision frontend split; bare Route = citizen leak
+- [JWT Auth Architecture](jwt-auth-architecture.md) — cookie session, strip-then-backfill pattern for legacy headers, demo account seeding, frontend AuthGate design

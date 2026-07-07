@@ -1,4 +1,13 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+/**
+ * User context — backed by the verified JWT session (GET /api/auth/me).
+ *
+ * The role, userId, and org are sourced exclusively from the server-verified
+ * JWT payload. There is no localStorage role selection in production.
+ *
+ * The context also exposes permission flags derived from the role so that
+ * UI components can gate features without re-querying the server.
+ */
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import {
   type UserRole,
   type RolePermissions,
@@ -9,27 +18,32 @@ import {
   getPermissions,
 } from '@/lib/permissions';
 
-// Demo organisation for org-scoped roles (director_general / department_director).
-// In production this would come from a trusted identity claim.
-const DEMO_ORG = 'وزارة الصحة ووقاية المجتمع — الإدارة العامة للرقابة والتفتيش الصحي — إمارة أبوظبي';
-
-function orgForRole(role: UserRole): string {
-  return getPermissions(role).seeOwnOrgOnly ? DEMO_ORG : '';
-}
-
 export type { UserRole, GovernanceRole };
 export type AppLanguage = 'ar' | 'en';
 
-interface UserContextType {
+interface SessionPayload {
+  userId: number;
+  role: string;
+  org: string;
+}
+
+export interface UserContextType {
+  /** True once the session check has resolved (success or failure) */
+  isLoaded: boolean;
+  /** True when a valid JWT session exists */
+  isAuthenticated: boolean;
   role: UserRole;
   userId: number;
-  userOrg: string; // '' for non-org-scoped roles; DEMO_ORG for seeOwnOrgOnly roles
+  /** Organisation string for org-scoped roles; '' for others */
+  userOrg: string;
   lang: AppLanguage;
   dir: 'rtl' | 'ltr';
-  setRole: (role: UserRole) => void;
+  /** setLang persists the preference to localStorage */
   setLang: (lang: AppLanguage) => void;
+  /** Trigger a re-fetch of the session (call after login/logout) */
+  refreshSession: () => Promise<void>;
   permissions: RolePermissions;
-  // Legacy permission booleans (kept for backward compatibility)
+  // ── Legacy permission booleans (backward compat) ──────────────────────────
   canUpload: boolean;
   canCreateDecision: boolean;
   canUseAi: boolean;
@@ -45,109 +59,130 @@ interface UserContextType {
   canWriteRiskTreatment: boolean;
   canRecalculateRisk: boolean;
   canViewRiskDashboard: boolean;
-  // CIL — Constitutional Intelligence Layer (Phase 42)
+  // CIL
   canReadConstitutionalAssessment: boolean;
   canRunCilAssessment: boolean;
   canAcknowledgeCilWarnings: boolean;
   canViewCilDashboard: boolean;
-  // NAIP — National Administrative Intelligence Platform (Phase 43)
+  // NAIP
   canViewNaipDashboard: boolean;
   canViewNaipSearch: boolean;
-  // JDT — Judicial Digital Twin (Phase 44)
+  // JDT
   canViewJdtSimulation: boolean;
   canRunJdtSimulation: boolean;
 }
 
-const UserContext = createContext<UserContextType | undefined>(undefined);
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
 
-export function UserProvider({ children }: { children: React.ReactNode }) {
-  const [role, setRoleState] = useState<UserRole>('owner');
-  const [userId] = useState<number>(1);
-  const [lang, setLangState] = useState<AppLanguage>('ar');
+async function fetchSession(): Promise<SessionPayload | null> {
+  try {
+    const res = await fetch(`${BASE}/api/auth/me`, {
+      credentials: 'include',
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as SessionPayload;
+  } catch {
+    return null;
+  }
+}
 
-  useEffect(() => {
-    const savedRole = localStorage.getItem('userRole') as UserRole;
-    if (savedRole && ALL_ROLES.includes(savedRole)) {
-      setRoleState(savedRole);
-      localStorage.setItem('userOrg', orgForRole(savedRole));
-    } else {
-      localStorage.setItem('userRole', 'owner');
-      localStorage.setItem('userOrg', '');
-    }
+function buildContext(session: SessionPayload | null, lang: AppLanguage): UserContextType {
+  const role = (
+    session && ALL_ROLES.includes(session.role as UserRole) ? session.role : 'citizen'
+  ) as UserRole;
 
-    const savedLang = localStorage.getItem('appLang') as AppLanguage;
-    if (savedLang && ['ar', 'en'].includes(savedLang)) {
-      setLangState(savedLang);
-    }
-
-    localStorage.setItem('userId', String(userId));
-  }, [userId]);
-
-  useEffect(() => {
-    const dir = lang === 'ar' ? 'rtl' : 'ltr';
-    document.documentElement.setAttribute('dir', dir);
-    document.documentElement.setAttribute('lang', lang);
-  }, [lang]);
-
-  const handleSetRole = (newRole: UserRole) => {
-    setRoleState(newRole);
-    localStorage.setItem('userRole', newRole);
-    localStorage.setItem('userOrg', orgForRole(newRole));
-  };
-
-  const handleSetLang = (newLang: AppLanguage) => {
-    setLangState(newLang);
-    localStorage.setItem('appLang', newLang);
-  };
-
+  const userId  = session?.userId ?? -1;
+  const userOrg = session?.org ?? '';
   const permissions = getPermissions(role);
   const isGovernanceRole = GOVERNANCE_ROLES.includes(role as GovernanceRole);
-  const userOrg = orgForRole(role);
 
-  const value: UserContextType = {
+  return {
+    isLoaded: true,
+    isAuthenticated: session !== null,
     role,
     userId,
     userOrg,
     lang,
     dir: lang === 'ar' ? 'rtl' : 'ltr',
-    setRole: handleSetRole,
-    setLang: handleSetLang,
+    setLang: () => { /* handled by provider */ },
+    refreshSession: async () => { /* handled by provider */ },
     permissions,
     canUpload: role === 'owner' || role === 'supervisor',
-    // Only owner/supervisor can create or edit administrative decisions.
     canCreateDecision: role === 'owner' || role === 'supervisor',
-    // All roles except citizen can use AI features (SPG/PGF/JRE/JDC/KB/workspace/ADKG).
-    // Citizen users access legal-os citizen portal instead.
     canUseAi: role !== 'citizen',
     canManageUsers: role === 'owner',
     canManageSettings: role === 'owner',
     canComment: role === 'owner' || role === 'supervisor',
     canViewAudit: permissions.canReadAuditLog,
     isGovernanceRole,
-    canViewGovernanceDashboard: permissions.canViewGovernanceDashboard,
-    canReadRiskAssessment: permissions.canReadRiskAssessment ?? false,
-    canWriteRiskTreatment: permissions.canWriteRiskTreatment ?? false,
-    canRecalculateRisk:    permissions.canRecalculateRisk    ?? false,
-    canViewRiskDashboard:  permissions.canViewRiskDashboard  ?? false,
+    canViewGovernanceDashboard:      permissions.canViewGovernanceDashboard,
+    canReadRiskAssessment:           permissions.canReadRiskAssessment           ?? false,
+    canWriteRiskTreatment:           permissions.canWriteRiskTreatment           ?? false,
+    canRecalculateRisk:              permissions.canRecalculateRisk              ?? false,
+    canViewRiskDashboard:            permissions.canViewRiskDashboard            ?? false,
     canReadConstitutionalAssessment: permissions.canReadConstitutionalAssessment ?? false,
     canRunCilAssessment:             permissions.canRunCilAssessment             ?? false,
     canAcknowledgeCilWarnings:       permissions.canAcknowledgeCilWarnings       ?? false,
     canViewCilDashboard:             permissions.canViewCilDashboard             ?? false,
-    canViewNaipDashboard:   permissions.canViewNaipDashboard   ?? false,
-    canViewNaipSearch:      permissions.canViewNaipSearch      ?? false,
-    canViewJdtSimulation:   permissions.canViewJdtSimulation   ?? false,
-    canRunJdtSimulation:    permissions.canRunJdtSimulation    ?? false,
+    canViewNaipDashboard:            permissions.canViewNaipDashboard            ?? false,
+    canViewNaipSearch:               permissions.canViewNaipSearch               ?? false,
+    canViewJdtSimulation:            permissions.canViewJdtSimulation            ?? false,
+    canRunJdtSimulation:             permissions.canRunJdtSimulation             ?? false,
+  };
+}
+
+const DEFAULT_LANG: AppLanguage = 'ar';
+
+const UserContext = createContext<UserContextType>({
+  ...buildContext(null, DEFAULT_LANG),
+  isLoaded: false,
+});
+
+export function UserProvider({ children }: { children: React.ReactNode }) {
+  const [session, setSession]     = useState<SessionPayload | null>(null);
+  const [isLoaded, setIsLoaded]   = useState(false);
+  const [lang, setLangState]      = useState<AppLanguage>(() => {
+    const saved = localStorage.getItem('appLang') as AppLanguage | null;
+    return saved === 'ar' || saved === 'en' ? saved : DEFAULT_LANG;
+  });
+
+  const loadSession = useCallback(async () => {
+    const payload = await fetchSession();
+    setSession(payload);
+    setIsLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    void loadSession();
+  }, [loadSession]);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+    document.documentElement.setAttribute('lang', lang);
+  }, [lang]);
+
+  const setLang = useCallback((newLang: AppLanguage) => {
+    setLangState(newLang);
+    localStorage.setItem('appLang', newLang);
+  }, []);
+
+  const refreshSession = useCallback(async () => {
+    const payload = await fetchSession();
+    setSession(payload);
+  }, []);
+
+  const value: UserContextType = {
+    ...buildContext(session, lang),
+    isLoaded,
+    setLang,
+    refreshSession,
   };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 }
 
 export function useUserContext() {
-  const context = useContext(UserContext);
-  if (context === undefined) {
-    throw new Error('useUserContext must be used within a UserProvider');
-  }
-  return context;
+  return useContext(UserContext);
 }
 
 export function useT() {

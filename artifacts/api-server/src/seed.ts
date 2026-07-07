@@ -1,11 +1,13 @@
 import {
   db,
+  pool,
   usersTable,
   comparisonsTable,
   settingsTable,
   legalSourcesTable,
   seedRiskCategories,
 } from "@workspace/db";
+import bcrypt from "bcryptjs";
 import { logger } from "./lib/logger";
 import { migrateResearchWorkspace } from "./research-workspace/migration.js";
 import { migrateAdkg } from "./adkg/migration.js";
@@ -34,7 +36,84 @@ const sampleRows = [
   },
 ];
 
+// ─── Demo accounts (one per role) ────────────────────────────────────────────
+const DEMO_ACCOUNTS = [
+  { name: "محمد الشامسي",            email: "m.alshamsi@legal.ae",       role: "owner",                    username: "admin",          password: "Admin@MARSAD2024" },
+  { name: "Sarah Al Mansoori",        email: "s.mansoori@legal.ae",       role: "supervisor",               username: "supervisor",     password: "Supervisor@MARSAD2024" },
+  { name: "Ahmed Khalil",             email: "a.khalil@legal.ae",         role: "viewer",                   username: "viewer",         password: "Viewer@MARSAD2024" },
+  { name: "القاضي سعيد المري",        email: "s.almarri@courts.ae",       role: "judge",                    username: "judge",          password: "Judge@MARSAD2024" },
+  { name: "مواطن — بوابة الخدمات",   email: "citizen@portal.ae",         role: "citizen",                  username: "citizen",        password: "Citizen@MARSAD2024" },
+  { name: "معالي الوزير",            email: "minister@ministry.ae",      role: "minister",                 username: "minister",       password: "Minister@MARSAD2024" },
+  { name: "وكيل الوزارة",            email: "undersec@ministry.ae",      role: "undersecretary",           username: "undersecretary", password: "Undersec@MARSAD2024" },
+  { name: "وكيل الوزارة المساعد",    email: "asst.under@ministry.ae",    role: "assistant_undersecretary", username: "asst_undersec",  password: "AsstUndersec@MARSAD2024" },
+  { name: "المدير العام",            email: "dirgen@ministry.ae",        role: "director_general",         username: "dir_general",    password: "DirGeneral@MARSAD2024" },
+  { name: "مدير الإدارة",           email: "deptdir@ministry.ae",       role: "department_director",      username: "dept_director",  password: "DeptDir@MARSAD2024" },
+  { name: "الشؤون القانونية",       email: "legal@ministry.ae",         role: "legal_department",         username: "legal_dept",     password: "LegalDept@MARSAD2024" },
+  { name: "المراجع الدستوري",       email: "constrev@ministry.ae",      role: "constitutional_reviewer",  username: "const_reviewer", password: "ConstRev@MARSAD2024" },
+  { name: "المدقق الداخلي",         email: "intaudit@ministry.ae",      role: "internal_auditor",         username: "int_auditor",    password: "IntAudit@MARSAD2024" },
+  { name: "المدقق الخارجي",         email: "extaudit@ministry.ae",      role: "external_auditor",         username: "ext_auditor",    password: "ExtAudit@MARSAD2024" },
+] as const;
+
+/**
+ * Migrate the users table to add JWT auth columns (idempotent).
+ * Then ensure all 14 demo accounts exist with hashed passwords.
+ * Only hashes passwords for accounts that are missing them (avoids slow
+ * bcrypt startup on every server restart).
+ */
+async function migrateAuth() {
+  // Add auth columns if they don't already exist
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS username TEXT`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT`);
+  await pool.query(
+    `CREATE UNIQUE INDEX IF NOT EXISTS users_username_uix ON users(username) WHERE username IS NOT NULL`,
+  );
+
+  // Find which accounts are missing password hashes
+  const { rows } = await pool.query<{ email: string; has_password: boolean }>(
+    `SELECT email, (password_hash IS NOT NULL) AS has_password FROM users`,
+  );
+  const authMap = new Map(rows.map((r) => [r.email, r.has_password]));
+
+  for (const account of DEMO_ACCOUNTS) {
+    const hasPassword = authMap.get(account.email) === true;
+
+    if (hasPassword) {
+      // Account already provisioned — just ensure username is set
+      await pool.query(
+        `UPDATE users SET username = $1 WHERE email = $2 AND username IS NULL`,
+        [account.username, account.email],
+      );
+      // Ensure account exists even if it wasn't in the initial seed
+      await pool.query(
+        `INSERT INTO users (name, email, role, username, password_hash)
+         VALUES ($1, $2, $3, $4, 'PLACEHOLDER')
+         ON CONFLICT (email) DO NOTHING`,
+        [account.name, account.email, account.role, account.username],
+      );
+    } else {
+      // Hash password (only done once per account, not on every restart)
+      const hash = await bcrypt.hash(account.password, 10);
+      await pool.query(
+        `INSERT INTO users (name, email, role, username, password_hash)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (email) DO UPDATE SET
+           username     = EXCLUDED.username,
+           password_hash = EXCLUDED.password_hash,
+           role         = EXCLUDED.role`,
+        [account.name, account.email, account.role, account.username, hash],
+      );
+    }
+  }
+
+  logger.info("Auth migration complete — 14 demo accounts provisioned");
+}
+
 export async function seedDatabase() {
+  // ─── Auth migration (MUST run first — adds username/password_hash columns) ───
+  await migrateAuth().catch((err) =>
+    logger.error({ err }, "Auth migration failed — users will not be able to log in"),
+  );
+
   // ─── Phase 57: Research Workspace tables (additive, IF NOT EXISTS) ───────────
   await migrateResearchWorkspace().catch((err) =>
     logger.warn({ err }, "Research workspace migration failed (non-fatal)"),
@@ -80,14 +159,11 @@ export async function seedDatabase() {
   logger.info("PCS migration complete");
 
   // ─── Users ──────────────────────────────────────────────────────────────────
+  // All 14 demo accounts are handled by migrateAuth() above.
+  // This block is kept only to seed the comparisons table which references user id=1.
   const existingUsers = await db.select().from(usersTable);
-  if (existingUsers.length === 0) {
-    await db.insert(usersTable).values([
-      { name: "محمد الشامسي", email: "m.alshamsi@legal.ae", role: "owner" },
-      { name: "Sarah Al Mansoori", email: "s.mansoori@legal.ae", role: "supervisor" },
-      { name: "Ahmed Khalil", email: "a.khalil@legal.ae", role: "viewer" },
-    ]);
-    logger.info("Seeded initial users");
+  if (existingUsers.length > 0) {
+    logger.info(`Users table has ${existingUsers.length} accounts (managed by migrateAuth)`);
   }
 
   // ─── Comparisons ────────────────────────────────────────────────────────────

@@ -369,6 +369,9 @@ export async function customFetch<T = unknown>(
 
   // Attach bearer token when an auth getter is configured and no
   // Authorization header has been explicitly provided.
+  // NOTE: In web apps the JWT is stored in an HTTP-only cookie and sent
+  // automatically via credentials: "include". The authTokenGetter is only
+  // needed for non-browser clients (e.g. Expo mobile apps using token auth).
   if (_authTokenGetter && !headers.has("authorization")) {
     const token = await _authTokenGetter();
     if (token) {
@@ -376,13 +379,12 @@ export async function customFetch<T = unknown>(
     }
   }
 
-  // Attach user role header for role-based access control.
+  // Legacy role/userId header injection — kept for non-web clients only.
+  // Web apps must NOT use these; the backend derives identity from the JWT cookie.
   if (_roleGetter && !headers.has("x-user-role")) {
     const role = _roleGetter();
     if (role) headers.set("x-user-role", role);
   }
-
-  // Attach user ID header.
   if (_userIdGetter && !headers.has("x-user-id")) {
     const uid = _userIdGetter();
     if (uid) headers.set("x-user-id", uid);
@@ -390,7 +392,13 @@ export async function customFetch<T = unknown>(
 
   const requestInfo = { method, url: resolveUrl(input) };
 
-  const response = await fetch(input, { ...init, method, headers });
+  // credentials: "include" ensures the HTTP-only JWT session cookie is sent
+  // on every request, including cross-origin calls in development (Vite dev
+  // server on a different port from the API). The caller can override this by
+  // passing credentials in options (which ends up in `init`).
+  const credentials = (init as RequestInit).credentials ?? "include";
+
+  const response = await fetch(input, { ...init, method, headers, credentials });
 
   if (!response.ok) {
     const errorData = await parseErrorBody(response, method);

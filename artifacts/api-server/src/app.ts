@@ -4,27 +4,27 @@ import pinoHttp from "pino-http";
 import helmet from "helmet";
 import compression from "compression";
 import rateLimit from "express-rate-limit";
+import cookieParser from "cookie-parser";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { auditMiddleware } from "./middlewares/auditLog";
+import { authenticate } from "./middlewares/authenticate";
 
 const app: Express = express();
 
-// ── Allowed origins ───────────────────────────────────────────────────────────
-// PRODUCTION: set ALLOWED_ORIGIN env var to the exact deployment domain.
-//             Only that origin (plus no-origin server-to-server) is allowed.
-// DEVELOPMENT / Replit: also permit localhost and Replit preview domains.
+// ── Environment ──────────────────────────────────────────────────────────────
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
+// ── Allowed CORS origins ─────────────────────────────────────────────────────
+// In production: set ALLOWED_ORIGIN env var to the exact deployment domain.
+// In development/Replit: localhost and *.replit.dev are automatically allowed.
 const ALLOWED_ORIGINS: (string | RegExp)[] = [];
 
 if (process.env.ALLOWED_ORIGIN) {
-  // Explicit override always wins (supports both dev and prod)
   ALLOWED_ORIGINS.push(process.env.ALLOWED_ORIGIN);
 }
 
 if (!IS_PRODUCTION) {
-  // Dev / Replit only — never active in production
   ALLOWED_ORIGINS.push(
     /^https?:\/\/localhost(:\d+)?$/,
     /^https?:\/\/127\.0\.0\.1(:\d+)?$/,
@@ -34,17 +34,16 @@ if (!IS_PRODUCTION) {
   );
 }
 
-// Security headers
+// ── Security headers (Helmet) ────────────────────────────────────────────────
 app.use(
   helmet({
-    // CSP for the API's own responses (JSON — no inline scripts/styles needed)
     contentSecurityPolicy: {
       directives: {
-        defaultSrc:  ["'none'"],
-        scriptSrc:   ["'none'"],
-        styleSrc:    ["'none'"],
-        imgSrc:      ["'none'"],
-        connectSrc:  ["'self'"],
+        defaultSrc:     ["'none'"],
+        scriptSrc:      ["'none'"],
+        styleSrc:       ["'none'"],
+        imgSrc:         ["'none'"],
+        connectSrc:     ["'self'"],
         frameAncestors: ["'none'"],
       },
     },
@@ -52,10 +51,10 @@ app.use(
   }),
 );
 
-// Compress all responses
+// ── Compression ──────────────────────────────────────────────────────────────
 app.use(compression());
 
-// HTTP request logging
+// ── HTTP request logging ─────────────────────────────────────────────────────
 app.use(
   pinoHttp({
     logger,
@@ -70,24 +69,66 @@ app.use(
   }),
 );
 
-// CORS — restricted to known origins; credentials allowed for cookie-based auth
-app.use(cors({
-  origin: (origin, cb) => {
-    // Allow requests with no origin (curl, server-to-server, mobile apps)
-    if (!origin) return cb(null, true);
-    const allowed = ALLOWED_ORIGINS.some((o) =>
-      typeof o === "string" ? o === origin : o.test(origin)
-    );
-    if (allowed) return cb(null, true);
-    return cb(new Error(`CORS: origin '${origin}' is not allowed`));
-  },
-  credentials: true,
-}));
-// Reduced body limits — 256 KB general, upload routes use their own multer limits
+// ── C3 Fix: Block no-Origin requests in production ───────────────────────────
+// Curl, scripts, and server-to-server tools send no Origin header.
+// In production, only browser requests from the known origin are accepted.
+// Health checks (/api/healthz) are exempt so load balancers still work.
+if (IS_PRODUCTION) {
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    if (req.path === "/api/healthz" || req.path === "/healthz") {
+      return next();
+    }
+    if (!req.headers.origin) {
+      res.status(403).json({ error: "Direct API access is not permitted in production." });
+      return;
+    }
+    next();
+  });
+}
+
+// ── CORS ─────────────────────────────────────────────────────────────────────
+// Credentials mode: the session cookie is sent on every API request.
+// On CORS rejection the origin callback throws; the error handler returns 403.
+app.use(
+  cors({
+    origin: (origin, cb) => {
+      // In development: allow no-origin requests (curl, Replit shell scripts)
+      if (!origin) {
+        return IS_PRODUCTION ? cb(new Error("CORS_NO_ORIGIN")) : cb(null, true);
+      }
+      const allowed = ALLOWED_ORIGINS.some((o) =>
+        typeof o === "string" ? o === origin : o.test(origin),
+      );
+      if (allowed) return cb(null, true);
+      return cb(new Error(`CORS_REJECTED:${origin}`));
+    },
+    credentials: true,
+  }),
+);
+
+// ── Body parsers ─────────────────────────────────────────────────────────────
 app.use(express.json({ limit: "256kb" }));
 app.use(express.urlencoded({ extended: true, limit: "256kb" }));
 
-// Global rate limiter: 200 requests per minute per IP
+// ── Cookie parser (required for JWT session cookie) ──────────────────────────
+app.use(cookieParser());
+
+// ── Strip spoofable identity headers ─────────────────────────────────────────
+// Attackers can send x-user-role / x-user-id / x-user-org to try to assume
+// another identity. We remove them here so no route handler ever sees a
+// caller-supplied value. The authenticate middleware below re-injects the
+// correct values from the verified JWT payload after token verification.
+app.use((req: Request, _res: Response, next: NextFunction) => {
+  delete req.headers["x-user-role"];
+  delete req.headers["x-user-id"];
+  delete req.headers["x-user-org"];
+  next();
+});
+
+// ── Rate limiting ─────────────────────────────────────────────────────────────
+// H1 Fix: trust proxy so real client IP is used (not reverse-proxy IP)
+app.set("trust proxy", 1);
+
 const globalLimiter = rateLimit({
   windowMs: 60_000,
   max: 200,
@@ -107,19 +148,46 @@ const aiLimiter = rateLimit({
 });
 app.use("/api/ai", aiLimiter);
 
-// Audit log all mutating requests
+// Brute-force protection for login endpoint
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60_000, // 15 minutes
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many login attempts. Please wait 15 minutes and try again." },
+});
+app.use("/api/auth/login", loginLimiter);
+
+// ── Audit middleware ─────────────────────────────────────────────────────────
 app.use(auditMiddleware);
 
-// API routes
+// ── JWT Authentication ───────────────────────────────────────────────────────
+// Applied to ALL /api/* routes EXCEPT:
+//   /api/healthz    — health check (no auth required for load balancers)
+//   /api/auth/…     — login / logout / session check (establishes auth)
+app.use("/api", (req: Request, res: Response, next: NextFunction) => {
+  if (req.path === "/healthz") return next();
+  if (req.path === "/auth/login" || req.path === "/auth/logout" || req.path === "/auth/me") {
+    return next();
+  }
+  return authenticate(req, res, next);
+});
+
+// ── API routes ───────────────────────────────────────────────────────────────
 app.use("/api", router);
 
-// 404 handler
+// ── 404 ──────────────────────────────────────────────────────────────────────
 app.use((_req: Request, res: Response) => {
   res.status(404).json({ error: "Not found" });
 });
 
-// Global error handler
+// ── Global error handler ─────────────────────────────────────────────────────
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+  // CORS rejections → 403 (not 500)
+  if (err.message?.startsWith("CORS_")) {
+    res.status(403).json({ error: "CORS: this origin is not permitted." });
+    return;
+  }
   logger.error({ err }, "Unhandled error");
   res.status(500).json({ error: "Internal server error" });
 });

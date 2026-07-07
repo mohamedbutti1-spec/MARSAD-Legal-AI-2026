@@ -29,10 +29,13 @@ const router: IRouter = Router();
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+/**
+ * Returns the org string from the verified JWT payload.
+ * Only non-empty for roles with seeOwnOrgOnly permission.
+ * SECURITY: reads from req.user (JWT), never from spoofable headers.
+ */
 function getUserOrg(req: Request): string | null {
-  const h = req.headers["x-user-org"];
-  const raw = (Array.isArray(h) ? h[0] : h) ?? "";
-  return raw.trim() || null;   // treat empty / whitespace as absent
+  return req.user?.org?.trim() || null;
 }
 
 /** Middleware: allow all registered roles (including governance + citizen) */

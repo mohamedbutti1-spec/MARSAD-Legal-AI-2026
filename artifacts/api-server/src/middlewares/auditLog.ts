@@ -14,9 +14,9 @@ export function logAudit(
     details?: Record<string, unknown>;
   } = {},
 ): void {
-  const userIdRaw = req.headers["x-user-id"];
-  const userId = userIdRaw ? parseInt(String(userIdRaw), 10) : undefined;
-  const userRole = String(req.headers["x-user-role"] || "viewer");
+  // Read from verified JWT payload (req.user) — never from spoofable headers
+  const userId   = req.user?.userId ?? undefined;
+  const userRole = req.user?.role   ?? "anonymous";
   const ip =
     String(req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "").split(",")[0].trim() ||
     null;
