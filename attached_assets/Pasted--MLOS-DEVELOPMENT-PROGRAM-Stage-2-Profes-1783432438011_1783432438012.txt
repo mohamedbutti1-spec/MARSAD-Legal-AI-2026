@@ -1,0 +1,366 @@
+############################################################
+MLOS DEVELOPMENT PROGRAM
+Stage 2
+Professional Role Intelligence Engines
+############################################################
+
+STATUS
+
+The MLOS Foundation (Stage 1) has already been completed successfully.
+
+DO NOT redesign the application.
+
+DO NOT remove or modify any existing feature.
+
+DO NOT recreate any page.
+
+Continue building on the approved MLOS architecture.
+
+The goal of this stage is to transform professional roles from static UI options into independent Legal Intelligence Engines.
+
+############################################################
+OBJECTIVE
+############################################################
+
+Each professional role must become an independent reasoning engine.
+
+The same legal question should produce different analysis, structure, priorities and recommendations depending on the selected role.
+
+The role must affect the AI reasoning itself, not only the page appearance.
+
+############################################################
+IMPLEMENT THE FOLLOWING ENGINES
+############################################################
+
+1. Judicial Engine
+
+Role:
+
+Judge
+
+Reasoning sequence:
+
+• Jurisdiction
+• Admissibility
+• Facts
+• Evidence
+• Applicable Law
+• Judicial Reasoning
+• Legal Analysis
+• Judgment
+• Remedy
+• Final Judicial Opinion
+
+Outputs:
+
+Judicial Analysis
+
+Expected Court Position
+
+Legal Certainty
+
+Possible Appeal
+
+Recommended Judicial Action
+
+------------------------------------------------------------
+
+2. Public Prosecution Engine
+
+Role:
+
+Public Prosecutor
+
+Reasoning sequence:
+
+• Facts
+
+• Available Evidence
+
+• Missing Evidence
+
+• Burden of Proof
+
+• Procedural Legality
+
+• Legal Qualification
+
+• Public Interest
+
+• Prosecution Position
+
+Outputs:
+
+Evidence Assessment
+
+Procedural Review
+
+Prosecution Recommendation
+
+Investigation Requirements
+
+------------------------------------------------------------
+
+3. Legislative Engine
+
+Role:
+
+Legislator
+
+Reasoning sequence:
+
+• Legislative Purpose
+
+• Legal Gap Detection
+
+• Comparative Legislation
+
+• Regulatory Impact
+
+• Suggested Amendment
+
+• Draft Article
+
+• Explanatory Memorandum
+
+Outputs:
+
+Legislative Recommendation
+
+Draft Amendment
+
+Expected Impact
+
+------------------------------------------------------------
+
+4. Research Engine
+
+Role:
+
+Researcher
+
+Reasoning sequence:
+
+• Research Problem
+
+• Literature Review
+
+• Research Gap
+
+• Methodology
+
+• Comparative Analysis
+
+• Findings
+
+• Recommendations
+
+Outputs:
+
+Academic Research Structure
+
+Suggested References
+
+Future Research
+
+------------------------------------------------------------
+
+5. Author Engine
+
+Role:
+
+Legal Author
+
+Reasoning sequence:
+
+• Chapter Structure
+
+• Academic Writing
+
+• Footnotes
+
+• References
+
+• Comparative Discussion
+
+• Conclusions
+
+Outputs:
+
+Book-ready Content
+
+Academic Style
+
+Publication-ready Format
+
+------------------------------------------------------------
+
+6. Professor Engine
+
+Role:
+
+Professor
+
+Reasoning sequence:
+
+• Academic Explanation
+
+• Teaching Notes
+
+• Practical Examples
+
+• Critical Analysis
+
+• Classroom Discussion
+
+• Examination Questions
+
+Outputs:
+
+Lecture Notes
+
+Learning Outcomes
+
+Teaching Material
+
+############################################################
+ROLE BEHAVIOUR
+############################################################
+
+Each role must have:
+
+Independent Prompt Profile
+
+Independent Reasoning Pipeline
+
+Independent Output Structure
+
+Independent Recommendation Engine
+
+Independent Future Extensibility
+
+No duplicated code.
+
+Use modular architecture.
+
+############################################################
+MLOS INTEGRATION
+############################################################
+
+The selected role becomes the primary reasoning engine.
+
+Every legal response must follow that reasoning model automatically.
+
+Changing the selected role must immediately change the legal reasoning.
+
+############################################################
+ADVANCED STANDARD
+############################################################
+
+If
+
+🧠 المعيار المتقدم (نظرية الشامسي)
+
+is enabled,
+
+DO NOT replace the selected reasoning engine.
+
+Instead,
+
+append a second analytical layer dedicated to intelligent administrative decision-making.
+
+This layer analyses:
+
+Digital Administrative Will
+
+Algorithmic Legal Weight
+
+Legitimate Algorithmic Bias
+
+Algorithmic Explainability
+
+Transparency
+
+Human Oversight
+
+Graduated Compliance
+
+Prior Administrative Challenge
+
+Judicial Review
+
+Administrative Liability without Algorithmic Fault
+
+Digital Governance
+
+Generate:
+
+Al-Shamsi Compliance Index
+
+with explanation.
+
+############################################################
+ARCHITECTURE REQUIREMENTS
+############################################################
+
+Every engine must be implemented as an independent module.
+
+The architecture must allow adding future engines without modifying existing engines.
+
+Examples:
+
+Risk Officer Engine
+
+Compliance Engine
+
+Minister Engine
+
+Constitutional Court Engine
+
+Audit Engine
+
+Arbitration Engine
+
+Mufti Engine
+
+Government Inspector Engine
+
+############################################################
+USER EXPERIENCE
+############################################################
+
+No redesign.
+
+No UI disruption.
+
+Existing pages remain.
+
+Only intelligence becomes role-aware.
+
+############################################################
+SUCCESS CRITERIA
+############################################################
+
+✔ Every professional role has its own reasoning engine.
+
+✔ The same legal question produces different analysis depending on the selected role.
+
+✔ Advanced Standard works as an additional analytical layer.
+
+✔ Existing features remain functional.
+
+✔ Zero build errors.
+
+✔ Modular architecture completed.
+
+############################################################
+WHEN FINISHED
+############################################################
+
+Reply only with:
+
+✅ MLOS Stage 2 Complete
+
+Professional Intelligence Engines Ready.
+
+Awaiting Stage 3.

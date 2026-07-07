@@ -201,6 +201,197 @@ const DEPTH_CFG: Record<ResearchDepth, string> = {
   short: 'مختصر', medium: 'متوسط', detailed: 'تفصيلي', comprehensive: 'شامل', unlimited: 'غير محدود',
 };
 
+// ─── Professional Role Intelligence Engines ────────────────────────────────────
+// Each role is an independent reasoning engine: its own sequence + output fields.
+// Add future engines here without touching existing ones.
+
+interface RoleEngine {
+  /** Self-contained Arabic label — engine does not depend on USER_TYPE_CONFIG. */
+  nameAr: string;
+  reasoningSequenceAr: string[];
+  outputsAr: string[];
+}
+
+const ROLE_ENGINES: Partial<Record<UserType, RoleEngine>> = {
+
+  // 1 — Judicial Engine
+  judge: {
+    nameAr: 'القضاء — المحرك القضائي',
+    reasoningSequenceAr: [
+      'الاختصاص القضائي',
+      'قبول الدعوى',
+      'الوقائع',
+      'الأدلة',
+      'القانون الواجب التطبيق',
+      'الاستدلال القضائي',
+      'التحليل القانوني',
+      'الحكم',
+      'الإنصاف والتعويض',
+      'الرأي القضائي النهائي',
+    ],
+    outputsAr: [
+      'التحليل القضائي',
+      'الموقف المتوقع للمحكمة',
+      'اليقين القانوني',
+      'إمكانية الطعن بالاستئناف',
+      'التوصية القضائية الموصى بها',
+    ],
+  },
+
+  // 2 — Public Prosecution Engine
+  prosecutor: {
+    nameAr: 'النيابة العامة — محرك الادعاء',
+    reasoningSequenceAr: [
+      'الوقائع',
+      'الأدلة المتاحة',
+      'الأدلة الناقصة',
+      'عبء الإثبات',
+      'المشروعية الإجرائية',
+      'التكييف القانوني',
+      'المصلحة العامة',
+      'موقف النيابة العامة',
+    ],
+    outputsAr: [
+      'تقييم الأدلة',
+      'المراجعة الإجرائية',
+      'توصية الادعاء',
+      'متطلبات التحقيق',
+    ],
+  },
+
+  // 3 — Legislative Engine (shared for legislator + committee)
+  legislator: {
+    nameAr: 'التشريع — المحرك التشريعي',
+    reasoningSequenceAr: [
+      'الغرض التشريعي',
+      'رصد الفجوات القانونية',
+      'التشريع المقارن',
+      'الأثر التنظيمي',
+      'التعديل المقترح',
+      'مسودة المادة القانونية',
+      'المذكرة التفسيرية',
+    ],
+    outputsAr: [
+      'التوصية التشريعية',
+      'مسودة التعديل',
+      'الأثر المتوقع للتشريع',
+    ],
+  },
+
+  legislative_committee: {
+    nameAr: 'اللجنة التشريعية — المحرك التشريعي',
+    reasoningSequenceAr: [
+      'الغرض التشريعي',
+      'رصد الفجوات القانونية',
+      'التشريع المقارن',
+      'الأثر التنظيمي',
+      'التعديل المقترح',
+      'مسودة المادة القانونية',
+      'المذكرة التفسيرية',
+    ],
+    outputsAr: [
+      'التوصية التشريعية',
+      'مسودة التعديل',
+      'الأثر المتوقع للتشريع',
+    ],
+  },
+
+  // 4 — Research Engine (shared for researcher + graduate student)
+  researcher: {
+    nameAr: 'البحث القانوني — المحرك البحثي',
+    reasoningSequenceAr: [
+      'مشكلة البحث',
+      'مراجعة الأدبيات',
+      'الفجوة البحثية',
+      'المنهجية',
+      'التحليل المقارن',
+      'النتائج',
+      'التوصيات',
+    ],
+    outputsAr: [
+      'الهيكل البحثي الأكاديمي',
+      'المراجع المقترحة',
+      'توجهات البحث المستقبلي',
+    ],
+  },
+
+  graduate_student: {
+    nameAr: 'طالب الدراسات العليا — المحرك البحثي',
+    reasoningSequenceAr: [
+      'مشكلة البحث',
+      'مراجعة الأدبيات',
+      'الفجوة البحثية',
+      'المنهجية',
+      'التحليل المقارن',
+      'النتائج',
+      'التوصيات',
+    ],
+    outputsAr: [
+      'الهيكل البحثي الأكاديمي',
+      'المراجع المقترحة',
+      'توجهات البحث المستقبلي',
+    ],
+  },
+
+  // 5 — Author Engine
+  legal_author: {
+    nameAr: 'التأليف القانوني — محرك الكتابة الأكاديمية',
+    reasoningSequenceAr: [
+      'هيكل الفصل',
+      'الكتابة الأكاديمية',
+      'الحواشي والتهميشات',
+      'المراجع',
+      'النقاش المقارن',
+      'الخاتمة والاستنتاجات',
+    ],
+    outputsAr: [
+      'محتوى جاهز للنشر',
+      'أسلوب أكاديمي رصين',
+      'تنسيق قابل للنشر',
+    ],
+  },
+
+  // 6 — Professor Engine
+  professor: {
+    nameAr: 'الأستاذية — المحرك الأكاديمي التعليمي',
+    reasoningSequenceAr: [
+      'الشرح الأكاديمي',
+      'ملاحظات التدريس',
+      'الأمثلة التطبيقية',
+      'التحليل النقدي',
+      'النقاش الصفي',
+      'أسئلة الامتحانات',
+    ],
+    outputsAr: [
+      'ملاحظات المحاضرة',
+      'مخرجات التعلم',
+      'المادة التعليمية',
+    ],
+  },
+
+  // ── Future engines go here without modifying the above ──
+  // risk_officer: { ... }
+  // compliance_officer: { ... }
+  // minister: { ... }
+  // ai_engineer: { ... }
+  // algorithm_reviewer: { ... }
+  // algorithmic_auditor: { ... }
+};
+
+/** Build the role-specific reasoning block injected into the AI prompt.
+ *  Fully self-contained — reads only from engine.nameAr, not USER_TYPE_CONFIG. */
+function buildEngineBlock(userType: UserType): string {
+  const engine = ROLE_ENGINES[userType];
+  if (!engine) return '';
+  let block = `\n[محرك الاستدلال المهني — ${engine.nameAr}]\n`;
+  block += `تسلسل الاستدلال المطلوب:\n`;
+  engine.reasoningSequenceAr.forEach((step, i) => {
+    block += `  ${i + 1}. ${step}\n`;
+  });
+  block += `المخرجات المطلوبة: ${engine.outputsAr.join(' | ')}\n`;
+  return block;
+}
+
 // Al-Shamsi keyword auto-detection
 const SHAMSI_AUTO_RE = /ذكاء اصطناعي|خوارزم|حكومة رقمية|تعلم آلي|قرار آلي|منصة رقمية|بيانات ضخمة|شفافية خوارزم|انحياز خوارزم|قرار ذكي|وكيل ذكي|أتمتة|نظام رقمي|AI\b|artificial intelligence|algorithm|machine learning|digital government|automated decision|big data|agentic|algorithmic/i;
 function detectShamsiKeywords(text: string): boolean { return SHAMSI_AUTO_RE.test(text); }
@@ -223,9 +414,30 @@ function buildConfigPrefix(config: SessionConfig, expertMode: boolean, opts: Exp
   let p = `[تكوين جلسة MLOS — Marsad Legal Operating System · نرصد · نحلل · نحكم]\n`;
   p += `المستخدم: ${USER_TYPE_CONFIG[config.userType].ar} | الهدف: ${USER_GOAL_CFG[config.userGoal].ar} | الأسلوب: ${CONFIG_ANSWER_MODE_CFG[config.answerMode].ar}\n`;
   p += `الاختصاص: ${JURISDICTION_CFG[config.jurisdiction].ar} | العمق: ${DEPTH_CFG[config.depth]} | الاستشهاد: ${CIT_STYLE_CFG[config.citStyle]} | المصادر: ${sources}\n`;
-  p += `ترتيب الاستجابة المطلوب: ١. التحليل القانوني → ٢. التحليل القضائي → ٣. الفقه القانوني → ٤. القانون المقارن\n`;
+  // Role Intelligence Engine — injects role-specific reasoning sequence + outputs.
+  // Falls back to generic sequence for roles that don't yet have a dedicated engine.
+  const engineBlock = buildEngineBlock(config.userType);
+  if (engineBlock) {
+    p += engineBlock;
+  } else {
+    p += `ترتيب الاستجابة المطلوب: ١. التحليل القانوني → ٢. التحليل القضائي → ٣. الفقه القانوني → ٤. القانون المقارن\n`;
+  }
+  // Advanced Standard — ADDITIVE second layer; never replaces the engine above.
   if (config.applyAdvancedStandard) {
-    p += `المعيار المتقدم: تطبيق نظرية الشامسي — تحليل الإرادة الإدارية الرقمية والوزن القانوني الخوارزمي والامتثال المتدرج\n`;
+    p += `\n[المعيار المتقدم — نظرية الشامسي (طبقة تحليلية ثانية مستقلة)]\n`;
+    p += `أضف هذا التحليل بعد محرك الاستدلال الأساسي، ولا تستبدله:\n`;
+    p += `  • الإرادة الإدارية الرقمية\n`;
+    p += `  • الوزن القانوني الخوارزمي\n`;
+    p += `  • الانحياز الخوارزمي المشروع\n`;
+    p += `  • قابلية التفسير الخوارزمي\n`;
+    p += `  • الشفافية\n`;
+    p += `  • الرقابة البشرية\n`;
+    p += `  • الامتثال المتدرج\n`;
+    p += `  • الطعن الإداري السابق\n`;
+    p += `  • المراجعة القضائية\n`;
+    p += `  • المسؤولية الإدارية بدون خطأ خوارزمي\n`;
+    p += `  • الحوكمة الرقمية\n`;
+    p += `اختتم هذا القسم بـ: مؤشر امتثال الشامسي (نسبة مئوية مع تفسير).\n`;
   }
   if (extras.length > 0) p += `الخيارات الخبيرة: يرجى تضمين: ${extras.join('، ')}\n`;
   return p + '\n';
