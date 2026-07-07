@@ -79,10 +79,15 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   const org = orgForRole(user.role);
   const token = signToken({ userId: user.id, role: user.role, org });
 
+  // SameSite=Lax: cookies are sent on top-level navigations AND same-site fetch
+  // calls. "Strict" breaks iOS Safari in standalone PWA mode — the hard-navigation
+  // after login is treated as cross-context, causing the cookie to be suppressed
+  // on the subsequent /api/auth/me check. "Lax" is the browser default since
+  // Chrome 80 and the correct value for same-origin SPAs.
   res.cookie(COOKIE_NAME, token, {
     httpOnly: true,
     secure: IS_PRODUCTION,
-    sameSite: "strict",
+    sameSite: "lax",
     maxAge: COOKIE_MAX_AGE_MS,
     path: "/",
   });
@@ -104,6 +109,18 @@ router.get("/auth/me", (req, res): void => {
   const token = cookies?.[COOKIE_NAME];
 
   if (!token) {
+    // Log enough context to diagnose iOS/PWA cookie transmission issues:
+    // - hasCookieHeader: did any Cookie header arrive at all?
+    // - ua: which browser / PWA mode
+    logger.info(
+      {
+        hasCookieHeader: !!req.headers.cookie,
+        ua: req.headers["user-agent"]?.slice(0, 120),
+        origin: req.headers.origin,
+        referer: req.headers.referer?.slice(0, 80),
+      },
+      "auth/me: no session cookie — returning 401",
+    );
     res.status(401).json({ error: "Not authenticated." });
     return;
   }
@@ -111,7 +128,11 @@ router.get("/auth/me", (req, res): void => {
   try {
     const payload = verifyToken(token);
     res.json(payload);
-  } catch {
+  } catch (err) {
+    logger.warn(
+      { err: String(err), ua: req.headers["user-agent"]?.slice(0, 120) },
+      "auth/me: invalid or expired token — clearing cookie",
+    );
     res.clearCookie(COOKIE_NAME, { path: "/" });
     res.status(401).json({ error: "Session expired." });
   }
@@ -122,7 +143,7 @@ router.post("/auth/logout", (_req, res): void => {
   res.clearCookie(COOKIE_NAME, {
     httpOnly: true,
     secure: IS_PRODUCTION,
-    sameSite: "strict",
+    sameSite: "lax",
     path: "/",
   });
   res.json({ message: "Logged out successfully." });

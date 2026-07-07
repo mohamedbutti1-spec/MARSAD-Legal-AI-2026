@@ -42,3 +42,4 @@
 - [UAT Permission Architecture](uat-permission-architecture.md) — requireAnyRole=13 non-citizen roles; requireSupervisorOrOwner=decision mutations; canUseAi vs canCreateDecision frontend split; bare Route = citizen leak
 - [JWT Auth Architecture](jwt-auth-architecture.md) — cookie session, strip-then-backfill pattern for legacy headers, demo account seeding, frontend AuthGate design
 - [Express 5 router.use() bleed](express5-router-bleed.md) — router.use(requireAnyRole) without path prefix blocks citizen from ALL later routers; register citizen routes BEFORE workspace/kb/adkg
+- [iOS SameSite Auth](ios-samesite-auth.md) — SameSite=Strict breaks iOS PWA standalone; use Lax + refreshSession() not window.location.href after login

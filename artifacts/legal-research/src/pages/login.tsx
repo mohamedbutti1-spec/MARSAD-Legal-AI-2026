@@ -4,6 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Shield, Lock, User, AlertCircle, ChevronDown } from 'lucide-react';
+import { useUserContext } from '@/lib/user-context';
+
+// True when built for production (Vite replaces this at compile time).
+const IS_PROD = import.meta.env.PROD;
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
 
@@ -38,6 +42,7 @@ const DEMO_ACCOUNTS = [
 
 export default function Login() {
   const [, navigate] = useLocation();
+  const { refreshSession } = useUserContext();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -50,8 +55,13 @@ export default function Login() {
     setLoading(true);
     try {
       await apiLogin(username.trim(), password);
-      // Reload to trigger AuthGate re-check which then shows the app
-      window.location.href = BASE + '/';
+      // Refresh the UserContext session state in-place — avoids a hard page
+      // reload which breaks iOS Safari / PWA standalone mode: the hard
+      // navigation triggers a new browsing context where the just-set cookie
+      // (SameSite=Lax) may not be forwarded to the following /api/auth/me
+      // check, causing an immediate 401 and redirect back to login.
+      await refreshSession();
+      navigate('/');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
     } finally {
@@ -59,24 +69,25 @@ export default function Login() {
     }
   };
 
+  // Demo account quick-fill (dev only — accounts are blocked in production).
+  // Passwords match seed.ts DEMO_ACCOUNTS (DEMO_SEED_VERSION = 2).
   const fillDemo = (u: string) => {
     setUsername(u);
-    // Derive password from username pattern
     const pwdMap: Record<string, string> = {
-      admin:          'Admin@MARSAD2024',
-      supervisor:     'Supervisor@MARSAD2024',
-      minister:       'Minister@MARSAD2024',
-      undersecretary: 'Undersec@MARSAD2024',
-      dir_general:    'DirGeneral@MARSAD2024',
-      dept_director:  'DeptDir@MARSAD2024',
-      judge:          'Judge@MARSAD2024',
-      legal_dept:     'LegalDept@MARSAD2024',
-      int_auditor:    'IntAudit@MARSAD2024',
-      ext_auditor:    'ExtAudit@MARSAD2024',
-      const_reviewer: 'ConstRev@MARSAD2024',
-      asst_undersec:  'AsstUndersec@MARSAD2024',
-      viewer:         'Viewer@MARSAD2024',
-      citizen:        'Citizen@MARSAD2024',
+      admin:          '7KW@ltkOeo3Qc6Ys',
+      supervisor:     'QCBTr&Jnu9sesK11',
+      viewer:         'ODT6jy3nz7HxX3@3',
+      judge:          '2W8zzGLhWxLysxM&',
+      citizen:        'CH94uTB2%Elu8RDA',
+      minister:       'sDk9OZ^XR08NmK6a',
+      undersecretary: 'iuyVisM7r#pgGCpi',
+      asst_undersec:  'YZ9yOO2MId#oiNi1',
+      dir_general:    'ATm1W2%8A5yM92rg',
+      dept_director:  '0s^mlN3FeOcpwP7i',
+      legal_dept:     'O#vlNZVdSGz6jlN7',
+      const_reviewer: 'AKN^2YD0Efnlgm2F',
+      int_auditor:    'jbSRQc0l1jRiMN&g',
+      ext_auditor:    'gJuHBN$VPxg3hFx3',
     };
     setPassword(pwdMap[u] ?? '');
     setShowDemo(false);
@@ -171,7 +182,8 @@ export default function Login() {
             </Button>
           </form>
 
-          {/* Demo accounts panel */}
+          {/* Demo accounts panel — hidden in production (accounts are blocked there) */}
+          {!IS_PROD && (
           <div className="mt-6 pt-5 border-t border-border">
             <button
               type="button"
@@ -205,6 +217,7 @@ export default function Login() {
               </div>
             )}
           </div>
+          )}
         </div>
 
         {/* Footer */}
