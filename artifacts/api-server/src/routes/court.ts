@@ -71,6 +71,79 @@ function writeLine(res: Response, obj: unknown): void {
   res.write(JSON.stringify(obj) + "\n");
 }
 
+// ── Architectural Lock Validation ─────────────────────────────────────────────
+
+/** All 11 canonical Shamsi principle IDs — every session must contain all of them. */
+const SHAMSI_REQUIRED_IDS: ReadonlySet<string> = new Set([
+  "human_will", "digital_will", "algo_weight", "explainability",
+  "legitimate_bias", "graded_compliance", "human_supervision",
+  "procedural", "accountability", "judicial_review", "final_legality",
+]);
+
+const SHAMSI_VALID_STATUSES = new Set(["مُستوفى", "جزئي", "مخفق"]);
+
+/**
+ * Validates the Al-Shamsi Matrix structural contract.
+ * Requires: exactly the 11 canonical principle IDs, each with
+ * status ∈ {مُستوفى, جزئي, مخفق}, non-empty evidence, and humanOversightNote.
+ */
+function validateShamsiMatrix(shamsi: unknown): shamsi is unknown[] {
+  if (!Array.isArray(shamsi) || shamsi.length < 11) return false;
+
+  // All 11 canonical IDs must be present
+  const ids = new Set((shamsi as Array<Record<string, unknown>>).map((p) => p.id as string));
+  for (const required of SHAMSI_REQUIRED_IDS) {
+    if (!ids.has(required)) return false;
+  }
+
+  // Each principle must have the required structured fields
+  return (shamsi as Array<Record<string, unknown>>).every((p) =>
+    typeof p.id === "string" &&
+    typeof p.status === "string" &&
+    SHAMSI_VALID_STATUSES.has(p.status) &&
+    typeof p.evidence === "string" && p.evidence.trim().length > 0 &&
+    typeof p.humanOversightNote === "string" && p.humanOversightNote.trim().length > 0
+  );
+}
+
+/**
+ * Validates the ASEP (Al-Shamsi Explainability Protocol) structural contract.
+ * Requires: 10 answers, overallExplainability (number), conclusion (string),
+ * each answer with question/answer strings and numeric confidence.
+ */
+function validateAsepReport(asep: unknown): boolean {
+  if (!asep || typeof asep !== "object" || Array.isArray(asep)) return false;
+  const report = asep as Record<string, unknown>;
+  if (!Array.isArray(report.answers) || report.answers.length < 10) return false;
+  if (typeof report.overallExplainability !== "number") return false;
+  if (typeof report.conclusion !== "string" || report.conclusion.trim().length === 0) return false;
+  return (report.answers as Array<Record<string, unknown>>).every((a) =>
+    typeof a.question === "string" &&
+    typeof a.answer === "string" && a.answer.trim().length > 0 &&
+    typeof a.confidence === "number"
+  );
+}
+
+/**
+ * Terminates a streaming session that encountered an early unrecoverable error.
+ * ALWAYS emits a terminal done event so clients can finalize their state machine.
+ */
+function terminalExit(
+  res: Response,
+  message: string,
+  model: string,
+  shamsiOk: boolean,
+  asepOk: boolean,
+): void {
+  writeLine(res, { type: "error", message });
+  const failedComponents = [
+    ...(!shamsiOk ? ["shamsi"] : []),
+    ...(!asepOk   ? ["asep"]   : []),
+  ];
+  writeLine(res, { type: "done", model, complete: false, failedComponents });
+  res.end();
+}
+
 // ─── POST /court/simulate ─────────────────────────────────────────────────────
 
 router.post(
@@ -136,14 +209,15 @@ ${caseText}
       if (d1.facts)  { writeLine(res, { type: "section", id: "facts",  data: d1.facts });  capturedFacts  = JSON.stringify(d1.facts).slice(0, 1500); }
       if (d1.issues) { writeLine(res, { type: "section", id: "issues", data: d1.issues }); capturedIssues = JSON.stringify(d1.issues).slice(0, 1500); }
     } catch (e) {
-      writeLine(res, { type: "error", message: (e as Error).message }); res.end(); return;
+      // Phase 1 failure: no mandatory components can succeed — mark both failed
+      terminalExit(res, (e as Error).message, model, false, false); return;
     }
 
     // ── Phase 2: Claimant + Admin Defenses ───────────────────────────────────
     try {
       const r2 = await provider.complete({
-        taskType: TaskType.RAG, systemPrompt: COURT_SYSTEM, maxTokens: 3500, temperature: 0.25,
-        prompt: `بناءً على القضية التالية، أنشئ دفوع الطرفين كـ JSON بمفتاحين: "claimant" (مصفوفة) و"admin" (مصفوفة).
+        taskType: TaskType.RAG, systemPrompt: COURT_SYSTEM, maxTokens: 5500, temperature: 0.25,
+        prompt: `بناءً على القضية التالية، أنشئ دفوع الطرفين كـ JSON بمفتاحين: "claimant" (مصفوفة) و"admin" (مصفوفة). أبقِ كل حجة موجزة (3-4 جمل كحد أقصى).
 
 القضية:
 ${caseText}
@@ -177,13 +251,14 @@ ${caseText}
       if (Array.isArray(d2.claimant)) writeLine(res, { type: "section", id: "claimant", data: d2.claimant });
       if (Array.isArray(d2.admin))    writeLine(res, { type: "section", id: "admin",    data: d2.admin });
     } catch (e) {
-      writeLine(res, { type: "error", message: (e as Error).message }); res.end(); return;
+      // Phase 2 failure: shamsi/asep still pending — mark both failed
+      terminalExit(res, (e as Error).message, model, false, false); return;
     }
 
     // ── Phase 3: Commissioner Report + Shamsi Analysis ───────────────────────
     try {
       const r3 = await provider.complete({
-        taskType: TaskType.RAG, systemPrompt: COURT_SYSTEM, maxTokens: 5000, temperature: 0.2,
+        taskType: TaskType.RAG, systemPrompt: COURT_SYSTEM, maxTokens: 10000, temperature: 0.2,
         prompt: `أنت مفوّض الدولة ومحلّل نظرية الشامسي. حلّل هذه القضية:
 
 ${caseText}
@@ -214,17 +289,36 @@ ${caseText}
       });
       const p3 = parseModelJson(r3.text);
       if (!p3.ok || !p3.data || typeof p3.data !== "object") {
-        writeLine(res, { type: "error", message: "Phase 3 (commissioner/shamsi) parse failed" }); res.end(); return;
-      }
-      const d3 = p3.data as Record<string, unknown>;
-      if (d3.commissioner && typeof d3.commissioner === "object") writeLine(res, { type: "section", id: "commissioner", data: d3.commissioner });
-      if (Array.isArray(d3.shamsi) && d3.shamsi.length > 0) {
-        writeLine(res, { type: "section", id: "shamsi", data: d3.shamsi });
-        capturedShamsi = JSON.stringify(d3.shamsi).slice(0, 2000);
-        shamsiOk = true;
+        // Commissioner/Shamsi parse failed — emit component_failed for shamsi then continue to Phase 4/5
+        writeLine(res, { type: "error", message: "Phase 3 (commissioner/shamsi) parse failed" });
+        writeLine(res, { type: "component_failed", component: "shamsi", reason: "Phase 3 JSON parse failed" });
+        // shamsiOk stays false; continue — ASEP may still succeed
+      } else {
+        const d3 = p3.data as Record<string, unknown>;
+        if (d3.commissioner && typeof d3.commissioner === "object") writeLine(res, { type: "section", id: "commissioner", data: d3.commissioner });
+
+        // ARCHITECTURAL LOCK: validate full Shamsi contract (11 IDs, required fields)
+        if (validateShamsiMatrix(d3.shamsi)) {
+          writeLine(res, { type: "section", id: "shamsi", data: d3.shamsi });
+          capturedShamsi = JSON.stringify(d3.shamsi).slice(0, 2000);
+          shamsiOk = true;
+        } else {
+          const shamsiLen = Array.isArray(d3.shamsi) ? (d3.shamsi as unknown[]).length : 0;
+          writeLine(res, {
+            type: "component_failed",
+            component: "shamsi",
+            reason: `Shamsi matrix failed structural validation (got ${shamsiLen} principles, need 11 with required fields)`,
+          });
+          // Emit whatever we have so the frontend can show partial data
+          if (Array.isArray(d3.shamsi) && d3.shamsi.length > 0) {
+            writeLine(res, { type: "section", id: "shamsi", data: d3.shamsi });
+          }
+        }
       }
     } catch (e) {
-      writeLine(res, { type: "error", message: (e as Error).message }); res.end(); return;
+      writeLine(res, { type: "error", message: (e as Error).message });
+      writeLine(res, { type: "component_failed", component: "shamsi", reason: (e as Error).message });
+      // Continue to Phase 4/5 — do not terminate early
     }
 
     // ── Phase 4: Judgment + Operative + Appeal + Scores ──────────────────────
@@ -277,9 +371,13 @@ ${caseText}
         if (d.operative) writeLine(res, { type: "section", id: "operative", data: d.operative });
         if (d.appeal)    writeLine(res, { type: "section", id: "appeal",    data: d.appeal });
         if (d.scores)    writeLine(res, { type: "section", id: "scores",    data: d.scores });
+      } else if (shapeErr || !p4.ok) {
+        writeLine(res, { type: "error", message: shapeErr ?? "Phase 4 parse failed" });
+        // Phase 4 failure is non-fatal for the architectural lock — ASEP may still succeed
       }
     } catch (e) {
-      writeLine(res, { type: "error", message: (e as Error).message }); res.end(); return;
+      writeLine(res, { type: "error", message: (e as Error).message });
+      // Phase 4 failure is non-fatal — continue to ASEP Phase 5
     }
 
     // ── Phase 5: ASEP — Al-Shamsi Explainability Protocol ────────────────────
@@ -318,19 +416,22 @@ ${caseText}
 قواعد: confidence هو عدد صحيح 0–100. flagged=true إذا كانت الإجابة تُثير إشكالية قانونية جدية.`,
       });
       const p5 = parseModelJson(r5.text);
-      if (p5.ok && p5.data && typeof p5.data === "object") {
+      // ARCHITECTURAL LOCK: validate full ASEP contract (10 answers + required fields)
+      if (p5.ok && validateAsepReport(p5.data)) {
         writeLine(res, { type: "section", id: "asep", data: p5.data });
         asepOk = true;
       } else {
-        writeLine(res, { type: "component_failed", component: "asep", reason: "ASEP parse returned invalid shape" });
+        const reason = !p5.ok
+          ? "ASEP JSON parse failed"
+          : `ASEP structural validation failed: need 10 answers with question/answer/confidence fields`;
+        writeLine(res, { type: "component_failed", component: "asep", reason });
+        // Emit whatever partial ASEP data arrived so the frontend can show partial results
+        if (p5.ok && p5.data && typeof p5.data === "object") {
+          writeLine(res, { type: "section", id: "asep", data: p5.data });
+        }
       }
     } catch (e) {
       writeLine(res, { type: "component_failed", component: "asep", reason: (e as Error).message });
-    }
-
-    // Emit component_failed for Al-Shamsi Matrix if it never produced data
-    if (!shamsiOk) {
-      writeLine(res, { type: "component_failed", component: "shamsi", reason: "Al-Shamsi Matrix produced no valid data in Phase 3" });
     }
 
     // ARCHITECTURAL LOCK — complete=true only when ALL mandatory components succeeded

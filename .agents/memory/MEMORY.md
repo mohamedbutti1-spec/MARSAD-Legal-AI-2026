@@ -46,3 +46,4 @@
 - [MLOS Stage 3 — Production Intelligence Layer](mlos-stage3.md) — 11 engines, NDJSON streaming (reader.releaseLock in finally), comparative law mode, Shamsi 11 dims, streaming guards on action blocks
 - [MLOS Stage 4 — Legal Intelligence Brain](mlos-stage4.md) — 6-engine hub page + 6 backend routes; safeStr/validateShape hardening pattern; Brain icon sidebar; Express 5 Response type fix
 - [MLOS Stage 5 — Smart Administrative Court](mlos-stage5.md) — 4-phase NDJSON streaming court sim; 9 sections; court panel MUST precede messages.length===0 in render tree; double-cast pattern for typed sections
+- [Court Architectural Lock](court-architectural-lock.md) — shamsiOk needs 11 IDs + field validation; asepOk needs 10 answers; all Phase 1-4 exits must emit done; JWT test auth via signToken() not headers
