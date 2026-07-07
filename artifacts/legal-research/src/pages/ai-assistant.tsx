@@ -76,6 +76,10 @@ type UserType =
   | 'citizen' | 'institution'
   // General Public
   | 'general_user' | 'individual' | 'company_rep' | 'government_entity'
+  // Law Enforcement (Special Police Module)
+  | 'police_officer_new' | 'police_station_officer' | 'evidence_officer' | 'investigation_officer'
+  // Regulatory
+  | 'regulatory_authority'
   // AI & Governance
   | 'ai_engineer' | 'algorithm_reviewer' | 'algorithmic_auditor'
   // Fallback
@@ -182,6 +186,13 @@ const USER_TYPE_CONFIG: Record<UserType, { ar: string; emoji: string }> = {
   individual:             { ar: 'فرد',                            emoji: '👤' },
   company_rep:            { ar: 'ممثل شركة',                      emoji: '🏢' },
   government_entity:      { ar: 'جهة حكومية',                     emoji: '🏛' },
+  // Law Enforcement
+  police_officer_new:     { ar: 'ضابط شرطة جديد',                emoji: '👮' },
+  police_station_officer: { ar: 'ضابط مركز شرطة',                emoji: '🚔' },
+  evidence_officer:       { ar: 'ضابط جمع الأدلة',               emoji: '🔎' },
+  investigation_officer:  { ar: 'ضابط التحقيق الجنائي',          emoji: '🕵️' },
+  // Regulatory
+  regulatory_authority:   { ar: 'ممثل جهة تنظيمية',              emoji: '🏦' },
   // AI & Governance
   ai_engineer:            { ar: 'مهندس أنظمة ذكية',              emoji: '🤖' },
   algorithm_reviewer:     { ar: 'مدقق خوارزميات',                emoji: '🔍' },
@@ -191,17 +202,39 @@ const USER_TYPE_CONFIG: Record<UserType, { ar: string; emoji: string }> = {
   unspecified:            { ar: 'غير محدد',                       emoji: '–' },
 };
 
-// Role groups — used by the accordion role selector in PreAnalysisPanel
+// ─── 17 Canonical Professional Identities (spec-defined) ───────────────────────
+// These are the identities shown in the Professional Identity dropdown.
+// All other UserTypes remain as internal aliases used by their respective engines.
+const PRIMARY_IDENTITIES: { value: UserType; labelAr: string; groupAr: string; emoji: string }[] = [
+  { value: 'citizen',               labelAr: 'مواطن / مستخدم عام',           groupAr: 'العموم',                  emoji: '👤' },
+  { value: 'law_student',           labelAr: 'طالب قانون',                   groupAr: 'التعليم والتدريب',         emoji: '📖' },
+  { value: 'academic_researcher',   labelAr: 'باحث أكاديمي',                 groupAr: 'التعليم والتدريب',         emoji: '🔬' },
+  { value: 'police_officer_new',    labelAr: 'ضابط شرطة جديد',               groupAr: 'الشرطة والتحقيق',          emoji: '👮' },
+  { value: 'police_station_officer',labelAr: 'ضابط مركز شرطة',               groupAr: 'الشرطة والتحقيق',          emoji: '🚔' },
+  { value: 'evidence_officer',      labelAr: 'ضابط جمع الأدلة',              groupAr: 'الشرطة والتحقيق',          emoji: '🔎' },
+  { value: 'investigation_officer', labelAr: 'ضابط التحقيق الجنائي',         groupAr: 'الشرطة والتحقيق',          emoji: '🕵️' },
+  { value: 'prosecutor',            labelAr: 'المدعي العام',                 groupAr: 'النيابة والادعاء',          emoji: '⚖️' },
+  { value: 'judicial_trainee',      labelAr: 'ملازم قضائي',                  groupAr: 'القضاء',                  emoji: '🎓' },
+  { value: 'judge_first_instance',  labelAr: 'قاضٍ ابتدائي',                groupAr: 'القضاء',                  emoji: '⚖️' },
+  { value: 'judge_appeal',          labelAr: 'قاضٍ استئناف',                 groupAr: 'القضاء',                  emoji: '⚖️' },
+  { value: 'judge_cassation',       labelAr: 'قاضٍ تمييز',                  groupAr: 'القضاء',                  emoji: '⚖️' },
+  { value: 'lawyer',                labelAr: 'محامٍ',                        groupAr: 'المحاماة والاستشارات',      emoji: '🧑‍⚖️' },
+  { value: 'legislator',            labelAr: 'مشرّع',                        groupAr: 'السلطة التشريعية',          emoji: '📜' },
+  { value: 'minister',              labelAr: 'صانع السياسات',                groupAr: 'الجهات الحكومية',          emoji: '🏛️' },
+  { value: 'government',            labelAr: 'ممثل حكومي',                  groupAr: 'الجهات الحكومية',          emoji: '🏛️' },
+  { value: 'regulatory_authority',  labelAr: 'ممثل جهة تنظيمية',            groupAr: 'الجهات الحكومية',          emoji: '🏦' },
+];
+
+// Role groups — used by the identity dropdown in PreAnalysisPanel
 const USER_TYPE_GROUPS: { labelAr: string; icon: string; types: UserType[] }[] = [
-  { labelAr: 'غير محدد / أخرى',              icon: '–',   types: ['unspecified', 'other'] },
-  { labelAr: 'القضاء',                        icon: '⚖️',  types: ['judicial_trainee', 'judge_first_instance', 'judge_appeal', 'judge_cassation', 'judge_admin', 'judge_criminal', 'judge_civil', 'judge_personal_status', 'judge', 'prosecutor'] },
-  { labelAr: 'النيابة العامة',                icon: '⚖️',  types: ['prosecution_member', 'prosecution_deputy', 'prosecution_first_deputy', 'prosecution_chief', 'public_attorney'] },
+  { labelAr: 'العموم',                        icon: '👤',  types: ['citizen', 'general_user', 'individual', 'other', 'unspecified'] },
+  { labelAr: 'التعليم والتدريب',              icon: '🎓',  types: ['law_student', 'academic_researcher', 'judicial_trainee', 'legal_intern', 'graduate_student'] },
+  { labelAr: 'الشرطة والتحقيق',              icon: '👮',  types: ['police_officer_new', 'police_station_officer', 'evidence_officer', 'investigation_officer'] },
+  { labelAr: 'النيابة والادعاء',              icon: '⚖️',  types: ['prosecutor', 'prosecution_member', 'prosecution_deputy', 'prosecution_first_deputy', 'prosecution_chief', 'public_attorney'] },
+  { labelAr: 'القضاء',                        icon: '⚖️',  types: ['judge_first_instance', 'judge_appeal', 'judge_cassation', 'judge_admin', 'judge_criminal', 'judge_civil', 'judge_personal_status', 'judge'] },
   { labelAr: 'المحاماة والاستشارات',          icon: '🧑‍⚖️', types: ['lawyer', 'legal_consultant', 'researcher'] },
-  { labelAr: 'التعليم والتدريب القانوني',     icon: '🎓',  types: ['law_student', 'graduate_student', 'academic_researcher', 'legal_intern'] },
-  { labelAr: 'الجهات الحكومية',               icon: '🏛️', types: ['minister', 'undersecretary', 'director_general', 'government', 'compliance_officer', 'risk_officer'] },
-  { labelAr: 'مستخدمون آخرون',               icon: '👤',  types: ['general_user', 'company_rep', 'government_entity', 'individual', 'citizen', 'institution', 'other', 'unspecified'] },
-  { labelAr: 'التخصصات القانونية',           icon: '📜',  types: ['admin_law_specialist', 'constitutional_specialist', 'criminal_specialist', 'civil_specialist', 'professor', 'legal_author', 'legal_consultant'] },
-  { labelAr: 'الذكاء الاصطناعي والحوكمة',    icon: '🤖',  types: ['ai_engineer', 'algorithm_reviewer', 'algorithmic_auditor'] },
+  { labelAr: 'السلطة التشريعية',              icon: '📜',  types: ['legislator', 'legislative_committee'] },
+  { labelAr: 'الجهات الحكومية',               icon: '🏛️', types: ['minister', 'undersecretary', 'director_general', 'government', 'government_entity', 'regulatory_authority', 'compliance_officer', 'risk_officer'] },
 ];
 
 const USER_GOAL_CFG: Record<UserGoal, { ar: string; emoji: string }> = {
@@ -1069,6 +1102,110 @@ const ROLE_ENGINES: Partial<Record<UserType, RoleEngine>> = {
     ],
   },
 
+  // ── PPE — Police Roles (Special Police Module) ──
+
+  police_officer_new: {
+    nameAr: 'ضابط الشرطة الجديد — محرك الإجراءات الأساسية',
+    reasoningSequenceAr: ['الإجراء المطلوب','السند القانوني','ضمانات الحقوق','التسلسل الإجرائي','الاستنتاج'],
+    outputsAr: ['الإجراء الصحيح','ضمانات الحقوق المراعاة','تحذيرات إجرائية'],
+    characteristicsAr: [
+      'شرح الإجراءات الأساسية بخطوات واضحة ومرقّمة',
+      'تحديد السند القانوني لكل إجراء',
+      'إبراز الضمانات القانونية لحقوق الموقوف / المشتبه به',
+      'التنبيه إلى العيوب الإجرائية التي تُبطل الدليل',
+      'توضيح التسلسل الإجرائي الواجب اتباعه',
+    ],
+    outputStructureAr: [
+      'الإجراء المطلوب — ما الخطوة الصحيحة في هذا الموقف؟',
+      'السند القانوني — النص القانوني المجيز لهذا الإجراء',
+      'ضمانات الحقوق — الحقوق الواجب مراعاتها وحمايتها',
+      'التسلسل الإجرائي — الخطوات بترتيبها الصحيح',
+      'تحذيرات إجرائية — ما قد يُبطل الدليل أو يُعرض القضية للبطلان',
+    ],
+  },
+
+  police_station_officer: {
+    nameAr: 'ضابط مركز الشرطة — محرك إدارة القضية',
+    reasoningSequenceAr: ['تسجيل الواقعة','جمع الأدلة','إدارة الشهود','الإجراء الإجرائي','الاستنتاج'],
+    outputsAr: ['الإجراء الصحيح لتسجيل البلاغ','قائمة الأدلة المطلوبة','التوصية الإجرائية'],
+    characteristicsAr: [
+      'توجيه إجراءات تسجيل القضية بدقة',
+      'تحديد الأدلة الواجب جمعها وحفظها فوراً',
+      'بيان آليات التعامل مع الشهود',
+      'ضبط مسرح الجريمة وفق المعايير الإجرائية',
+      'التحقق من الامتثال للإجراءات القانونية',
+    ],
+    outputStructureAr: [
+      'تسجيل الواقعة — كيفية توثيق البلاغ ومضمون المحضر',
+      'جمع الأدلة — قائمة الأدلة المطلوبة وطريقة حفظها',
+      'إدارة الشهود — الأسلوب الإجرائي الصحيح للتعامل مع الشهود',
+      'الإجراء الإجرائي — الخطوات المنهجية المطلوبة',
+      'التوصية — الإجراء الفوري الواجب اتخاذه',
+    ],
+  },
+
+  evidence_officer: {
+    nameAr: 'ضابط جمع الأدلة — محرك سلسلة الحيازة',
+    reasoningSequenceAr: ['الأدلة المادية','سلسلة الحيازة','التوثيق','التنسيق الجنائي','الاستنتاج'],
+    outputsAr: ['قائمة الأدلة المطلوبة','متطلبات توثيق سلسلة الحيازة','التوصية الجنائية'],
+    characteristicsAr: [
+      'ضبط إجراءات جمع الأدلة المادية وفق المعايير القانونية',
+      'التحقق من سلامة سلسلة الحيازة',
+      'توضيح متطلبات التوثيق الإجرائي الكافي',
+      'بيان إجراءات التنسيق مع خبراء الأدلة الجنائية',
+      'تحديد الأدلة الناقصة وكيفية تأمينها',
+    ],
+    outputStructureAr: [
+      'الأدلة المادية — ما يجب جمعه وكيفية التعامل معه',
+      'سلسلة الحيازة — خطوات الحفاظ على سلامة الأدلة من اللحظة الأولى',
+      'التوثيق — المتطلبات الإجرائية لإثبات مسار الدليل',
+      'التنسيق الجنائي — متى ولماذا يُطلب الخبير الجنائي',
+      'الأدلة الناقصة — ما لم يُجمع بعد وكيفية تأمينه',
+    ],
+  },
+
+  investigation_officer: {
+    nameAr: 'ضابط التحقيق الجنائي — محرك استراتيجية التحقيق',
+    reasoningSequenceAr: ['استراتيجية التحقيق','أساليب الاستجواب','كفاية الأدلة','جاهزية الإحالة','الاستنتاج'],
+    outputsAr: ['خطة التحقيق','تقييم كفاية الأدلة','قرار الإحالة أو الاستمرار'],
+    characteristicsAr: [
+      'بناء استراتيجية تحقيق منهجية',
+      'تحديد أساليب الاستجواب القانونية والفعّالة',
+      'تقييم كفاية الأدلة لكل ركن من أركان الجريمة',
+      'قياس جاهزية الملف للإحالة إلى النيابة العامة',
+      'تحديد المعلومات الناقصة وسُبل الحصول عليها',
+    ],
+    outputStructureAr: [
+      'استراتيجية التحقيق — المسار المنهجي لاستكمال التحقيق',
+      'أساليب الاستجواب — التقنيات القانونية للحصول على شهادات موثوقة',
+      'كفاية الأدلة — تقييم قوة الملف لإثبات كل ركن جنائي',
+      'جاهزية الإحالة — هل الملف مكتمل للإحالة؟ وما الناقص؟',
+      'التوصية — الاستمرار في التحقيق أو الإحالة مع التبرير',
+    ],
+  },
+
+  // ── PPE — Regulatory Authority ──
+
+  regulatory_authority: {
+    nameAr: 'ممثل الجهة التنظيمية — محرك الامتثال التنظيمي',
+    reasoningSequenceAr: ['الإطار التنظيمي','آليات الرقابة','صلاحيات الإنفاذ','متطلبات الامتثال','التوصية'],
+    outputsAr: ['تقييم الامتثال','آليات الرقابة المناسبة','الإجراء التنفيذي الموصى به'],
+    characteristicsAr: [
+      'تحليل الإطار التنظيمي المنطبق على المسألة',
+      'تحديد آليات الرقابة والمتابعة المناسبة',
+      'بيان صلاحيات الإنفاذ والجزاءات المتاحة',
+      'تقييم مستوى الامتثال ونقاط الضعف',
+      'اقتراح الإجراء التنفيذي المناسب',
+    ],
+    outputStructureAr: [
+      'الإطار التنظيمي — الأنظمة واللوائح المنطبقة على الحالة',
+      'آليات الرقابة — أدوات الإشراف والمتابعة المتاحة',
+      'صلاحيات الإنفاذ — الجزاءات والتدابير التنفيذية المقررة قانوناً',
+      'تقييم الامتثال — مستوى الامتثال الحالي ونقاط الضعف الجوهرية',
+      'التوصية — الإجراء التنفيذي الأنسب مع تبريره القانوني',
+    ],
+  },
+
   // ── Future engines (ai_engineer, algorithm_reviewer, etc.) go here ──
 };
 
@@ -1094,6 +1231,28 @@ function buildEngineBlock(userType: UserType): string {
   }
   return block;
 }
+
+// ─── Special Police Module ────────────────────────────────────────────────────
+// Injected as an additional mandatory section for all police identity types.
+
+const POLICE_IDENTITY_TYPES = new Set<UserType>([
+  'police_officer_new', 'police_station_officer', 'evidence_officer', 'investigation_officer',
+]);
+
+const POLICE_MODULE_BLOCK = `
+[الوحدة الخاصة بالشرطة — 10 محاور إلزامية تُضاف بعد التحليل الرئيسي]
+بعد إتمام التحليل القانوني أعلاه، أضف هذه المحاور العشرة بترتيبها:
+  ١. قائمة الأدلة الواجب جمعها — حدّد بدقة الأدلة المادية والرقمية والشهادات المطلوبة.
+  ٢. مبادئ التحقيق الاستدلالي — الخطوات الإجرائية الأساسية للتحقيق السليم.
+  ٣. التحقق من صحة المحضر — هل المحضر المُعدّ مستوفٍ للشروط الشكلية والموضوعية؟
+  ٤. مراجعة المشروعية الإجرائية — هل الإجراءات المتخذة مطابقة للقانون بشكل كامل؟
+  ٥. تحذيرات الأخطاء الجسيمة — الأخطاء التي قد تُبطل القضية أو تُضعف الاتهام.
+  ٦. مراجعة سلسلة الحيازة — تقييم سلامة الحفاظ على الأدلة وتوثيق انتقالها.
+  ٧. تقييم جاهزية الإحالة — هل الملف جاهز للإحالة إلى النيابة العامة؟ وما الناقص؟
+  ٨. تحديد الأدلة الناقصة — ما لم يُجمع بعد وكيفية الحصول عليه.
+  ٩. رصد العيوب الإجرائية — الإجراءات المعيبة التي تُخلّ بمشروعية الملف.
+  ١٠. درجة اكتمال التحقيق — تقييم نسبي (%) لمدى اكتمال الملف مع توصيات التحسين.
+`;
 
 // Al-Shamsi keyword auto-detection
 const SHAMSI_AUTO_RE = /ذكاء اصطناعي|خوارزم|حكومة رقمية|تعلم آلي|قرار آلي|منصة رقمية|بيانات ضخمة|شفافية خوارزم|انحياز خوارزم|قرار ذكي|وكيل ذكي|أتمتة|نظام رقمي|AI\b|artificial intelligence|algorithm|machine learning|digital government|automated decision|big data|agentic|algorithmic/i;
@@ -1156,6 +1315,10 @@ function buildConfigPrefix(config: SessionConfig, expertMode: boolean, opts: Exp
     p += `  ١١. الحوكمة الرقمية: الإطار التنظيمي الإماراتي للذكاء الاصطناعي\n`;
     p += `اختتم هذا القسم بـ: مؤشر امتثال الشامسي (نسبة مئوية مع تفسير تفصيلي لكل بُعد).\n`;
   }
+  // Special Police Module — appended for all law-enforcement identities
+  if (POLICE_IDENTITY_TYPES.has(config.userType)) {
+    p += POLICE_MODULE_BLOCK;
+  }
   if (extras.length > 0) p += `الخيارات الخبيرة: يرجى تضمين: ${extras.join('، ')}\n`;
   return p + '\n';
 }
@@ -1186,9 +1349,9 @@ const MODE_CONFIG: Record<ResponseMode, {
   },
   standard: {
     icon: <BookOpen className="w-3 h-3" />,
-    ar: 'معياري',
-    en: 'Standard',
-    descAr: 'تحليل قانوني · 5–10 ثوانٍ',
+    ar: 'إجابة مفصّلة',
+    en: 'Detailed Answer',
+    descAr: 'تحليل قانوني تفصيلي · 5–10 ثوانٍ',
     activeClass: 'bg-indigo-600 text-white border-indigo-600',
     badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-200',
     maxSections: 6,
@@ -1213,9 +1376,9 @@ const MODE_CONFIG: Record<ResponseMode, {
   },
   exemplary: {
     icon: <span aria-hidden>🏛️</span>,
-    ar: 'نموذجي',
-    en: 'Exemplary',
-    descAr: 'تحليل قضائي نموذجي — يُعلِّم المسار الصحيح للاستدلال والحكم',
+    ar: 'النموذج القياسي',
+    en: 'Standard Model Answer',
+    descAr: 'نموذج قضائي مثالي — يُعلِّم المسار الصحيح للاستدلال والحكم',
     activeClass: 'bg-slate-700 text-white border-slate-700',
     badgeClass: 'bg-slate-50 text-slate-700 border-slate-200',
     maxSections: undefined,
@@ -1875,43 +2038,30 @@ function PreAnalysisPanel({
   onToggleExpert: () => void;
   currentInput?: string;
 }) {
-  // Accordion state — auto-expand the group containing the active role
-  const [expandedGroup, setExpandedGroup] = useState<string | null>(() => {
-    const active = USER_TYPE_GROUPS.find((g) => g.types.includes(config.userType));
-    return active?.labelAr ?? USER_TYPE_GROUPS[0].labelAr;
-  });
+  // Derive the selected identity — prefer a PRIMARY_IDENTITIES match, else fall back to canonical
+  const selectedIdentity = PRIMARY_IDENTITIES.find((id) => id.value === config.userType)
+    ?? PRIMARY_IDENTITIES[0];
 
-  function toggleSource(s: SourceType) {
-    if (s === 'all') { onChange({ ...config, sources: ['all'] }); return; }
-    const without = config.sources.filter((x) => x !== 'all' && x !== s);
-    const adding  = !config.sources.includes(s);
-    const next    = adding ? [...without, s] : without;
-    onChange({ ...config, sources: next.length === 0 ? ['all'] : next });
-  }
-  function isActive(s: SourceType) {
-    return s === 'all' ? config.sources.includes('all') : config.sources.includes(s) && !config.sources.includes('all');
-  }
+  // Whether the selected identity triggers the Special Police Module
+  const isPolice = POLICE_IDENTITY_TYPES.has(config.userType);
 
   return (
     <div className="flex-1 overflow-y-auto px-3 sm:px-5 py-4" dir="rtl">
-      <div className="max-w-2xl mx-auto">
-        {/* MLOS identity header */}
+      <div className="max-w-xl mx-auto">
+
+        {/* ── MLOS identity header ───────────────────────────────────────── */}
         <div className="text-center mb-6">
           <div className="inline-flex flex-col items-center gap-1 mb-4">
-            {/* MLOS badge */}
             <div className="inline-flex items-center gap-2.5 bg-primary/8 border border-primary/20 rounded-xl px-4 py-2 mb-1">
               <Scale className="w-5 h-5 text-primary/80" aria-hidden />
               <span className="text-2xl font-black tracking-[0.12em] text-primary">MLOS</span>
             </div>
-            {/* English subtitle */}
             <span className="text-sm font-semibold text-foreground/80 tracking-wide">
               Marsad Legal Operating System
             </span>
-            {/* Arabic subtitle */}
             <span className="text-sm font-medium text-muted-foreground" dir="rtl">
               نظام مرصد للتشغيل القانوني الذكي
             </span>
-            {/* Tagline */}
             <span className="text-[11px] text-primary/50 tracking-widest mt-0.5">نرصد · نحلل · نحكم</span>
           </div>
           <h2 className="text-base font-bold text-foreground mt-2">
@@ -1922,80 +2072,55 @@ function PreAnalysisPanel({
         </div>
 
         <div className="space-y-3">
-          {/* User Role — accordion hierarchy (mobile-friendly) */}
+
+          {/* ── Professional Identity — single dropdown ────────────────── */}
           <div className="bg-card border border-border/60 rounded-xl overflow-hidden">
-            {/* Header showing current selection */}
-            <div className="px-3 py-2.5 border-b border-border/40 flex items-center justify-between">
-              <p className="text-[11px] font-bold text-foreground flex items-center gap-1.5">
-                <span>👤</span>الصفة المهنية
+            <div className="px-3 pt-3 pb-1">
+              <p className="text-[11px] font-bold text-foreground mb-1.5 flex items-center gap-1.5">
+                <span>👤</span>
+                الهوية المهنية
+                <span className="text-[9px] font-normal text-muted-foreground">(من أنت؟)</span>
               </p>
-              <span className="text-[11px] font-medium text-primary bg-primary/8 border border-primary/20 px-2 py-0.5 rounded-lg">
-                {USER_TYPE_CONFIG[config.userType].emoji} {USER_TYPE_CONFIG[config.userType].ar}
-              </span>
+              <select
+                value={config.userType}
+                onChange={(e) => onChange({ ...config, userType: e.target.value as UserType })}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 appearance-none cursor-pointer"
+                style={{ direction: 'rtl' }}
+              >
+                {/* Group identities by their groupAr for optgroup */}
+                {Array.from(new Set(PRIMARY_IDENTITIES.map((id) => id.groupAr))).map((group) => (
+                  <optgroup key={group} label={group}>
+                    {PRIMARY_IDENTITIES.filter((id) => id.groupAr === group).map((id) => (
+                      <option key={id.value} value={id.value}>
+                        {id.emoji} {id.labelAr}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
             </div>
-            {/* Accordion groups */}
-            <div className="divide-y divide-border/30">
-              {USER_TYPE_GROUPS.map(({ labelAr, icon, types }) => {
-                const isOpen = expandedGroup === labelAr;
-                const hasActive = types.includes(config.userType);
-                return (
-                  <div key={labelAr}>
-                    <button
-                      type="button"
-                      onClick={() => setExpandedGroup(isOpen ? null : labelAr)}
-                      className={`w-full flex items-center justify-between px-3 py-2 text-start transition-colors ${
-                        hasActive ? 'bg-primary/5' : 'hover:bg-muted/30'
-                      }`}
-                    >
-                      <span className="flex items-center gap-2 text-[11px] font-semibold text-foreground/80">
-                        <span>{icon}</span>
-                        <span>{labelAr}</span>
-                        {hasActive && (
-                          <span className="text-[9px] font-bold text-primary">●</span>
-                        )}
-                      </span>
-                      <ChevronDown
-                        className={`w-3.5 h-3.5 text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-                      />
-                    </button>
-                    {isOpen && (
-                      <div className="px-3 pb-3 pt-1.5 flex flex-wrap gap-1.5 bg-muted/20">
-                        {types.map((k) => {
-                          const v = USER_TYPE_CONFIG[k];
-                          return (
-                            <ConfigChip key={k} value={k} selected={config.userType}
-                              label={`${v.emoji} ${v.ar}`}
-                              onSelect={(val) => { onChange({ ...config, userType: val }); setExpandedGroup(null); }}
-                            />
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+
+            {/* Selected identity badge + description */}
+            <div className={`mx-3 mb-3 mt-2 rounded-lg px-3 py-2 text-[11px] ${
+              isPolice
+                ? 'bg-blue-50 border border-blue-200'
+                : 'bg-primary/5 border border-primary/15'
+            }`}>
+              <p className={`font-bold mb-0.5 ${isPolice ? 'text-blue-800' : 'text-primary'}`}>
+                {selectedIdentity.emoji} {selectedIdentity.labelAr}
+              </p>
+              {isPolice && (
+                <p className="text-[10px] text-blue-700 font-medium">
+                  🔍 تُفعَّل الوحدة الخاصة بالشرطة — 10 محاور إجرائية إضافية في كل إجابة
+                </p>
+              )}
+              <p className="text-muted-foreground leading-relaxed mt-0.5">
+                يتكيّف النظام تلقائياً: اللغة · العمق · المصطلحات · الإرشاد الإجرائي · هيكل الإجابة
+              </p>
             </div>
           </div>
 
-          {/* User Goal */}
-          <CfgSection title="الهدف من الاستعلام" icon="🎯">
-            <div className="flex flex-wrap gap-1.5">
-              {(Object.entries(USER_GOAL_CFG) as [UserGoal, { ar: string; emoji: string }][]).map(([k, v]) => (
-                <ConfigChip key={k} value={k} selected={config.userGoal}
-                  label={`${v.emoji} ${v.ar}`} onSelect={(val) => onChange({ ...config, userGoal: val })} />
-              ))}
-            </div>
-          </CfgSection>
-
-          <CfgSection title="أسلوب الإجابة" icon="📋">
-            <div className="flex flex-wrap gap-1.5">
-              {(Object.entries(CONFIG_ANSWER_MODE_CFG) as [ConfigAnswerMode, { ar: string; emoji: string }][]).map(([k, v]) => (
-                <ConfigChip key={k} value={k} selected={config.answerMode}
-                  label={`${v.emoji} ${v.ar}`} onSelect={(val) => onChange({ ...config, answerMode: val })} />
-              ))}
-            </div>
-          </CfgSection>
-
+          {/* ── Jurisdiction ─────────────────────────────────────────────── */}
           <CfgSection title="الاختصاص القضائي" icon="🌐">
             <div className="flex flex-wrap gap-1.5">
               {(Object.entries(JURISDICTION_CFG) as [Jurisdiction, { ar: string; flag: string }][]).map(([k, v]) => (
@@ -2005,41 +2130,7 @@ function PreAnalysisPanel({
             </div>
           </CfgSection>
 
-          <CfgSection title="المصادر" icon="📚">
-            <div className="flex flex-wrap gap-1.5">
-              {(Object.keys(SOURCE_CFG) as SourceType[]).map((s) => (
-                <button key={s} type="button" onClick={() => toggleSource(s)}
-                  className={`inline-flex items-center text-[11px] font-medium px-2.5 py-1 rounded-lg border transition-all ${
-                    isActive(s) ? 'bg-primary text-primary-foreground border-primary'
-                                : 'border-border text-muted-foreground hover:border-primary/40 hover:text-foreground'
-                  }`}
-                >
-                  {SOURCE_CFG[s]}
-                </button>
-              ))}
-            </div>
-          </CfgSection>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <CfgSection title="أسلوب الاستشهاد" icon="📎">
-              <div className="flex flex-wrap gap-1.5">
-                {(Object.entries(CIT_STYLE_CFG) as [CitStyle, string][]).map(([k, v]) => (
-                  <ConfigChip key={k} value={k} selected={config.citStyle}
-                    label={v} onSelect={(val) => onChange({ ...config, citStyle: val })} />
-                ))}
-              </div>
-            </CfgSection>
-            <CfgSection title="عمق البحث" icon="🔍">
-              <div className="flex flex-wrap gap-1.5">
-                {(Object.entries(DEPTH_CFG) as [ResearchDepth, string][]).map(([k, v]) => (
-                  <ConfigChip key={k} value={k} selected={config.depth}
-                    label={v} onSelect={(val) => onChange({ ...config, depth: val })} />
-                ))}
-              </div>
-            </CfgSection>
-          </div>
-
-          {/* Comparative Law Mode — UAE ↔ France */}
+          {/* ── Comparative Law toggle ────────────────────────────────────── */}
           <label htmlFor="comparativeMode" className="flex items-start gap-3 rounded-xl px-3 py-2.5 cursor-pointer bg-indigo-50 border border-indigo-200">
             <input
               type="checkbox"
@@ -2050,14 +2141,13 @@ function PreAnalysisPanel({
             />
             <div className="flex-1 min-w-0">
               <p className="text-[11px] font-bold leading-tight text-indigo-800">🇦🇪↔🇫🇷 القانون المقارن: الإمارات ↔ فرنسا</p>
-              <p className="text-[10px] font-medium text-indigo-600">Comparative Law Mode</p>
-              <p className="text-[9px] leading-relaxed mt-1 text-indigo-500">
-                مقارنة منهجية بين الموقف الإماراتي والموقف الفرنسي في كل إجابة، مع جدول مقارن وتحديد وجه الاستئناس.
+              <p className="text-[9px] leading-relaxed mt-0.5 text-indigo-500">
+                مقارنة منهجية بين الموقف الإماراتي والموقف الفرنسي مع جدول مقارن في كل إجابة.
               </p>
             </div>
           </label>
 
-          {/* Advanced Standard (Al-Shamsi Theory) checkbox */}
+          {/* ── Al-Shamsi Theory toggle ───────────────────────────────────── */}
           <label htmlFor="applyAdvancedStandard" className="flex items-start gap-3 rounded-xl px-3 py-2.5 cursor-pointer"
             style={{ background: '#EAF2FF', border: '1px solid #a8c4f0' }}
           >
@@ -2070,13 +2160,13 @@ function PreAnalysisPanel({
             />
             <div className="flex-1 min-w-0">
               <p className="text-[11px] font-bold leading-tight" style={{ color: '#1a3a6e' }}>🧠 تطبيق المعيار المتقدم</p>
-              <p className="text-[10px] font-medium" style={{ color: '#2B5F9E' }}>(نظرية الشامسي — طبقة نظرية الذكاء الاصطناعي)</p>
-              <p className="text-[9px] leading-relaxed mt-1" style={{ color: '#3a6fa8' }}>
-                تحليل إضافي للمسائل المرتبطة بالذكاء الاصطناعي والقرارات الإدارية الذكية والخوارزميات وفق المبادئ الأحد عشر.
+              <p className="text-[9px] leading-relaxed mt-0.5" style={{ color: '#3a6fa8' }}>
+                نظرية الشامسي — تحليل إضافي للقرارات الذكية والخوارزميات وفق المبادئ الأحد عشر.
               </p>
             </div>
           </label>
 
+          {/* ── Expert Mode toggle ────────────────────────────────────────── */}
           <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
             <div>
               <p className="text-xs font-bold text-amber-800">وضع الخبير</p>
@@ -2089,6 +2179,7 @@ function PreAnalysisPanel({
             </button>
           </div>
 
+          {/* ── Start button ─────────────────────────────────────────────── */}
           <button type="button" onClick={onStart}
             className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
           >
@@ -2115,17 +2206,13 @@ function SessionConfigBar({ config, expertMode, onEdit }: {
         {USER_TYPE_CONFIG[config.userType].emoji} {USER_TYPE_CONFIG[config.userType].ar}
       </span>
       <span className="text-[10px] bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-medium">
-        {USER_GOAL_CFG[config.userGoal].emoji} {USER_GOAL_CFG[config.userGoal].ar}
-      </span>
-      <span className="text-[10px] bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-medium">
-        {CONFIG_ANSWER_MODE_CFG[config.answerMode].emoji} {CONFIG_ANSWER_MODE_CFG[config.answerMode].ar}
-      </span>
-      <span className="text-[10px] bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-medium">
         {JURISDICTION_CFG[config.jurisdiction].flag} {JURISDICTION_CFG[config.jurisdiction].ar}
       </span>
-      <span className="text-[10px] bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-medium">
-        🔍 {DEPTH_CFG[config.depth]}
-      </span>
+      {POLICE_IDENTITY_TYPES.has(config.userType) && (
+        <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full font-bold">
+          🔍 وحدة الشرطة
+        </span>
+      )}
       {config.comparativeMode && (
         <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
           🇦🇪↔🇫🇷 مقارنة إماراتي–فرنسي

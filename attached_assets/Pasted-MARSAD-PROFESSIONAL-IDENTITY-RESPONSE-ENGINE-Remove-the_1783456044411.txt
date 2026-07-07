@@ -1,0 +1,224 @@
+MARSAD PROFESSIONAL IDENTITY & RESPONSE ENGINE
+
+Remove the standalone "Legal Assistance" module entirely.
+
+Replace it with a single dropdown menu:
+
+"Professional Identity"
+(Who are you?)
+
+The user selects only one professional identity.
+
+The AI automatically changes:
+- reasoning method,
+- legal depth,
+- terminology,
+- procedural guidance,
+- educational detail,
+- drafting style,
+- evidence expectations,
+- practical recommendations.
+
+The legal outcome remains legally correct, but the analytical path changes according to the selected profession.
+
+══════════════════════════════
+AVAILABLE PROFESSIONAL IDENTITIES
+══════════════════════════════
+
+1. Citizen / Public User
+2. Law Student
+3. Academic Researcher
+4. New Police Officer
+5. Police Station Officer
+6. Evidence Collection Officer
+7. Criminal Investigation Officer
+8. Public Prosecutor
+9. Judicial Trainee (New Judge)
+10. First Instance Judge
+11. Appeal Judge
+12. Cassation Judge
+13. Lawyer
+14. Legislator
+15. Policy Maker
+16. Government Representative
+17. Regulatory Authority Representative
+
+══════════════════════════════
+ROLE BEHAVIOUR DEFINITIONS
+══════════════════════════════
+
+Citizen:
+- rights and obligations
+- simple explanations
+- practical guidance
+- procedural awareness
+
+Law Student:
+- legal definitions
+- principles and doctrines
+- examples and explanations
+- references and educational guidance
+
+Academic Researcher:
+- doctrinal analysis
+- comparative law
+- jurisprudential debate
+- methodology and references
+
+New Police Officer:
+- basic procedures
+- evidence preservation
+- legal safeguards
+- procedural sequence
+
+Police Station Officer:
+- case registration
+- evidence gathering
+- witness handling
+- scene management
+- procedural compliance
+
+Evidence Collection Officer:
+- chain of custody
+- evidence handling
+- documentation requirements
+- forensic coordination
+
+Criminal Investigation Officer:
+- investigative strategy
+- interviewing methods
+- evidentiary sufficiency
+- referral readiness
+
+Public Prosecutor:
+- legal elements
+- sufficiency of evidence
+- investigative directions
+- prosecution decisions
+
+Judicial Trainee:
+- identification of legal issues
+- judicial reasoning training
+- judgment methodology
+
+First Instance Judge:
+- burden of proof
+- evidence evaluation
+- legality assessment
+- judgment drafting
+
+Appeal Judge:
+- review of legal errors
+- procedural defects
+- appellate reasoning
+
+Cassation Judge:
+- interpretation of law
+- legal principles
+- precedent consistency
+
+Lawyer:
+- legal arguments
+- procedural objections
+- litigation strategy
+- defence planning
+
+Legislator:
+- legislative gaps
+- reform proposals
+- comparative legislation
+- draft legal provisions
+
+Policy Maker:
+- governance implications
+- institutional impact
+- implementation feasibility
+- strategic recommendations
+
+Government Representative:
+- administrative procedures
+- institutional compliance
+- regulatory obligations
+
+Regulatory Authority Representative:
+- compliance frameworks
+- supervision mechanisms
+- enforcement powers
+
+══════════════════════════════
+SPECIAL POLICE MODULE
+══════════════════════════════
+
+For police identities the system must additionally provide:
+
+1. Evidence Collection Checklist.
+2. Preliminary Investigation Principles.
+3. Police Report Validation.
+4. Procedural Legality Review.
+5. Critical Mistakes Warning.
+6. Chain of Custody Review.
+7. Referral Readiness Assessment.
+8. Missing Evidence Identification.
+9. Procedural Defects Detection.
+10. Investigation Completion Score.
+
+Examples of police guidance:
+
+- What evidence should be collected?
+- What witnesses should be interviewed?
+- Which procedures require authorisation?
+- Which mistakes may invalidate the case?
+- Is the file ready for prosecution referral?
+
+══════════════════════════════
+EDUCATIONAL SCENARIO ENGINE
+══════════════════════════════
+
+Enable educational scenarios for:
+
+- Law students.
+- Judicial trainees.
+- Prosecutors.
+- Police officers.
+- Judges.
+
+The system must explain:
+
+- facts,
+- legal issues,
+- evidence,
+- procedures,
+- reasoning,
+- expected judicial outcome.
+
+══════════════════════════════
+RESPONSE MODES
+══════════════════════════════
+
+Available response modes:
+
+1. Quick Response
+2. Professional Response
+3. Standard Model Answer
+4. Detailed Answer
+5. Court Session Simulation
+6. Al-Shamsi Theory Analysis
+7. Educational Scenario
+8. Expert Analysis
+
+══════════════════════════════
+FINAL RULE
+══════════════════════════════
+
+Changing the professional identity must fundamentally change:
+
+- language,
+- depth,
+- evidence requirements,
+- procedural guidance,
+- analytical structure,
+- legal reasoning path,
+
+while preserving the same legally correct legal conclusion.
+
+The platform must behave as if the user is speaking directly with a senior professional from the selected field.
