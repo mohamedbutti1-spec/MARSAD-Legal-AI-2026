@@ -1,0 +1,145 @@
+FINAL ARCHITECT DIRECTIVE — LOCK THE PLATFORM VISION
+
+This is a FINAL ARCHITECTURE DECISION.
+
+Do NOT add unrelated features.
+Do NOT expand into a generic legal assistant.
+Do NOT redesign the UI.
+Do NOT create new pages unless explicitly required.
+
+The mission is singular:
+
+Build the world's most advanced Intelligent Administrative Court based on Al-Shamsi Theory.
+
+The platform must remain focused on administrative justice.
+
+The following three initiatives are APPROVED and must be implemented as the permanent roadmap.
+
+========================================================
+PROJECT A
+AL-SHAMSI EXPLAINABILITY PROTOCOL (ASEP)
+========================================================
+
+Every generated judgment MUST automatically answer these mandatory questions before the final ruling is considered complete.
+
+1. What facts were relied upon?
+2. What legal provisions were applied?
+3. How was every major fact legally weighted?
+4. Was algorithmic bias detected?
+5. If bias exists, is it legally justified?
+6. Why were opposing arguments rejected?
+7. Where did human oversight intervene?
+8. What confidence level exists for every conclusion?
+9. Could another legally acceptable outcome exist?
+10. Does the judgment satisfy all Al-Shamsi Principles?
+
+Display this as a structured Explainability Report.
+
+No judgment is considered complete without ASEP.
+
+========================================================
+PROJECT B
+AL-SHAMSI MATRIX
+========================================================
+
+Replace the current static principles section with an interactive Al-Shamsi Matrix.
+
+Each of the eleven principles must appear as an individual evaluation card.
+
+Every principle receives:
+
+• Status
+✓ Satisfied
+△ Partial
+✗ Failed
+
+• Numerical score
+
+• Legal reasoning
+
+• Evidence relied upon
+
+• Human oversight assessment
+
+• Improvement recommendation
+
+Clicking any principle expands into its complete legal analysis.
+
+This matrix becomes the central identity of the platform.
+
+========================================================
+PROJECT C
+DIGITAL WILL ENGINE
+========================================================
+
+Create a dedicated visualization called
+
+"Digital Will Formation"
+
+Every administrative decision must pass through the following mandatory pipeline:
+
+Input Data
+
+↓
+
+Evidence Validation
+
+↓
+
+Legal Weight Assignment
+
+↓
+
+Bias Detection
+
+↓
+
+Legitimacy Verification
+
+↓
+
+Human Oversight
+
+↓
+
+Digital Will Formation
+
+↓
+
+Administrative Decision
+
+↓
+
+Judicial Review
+
+↓
+
+Final Judgment
+
+The user must visually understand exactly how the administrative digital will was formed.
+
+This engine is the practical implementation of Al-Shamsi Theory.
+
+========================================================
+GLOBAL RULES
+========================================================
+
+No feature duplication.
+
+No unnecessary AI gimmicks.
+
+No decorative complexity.
+
+Everything must directly strengthen:
+
+• Administrative legality
+
+• Judicial reasoning
+
+• Explainability
+
+• Al-Shamsi Theory
+
+Every screen must make the platform academically stronger, legally stronger, and easier for judges, researchers, and government entities to trust.
+
+These three projects now become permanent core architecture and are treated as first-class platform components.

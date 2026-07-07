@@ -1,17 +1,26 @@
 /**
  * Stage 5 — Smart Administrative Court Simulation
- * CourtSessionPanel — renders the full courtroom session UI
+ *
+ * Projects A, B, C implemented:
+ *   A — Al-Shamsi Explainability Protocol (ASEP) panel
+ *   B — Al-Shamsi Matrix (interactive 11-principle evaluation cards)
+ *   C — Digital Will Engine (10-stage pipeline visualization)
  */
 
 import React, { useState } from 'react';
-import { Scale, Gavel, Shield, Users, FileText, Brain, AlertTriangle,
-  ChevronDown, ChevronUp, Loader2, CheckCircle2, XCircle,
-  TrendingUp, TrendingDown, Minus, Star, RotateCcw } from 'lucide-react';
+import {
+  Scale, Gavel, Shield, Users, FileText, Brain,
+  AlertTriangle, ChevronDown, ChevronUp, Loader2,
+  CheckCircle2, XCircle, TrendingUp, TrendingDown,
+  Star, RotateCcw, Activity, Eye, ArrowDown,
+  ClipboardCheck, Cpu, Lock, Search, Zap,
+} from 'lucide-react';
 import type {
-  CourtSessionData, CourtDefense, CourtShamsiPrinciple, CourtScores,
+  CourtSessionData, CourtDefense, CourtShamsiPrinciple,
+  CourtScores, ASEPReport,
 } from '@/lib/court-types';
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Primitives ───────────────────────────────────────────────────────────────
 
 function ScoreBar({ label, value, color }: { label: string; value: number; color: string }) {
   return (
@@ -97,7 +106,7 @@ function LoadingCard({ titleAr, titleEn, icon }: { titleAr: string; titleEn: str
   );
 }
 
-// ─── Section sub-renderers ────────────────────────────────────────────────────
+// ─── Defense List ─────────────────────────────────────────────────────────────
 
 function DefenseList({ items }: { items: CourtDefense[] }) {
   const [expanded, setExpanded] = useState<number | null>(null);
@@ -127,71 +136,421 @@ function DefenseList({ items }: { items: CourtDefense[] }) {
   );
 }
 
-function ShamsiGrid({ items }: { items: CourtShamsiPrinciple[] }) {
+// ─── Project B — Al-Shamsi Matrix ─────────────────────────────────────────────
+
+/** Canonical status resolver — uses explicit status if valid, falls back to score band */
+function resolveShamsiStatus(p: CourtShamsiPrinciple): 'مُستوفى' | 'جزئي' | 'مخفق' {
+  if (p.status === 'مُستوفى' || p.status === 'جزئي' || p.status === 'مخفق') return p.status;
+  const s = Number(p.score);
+  return s >= 70 ? 'مُستوفى' : s >= 40 ? 'جزئي' : 'مخفق';
+}
+
+function ShamsiStatusIcon({ status }: { status: 'مُستوفى' | 'جزئي' | 'مخفق' }) {
+  if (status === 'مُستوفى') return <span className="text-emerald-600 font-bold text-base">✓</span>;
+  if (status === 'جزئي')   return <span className="text-amber-500  font-bold text-base">△</span>;
+  return                          <span className="text-red-600    font-bold text-base">✗</span>;
+}
+
+function ShamsiMatrix({ items }: { items: CourtShamsiPrinciple[] }) {
   const [expanded, setExpanded] = useState<string | null>(null);
+  if (!Array.isArray(items) || items.length === 0) return null;
+
   return (
     <div className="space-y-2">
-      {items.map((p) => (
-        <div key={p.id} className="border border-border/60 rounded-lg overflow-hidden">
+      {items.map((p, idx) => {
+        const status = resolveShamsiStatus(p);
+        const score  = Math.min(100, Math.max(0, Number(p.score ?? 0)));
+        const statusBg =
+          status === 'مُستوفى' ? 'border-emerald-200 bg-emerald-50/40' :
+          status === 'جزئي'   ? 'border-amber-200  bg-amber-50/40'   :
+                                 'border-red-200    bg-red-50/40';
+        const scoreColor =
+          score >= 70 ? 'text-emerald-600' : score >= 40 ? 'text-amber-600' : 'text-red-600';
+        const barColor =
+          score >= 70 ? 'bg-emerald-500' : score >= 40 ? 'bg-amber-500' : 'bg-red-500';
+        const key = p.id || String(idx);
+
+        return (
+          <div key={key} className={`border rounded-lg overflow-hidden ${statusBg}`}>
+            <button
+              type="button"
+              onClick={() => setExpanded(expanded === key ? null : key)}
+              className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-black/5 transition-colors"
+              dir="rtl"
+            >
+              <div className="w-6 shrink-0 text-center">
+                <ShamsiStatusIcon status={status} />
+              </div>
+              <div className="flex-1 min-w-0 text-start">
+                <span className="text-sm font-medium">{p.nameAr ?? p.id}</span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <div className="w-14 h-1.5 rounded-full bg-muted overflow-hidden">
+                  <div className={`h-full rounded-full ${barColor}`} style={{ width: `${score}%` }} />
+                </div>
+                <span className={`text-[11px] font-bold w-8 text-end ${scoreColor}`}>{score}%</span>
+                {expanded === key
+                  ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" />
+                  : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}
+              </div>
+            </button>
+
+            {expanded === key && (
+              <div className="px-4 pb-4 pt-1 border-t border-border/30 space-y-3 text-sm" dir="rtl">
+                {/* 1 — Legal reasoning (always) */}
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground mb-0.5">التحليل القانوني</p>
+                  <p className="text-foreground leading-relaxed">{p.reason || '—'}</p>
+                </div>
+                {/* 2 — Evidence (always, with placeholder) */}
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-blue-600 mb-0.5 flex items-center gap-1">
+                    <Search className="w-3 h-3" /> الأدلة المستند إليها
+                  </p>
+                  <p className="text-muted-foreground leading-relaxed">
+                    {p.evidence || 'لا توجد أدلة محددة في التقرير'}
+                  </p>
+                </div>
+                {/* 3 — Human oversight (always, with placeholder) */}
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-purple-600 mb-0.5 flex items-center gap-1">
+                    <Eye className="w-3 h-3" /> الرقابة البشرية
+                  </p>
+                  <p className="text-muted-foreground leading-relaxed">
+                    {p.humanOversightNote || 'لم يُحدَّد دور الرقابة البشرية في هذا المبدأ'}
+                  </p>
+                </div>
+                {/* 4 — Legal risk (always) */}
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-red-500 mb-0.5">المخاطر القانونية</p>
+                  <p className="text-red-700 text-xs leading-relaxed">{p.legalRisk || '—'}</p>
+                </div>
+                {/* 5 — Recommendation (always) */}
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-600 mb-0.5">التوصية</p>
+                  <p className="text-emerald-700 text-xs leading-relaxed">{p.recommendation || '—'}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      {/* Matrix summary bar */}
+      {(() => {
+        const satisfied = items.filter(p => resolveShamsiStatus(p) === 'مُستوفى').length;
+        const partial   = items.filter(p => resolveShamsiStatus(p) === 'جزئي').length;
+        const failed    = items.filter(p => resolveShamsiStatus(p) === 'مخفق').length;
+        return (
+          <div className="mt-3 flex items-center justify-center gap-4 border border-border/50 rounded-lg py-2 bg-muted/20 text-[11px]" dir="rtl">
+            <span className="flex items-center gap-1 text-emerald-700 font-semibold">✓ مُستوفى: {satisfied}</span>
+            <span className="text-muted-foreground/40">|</span>
+            <span className="flex items-center gap-1 text-amber-600 font-semibold">△ جزئي: {partial}</span>
+            <span className="text-muted-foreground/40">|</span>
+            <span className="flex items-center gap-1 text-red-600 font-semibold">✗ مخفق: {failed}</span>
+          </div>
+        );
+      })()}
+    </div>
+  );
+}
+
+// ─── Project C — Digital Will Engine ─────────────────────────────────────────
+
+interface DWStage {
+  icon: React.ReactNode;
+  nameAr: string;
+  nameEn: string;
+  done: boolean;
+  excerpt?: string;
+}
+
+function DigitalWillEngine({ session, loading }: { session: CourtSessionData; loading: boolean }) {
+  const [open, setOpen] = useState(true);
+
+  const stages: DWStage[] = [
+    {
+      icon: <FileText className="w-3.5 h-3.5" />,
+      nameAr: 'البيانات المدخلة',
+      nameEn: 'Input Data',
+      done: !!session.caseText,
+      excerpt: session.caseText.slice(0, 60) + (session.caseText.length > 60 ? '...' : ''),
+    },
+    {
+      icon: <Search className="w-3.5 h-3.5" />,
+      nameAr: 'التحقق من الأدلة',
+      nameEn: 'Evidence Validation',
+      done: !!session.facts,
+      excerpt: session.facts?.summary?.slice(0, 60),
+    },
+    {
+      icon: <Zap className="w-3.5 h-3.5" />,
+      nameAr: 'تحديد الأوزان القانونية',
+      nameEn: 'Legal Weight Assignment',
+      done: !!session.issues,
+      excerpt: session.issues?.cause?.slice(0, 60),
+    },
+    {
+      icon: <Cpu className="w-3.5 h-3.5" />,
+      nameAr: 'كشف التحيز الخوارزمي',
+      nameEn: 'Bias Detection',
+      done: !!session.shamsiAnalysis,
+      excerpt: session.shamsiAnalysis
+        ? `${session.shamsiAnalysis.filter(p => (p.status ?? (p.score < 40 ? 'مخفق' : p.score < 70 ? 'جزئي' : 'مُستوفى')) === 'مخفق').length} مبدأ مخفق من 11`
+        : undefined,
+    },
+    {
+      icon: <Lock className="w-3.5 h-3.5" />,
+      nameAr: 'التحقق من المشروعية',
+      nameEn: 'Legitimacy Verification',
+      done: !!session.commissionerReport,
+      excerpt: session.commissionerReport?.recommendation
+        ? `توصية المفوض: ${session.commissionerReport.recommendation}`
+        : undefined,
+    },
+    {
+      icon: <Eye className="w-3.5 h-3.5" />,
+      nameAr: 'الرقابة البشرية',
+      nameEn: 'Human Oversight',
+      done: !!session.shamsiAnalysis,
+      excerpt: session.shamsiAnalysis?.find(p => p.id === 'human_supervision')
+        ? `${session.shamsiAnalysis.find(p => p.id === 'human_supervision')!.score}% — الرقابة البشرية الفاعلة`
+        : undefined,
+    },
+    {
+      icon: <Brain className="w-3.5 h-3.5" />,
+      nameAr: 'تكوين الإرادة الرقمية',
+      nameEn: 'Digital Will Formation',
+      done: !!session.judgment,
+      excerpt: session.judgment?.ruling?.slice(0, 60),
+    },
+    {
+      icon: <ClipboardCheck className="w-3.5 h-3.5" />,
+      nameAr: 'القرار الإداري',
+      nameEn: 'Administrative Decision',
+      done: !!session.operative,
+      excerpt: session.operative
+        ? `${session.operative.decision} — ${session.operative.cancellation}`
+        : undefined,
+    },
+    {
+      icon: <Scale className="w-3.5 h-3.5" />,
+      nameAr: 'المراجعة القضائية',
+      nameEn: 'Judicial Review',
+      done: !!session.appeal,
+      excerpt: session.appeal
+        ? `فرص الطعن: ${session.appeal.successChance}%`
+        : undefined,
+    },
+    {
+      icon: <Gavel className="w-3.5 h-3.5" />,
+      nameAr: 'الحكم النهائي',
+      nameEn: 'Final Judgment',
+      done: !!session.asep || (!!session.scores && !!session.judgment),
+      excerpt: session.asep
+        ? `قابلية التفسير: ${session.asep.overallExplainability}%`
+        : session.scores
+        ? `مؤشر الشامسي: ${session.scores.shamsiIndex}%`
+        : undefined,
+    },
+  ];
+
+  const doneCount  = stages.filter(s => s.done).length;
+  const activeIdx  = stages.findIndex(s => !s.done);
+
+  return (
+    <div className="border-2 border-primary/20 rounded-xl overflow-hidden bg-gradient-to-b from-primary/3 to-transparent">
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-primary/5 transition-colors"
+        dir="rtl"
+      >
+        <div className="flex items-center gap-2">
+          <Activity className="w-4 h-4 text-primary" />
+          <span className="font-bold text-sm text-primary">محرك الإرادة الرقمية</span>
+          <span className="text-[10px] text-muted-foreground hidden sm:inline">/ Digital Will Engine</span>
+          <span className="text-[10px] bg-primary/10 text-primary border border-primary/20 rounded-full px-2 py-0.5">
+            Project C
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] text-muted-foreground">{doneCount}/{stages.length}</span>
+          {open ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+        </div>
+      </button>
+
+      {open && (
+        <div className="px-4 pb-4" dir="rtl">
+          <div className="flex flex-col items-center gap-0">
+            {stages.map((stage, idx) => {
+              const isActive = loading && idx === activeIdx;
+              const statusColor = stage.done
+                ? 'text-emerald-600 border-emerald-400 bg-emerald-50'
+                : isActive
+                ? 'text-amber-600 border-amber-400 bg-amber-50 animate-pulse'
+                : 'text-muted-foreground border-border bg-muted/30';
+              return (
+                <React.Fragment key={idx}>
+                  <div className={`w-full flex items-start gap-3 p-2.5 rounded-lg border transition-all ${statusColor}`}>
+                    {/* Step indicator */}
+                    <div className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold border-2 mt-0.5 ${
+                      stage.done
+                        ? 'bg-emerald-500 text-white border-emerald-500'
+                        : isActive
+                        ? 'bg-amber-400 text-white border-amber-400'
+                        : 'bg-muted text-muted-foreground border-border/60'
+                    }`}>
+                      {stage.done ? '✓' : isActive ? <Loader2 className="w-3 h-3 animate-spin" /> : idx + 1}
+                    </div>
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="opacity-70">{stage.icon}</span>
+                        <span className="text-xs font-semibold">{stage.nameAr}</span>
+                        <span className="text-[10px] text-muted-foreground hidden sm:inline">/ {stage.nameEn}</span>
+                      </div>
+                      {stage.excerpt && stage.done && (
+                        <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug line-clamp-1">
+                          {stage.excerpt}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {idx < stages.length - 1 && (
+                    <div className="flex flex-col items-center w-6 shrink-0">
+                      <div className={`w-0.5 h-3 ${stage.done ? 'bg-emerald-400' : 'bg-border'}`} />
+                      <ArrowDown className={`w-3 h-3 ${stage.done ? 'text-emerald-400' : 'text-border'}`} />
+                      <div className={`w-0.5 h-1 ${stages[idx + 1]?.done ? 'bg-emerald-400' : 'bg-border'}`} />
+                    </div>
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Project A — ASEP Panel ───────────────────────────────────────────────────
+
+function ASEPPanel({ report }: { report: ASEPReport }) {
+  const [expanded, setExpanded] = useState<number | null>(null);
+
+  const confColor = (c: number) =>
+    c >= 70 ? 'text-emerald-600' : c >= 40 ? 'text-amber-600' : 'text-red-600';
+
+  // Defensive: ensure answers is always an array and each entry has required fields
+  const safeAnswers = Array.isArray(report.answers)
+    ? report.answers.map((a) => ({
+        question:   String(a?.question   ?? ''),
+        answer:     String(a?.answer     ?? ''),
+        confidence: Math.min(100, Math.max(0, Number(a?.confidence ?? 0))),
+        flagged:    Boolean(a?.flagged),
+      }))
+    : [];
+  const safeExplainability = Math.min(100, Math.max(0, Number(report.overallExplainability ?? 0)));
+
+  if (safeAnswers.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground text-center py-4">
+        لا توجد بيانات قابلية التفسير
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {/* Overall explainability score */}
+      <div className="flex items-center gap-3 border border-border/50 rounded-lg px-3 py-2.5 bg-muted/20">
+        <div className="flex-1">
+          <p className="text-[11px] font-bold text-muted-foreground mb-1">مؤشر قابلية التفسير الكلية</p>
+          <div className="h-2 rounded-full bg-muted overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-700 ${
+                safeExplainability >= 70 ? 'bg-emerald-500'
+                : safeExplainability >= 40 ? 'bg-amber-500' : 'bg-red-500'
+              }`}
+              style={{ width: `${safeExplainability}%` }}
+            />
+          </div>
+        </div>
+        <span className={`text-2xl font-bold shrink-0 ${confColor(safeExplainability)}`}>
+          {safeExplainability}%
+        </span>
+      </div>
+
+      {/* 10 Q&A cards */}
+      {safeAnswers.map((qa, i) => (
+        <div
+          key={i}
+          className={`border rounded-lg overflow-hidden ${
+            qa.flagged ? 'border-amber-300 bg-amber-50/30' : 'border-border/60 bg-card'
+          }`}
+        >
           <button
             type="button"
-            onClick={() => setExpanded(expanded === p.id ? null : p.id)}
-            className="w-full flex items-center gap-3 px-3 py-2 hover:bg-muted/30 transition-colors"
+            onClick={() => setExpanded(expanded === i ? null : i)}
+            className="w-full flex items-start gap-3 px-3 py-2.5 hover:bg-black/5 transition-colors text-start"
+            dir="rtl"
           >
-            <div className="flex-1 min-w-0 text-start">
-              <span className="text-sm font-medium">{p.nameAr}</span>
+            <span className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold mt-0.5 border ${
+              qa.flagged
+                ? 'bg-amber-100 text-amber-700 border-amber-300'
+                : 'bg-primary/10 text-primary border-primary/20'
+            }`}>
+              {i + 1}
+            </span>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold leading-snug">{qa.question}</p>
+              {qa.flagged && (
+                <span className="text-[10px] text-amber-600 font-medium">⚠ يستوجب الانتباه</span>
+              )}
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <div className="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
-                <div
-                  className={`h-full rounded-full ${p.score >= 70 ? 'bg-emerald-500' : p.score >= 40 ? 'bg-amber-500' : 'bg-red-500'}`}
-                  style={{ width: `${p.score}%` }}
-                />
-              </div>
-              <span className={`text-[11px] font-bold w-8 text-end ${p.score >= 70 ? 'text-emerald-600' : p.score >= 40 ? 'text-amber-600' : 'text-red-600'}`}>
-                {p.score}%
+              <span className={`text-[11px] font-bold ${confColor(qa.confidence)}`}>
+                {qa.confidence}%
               </span>
-              {expanded === p.id ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}
+              {expanded === i
+                ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" />
+                : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}
             </div>
           </button>
-          {expanded === p.id && (
-            <div className="px-3 pb-3 pt-1 border-t border-border/40 space-y-2 text-sm">
-              <p className="text-muted-foreground leading-relaxed"><span className="font-medium text-foreground">السبب: </span>{p.reason}</p>
-              <p className="text-red-600 text-xs"><span className="font-medium">المخاطر القانونية: </span>{p.legalRisk}</p>
-              <p className="text-emerald-600 text-xs"><span className="font-medium">التوصية: </span>{p.recommendation}</p>
+
+          {expanded === i && (
+            <div className="px-4 pb-3 pt-1 border-t border-border/30" dir="rtl">
+              <p className="text-sm text-foreground leading-relaxed mb-2">{qa.answer}</p>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-muted-foreground">مستوى الثقة:</span>
+                <div className="flex-1 h-1 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${
+                      qa.confidence >= 70 ? 'bg-emerald-500' : qa.confidence >= 40 ? 'bg-amber-500' : 'bg-red-500'
+                    }`}
+                    style={{ width: `${qa.confidence}%` }}
+                  />
+                </div>
+                <span className={`text-[10px] font-bold ${confColor(qa.confidence)}`}>{qa.confidence}%</span>
+              </div>
             </div>
           )}
         </div>
       ))}
+
+      {/* Conclusion */}
+      {report.conclusion && (
+        <div className="border-r-4 border-primary pr-3 py-1">
+          <p className="text-[11px] font-bold text-primary mb-0.5">خلاصة قابلية التفسير</p>
+          <p className="text-sm text-foreground leading-relaxed">{report.conclusion}</p>
+        </div>
+      )}
     </div>
   );
 }
 
-function ScoresDashboard({ scores }: { scores: CourtScores }) {
-  const items: Array<{ label: string; value: number; inverse?: boolean }> = [
-    { label: 'درجة المشروعية',           value: scores.legality },
-    { label: 'درجة الشفافية',            value: scores.transparency },
-    { label: 'درجة التفسير الخوارزمي',   value: scores.algorithmicExplainability },
-    { label: 'درجة الرقابة البشرية',     value: scores.humanOversight },
-    { label: 'درجة المخاطر القضائية',    value: scores.judicialRisk,          inverse: true },
-    { label: 'احتمال الإلغاء القضائي',   value: scores.annulmentProbability,  inverse: true },
-    { label: 'مؤشر نظرية الشامسي',       value: scores.shamsiIndex },
-  ];
-
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      {items.map((item) => {
-        const displayValue = item.inverse ? item.value : item.value;
-        const color = item.inverse
-          ? item.value >= 70 ? 'text-red-600' : item.value >= 40 ? 'text-amber-600' : 'text-emerald-600'
-          : item.value >= 70 ? 'text-emerald-600' : item.value >= 40 ? 'text-amber-600' : 'text-red-600';
-        return (
-          <ScoreBar key={item.label} label={item.label} value={displayValue} color={color} />
-        );
-      })}
-    </div>
-  );
-}
+// ─── Judgment Text ────────────────────────────────────────────────────────────
 
 function JudgmentText({ data }: { data: NonNullable<CourtSessionData['judgment']> }) {
   const clauses = [
@@ -214,7 +573,31 @@ function JudgmentText({ data }: { data: NonNullable<CourtSessionData['judgment']
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
+// ─── Scores Dashboard ─────────────────────────────────────────────────────────
+
+function ScoresDashboard({ scores }: { scores: CourtScores }) {
+  const items: Array<{ label: string; value: number; inverse?: boolean }> = [
+    { label: 'درجة المشروعية',           value: scores.legality },
+    { label: 'درجة الشفافية',            value: scores.transparency },
+    { label: 'درجة التفسير الخوارزمي',   value: scores.algorithmicExplainability },
+    { label: 'درجة الرقابة البشرية',     value: scores.humanOversight },
+    { label: 'درجة المخاطر القضائية',    value: scores.judicialRisk,         inverse: true },
+    { label: 'احتمال الإلغاء القضائي',   value: scores.annulmentProbability, inverse: true },
+    { label: 'مؤشر نظرية الشامسي',       value: scores.shamsiIndex },
+  ];
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {items.map((item) => {
+        const color = item.inverse
+          ? item.value >= 70 ? 'text-red-600' : item.value >= 40 ? 'text-amber-600' : 'text-emerald-600'
+          : item.value >= 70 ? 'text-emerald-600' : item.value >= 40 ? 'text-amber-600' : 'text-red-600';
+        return <ScoreBar key={item.label} label={item.label} value={item.value} color={color} />;
+      })}
+    </div>
+  );
+}
+
+// ─── Main export ──────────────────────────────────────────────────────────────
 
 interface CourtSessionPanelProps {
   session: CourtSessionData;
@@ -225,15 +608,16 @@ interface CourtSessionPanelProps {
 
 export function CourtSessionPanel({ session, onSupremeReview, onReset, loading }: CourtSessionPanelProps) {
   const allSections: Array<{ id: string; titleAr: string; titleEn: string; icon: React.ReactNode }> = [
-    { id: 'facts',        titleAr: 'عرض الوقائع',            titleEn: 'Facts',            icon: <FileText className="w-4 h-4" /> },
-    { id: 'issues',       titleAr: 'المسائل القانونية',       titleEn: 'Legal Issues',     icon: <Scale className="w-4 h-4" /> },
-    { id: 'claimant',     titleAr: 'دفوع المدعي',             titleEn: 'Claimant',         icon: <Users className="w-4 h-4" /> },
-    { id: 'admin',        titleAr: 'دفوع الإدارة',            titleEn: 'Administration',   icon: <Shield className="w-4 h-4" /> },
-    { id: 'commissioner', titleAr: 'رأي المفوض / المقرر',    titleEn: 'Commissioner',     icon: <Star className="w-4 h-4" /> },
-    { id: 'shamsi',       titleAr: 'تطبيق نظرية الشامسي',    titleEn: 'Shamsi Theory',    icon: <Brain className="w-4 h-4" /> },
-    { id: 'judgment',     titleAr: 'الحكم القضائي',           titleEn: 'Judgment',         icon: <Gavel className="w-4 h-4" /> },
-    { id: 'operative',    titleAr: 'منطوق الحكم',             titleEn: 'Operative Part',   icon: <CheckCircle2 className="w-4 h-4" /> },
-    { id: 'appeal',       titleAr: 'قابلية الطعن',            titleEn: 'Appeal',           icon: <TrendingUp className="w-4 h-4" /> },
+    { id: 'facts',        titleAr: 'عرض الوقائع',            titleEn: 'Facts',                icon: <FileText className="w-4 h-4" /> },
+    { id: 'issues',       titleAr: 'المسائل القانونية',       titleEn: 'Legal Issues',         icon: <Scale className="w-4 h-4" /> },
+    { id: 'claimant',     titleAr: 'دفوع المدعي',             titleEn: 'Claimant',             icon: <Users className="w-4 h-4" /> },
+    { id: 'admin',        titleAr: 'دفوع الإدارة',            titleEn: 'Administration',       icon: <Shield className="w-4 h-4" /> },
+    { id: 'commissioner', titleAr: 'رأي المفوض / المقرر',    titleEn: 'Commissioner',         icon: <Star className="w-4 h-4" /> },
+    { id: 'shamsi',       titleAr: 'مصفوفة نظرية الشامسي',   titleEn: 'Al-Shamsi Matrix',     icon: <Brain className="w-4 h-4" /> },
+    { id: 'judgment',     titleAr: 'الحكم القضائي',           titleEn: 'Judgment',             icon: <Gavel className="w-4 h-4" /> },
+    { id: 'operative',    titleAr: 'منطوق الحكم',             titleEn: 'Operative Part',       icon: <CheckCircle2 className="w-4 h-4" /> },
+    { id: 'appeal',       titleAr: 'قابلية الطعن',            titleEn: 'Appeal',               icon: <TrendingUp className="w-4 h-4" /> },
+    { id: 'asep',         titleAr: 'بروتوكول قابلية التفسير', titleEn: 'ASEP',                 icon: <ClipboardCheck className="w-4 h-4" /> },
   ];
 
   const sectionDone = (id: string) => {
@@ -246,6 +630,7 @@ export function CourtSessionPanel({ session, onSupremeReview, onReset, loading }
     if (id === 'judgment')     return !!session.judgment;
     if (id === 'operative')    return !!session.operative;
     if (id === 'appeal')       return !!session.appeal;
+    if (id === 'asep')         return !!session.asep;
     return false;
   };
 
@@ -267,7 +652,7 @@ export function CourtSessionPanel({ session, onSupremeReview, onReset, loading }
           {loading && (
             <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
               <Loader2 className="w-3 h-3 animate-spin" />
-              جارٍ المحاكمة ({completedCount}/9)
+              جارٍ المحاكمة ({completedCount}/{allSections.length})
             </span>
           )}
           <button
@@ -285,7 +670,7 @@ export function CourtSessionPanel({ session, onSupremeReview, onReset, loading }
         <div className="h-1 rounded-full bg-muted overflow-hidden">
           <div
             className="h-full rounded-full bg-amber-500 transition-all duration-500"
-            style={{ width: `${Math.round((completedCount / (allSections.length + 1)) * 100)}%` }}
+            style={{ width: `${Math.round((completedCount / allSections.length) * 100)}%` }}
           />
         </div>
       )}
@@ -296,23 +681,31 @@ export function CourtSessionPanel({ session, onSupremeReview, onReset, loading }
         {session.caseText.slice(0, 200)}{session.caseText.length > 200 ? '...' : ''}
       </div>
 
-      {/* Sections */}
+      {/* Project C — Digital Will Engine */}
+      {(loading || completedCount > 0) && (
+        <DigitalWillEngine session={session} loading={loading} />
+      )}
+
+      {/* 10 content sections */}
       {allSections.map((s) => {
         const done = sectionDone(s.id);
         const isCurrentlyLoading = loading && !done;
 
         if (!done && isCurrentlyLoading) {
-          // Check if previous is done (first undone during loading)
           const prevIdx = allSections.indexOf(s) - 1;
           const prevDone = prevIdx < 0 || sectionDone(allSections[prevIdx].id);
-          if (!prevDone) return null; // not yet reached
+          if (!prevDone) return null;
           return <LoadingCard key={s.id} titleAr={s.titleAr} titleEn={s.titleEn} icon={s.icon} />;
         }
         if (!done) return null;
 
-        // Render completed section
+        const badgeFn: Record<string, string | undefined> = {
+          shamsi: 'Project B',
+          asep: 'Project A',
+        };
+
         return (
-          <SectionCard key={s.id} icon={s.icon} titleAr={s.titleAr} titleEn={s.titleEn}>
+          <SectionCard key={s.id} icon={s.icon} titleAr={s.titleAr} titleEn={s.titleEn} badge={badgeFn[s.id]}>
             {s.id === 'facts' && session.facts && (
               <div className="space-y-3">
                 <p className="text-sm text-foreground leading-relaxed">{session.facts.summary}</p>
@@ -393,15 +786,16 @@ export function CourtSessionPanel({ session, onSupremeReview, onReset, loading }
                     <span className="text-[11px] font-bold text-muted-foreground">التوصية:</span>
                     <span className={`text-sm font-bold ${
                       c.recommendation === 'قبول' ? 'text-emerald-600' :
-                      c.recommendation === 'رفض' ? 'text-red-600' : 'text-amber-600'
+                      c.recommendation === 'رفض'  ? 'text-red-600'     : 'text-amber-600'
                     }`}>{c.recommendation}</span>
                   </div>
                 </div>
               );
             })()}
 
+            {/* Project B — Al-Shamsi Matrix */}
             {s.id === 'shamsi' && session.shamsiAnalysis && (
-              <ShamsiGrid items={session.shamsiAnalysis} />
+              <ShamsiMatrix items={session.shamsiAnalysis} />
             )}
 
             {s.id === 'judgment' && session.judgment && (
@@ -483,6 +877,11 @@ export function CourtSessionPanel({ session, onSupremeReview, onReset, loading }
                 </div>
               );
             })()}
+
+            {/* Project A — ASEP */}
+            {s.id === 'asep' && session.asep && (
+              <ASEPPanel report={session.asep} />
+            )}
           </SectionCard>
         );
       })}
@@ -542,13 +941,13 @@ export function CourtSessionPanel({ session, onSupremeReview, onReset, loading }
       {session.supremeReview && (() => {
         const sr = session.supremeReview!;
         const layers: Array<{ key: keyof typeof sr; labelAr: string; icon: string }> = [
-          { key: 'firstInstance',  labelAr: 'حكم أول درجة',                icon: '⚖️' },
-          { key: 'appeal',         labelAr: 'حكم الاستئناف',               icon: '📋' },
-          { key: 'cassation',      labelAr: 'حكم التمييز / النقض',          icon: '🏛️' },
-          { key: 'frenchCouncil',  labelAr: 'مجلس الدولة الفرنسي',         icon: '🇫🇷' },
-          { key: 'europeanCourt',  labelAr: 'المحكمة الأوروبية',            icon: '🇪🇺' },
-          { key: 'shamsiEval',     labelAr: 'تقييم نظرية الشامسي',          icon: '🧠' },
-          { key: 'finalComparison',labelAr: 'النتيجة النهائية المقارنة',    icon: '📊' },
+          { key: 'firstInstance',   labelAr: 'حكم أول درجة',                icon: '⚖️' },
+          { key: 'appeal',          labelAr: 'حكم الاستئناف',               icon: '📋' },
+          { key: 'cassation',       labelAr: 'حكم التمييز / النقض',          icon: '🏛️' },
+          { key: 'frenchCouncil',   labelAr: 'مجلس الدولة الفرنسي',         icon: '🇫🇷' },
+          { key: 'europeanCourt',   labelAr: 'المحكمة الأوروبية',            icon: '🇪🇺' },
+          { key: 'shamsiEval',      labelAr: 'تقييم نظرية الشامسي',          icon: '🧠' },
+          { key: 'finalComparison', labelAr: 'النتيجة النهائية المقارنة',    icon: '📊' },
         ];
         return (
           <SectionCard

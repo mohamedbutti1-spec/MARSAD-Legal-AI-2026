@@ -1,7 +1,7 @@
 /**
  * Stage 5 — Smart Administrative Court Simulation
  *
- * POST /court/simulate       — Full 9-section NDJSON streaming court session
+ * POST /court/simulate       — Full 10-section NDJSON streaming court session
  * POST /court/supreme-review — Layered 7-tier supreme court analysis (JSON)
  *
  * Streaming format (court/simulate):
@@ -10,11 +10,12 @@
  *   {"type":"section","id":"claimant",    "data":[...]}
  *   {"type":"section","id":"admin",       "data":[...]}
  *   {"type":"section","id":"commissioner","data":{...}}
- *   {"type":"section","id":"shamsi",      "data":[...]}
+ *   {"type":"section","id":"shamsi",      "data":[...]}  ← Project B: includes status/evidence/humanOversightNote
  *   {"type":"section","id":"judgment",    "data":{...}}
  *   {"type":"section","id":"operative",   "data":{...}}
  *   {"type":"section","id":"appeal",      "data":{...}}
  *   {"type":"section","id":"scores",      "data":{...}}
+ *   {"type":"section","id":"asep",        "data":{...}}  ← Project A: ASEP explainability report
  *   {"type":"done","model":"..."}
  */
 
@@ -84,6 +85,11 @@ router.post(
     res.setHeader("X-Accel-Buffering", "no");
 
     let model = "";
+    // Capture data for Phase 5 ASEP
+    let capturedFacts    = '';
+    let capturedIssues   = '';
+    let capturedShamsi   = '';
+    let capturedJudgment = '';
 
     // ── Phase 1: Facts + Issues ───────────────────────────────────────────────
     try {
@@ -120,8 +126,8 @@ ${caseText}
         writeLine(res, { type: "error", message: "Phase 1 (facts/issues) parse failed" }); res.end(); return;
       }
       const d1 = p1.data as Record<string, unknown>;
-      if (d1.facts)  writeLine(res, { type: "section", id: "facts",  data: d1.facts });
-      if (d1.issues) writeLine(res, { type: "section", id: "issues", data: d1.issues });
+      if (d1.facts)  { writeLine(res, { type: "section", id: "facts",  data: d1.facts });  capturedFacts  = JSON.stringify(d1.facts).slice(0, 1500); }
+      if (d1.issues) { writeLine(res, { type: "section", id: "issues", data: d1.issues }); capturedIssues = JSON.stringify(d1.issues).slice(0, 1500); }
     } catch (e) {
       writeLine(res, { type: "error", message: (e as Error).message }); res.end(); return;
     }
@@ -185,17 +191,17 @@ ${caseText}
     "recommendation": "قبول | رفض | قبول جزئي"
   },
   "shamsi": [
-    {"id":"human_will",       "nameAr":"تكوين الإرادة البشرية",       "score":0,"reason":"string","legalRisk":"string","recommendation":"string"},
-    {"id":"digital_will",     "nameAr":"تكوين الإرادة الرقمية",       "score":0,"reason":"string","legalRisk":"string","recommendation":"string"},
-    {"id":"algo_weight",      "nameAr":"الوزن القانوني الخوارزمي",     "score":0,"reason":"string","legalRisk":"string","recommendation":"string"},
-    {"id":"explainability",   "nameAr":"قابلية التفسير الخوارزمي",     "score":0,"reason":"string","legalRisk":"string","recommendation":"string"},
-    {"id":"legitimate_bias",  "nameAr":"الانحياز الخوارزمي المشروع",   "score":0,"reason":"string","legalRisk":"string","recommendation":"string"},
-    {"id":"graded_compliance","nameAr":"الامتثال المتدرج",              "score":0,"reason":"string","legalRisk":"string","recommendation":"string"},
-    {"id":"human_supervision","nameAr":"الرقابة البشرية الفاعلة",      "score":0,"reason":"string","legalRisk":"string","recommendation":"string"},
-    {"id":"procedural",       "nameAr":"الضمانات الإجرائية",            "score":0,"reason":"string","legalRisk":"string","recommendation":"string"},
-    {"id":"accountability",   "nameAr":"المساءلة والمسؤولية",           "score":0,"reason":"string","legalRisk":"string","recommendation":"string"},
-    {"id":"judicial_review",  "nameAr":"المراجعة القضائية",              "score":0,"reason":"string","legalRisk":"string","recommendation":"string"},
-    {"id":"final_legality",   "nameAr":"مشروعية الخوارزمية الكلية",    "score":0,"reason":"string","legalRisk":"string","recommendation":"string"}
+    {"id":"human_will",       "nameAr":"تكوين الإرادة البشرية",       "score":0,"status":"مُستوفى | جزئي | مخفق","reason":"string","evidence":"string — الأدلة المستند إليها","humanOversightNote":"string — دور الرقابة البشرية","legalRisk":"string","recommendation":"string"},
+    {"id":"digital_will",     "nameAr":"تكوين الإرادة الرقمية",       "score":0,"status":"مُستوفى | جزئي | مخفق","reason":"string","evidence":"string","humanOversightNote":"string","legalRisk":"string","recommendation":"string"},
+    {"id":"algo_weight",      "nameAr":"الوزن القانوني الخوارزمي",     "score":0,"status":"مُستوفى | جزئي | مخفق","reason":"string","evidence":"string","humanOversightNote":"string","legalRisk":"string","recommendation":"string"},
+    {"id":"explainability",   "nameAr":"قابلية التفسير الخوارزمي",     "score":0,"status":"مُستوفى | جزئي | مخفق","reason":"string","evidence":"string","humanOversightNote":"string","legalRisk":"string","recommendation":"string"},
+    {"id":"legitimate_bias",  "nameAr":"الانحياز الخوارزمي المشروع",   "score":0,"status":"مُستوفى | جزئي | مخفق","reason":"string","evidence":"string","humanOversightNote":"string","legalRisk":"string","recommendation":"string"},
+    {"id":"graded_compliance","nameAr":"الامتثال المتدرج",              "score":0,"status":"مُستوفى | جزئي | مخفق","reason":"string","evidence":"string","humanOversightNote":"string","legalRisk":"string","recommendation":"string"},
+    {"id":"human_supervision","nameAr":"الرقابة البشرية الفاعلة",      "score":0,"status":"مُستوفى | جزئي | مخفق","reason":"string","evidence":"string","humanOversightNote":"string","legalRisk":"string","recommendation":"string"},
+    {"id":"procedural",       "nameAr":"الضمانات الإجرائية",            "score":0,"status":"مُستوفى | جزئي | مخفق","reason":"string","evidence":"string","humanOversightNote":"string","legalRisk":"string","recommendation":"string"},
+    {"id":"accountability",   "nameAr":"المساءلة والمسؤولية",           "score":0,"status":"مُستوفى | جزئي | مخفق","reason":"string","evidence":"string","humanOversightNote":"string","legalRisk":"string","recommendation":"string"},
+    {"id":"judicial_review",  "nameAr":"المراجعة القضائية",              "score":0,"status":"مُستوفى | جزئي | مخفق","reason":"string","evidence":"string","humanOversightNote":"string","legalRisk":"string","recommendation":"string"},
+    {"id":"final_legality",   "nameAr":"مشروعية الخوارزمية الكلية",    "score":0,"status":"مُستوفى | جزئي | مخفق","reason":"string","evidence":"string","humanOversightNote":"string","legalRisk":"string","recommendation":"string"}
   ]
 }`,
       });
@@ -205,7 +211,7 @@ ${caseText}
       }
       const d3 = p3.data as Record<string, unknown>;
       if (d3.commissioner && typeof d3.commissioner === "object") writeLine(res, { type: "section", id: "commissioner", data: d3.commissioner });
-      if (Array.isArray(d3.shamsi)) writeLine(res, { type: "section", id: "shamsi", data: d3.shamsi });
+      if (Array.isArray(d3.shamsi)) { writeLine(res, { type: "section", id: "shamsi", data: d3.shamsi }); capturedShamsi = JSON.stringify(d3.shamsi).slice(0, 2000); }
     } catch (e) {
       writeLine(res, { type: "error", message: (e as Error).message }); res.end(); return;
     }
@@ -256,7 +262,7 @@ ${caseText}
       const shapeErr = validateShape(p4.ok ? p4.data : null, ["judgment", "operative", "appeal", "scores"]);
       if (p4.ok && !shapeErr && p4.data && typeof p4.data === "object") {
         const d = p4.data as Record<string, unknown>;
-        if (d.judgment)  writeLine(res, { type: "section", id: "judgment",  data: d.judgment });
+        if (d.judgment)  { writeLine(res, { type: "section", id: "judgment",  data: d.judgment });  capturedJudgment = JSON.stringify(d.judgment).slice(0, 2000); }
         if (d.operative) writeLine(res, { type: "section", id: "operative", data: d.operative });
         if (d.appeal)    writeLine(res, { type: "section", id: "appeal",    data: d.appeal });
         if (d.scores)    writeLine(res, { type: "section", id: "scores",    data: d.scores });
@@ -264,6 +270,47 @@ ${caseText}
     } catch (e) {
       writeLine(res, { type: "error", message: (e as Error).message }); res.end(); return;
     }
+
+    // ── Phase 5: ASEP — Al-Shamsi Explainability Protocol ────────────────────
+    // Non-fatal: failure does not block the done signal
+    try {
+      const r5 = await provider.complete({
+        taskType: TaskType.RAG,
+        systemPrompt: COURT_SYSTEM,
+        maxTokens: 4000,
+        temperature: 0.2,
+        prompt: `استناداً إلى بيانات الجلسة القضائية:
+
+الوقائع: ${capturedFacts}
+المسائل القانونية: ${capturedIssues}
+نظرية الشامسي: ${capturedShamsi}
+الحكم: ${capturedJudgment}
+
+أجب عن الأسئلة العشرة لبروتوكول قابلية التفسير (ASEP) في JSON:
+{
+  "answers": [
+    {"question":"ما الوقائع التي استند إليها الحكم؟","answer":"string","confidence":0,"flagged":false},
+    {"question":"ما الأحكام القانونية المطبقة؟","answer":"string","confidence":0,"flagged":false},
+    {"question":"كيف وُزِّنت كل واقعة قانونياً؟","answer":"string","confidence":0,"flagged":false},
+    {"question":"هل اكتُشف تحيز خوارزمي؟","answer":"string","confidence":0,"flagged":false},
+    {"question":"إن وُجد التحيز، هل هو مبرر قانونياً؟","answer":"string","confidence":0,"flagged":false},
+    {"question":"لماذا رُفضت الحجج المعارضة؟","answer":"string","confidence":0,"flagged":false},
+    {"question":"أين تدخلت الرقابة البشرية؟","answer":"string","confidence":0,"flagged":false},
+    {"question":"ما مستوى الثقة في كل استنتاج؟","answer":"string","confidence":0,"flagged":false},
+    {"question":"هل يمكن قانوناً تصوُّر نتيجة أخرى مقبولة؟","answer":"string","confidence":0,"flagged":false},
+    {"question":"هل يستوفي الحكم جميع مبادئ نظرية الشامسي؟","answer":"string","confidence":0,"flagged":false}
+  ],
+  "overallExplainability": 0,
+  "conclusion": "string — خلاصة قابلية التفسير الكلية"
+}
+
+قواعد: confidence هو عدد صحيح 0–100. flagged=true إذا كانت الإجابة تُثير إشكالية قانونية جدية.`,
+      });
+      const p5 = parseModelJson(r5.text);
+      if (p5.ok && p5.data && typeof p5.data === "object") {
+        writeLine(res, { type: "section", id: "asep", data: p5.data });
+      }
+    } catch { /* ASEP failure is non-fatal */ }
 
     await logAudit(req, "court.simulate", {});
     writeLine(res, { type: "done", model });

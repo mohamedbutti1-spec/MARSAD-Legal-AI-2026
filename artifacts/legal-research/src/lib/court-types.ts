@@ -33,11 +33,18 @@ export interface CourtCommissioner {
   recommendation: string;
 }
 
+// ── Project B — Al-Shamsi Matrix (extended) ──────────────────────────────────
 export interface CourtShamsiPrinciple {
   id: string;
   nameAr: string;
   score: number;
+  /** Project B: satisfaction status */
+  status: 'مُستوفى' | 'جزئي' | 'مخفق';
   reason: string;
+  /** Project B: evidence relied upon */
+  evidence: string;
+  /** Project B: human oversight assessment */
+  humanOversightNote: string;
   legalRisk: string;
   recommendation: string;
 }
@@ -86,6 +93,24 @@ export interface SupremeCourtReview {
   finalComparison: string;
 }
 
+// ── Project A — Al-Shamsi Explainability Protocol (ASEP) ─────────────────────
+export interface ASEPAnswer {
+  question: string;
+  answer: string;
+  /** confidence 0–100 */
+  confidence: number;
+  /** true if this answer raises a concern */
+  flagged?: boolean;
+}
+
+export interface ASEPReport {
+  answers: ASEPAnswer[];
+  /** overall explainability score 0–100 */
+  overallExplainability: number;
+  conclusion: string;
+}
+
+// ── Session aggregate ─────────────────────────────────────────────────────────
 export interface CourtSessionData {
   caseText: string;
   facts?: CourtFacts;
@@ -98,6 +123,8 @@ export interface CourtSessionData {
   operative?: CourtOperative;
   appeal?: CourtAppeal;
   scores?: CourtScores;
+  /** Project A — ASEP explainability report */
+  asep?: ASEPReport;
   model?: string;
   supremeReview?: SupremeCourtReview;
   supremeLoading?: boolean;

@@ -2422,16 +2422,36 @@ export default function AiAssistant() {
                   const next = { ...prev };
                   const isObj = (v: unknown): v is Record<string, unknown> =>
                     !!v && typeof v === 'object' && !Array.isArray(v);
-                  if (id === 'facts'        && isObj(data))          next.facts             = data as unknown as CourtSessionData['facts'];
-                  if (id === 'issues'       && isObj(data))          next.issues            = data as unknown as CourtSessionData['issues'];
-                  if (id === 'claimant'     && Array.isArray(data))  next.claimantDefenses  = data as unknown as CourtSessionData['claimantDefenses'];
-                  if (id === 'admin'        && Array.isArray(data))  next.adminDefenses     = data as unknown as CourtSessionData['adminDefenses'];
+                  if (id === 'facts'        && isObj(data))          next.facts              = data as unknown as CourtSessionData['facts'];
+                  if (id === 'issues'       && isObj(data))          next.issues             = data as unknown as CourtSessionData['issues'];
+                  if (id === 'claimant'     && Array.isArray(data))  next.claimantDefenses   = data as unknown as CourtSessionData['claimantDefenses'];
+                  if (id === 'admin'        && Array.isArray(data))  next.adminDefenses      = data as unknown as CourtSessionData['adminDefenses'];
                   if (id === 'commissioner' && isObj(data))          next.commissionerReport = data as unknown as CourtSessionData['commissionerReport'];
-                  if (id === 'shamsi'       && Array.isArray(data))  next.shamsiAnalysis    = data as unknown as CourtSessionData['shamsiAnalysis'];
-                  if (id === 'judgment'     && isObj(data))          next.judgment          = data as unknown as CourtSessionData['judgment'];
-                  if (id === 'operative'    && isObj(data))          next.operative         = data as unknown as CourtSessionData['operative'];
-                  if (id === 'appeal'       && isObj(data))          next.appeal            = data as unknown as CourtSessionData['appeal'];
-                  if (id === 'scores'       && isObj(data))          next.scores            = data as unknown as CourtSessionData['scores'];
+                  if (id === 'shamsi'       && Array.isArray(data))  next.shamsiAnalysis     = data as unknown as CourtSessionData['shamsiAnalysis'];
+                  if (id === 'judgment'     && isObj(data))          next.judgment           = data as unknown as CourtSessionData['judgment'];
+                  if (id === 'operative'    && isObj(data))          next.operative          = data as unknown as CourtSessionData['operative'];
+                  if (id === 'appeal'       && isObj(data))          next.appeal             = data as unknown as CourtSessionData['appeal'];
+                  if (id === 'scores'       && isObj(data))          next.scores             = data as unknown as CourtSessionData['scores'];
+                  // Project A — ASEP (normalize before storing to prevent runtime crashes)
+                  if (id === 'asep' && isObj(data)) {
+                    const raw = data as Record<string, unknown>;
+                    const normalizedAnswers = Array.isArray(raw.answers)
+                      ? (raw.answers as unknown[]).map((a: unknown) => {
+                          const aa = (a && typeof a === 'object' ? a : {}) as Record<string, unknown>;
+                          return {
+                            question:   String(aa.question   ?? ''),
+                            answer:     String(aa.answer     ?? ''),
+                            confidence: Math.min(100, Math.max(0, Number(aa.confidence ?? 0))),
+                            flagged:    Boolean(aa.flagged),
+                          };
+                        })
+                      : [];
+                    next.asep = {
+                      answers: normalizedAnswers,
+                      overallExplainability: Math.min(100, Math.max(0, Number(raw.overallExplainability ?? 0))),
+                      conclusion: String(raw.conclusion ?? ''),
+                    };
+                  }
                   return next;
                 });
               } else if (parsed.type === 'done') {

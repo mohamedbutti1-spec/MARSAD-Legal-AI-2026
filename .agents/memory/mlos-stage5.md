@@ -56,3 +56,24 @@ Use `setTimeout(() => runSupremeReview(text), 0)` in the finally block to let co
 ## Registration
 `artifacts/api-server/src/routes/index.ts`: courtRouter registered after legalBrainRouter.
 Sidebar: no new entry needed — court mode is a toggle on the existing AI Assistant page.
+
+## Projects A/B/C — Final Architect Directive
+
+### Project A — ASEP (Al-Shamsi Explainability Protocol)
+- Backend: Phase 5 in court.ts — runs AFTER phases 1-4, non-fatal (try/catch no res.end on failure)
+- Captures: capturedFacts/capturedIssues/capturedShamsi/capturedJudgment at end of each phase
+- Emits: NDJSON section {type:"section",id:"asep",data:{answers:[10 items],overallExplainability,conclusion}}
+- Frontend: normalize ASEP in ai-assistant.tsx streaming handler BEFORE state assignment (ensures answers is array, confidence 0-100 bounds)
+- ASEPPanel guards: Array.isArray(report.answers), safe defaults, early return for empty
+
+### Project B — Al-Shamsi Matrix
+- Backend: Phase 3 prompt extended with status/evidence/humanOversightNote per principle
+- Status values: exact Arabic "مُستوفى | جزئي | مخفق" 
+- resolveShamsiStatus() helper: authoritative resolver, tries explicit status first then falls back to score band
+- Use resolveShamsiStatus() EVERYWHERE in ShamsiMatrix (icon, card border, summary bar) — never inline the derivation
+- All 5 expanded fields always render with Arabic placeholders when missing
+
+### Project C — Digital Will Engine
+- Pure frontend, no new AI call — maps 10 pipeline stages to session data fields
+- Rendered with open/collapsible toggle, ArrowDown connectors between stages
+- Shown whenever loading || completedCount > 0
