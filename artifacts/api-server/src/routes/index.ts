@@ -59,6 +59,8 @@ import pgfRouter           from "./pgf";
 import pcsRouter           from "./pcs";
 // Stage 4 — Legal Intelligence Brain
 import legalBrainRouter    from "./legal-brain";
+// Stage 5 — Smart Administrative Court Simulation
+import courtRouter         from "./court";
 // Beta — Reviewer Feedback
 import betaRouter          from "./beta";
 
@@ -108,6 +110,8 @@ router.use(jdtRouter);
 router.use(naipRouter);
 // Stage 4 — Legal Intelligence Brain
 router.use(legalBrainRouter);
+// Stage 5 — Smart Administrative Court Simulation
+router.use(courtRouter);
 // Beta — Reviewer Feedback (registered before workspace/adkg/kb — those routers
 // apply requireAnyRole globally, which would intercept /beta/* paths and
 // return 403 for the citizen role before betaRouter is ever reached)

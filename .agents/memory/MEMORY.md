@@ -45,3 +45,4 @@
 - [iOS SameSite Auth](ios-samesite-auth.md) — SameSite=Strict breaks iOS PWA standalone; use Lax + refreshSession() not window.location.href after login
 - [MLOS Stage 3 — Production Intelligence Layer](mlos-stage3.md) — 11 engines, NDJSON streaming (reader.releaseLock in finally), comparative law mode, Shamsi 11 dims, streaming guards on action blocks
 - [MLOS Stage 4 — Legal Intelligence Brain](mlos-stage4.md) — 6-engine hub page + 6 backend routes; safeStr/validateShape hardening pattern; Brain icon sidebar; Express 5 Response type fix
+- [MLOS Stage 5 — Smart Administrative Court](mlos-stage5.md) — 4-phase NDJSON streaming court sim; 9 sections; court panel MUST precede messages.length===0 in render tree; double-cast pattern for typed sections

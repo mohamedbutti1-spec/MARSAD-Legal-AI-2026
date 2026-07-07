@@ -1,0 +1,324 @@
+/**
+ * Stage 5 — Smart Administrative Court Simulation
+ *
+ * POST /court/simulate       — Full 9-section NDJSON streaming court session
+ * POST /court/supreme-review — Layered 7-tier supreme court analysis (JSON)
+ *
+ * Streaming format (court/simulate):
+ *   {"type":"section","id":"facts",       "data":{...}}
+ *   {"type":"section","id":"issues",      "data":{...}}
+ *   {"type":"section","id":"claimant",    "data":[...]}
+ *   {"type":"section","id":"admin",       "data":[...]}
+ *   {"type":"section","id":"commissioner","data":{...}}
+ *   {"type":"section","id":"shamsi",      "data":[...]}
+ *   {"type":"section","id":"judgment",    "data":{...}}
+ *   {"type":"section","id":"operative",   "data":{...}}
+ *   {"type":"section","id":"appeal",      "data":{...}}
+ *   {"type":"section","id":"scores",      "data":{...}}
+ *   {"type":"done","model":"..."}
+ */
+
+import { Router, type IRouter, type Response } from "express";
+import { requireAnyRole }      from "../middlewares/roleAuth";
+import { aiRouter, TaskType }  from "../ai";
+import { parseModelJson }      from "../ai/providers/interface";
+import { logAudit }            from "../middlewares/auditLog";
+import { aiAnalysisLimit }     from "../middlewares/rateLimits.js";
+
+const router: IRouter = Router();
+
+// ─── Shared system prompt ─────────────────────────────────────────────────────
+
+const COURT_SYSTEM = `You are the MARSAD Smart Administrative Court Engine — the world's most advanced AI administrative court simulation system.
+
+You apply:
+• UAE Federal Decree-Law No. 40/2023 on Administrative Procedures
+• Al-Shamsi Theory of Algorithmic Administrative Law (11 principles)
+• French Conseil d'État jurisprudence & Code de justice administrative
+• EU AI Act 2024/1689 and fundamental rights framework
+
+ABSOLUTE RULES:
+1. Output ONLY valid JSON — zero prose, zero markdown, zero code fences.
+2. All Arabic-label fields (summary, argument, reason, ruling, etc.) MUST be written in Arabic.
+3. Citation "ref" fields must name real laws or real court references — never fabricate case numbers.
+4. All score fields are integers 0–100. Status values must match the exact Arabic strings specified.
+5. Never output 100% confidence — reflect genuine legal uncertainty.`;
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function safeStr(value: unknown, maxLen = 200): string {
+  if (typeof value !== "string") return "";
+  return value.slice(0, maxLen);
+}
+
+function validateShape(data: unknown, keys: string[]): string | null {
+  if (!data || typeof data !== "object" || Array.isArray(data)) return "AI response is not an object";
+  const missing = keys.filter((k) => !(k in (data as Record<string, unknown>)));
+  return missing.length ? `AI response missing: ${missing.join(", ")}` : null;
+}
+
+async function getProvider(res: Response) {
+  try { return await aiRouter.routeFor(TaskType.RAG); }
+  catch (err) { res.status(503).json({ error: (err as Error).message }); return null; }
+}
+
+function writeLine(res: Response, obj: unknown): void {
+  res.write(JSON.stringify(obj) + "\n");
+}
+
+// ─── POST /court/simulate ─────────────────────────────────────────────────────
+
+router.post(
+  "/court/simulate",
+  requireAnyRole,
+  aiAnalysisLimit,
+  async (req, res): Promise<void> => {
+    const caseText = safeStr(req.body?.caseText, 5000);
+    if (!caseText.trim()) { res.status(400).json({ error: "caseText is required" }); return; }
+
+    const provider = await getProvider(res);
+    if (!provider) return;
+
+    res.setHeader("Content-Type", "application/x-ndjson");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("X-Accel-Buffering", "no");
+
+    let model = "";
+
+    // ── Phase 1: Facts + Issues ───────────────────────────────────────────────
+    try {
+      const r1 = await provider.complete({
+        taskType: TaskType.RAG, systemPrompt: COURT_SYSTEM, maxTokens: 3500, temperature: 0.2,
+        prompt: `أنت محكمة إدارية. حلّل هذه القضية وأخرج JSON بمفتاحين فقط: "facts" و"issues".
+
+القضية:
+${caseText}
+
+{
+  "facts": {
+    "summary": "string — ملخص الوقائع",
+    "disputedDecision": "string — القرار محل النزاع",
+    "parties": [{"role": "string — الدور القانوني", "name": "string — الاسم أو الوصف"}],
+    "requests": ["string — الطلب القضائي"]
+  },
+  "issues": {
+    "jurisdiction": "string — تحليل الاختصاص",
+    "form": "string — تحليل الشكل والإجراءات",
+    "cause": "string — تحليل ركن السبب",
+    "subject": "string — تحليل ركن المحل",
+    "purpose": "string — تحليل ركن الغاية",
+    "proportionality": "string — مبدأ التناسب",
+    "transparency": "string — مبدأ الشفافية",
+    "humanOversight": "string — الرقابة البشرية",
+    "algorithmicEffect": "string | null"
+  }
+}`,
+      });
+      model = r1.model;
+      const p1 = parseModelJson(r1.text);
+      if (!p1.ok || !p1.data || typeof p1.data !== "object") {
+        writeLine(res, { type: "error", message: "Phase 1 (facts/issues) parse failed" }); res.end(); return;
+      }
+      const d1 = p1.data as Record<string, unknown>;
+      if (d1.facts)  writeLine(res, { type: "section", id: "facts",  data: d1.facts });
+      if (d1.issues) writeLine(res, { type: "section", id: "issues", data: d1.issues });
+    } catch (e) {
+      writeLine(res, { type: "error", message: (e as Error).message }); res.end(); return;
+    }
+
+    // ── Phase 2: Claimant + Admin Defenses ───────────────────────────────────
+    try {
+      const r2 = await provider.complete({
+        taskType: TaskType.RAG, systemPrompt: COURT_SYSTEM, maxTokens: 3500, temperature: 0.25,
+        prompt: `بناءً على القضية التالية، أنشئ دفوع الطرفين كـ JSON بمفتاحين: "claimant" (مصفوفة) و"admin" (مصفوفة).
+
+القضية:
+${caseText}
+
+{
+  "claimant": [
+    {"ground": "أوجه عدم المشروعية",        "argument": "string", "strength": "قوي | متوسط | ضعيف"},
+    {"ground": "عيب السبب",                 "argument": "string", "strength": "..."},
+    {"ground": "عيب الشكل",                 "argument": "string", "strength": "..."},
+    {"ground": "عيب إساءة استعمال السلطة",   "argument": "string", "strength": "..."},
+    {"ground": "غياب الشفافية",              "argument": "string", "strength": "..."},
+    {"ground": "الإخلال بحق الدفاع",         "argument": "string", "strength": "..."},
+    {"ground": "الخلل الخوارزمي",            "argument": "string", "strength": "..."}
+  ],
+  "admin": [
+    {"ground": "سلامة الاختصاص",             "argument": "string", "strength": "قوي | متوسط | ضعيف"},
+    {"ground": "صحة الإجراءات",              "argument": "string", "strength": "..."},
+    {"ground": "مشروعية السبب",              "argument": "string", "strength": "..."},
+    {"ground": "تناسب القرار",               "argument": "string", "strength": "..."},
+    {"ground": "وجود رقابة بشرية",           "argument": "string", "strength": "..."},
+    {"ground": "حدود الإفصاح الخوارزمي",     "argument": "string", "strength": "..."},
+    {"ground": "حماية المصلحة العامة",        "argument": "string", "strength": "..."}
+  ]
+}`,
+      });
+      const p2 = parseModelJson(r2.text);
+      if (!p2.ok || !p2.data || typeof p2.data !== "object") {
+        writeLine(res, { type: "error", message: "Phase 2 (defenses) parse failed" }); res.end(); return;
+      }
+      const d2 = p2.data as Record<string, unknown>;
+      if (Array.isArray(d2.claimant)) writeLine(res, { type: "section", id: "claimant", data: d2.claimant });
+      if (Array.isArray(d2.admin))    writeLine(res, { type: "section", id: "admin",    data: d2.admin });
+    } catch (e) {
+      writeLine(res, { type: "error", message: (e as Error).message }); res.end(); return;
+    }
+
+    // ── Phase 3: Commissioner Report + Shamsi Analysis ───────────────────────
+    try {
+      const r3 = await provider.complete({
+        taskType: TaskType.RAG, systemPrompt: COURT_SYSTEM, maxTokens: 5000, temperature: 0.2,
+        prompt: `أنت مفوّض الدولة ومحلّل نظرية الشامسي. حلّل هذه القضية:
+
+${caseText}
+
+أخرج JSON بمفتاحين: "commissioner" و"shamsi" (11 مبادئ):
+{
+  "commissioner": {
+    "facts": "string — عرض الوقائع",
+    "applicableLaw": "string — القانون الواجب التطبيق",
+    "defenseAnalysis": "string — تحليل الدفوع",
+    "legalOpinion": "string — الرأي القانوني",
+    "recommendation": "قبول | رفض | قبول جزئي"
+  },
+  "shamsi": [
+    {"id":"human_will",       "nameAr":"تكوين الإرادة البشرية",       "score":0,"reason":"string","legalRisk":"string","recommendation":"string"},
+    {"id":"digital_will",     "nameAr":"تكوين الإرادة الرقمية",       "score":0,"reason":"string","legalRisk":"string","recommendation":"string"},
+    {"id":"algo_weight",      "nameAr":"الوزن القانوني الخوارزمي",     "score":0,"reason":"string","legalRisk":"string","recommendation":"string"},
+    {"id":"explainability",   "nameAr":"قابلية التفسير الخوارزمي",     "score":0,"reason":"string","legalRisk":"string","recommendation":"string"},
+    {"id":"legitimate_bias",  "nameAr":"الانحياز الخوارزمي المشروع",   "score":0,"reason":"string","legalRisk":"string","recommendation":"string"},
+    {"id":"graded_compliance","nameAr":"الامتثال المتدرج",              "score":0,"reason":"string","legalRisk":"string","recommendation":"string"},
+    {"id":"human_supervision","nameAr":"الرقابة البشرية الفاعلة",      "score":0,"reason":"string","legalRisk":"string","recommendation":"string"},
+    {"id":"procedural",       "nameAr":"الضمانات الإجرائية",            "score":0,"reason":"string","legalRisk":"string","recommendation":"string"},
+    {"id":"accountability",   "nameAr":"المساءلة والمسؤولية",           "score":0,"reason":"string","legalRisk":"string","recommendation":"string"},
+    {"id":"judicial_review",  "nameAr":"المراجعة القضائية",              "score":0,"reason":"string","legalRisk":"string","recommendation":"string"},
+    {"id":"final_legality",   "nameAr":"مشروعية الخوارزمية الكلية",    "score":0,"reason":"string","legalRisk":"string","recommendation":"string"}
+  ]
+}`,
+      });
+      const p3 = parseModelJson(r3.text);
+      if (!p3.ok || !p3.data || typeof p3.data !== "object") {
+        writeLine(res, { type: "error", message: "Phase 3 (commissioner/shamsi) parse failed" }); res.end(); return;
+      }
+      const d3 = p3.data as Record<string, unknown>;
+      if (d3.commissioner && typeof d3.commissioner === "object") writeLine(res, { type: "section", id: "commissioner", data: d3.commissioner });
+      if (Array.isArray(d3.shamsi)) writeLine(res, { type: "section", id: "shamsi", data: d3.shamsi });
+    } catch (e) {
+      writeLine(res, { type: "error", message: (e as Error).message }); res.end(); return;
+    }
+
+    // ── Phase 4: Judgment + Operative + Appeal + Scores ──────────────────────
+    try {
+      const r4 = await provider.complete({
+        taskType: TaskType.RAG, systemPrompt: COURT_SYSTEM, maxTokens: 4500, temperature: 0.2,
+        prompt: `أصدر الحكم الكامل في هذه القضية الإدارية:
+
+${caseText}
+
+أخرج JSON بأربعة مفاتيح: "judgment", "operative", "appeal", "scores":
+{
+  "judgment": {
+    "preamble": "string — باسم العدالة / بعد الاطلاع على الأوراق",
+    "facts": "string — حيث إن الوقائع تتحصل في",
+    "courtView": "string — وحيث إن المحكمة ترى",
+    "established": "string — وحيث إن الثابت",
+    "challenged": "string — وحيث إن القرار محل الطعن",
+    "ruling": "string — لذلك حكمت المحكمة"
+  },
+  "operative": {
+    "decision": "قبول | رفض | قبول جزئي",
+    "cancellation": "إلغاء القرار | تأييد القرار | تعديل القرار",
+    "effect": "string — أثر الحكم",
+    "adminObligation": "string | null",
+    "reformRecommendations": ["string"]
+  },
+  "appeal": {
+    "isAppealable": true,
+    "successChance": 0,
+    "strongestGrounds": ["string"],
+    "weakestPoints": ["string"]
+  },
+  "scores": {
+    "legality": 0,
+    "transparency": 0,
+    "algorithmicExplainability": 0,
+    "humanOversight": 0,
+    "judicialRisk": 0,
+    "annulmentProbability": 0,
+    "shamsiIndex": 0
+  }
+}`,
+      });
+      const p4 = parseModelJson(r4.text);
+      const shapeErr = validateShape(p4.ok ? p4.data : null, ["judgment", "operative", "appeal", "scores"]);
+      if (p4.ok && !shapeErr && p4.data && typeof p4.data === "object") {
+        const d = p4.data as Record<string, unknown>;
+        if (d.judgment)  writeLine(res, { type: "section", id: "judgment",  data: d.judgment });
+        if (d.operative) writeLine(res, { type: "section", id: "operative", data: d.operative });
+        if (d.appeal)    writeLine(res, { type: "section", id: "appeal",    data: d.appeal });
+        if (d.scores)    writeLine(res, { type: "section", id: "scores",    data: d.scores });
+      }
+    } catch (e) {
+      writeLine(res, { type: "error", message: (e as Error).message }); res.end(); return;
+    }
+
+    await logAudit(req, "court.simulate", {});
+    writeLine(res, { type: "done", model });
+    res.end();
+  }
+);
+
+// ─── POST /court/supreme-review ───────────────────────────────────────────────
+
+router.post(
+  "/court/supreme-review",
+  requireAnyRole,
+  aiAnalysisLimit,
+  async (req, res): Promise<void> => {
+    const caseText = safeStr(req.body?.caseText, 5000);
+    if (!caseText.trim()) { res.status(400).json({ error: "caseText is required" }); return; }
+
+    const provider = await getProvider(res);
+    if (!provider) return;
+
+    try {
+      const result = await provider.complete({
+        taskType: TaskType.RAG,
+        systemPrompt: COURT_SYSTEM,
+        maxTokens: 6000,
+        temperature: 0.3,
+        prompt: `أجرِ مراجعة قضائية متعددة المستويات لهذه القضية الإدارية:
+
+${caseText}
+
+أخرج JSON بسبعة مفاتيح:
+{
+  "firstInstance":  "string — تحليل حكم أول درجة وأسبابه بالتفصيل",
+  "appeal":         "string — توقع حكم محكمة الاستئناف مع التعليل",
+  "cassation":      "string — موقف محكمة التمييز / النقض المحتمل",
+  "frenchCouncil":  "string — كيف كان سيحكم مجلس الدولة الفرنسي في ذات القضية",
+  "europeanCourt":  "string | null — موقف المحكمة الأوروبية لحقوق الإنسان إن كانت القضية ذات صلة وإلا null",
+  "shamsiEval":     "string — تقييم القضية من منظور نظرية الشامسي الشاملة",
+  "finalComparison":"string — النتيجة النهائية المقارنة والخلاصة التحليلية"
+}`,
+      });
+
+      const parsed = parseModelJson(result.text);
+      const shapeErr = validateShape(parsed.ok ? parsed.data : null,
+        ["firstInstance", "appeal", "cassation", "frenchCouncil", "shamsiEval", "finalComparison"]);
+      if (!parsed.ok || shapeErr) {
+        res.status(422).json({ error: shapeErr ?? "AI output parse failed" }); return;
+      }
+
+      await logAudit(req, "court.supreme-review", {});
+      res.json({ result: parsed.data, model: result.model });
+    } catch (err) {
+      res.status(500).json({ error: (err as Error).message });
+    }
+  }
+);
+
+export default router;

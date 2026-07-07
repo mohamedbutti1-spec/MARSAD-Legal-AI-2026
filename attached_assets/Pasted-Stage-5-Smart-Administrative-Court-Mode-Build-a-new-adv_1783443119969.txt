@@ -1,0 +1,170 @@
+Stage 5 — Smart Administrative Court Mode
+
+Build a new advanced mode called:
+
+⚖️ جلسة محاكمة كاملة
+Smart Administrative Court Simulation
+
+Objective:
+Transform the legal assistant from a legal answer generator into a full administrative court simulation engine.
+
+Required features:
+
+1. Add a visible button:
+⚖️ جلسة محاكمة كاملة
+
+2. When enabled, every legal case must be processed through the following courtroom workflow:
+
+أولًا: عرض الوقائع
+- تلخيص الوقائع
+- تحديد القرار محل النزاع
+- تحديد أطراف الخصومة
+- تحديد الطلبات
+
+ثانيًا: تحديد المسائل القانونية
+- الاختصاص
+- الشكل والإجراءات
+- السبب
+- المحل
+- الغاية
+- التناسب
+- الشفافية
+- الرقابة البشرية
+- أثر الخوارزمية إن وجدت
+
+ثالثًا: دفوع المدعي
+Generate claimant arguments:
+- أوجه عدم المشروعية
+- عيب السبب
+- عيب الشكل
+- عيب إساءة استعمال السلطة
+- غياب الشفافية
+- الإخلال بحق الدفاع
+- الخلل الخوارزمي
+
+رابعًا: دفوع الإدارة
+Generate administration defence:
+- سلامة الاختصاص
+- صحة الإجراءات
+- مشروعية السبب
+- تناسب القرار
+- وجود رقابة بشرية
+- حدود الإفصاح الخوارزمي
+- حماية المصلحة العامة
+
+خامسًا: رأي المفوض أو المقرر
+Generate a neutral legal report:
+- الوقائع
+- القانون الواجب التطبيق
+- تحليل الدفوع
+- الرأي القانوني
+- التوصية بالحكم
+
+سادسًا: تطبيق نظرية الشامسي
+Apply the eleven Shamsi principles:
+- Human Will Formation
+- Digital Will Formation
+- Algorithmic Legal Weight
+- Explainable Algorithmic Reasoning
+- Legitimate Algorithmic Bias
+- Graded Compliance
+- Human Supervision
+- Procedural Guarantees
+- Accountability
+- Judicial Review
+- Final Legality Index
+
+For each principle, output:
+- percentage score
+- reason
+- legal risk
+- improvement recommendation
+
+سابعًا: إصدار الحكم
+Generate a full judgment:
+- باسم العدالة
+- بعد الاطلاع على الأوراق
+- حيث إن الوقائع تتحصل في
+- وحيث إن المحكمة ترى
+- وحيث إن الثابت
+- وحيث إن القرار محل الطعن
+- لذلك حكمت المحكمة
+
+ثامنًا: منطوق الحكم
+Output:
+- قبول أو رفض الدعوى
+- إلغاء القرار أو تأييده
+- أثر الحكم
+- إلزام الجهة الإدارية إن لزم
+- التوصيات الإصلاحية
+
+تاسعًا: قابلية الطعن
+Assess:
+- هل الحكم قابل للاستئناف؟
+- فرص نجاح الاستئناف
+- أقوى أسباب الطعن
+- أضعف نقاط الحكم
+
+3. Add visual scoring dashboard under every answer:
+
+درجة المشروعية:
+0–100%
+
+درجة الشفافية:
+0–100%
+
+درجة التفسير الخوارزمي:
+0–100%
+
+درجة الرقابة البشرية:
+0–100%
+
+درجة المخاطر القضائية:
+0–100%
+
+احتمال الإلغاء القضائي:
+0–100%
+
+مؤشر نظرية الشامسي:
+0–100%
+
+4. Add expandable cards:
+- لماذا هذه النسبة؟
+- أين الخلل؟
+- ما النص القانوني؟
+- ما السوابق؟
+- كيف نصل إلى 100%؟
+
+5. Add final court-style summary card:
+
+الحكم النهائي:
+المشروعية:
+درجة القوة:
+درجة الطعن:
+احتمال الإلغاء:
+درجة المخاطر:
+التوصية النهائية:
+
+6. Add another advanced button:
+
+🔬 اختبار المحكمة العليا
+
+When enabled, generate layered review:
+- حكم أول درجة
+- حكم الاستئناف
+- حكم التمييز / النقض
+- موقف مجلس الدولة الفرنسي
+- موقف المحكمة الأوروبية إن وجد
+- تقييم نظرية الشامسي
+- النتيجة النهائية المقارنة
+
+7. Run full tests:
+- UI tests
+- mobile responsiveness
+- Arabic RTL layout
+- streaming stability
+- no JavaScript errors
+- no endpoint failures
+- no regression in previous legal engines
+
+Deliver a production readiness report after completion.

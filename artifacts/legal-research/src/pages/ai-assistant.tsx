@@ -7,11 +7,13 @@ import {
   Bot, Plus, Trash2, Send, Loader2, MessageSquare, Sparkles,
   FileText, BookOpen, Copy, Check, ChevronDown, ChevronUp,
   X, Pin, PinOff, Menu, FlaskConical,
-  Zap, GraduationCap, Star, Maximize2, Minimize2,
+  Zap, GraduationCap, Star, Maximize2, Minimize2, Scale, Gavel,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { TheoryLensSelector, TheoryLensBadge, type TheoryLensState } from '@/components/research/theory-lens-selector';
+import { CourtSessionPanel } from '@/components/research/court-session-panel';
+import type { CourtSessionData } from '@/lib/court-types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -2083,6 +2085,12 @@ export default function AiAssistant() {
   /** True once user dismisses the pre-analysis panel for the current session. */
   const [configCommitted, setConfigCommitted] = useState(false);
 
+  // ── Stage 5 — Smart Administrative Court Mode ─────────────────────────────
+  const [courtMode, setCourtMode] = useState(false);
+  const [supremeCourtMode, setSupremeCourtMode] = useState(false);
+  const [courtSession, setCourtSession] = useState<CourtSessionData | null>(null);
+  const [courtLoading, setCourtLoading] = useState(false);
+
   const { data: documents } = useListDocuments();
 
   const fetchSessions = useCallback(async () => {
@@ -2367,6 +2375,111 @@ export default function AiAssistant() {
     }
   }
 
+  // ── Stage 5 — Court simulation streaming ─────────────────────────────────
+
+  async function runCourtSession(overrideText?: string) {
+    const text = (overrideText ?? input).trim();
+    if (!text || !activeSession || sending || courtLoading) return;
+    setInput('');
+    setCourtLoading(true);
+    setCourtSession({ caseText: text });
+
+    try {
+      const r = await apiFetch('/api/court/simulate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/x-ndjson' },
+        body: JSON.stringify({ caseText: text }),
+      });
+
+      if (!r.ok || !r.body) {
+        const err = await r.json().catch(() => ({ error: 'Court simulation failed' }));
+        toast({ title: t('خطأ في المحاكمة', 'Court error'), description: (err as { error?: string }).error, variant: 'destructive' });
+        setCourtLoading(false);
+        return;
+      }
+
+      const reader = r.body.getReader();
+      const decoder = new TextDecoder();
+      let lineBuffer = '';
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          lineBuffer += decoder.decode(value, { stream: true });
+          let idx: number;
+          while ((idx = lineBuffer.indexOf('\n')) !== -1) {
+            const line = lineBuffer.slice(0, idx).trim();
+            lineBuffer = lineBuffer.slice(idx + 1);
+            if (!line) continue;
+            try {
+              const parsed = JSON.parse(line) as Record<string, unknown>;
+              if (parsed.type === 'section') {
+                const id = parsed.id as string;
+                const data = parsed.data;
+                setCourtSession((prev) => {
+                  if (!prev) return prev;
+                  const next = { ...prev };
+                  const isObj = (v: unknown): v is Record<string, unknown> =>
+                    !!v && typeof v === 'object' && !Array.isArray(v);
+                  if (id === 'facts'        && isObj(data))          next.facts             = data as unknown as CourtSessionData['facts'];
+                  if (id === 'issues'       && isObj(data))          next.issues            = data as unknown as CourtSessionData['issues'];
+                  if (id === 'claimant'     && Array.isArray(data))  next.claimantDefenses  = data as unknown as CourtSessionData['claimantDefenses'];
+                  if (id === 'admin'        && Array.isArray(data))  next.adminDefenses     = data as unknown as CourtSessionData['adminDefenses'];
+                  if (id === 'commissioner' && isObj(data))          next.commissionerReport = data as unknown as CourtSessionData['commissionerReport'];
+                  if (id === 'shamsi'       && Array.isArray(data))  next.shamsiAnalysis    = data as unknown as CourtSessionData['shamsiAnalysis'];
+                  if (id === 'judgment'     && isObj(data))          next.judgment          = data as unknown as CourtSessionData['judgment'];
+                  if (id === 'operative'    && isObj(data))          next.operative         = data as unknown as CourtSessionData['operative'];
+                  if (id === 'appeal'       && isObj(data))          next.appeal            = data as unknown as CourtSessionData['appeal'];
+                  if (id === 'scores'       && isObj(data))          next.scores            = data as unknown as CourtSessionData['scores'];
+                  return next;
+                });
+              } else if (parsed.type === 'done') {
+                setCourtSession((prev) => prev ? { ...prev, model: String(parsed.model ?? '') } : prev);
+              } else if (parsed.type === 'error') {
+                toast({ title: t('خطأ في المحاكمة', 'Court error'), description: String(parsed.message), variant: 'destructive' });
+              }
+            } catch { /* malformed line — skip */ }
+          }
+        }
+      } finally {
+        try { reader.releaseLock(); } catch { /* already released */ }
+        setCourtLoading(false);
+        // Auto-trigger supreme review if toggle is on
+        if (supremeCourtMode) {
+          // Use a microtask tick so courtLoading state has settled before runSupremeReview reads it
+          setTimeout(() => runSupremeReview(text), 0);
+        }
+      }
+    } catch (err) {
+      toast({ title: t('خطأ في الاتصال', 'Connection error'), description: (err as Error).message, variant: 'destructive' });
+      setCourtLoading(false);
+    }
+  }
+
+  async function runSupremeReview(overrideCaseText?: string) {
+    const reviewText = overrideCaseText ?? courtSession?.caseText;
+    if (!reviewText) return;
+    setCourtSession((prev) => prev ? { ...prev, supremeLoading: true } : prev);
+    try {
+      const r = await apiFetch('/api/court/supreme-review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ caseText: reviewText }),
+      });
+      if (r.ok) {
+        const data = await r.json();
+        setCourtSession((prev) => prev ? { ...prev, supremeReview: data.result, supremeLoading: false } : prev);
+      } else {
+        toast({ title: t('خطأ', 'Error'), description: t('فشل اختبار المحكمة العليا', 'Supreme court review failed'), variant: 'destructive' });
+        setCourtSession((prev) => prev ? { ...prev, supremeLoading: false } : prev);
+      }
+    } catch (err) {
+      toast({ title: t('خطأ في الاتصال', 'Connection error'), description: (err as Error).message, variant: 'destructive' });
+      setCourtSession((prev) => prev ? { ...prev, supremeLoading: false } : prev);
+    }
+  }
+
   /** Handle action button clicks from MessageBubble. */
   function handleAction(_msgId: number, key: ActionKey, userQuery: string) {
     if (key === 'expand' || key === 'collapse') return; // handled locally in ActionButtons
@@ -2401,7 +2514,10 @@ export default function AiAssistant() {
   }
 
   function handleKey(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (courtMode) runCourtSession(); else sendMessage();
+    }
   }
 
   function switchSession(s: Session) {
@@ -2599,6 +2715,15 @@ export default function AiAssistant() {
               <div className="flex items-center justify-center h-full">
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
               </div>
+            ) : courtMode && (courtLoading || courtSession) ? (
+              <div className="overflow-y-auto flex-1 px-3 sm:px-4 py-3">
+                <CourtSessionPanel
+                  session={courtSession ?? { caseText: '' }}
+                  loading={courtLoading}
+                  onReset={() => { setCourtSession(null); }}
+                  onSupremeReview={runSupremeReview}
+                />
+              </div>
             ) : messages.length === 0 ? (
               !configCommitted ? (
                 <PreAnalysisPanel
@@ -2735,7 +2860,7 @@ export default function AiAssistant() {
             )}
 
             {/* Theory Lens Selector */}
-            {activeSession && (
+            {activeSession && !courtMode && (
               <div className="mb-2">
                 <TheoryLensSelector
                   value={theoryLens}
@@ -2743,6 +2868,44 @@ export default function AiAssistant() {
                   arabic={true}
                   disabled={sending || !canUseAi}
                 />
+              </div>
+            )}
+
+            {/* Stage 5 — Court mode toggles */}
+            {activeSession && canUseAi && (
+              <div className="mb-2 flex flex-wrap gap-2" dir="rtl">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = !courtMode;
+                    setCourtMode(next);
+                    if (!next) { setSupremeCourtMode(false); setCourtSession(null); }
+                  }}
+                  disabled={sending || courtLoading}
+                  className={`flex items-center gap-1.5 text-[11px] font-medium px-3 py-1.5 rounded-full border transition-colors disabled:opacity-40 ${
+                    courtMode
+                      ? 'bg-amber-500 text-white border-amber-500 shadow-sm'
+                      : 'bg-background text-muted-foreground border-border hover:border-amber-400 hover:text-amber-700'
+                  }`}
+                >
+                  <Scale className="w-3.5 h-3.5" />
+                  {courtMode ? '⚖️ جلسة محاكمة — فعّال' : '⚖️ جلسة محاكمة كاملة'}
+                </button>
+
+                {courtMode && (
+                  <button
+                    type="button"
+                    onClick={() => setSupremeCourtMode((v) => !v)}
+                    disabled={courtLoading}
+                    className={`flex items-center gap-1.5 text-[11px] font-medium px-3 py-1.5 rounded-full border transition-colors disabled:opacity-40 ${
+                      supremeCourtMode
+                        ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
+                        : 'bg-background text-muted-foreground border-border hover:border-purple-400 hover:text-purple-700'
+                    }`}
+                  >
+                    🔬 {supremeCourtMode ? 'المحكمة العليا — فعّال' : 'اختبار المحكمة العليا'}
+                  </button>
+                )}
               </div>
             )}
 
@@ -2814,12 +2977,13 @@ export default function AiAssistant() {
               />
               <Button
                 size="sm"
-                className="shrink-0 h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-xl"
-                onClick={() => sendMessage()}
-                disabled={!input.trim() || !activeSession || sending || !canUseAi}
-                aria-label={t('إرسال', 'Send')}
+                className={`shrink-0 h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-xl ${courtMode ? 'bg-amber-500 hover:bg-amber-600 border-amber-500' : ''}`}
+                onClick={() => courtMode ? runCourtSession() : sendMessage()}
+                disabled={!input.trim() || !activeSession || sending || courtLoading || !canUseAi}
+                aria-label={courtMode ? t('محاكمة', 'Simulate') : t('إرسال', 'Send')}
+                title={courtMode ? t('تشغيل جلسة المحاكمة', 'Run court session') : undefined}
               >
-                <Send className="w-4 h-4" aria-hidden />
+                {courtMode ? <Gavel className="w-4 h-4" aria-hidden /> : <Send className="w-4 h-4" aria-hidden />}
               </Button>
             </div>
           </div>
