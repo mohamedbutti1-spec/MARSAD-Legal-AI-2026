@@ -184,11 +184,11 @@ git checkout release/v1.0 && git merge hotfix/v1.0.1
 | Scenario | Approach |
 |----------|----------|
 | New column added but code reverted | Column remains. Old code ignores it. **No action needed.** |
-| New table added but code reverted | Table remains empty. Old code doesn't query it. **No action needed.** |
+| New table added but code reverted | Table persists in DB with whatever data it contains. Old code does not reference it. **No action needed** — data is preserved and harmless. |
 | Data corruption in `decisions` table | Restore from database backup. Coordinate with Replit DB support. |
 | Audit trail corruption | Audit log is append-only. Do not delete entries. Contact legal team. |
 | KB documents corrupted | Re-run the KB ingestion seed runners (idempotent, safe to re-run). |
-| NRME risk categories corrupted | Re-run: `pnpm --filter @workspace/api-server run seed:nrme` (idempotent). |
+| NRME risk categories corrupted | NRME seed runs automatically and idempotently on every server startup via `seedDatabase()`. Restart the API Server workflow — categories will be re-seeded. |
 
 ---
 
