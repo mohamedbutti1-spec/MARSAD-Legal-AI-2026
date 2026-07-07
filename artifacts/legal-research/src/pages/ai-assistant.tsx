@@ -76,8 +76,21 @@ type UserType =
   | 'citizen' | 'institution'
   // General Public
   | 'general_user' | 'individual' | 'company_rep' | 'government_entity'
-  // Law Enforcement (Special Police Module)
-  | 'police_officer_new' | 'police_station_officer' | 'evidence_officer' | 'investigation_officer'
+  // Law Enforcement — V3 (kept for backward compat)
+  | 'police_officer_new' | 'evidence_officer' | 'investigation_officer'
+  // Law Enforcement — V4.0 (9 specialized engines)
+  | 'police_recruit_officer' | 'police_station_officer'
+  | 'evidence_collection_officer' | 'criminal_investigation_officer'
+  | 'forensic_laboratory_officer' | 'cybercrime_officer'
+  | 'community_policing_officer' | 'child_protection_officer' | 'juvenile_affairs_officer'
+  // Police Trainee (training group)
+  | 'police_trainee'
+  // Judicial intern (training group)
+  | 'judicial_intern'
+  // Enforcement / Execution Judge
+  | 'enforcement_judge'
+  // Legal professions expansion
+  | 'arbitrator' | 'legislative_researcher'
   // Regulatory
   | 'regulatory_authority'
   // AI & Governance
@@ -186,11 +199,28 @@ const USER_TYPE_CONFIG: Record<UserType, { ar: string; emoji: string }> = {
   individual:             { ar: 'فرد',                            emoji: '👤' },
   company_rep:            { ar: 'ممثل شركة',                      emoji: '🏢' },
   government_entity:      { ar: 'جهة حكومية',                     emoji: '🏛' },
-  // Law Enforcement
-  police_officer_new:     { ar: 'ضابط شرطة جديد',                emoji: '👮' },
-  police_station_officer: { ar: 'ضابط مركز شرطة',                emoji: '🚔' },
-  evidence_officer:       { ar: 'ضابط جمع الأدلة',               emoji: '🔎' },
-  investigation_officer:  { ar: 'ضابط التحقيق الجنائي',          emoji: '🕵️' },
+  // Law Enforcement — V3 legacy
+  police_officer_new:              { ar: 'ضابط شرطة جديد',               emoji: '👮' },
+  evidence_officer:                { ar: 'ضابط جمع الأدلة',              emoji: '🔎' },
+  investigation_officer:           { ar: 'ضابط التحقيق الجنائي',         emoji: '🕵️' },
+  // Law Enforcement — V4.0
+  police_recruit_officer:          { ar: 'ضابط حديث التعيين',            emoji: '👮' },
+  police_station_officer:          { ar: 'ضابط مركز شرطة',               emoji: '🚔' },
+  evidence_collection_officer:     { ar: 'ضابط جمع الاستدلالات',         emoji: '🔎' },
+  criminal_investigation_officer:  { ar: 'ضابط التحقيق الجنائي',         emoji: '🕵️' },
+  forensic_laboratory_officer:     { ar: 'ضابط الأدلة الجنائية',         emoji: '🧬' },
+  cybercrime_officer:              { ar: 'ضابط الجرائم الإلكترونية',     emoji: '💻' },
+  community_policing_officer:      { ar: 'ضابط الشرطة المجتمعية',        emoji: '🤝' },
+  child_protection_officer:        { ar: 'ضابط حماية الطفل',             emoji: '🛡️' },
+  juvenile_affairs_officer:        { ar: 'ضابط الأحداث',                 emoji: '👦' },
+  // Training roles
+  police_trainee:                  { ar: 'متدرب شرطي',                   emoji: '📋' },
+  judicial_intern:                 { ar: 'متدرب قضائي',                  emoji: '📋' },
+  // Judicial expansion
+  enforcement_judge:               { ar: 'قاضي تنفيذ',                   emoji: '⚖️' },
+  // Legal professions expansion
+  arbitrator:                      { ar: 'محكم',                         emoji: '🤝' },
+  legislative_researcher:          { ar: 'باحث تشريعي',                  emoji: '📜' },
   // Regulatory
   regulatory_authority:   { ar: 'ممثل جهة تنظيمية',              emoji: '🏦' },
   // AI & Governance
@@ -202,39 +232,63 @@ const USER_TYPE_CONFIG: Record<UserType, { ar: string; emoji: string }> = {
   unspecified:            { ar: 'غير محدد',                       emoji: '–' },
 };
 
-// ─── 17 Canonical Professional Identities (spec-defined) ───────────────────────
-// These are the identities shown in the Professional Identity dropdown.
-// All other UserTypes remain as internal aliases used by their respective engines.
+// ─── V4.0 Professional Identities — 35 entries, 8 groups (1+4+9+4+8+3+2+4) ───
 const PRIMARY_IDENTITIES: { value: UserType; labelAr: string; groupAr: string; emoji: string }[] = [
-  { value: 'citizen',               labelAr: 'مواطن / مستخدم عام',           groupAr: 'العموم',                  emoji: '👤' },
-  { value: 'law_student',           labelAr: 'طالب قانون',                   groupAr: 'التعليم والتدريب',         emoji: '📖' },
-  { value: 'academic_researcher',   labelAr: 'باحث أكاديمي',                 groupAr: 'التعليم والتدريب',         emoji: '🔬' },
-  { value: 'police_officer_new',    labelAr: 'ضابط شرطة جديد',               groupAr: 'الشرطة والتحقيق',          emoji: '👮' },
-  { value: 'police_station_officer',labelAr: 'ضابط مركز شرطة',               groupAr: 'الشرطة والتحقيق',          emoji: '🚔' },
-  { value: 'evidence_officer',      labelAr: 'ضابط جمع الأدلة',              groupAr: 'الشرطة والتحقيق',          emoji: '🔎' },
-  { value: 'investigation_officer', labelAr: 'ضابط التحقيق الجنائي',         groupAr: 'الشرطة والتحقيق',          emoji: '🕵️' },
-  { value: 'prosecutor',            labelAr: 'المدعي العام',                 groupAr: 'النيابة والادعاء',          emoji: '⚖️' },
-  { value: 'judicial_trainee',      labelAr: 'ملازم قضائي',                  groupAr: 'القضاء',                  emoji: '🎓' },
-  { value: 'judge_first_instance',  labelAr: 'قاضٍ ابتدائي',                groupAr: 'القضاء',                  emoji: '⚖️' },
-  { value: 'judge_appeal',          labelAr: 'قاضٍ استئناف',                 groupAr: 'القضاء',                  emoji: '⚖️' },
-  { value: 'judge_cassation',       labelAr: 'قاضٍ تمييز',                  groupAr: 'القضاء',                  emoji: '⚖️' },
-  { value: 'lawyer',                labelAr: 'محامٍ',                        groupAr: 'المحاماة والاستشارات',      emoji: '🧑‍⚖️' },
-  { value: 'legislator',            labelAr: 'مشرّع',                        groupAr: 'السلطة التشريعية',          emoji: '📜' },
-  { value: 'minister',              labelAr: 'صانع السياسات',                groupAr: 'الجهات الحكومية',          emoji: '🏛️' },
-  { value: 'government',            labelAr: 'ممثل حكومي',                  groupAr: 'الجهات الحكومية',          emoji: '🏛️' },
-  { value: 'regulatory_authority',  labelAr: 'ممثل جهة تنظيمية',            groupAr: 'الجهات الحكومية',          emoji: '🏦' },
+  // ■ العموم
+  { value: 'citizen',                       labelAr: 'مواطن / مستخدم عام',          groupAr: 'العموم',                            emoji: '👤' },
+  // ■ التعليم والتدريب
+  { value: 'law_student',                   labelAr: 'طالب قانون',                  groupAr: 'التعليم والتدريب',                  emoji: '📖' },
+  { value: 'academic_researcher',           labelAr: 'باحث أكاديمي',                groupAr: 'التعليم والتدريب',                  emoji: '🔬' },
+  { value: 'judicial_intern',               labelAr: 'متدرب قضائي',                 groupAr: 'التعليم والتدريب',                  emoji: '📋' },
+  { value: 'police_trainee',                labelAr: 'متدرب شرطي',                  groupAr: 'التعليم والتدريب',                  emoji: '📋' },
+  // ■ الشرطة والتحقيق
+  { value: 'police_recruit_officer',        labelAr: 'ضابط حديث التعيين',           groupAr: 'الشرطة والتحقيق',                   emoji: '👮' },
+  { value: 'police_station_officer',        labelAr: 'ضابط مركز شرطة',              groupAr: 'الشرطة والتحقيق',                   emoji: '🚔' },
+  { value: 'evidence_collection_officer',   labelAr: 'ضابط جمع الاستدلالات',        groupAr: 'الشرطة والتحقيق',                   emoji: '🔎' },
+  { value: 'criminal_investigation_officer',labelAr: 'ضابط التحقيق الجنائي',        groupAr: 'الشرطة والتحقيق',                   emoji: '🕵️' },
+  { value: 'forensic_laboratory_officer',   labelAr: 'ضابط الأدلة الجنائية',        groupAr: 'الشرطة والتحقيق',                   emoji: '🧬' },
+  { value: 'cybercrime_officer',            labelAr: 'ضابط الجرائم الإلكترونية',    groupAr: 'الشرطة والتحقيق',                   emoji: '💻' },
+  { value: 'community_policing_officer',    labelAr: 'ضابط الشرطة المجتمعية',       groupAr: 'الشرطة والتحقيق',                   emoji: '🤝' },
+  { value: 'child_protection_officer',      labelAr: 'ضابط حماية الطفل',            groupAr: 'الشرطة والتحقيق',                   emoji: '🛡️' },
+  { value: 'juvenile_affairs_officer',      labelAr: 'ضابط الأحداث',                groupAr: 'الشرطة والتحقيق',                   emoji: '👦' },
+  // ■ النيابة العامة
+  { value: 'prosecution_member',            labelAr: 'وكيل نيابة جديد',             groupAr: 'النيابة العامة',                    emoji: '⚖️' },
+  { value: 'prosecution_deputy',            labelAr: 'وكيل نيابة',                  groupAr: 'النيابة العامة',                    emoji: '⚖️' },
+  { value: 'prosecution_chief',             labelAr: 'رئيس نيابة',                  groupAr: 'النيابة العامة',                    emoji: '⚖️' },
+  { value: 'public_attorney',               labelAr: 'محامٍ عام',                   groupAr: 'النيابة العامة',                    emoji: '⚖️' },
+  // ■ القضاء
+  { value: 'judicial_trainee',              labelAr: 'ملازم قضائي',                 groupAr: 'القضاء',                            emoji: '🎓' },
+  { value: 'judge_first_instance',          labelAr: 'قاضٍ ابتدائي',               groupAr: 'القضاء',                            emoji: '⚖️' },
+  { value: 'judge_criminal',                labelAr: 'قاضٍ جزائي',                  groupAr: 'القضاء',                            emoji: '⚖️' },
+  { value: 'judge_admin',                   labelAr: 'قاضٍ إداري',                  groupAr: 'القضاء',                            emoji: '🏛️' },
+  { value: 'enforcement_judge',             labelAr: 'قاضي تنفيذ',                  groupAr: 'القضاء',                            emoji: '⚖️' },
+  { value: 'judge_personal_status',         labelAr: 'قاضي أحوال شخصية',           groupAr: 'القضاء',                            emoji: '👨‍👩‍👧' },
+  { value: 'judge_appeal',                  labelAr: 'قاضي استئناف',                groupAr: 'القضاء',                            emoji: '⚖️' },
+  { value: 'judge_cassation',               labelAr: 'قاضي تمييز',                  groupAr: 'القضاء',                            emoji: '⚖️' },
+  // ■ المحاماة والاستشارات
+  { value: 'lawyer',                        labelAr: 'محامٍ',                        groupAr: 'المحاماة والاستشارات',               emoji: '🧑‍⚖️' },
+  { value: 'legal_consultant',              labelAr: 'مستشار قانوني',               groupAr: 'المحاماة والاستشارات',               emoji: '🧑‍⚖️' },
+  { value: 'arbitrator',                    labelAr: 'محكم',                         groupAr: 'المحاماة والاستشارات',               emoji: '🤝' },
+  // ■ السلطة التشريعية
+  { value: 'legislator',                    labelAr: 'مشرّع',                        groupAr: 'السلطة التشريعية',                  emoji: '📜' },
+  { value: 'legislative_researcher',        labelAr: 'باحث تشريعي',                  groupAr: 'السلطة التشريعية',                  emoji: '📜' },
+  // ■ الجهات الحكومية والتنظيمية
+  { value: 'minister',                      labelAr: 'صانع سياسات',                 groupAr: 'الجهات الحكومية والتنظيمية',        emoji: '🏛️' },
+  { value: 'government',                    labelAr: 'ممثل جهة حكومية',             groupAr: 'الجهات الحكومية والتنظيمية',        emoji: '🏛️' },
+  { value: 'regulatory_authority',          labelAr: 'ممثل جهة تنظيمية',            groupAr: 'الجهات الحكومية والتنظيمية',        emoji: '🏦' },
+  { value: 'compliance_officer',            labelAr: 'مسؤول امتثال',                groupAr: 'الجهات الحكومية والتنظيمية',        emoji: '✅' },
 ];
 
-// Role groups — used by the identity dropdown in PreAnalysisPanel
+// Role groups — used internally (not directly by the new dropdown, but kept for search/future use)
 const USER_TYPE_GROUPS: { labelAr: string; icon: string; types: UserType[] }[] = [
-  { labelAr: 'العموم',                        icon: '👤',  types: ['citizen', 'general_user', 'individual', 'other', 'unspecified'] },
-  { labelAr: 'التعليم والتدريب',              icon: '🎓',  types: ['law_student', 'academic_researcher', 'judicial_trainee', 'legal_intern', 'graduate_student'] },
-  { labelAr: 'الشرطة والتحقيق',              icon: '👮',  types: ['police_officer_new', 'police_station_officer', 'evidence_officer', 'investigation_officer'] },
-  { labelAr: 'النيابة والادعاء',              icon: '⚖️',  types: ['prosecutor', 'prosecution_member', 'prosecution_deputy', 'prosecution_first_deputy', 'prosecution_chief', 'public_attorney'] },
-  { labelAr: 'القضاء',                        icon: '⚖️',  types: ['judge_first_instance', 'judge_appeal', 'judge_cassation', 'judge_admin', 'judge_criminal', 'judge_civil', 'judge_personal_status', 'judge'] },
-  { labelAr: 'المحاماة والاستشارات',          icon: '🧑‍⚖️', types: ['lawyer', 'legal_consultant', 'researcher'] },
-  { labelAr: 'السلطة التشريعية',              icon: '📜',  types: ['legislator', 'legislative_committee'] },
-  { labelAr: 'الجهات الحكومية',               icon: '🏛️', types: ['minister', 'undersecretary', 'director_general', 'government', 'government_entity', 'regulatory_authority', 'compliance_officer', 'risk_officer'] },
+  { labelAr: 'العموم',                             icon: '👤',  types: ['citizen', 'general_user', 'individual', 'other', 'unspecified'] },
+  { labelAr: 'التعليم والتدريب',                   icon: '🎓',  types: ['law_student', 'academic_researcher', 'judicial_intern', 'police_trainee', 'legal_intern', 'graduate_student'] },
+  { labelAr: 'الشرطة والتحقيق',                   icon: '👮',  types: ['police_recruit_officer', 'police_station_officer', 'evidence_collection_officer', 'criminal_investigation_officer', 'forensic_laboratory_officer', 'cybercrime_officer', 'community_policing_officer', 'child_protection_officer', 'juvenile_affairs_officer'] },
+  { labelAr: 'النيابة العامة',                     icon: '⚖️',  types: ['prosecution_member', 'prosecution_deputy', 'prosecution_chief', 'public_attorney', 'prosecutor', 'prosecution_first_deputy'] },
+  { labelAr: 'القضاء',                             icon: '⚖️',  types: ['judicial_trainee', 'judge_first_instance', 'judge_criminal', 'judge_admin', 'enforcement_judge', 'judge_personal_status', 'judge_appeal', 'judge_cassation', 'judge_civil', 'judge'] },
+  { labelAr: 'المحاماة والاستشارات',               icon: '🧑‍⚖️', types: ['lawyer', 'legal_consultant', 'arbitrator', 'researcher'] },
+  { labelAr: 'السلطة التشريعية',                   icon: '📜',  types: ['legislator', 'legislative_researcher', 'legislative_committee'] },
+  { labelAr: 'الجهات الحكومية والتنظيمية',         icon: '🏛️', types: ['minister', 'government', 'regulatory_authority', 'compliance_officer', 'undersecretary', 'director_general', 'government_entity', 'risk_officer'] },
 ];
 
 const USER_GOAL_CFG: Record<UserGoal, { ar: string; emoji: string }> = {
@@ -1206,7 +1260,274 @@ const ROLE_ENGINES: Partial<Record<UserType, RoleEngine>> = {
     ],
   },
 
-  // ── Future engines (ai_engineer, algorithm_reviewer, etc.) go here ──
+  // ── V4.0 — Specialized Police Engines ──────────────────────────────────────
+
+  police_recruit_officer: {
+    nameAr: 'ضابط حديث التعيين — محرك الإجراءات الأساسية',
+    reasoningSequenceAr: ['الإجراء المطلوب','السند القانوني','ضمانات الحقوق','التسلسل الإجرائي','الاستنتاج'],
+    outputsAr: ['الإجراء الصحيح','ضمانات الحقوق','تحذيرات إجرائية'],
+    characteristicsAr: [
+      'شرح الإجراءات الأساسية بخطوات واضحة ومرقّمة',
+      'تحديد السند القانوني لكل إجراء',
+      'إبراز الضمانات القانونية لحقوق الموقوف والمشتبه به',
+      'التنبيه إلى العيوب الإجرائية التي تُبطل الدليل',
+      'توضيح التسلسل الإجرائي الواجب اتباعه',
+    ],
+    outputStructureAr: [
+      'الإجراء المطلوب — الخطوة الصحيحة في هذا الموقف',
+      'السند القانوني — النص المُجيز لهذا الإجراء',
+      'ضمانات الحقوق — الحقوق الواجب مراعاتها',
+      'التسلسل الإجرائي — الخطوات بترتيبها الصحيح',
+      'تحذيرات — ما قد يُبطل الدليل أو يُعرض القضية للبطلان',
+    ],
+  },
+
+  evidence_collection_officer: {
+    nameAr: 'ضابط جمع الاستدلالات — محرك الاستدلال الأولي',
+    reasoningSequenceAr: ['الاستدلال الأولي','الأدلة الواجب جمعها','التوثيق الإجرائي','تسليم الملف','الاستنتاج'],
+    outputsAr: ['الاستدلالات الأولية المطلوبة','توثيق جمع الأدلة','قائمة التسليم'],
+    characteristicsAr: [
+      'تحديد الاستدلالات الأولية المطلوبة وأسلوب جمعها',
+      'بيان آليات التوثيق الإجرائي الكافي',
+      'تحديد الأدلة الناقصة وكيفية تأمينها',
+      'ضبط إجراءات تسليم الملف للتحقيق',
+    ],
+    outputStructureAr: [
+      'الاستدلال الأولي — ما يجب رصده وتوثيقه فور ورود البلاغ',
+      'الأدلة الواجب جمعها — قائمة الأدلة المادية والرقمية والشهود',
+      'التوثيق الإجرائي — كيفية توثيق كل خطوة لضمان سلامة الملف',
+      'تسليم الملف — إجراءات الإحالة للجهة المختصة',
+      'الأدلة الناقصة — ما لم يُجمع بعد وسُبل استكماله',
+    ],
+  },
+
+  criminal_investigation_officer: {
+    nameAr: 'ضابط التحقيق الجنائي — محرك استراتيجية التحقيق',
+    reasoningSequenceAr: ['استراتيجية التحقيق','أساليب الاستجواب','كفاية الأدلة','جاهزية الإحالة','الاستنتاج'],
+    outputsAr: ['خطة التحقيق','تقييم كفاية الأدلة','قرار الإحالة أو الاستمرار'],
+    characteristicsAr: [
+      'بناء استراتيجية تحقيق منهجية ومتكاملة',
+      'تحديد أساليب الاستجواب القانونية الفعّالة',
+      'تقييم كفاية الأدلة لإثبات كل ركن من أركان الجريمة',
+      'قياس جاهزية الملف للإحالة إلى النيابة العامة',
+      'تحديد المعلومات الناقصة وسُبل الحصول عليها',
+    ],
+    outputStructureAr: [
+      'استراتيجية التحقيق — المسار المنهجي لاستكمال التحقيق',
+      'أساليب الاستجواب — التقنيات القانونية للحصول على شهادات موثوقة',
+      'كفاية الأدلة — تقييم قوة الملف لإثبات كل ركن جنائي',
+      'جاهزية الإحالة — هل الملف مكتمل؟ وما الناقص؟',
+      'التوصية — الاستمرار في التحقيق أو الإحالة مع التبرير',
+    ],
+  },
+
+  forensic_laboratory_officer: {
+    nameAr: 'ضابط الأدلة الجنائية — محرك الأدلة العلمية',
+    reasoningSequenceAr: ['الدليل الجنائي','منهجية الفحص','سلسلة الحيازة','تقرير الخبرة','الاستنتاج'],
+    outputsAr: ['المنهجية الجنائية المطلوبة','سلسلة الحيازة','تقرير الخبرة'],
+    characteristicsAr: [
+      'تحديد الأدلة الجنائية المادية والرقمية القابلة للفحص',
+      'ضبط منهجية جمع الأدلة العلمية وفق المعايير الدولية',
+      'التحقق من سلامة سلسلة الحيازة من اللحظة الأولى',
+      'بيان متطلبات تقرير الخبرة الجنائية',
+    ],
+    outputStructureAr: [
+      'الدليل الجنائي — تحديد الأدلة المادية والرقمية القابلة للتحليل',
+      'منهجية الفحص — الخطوات العلمية والقانونية لفحص الأدلة',
+      'سلسلة الحيازة — توثيق انتقال الدليل منذ لحظة جمعه',
+      'تقرير الخبرة — عناصر التقرير الجنائي المطلوبة',
+      'الأدلة الناقصة — ما يحتاج تحليلاً إضافياً أو خبيراً متخصصاً',
+    ],
+  },
+
+  cybercrime_officer: {
+    nameAr: 'ضابط الجرائم الإلكترونية — محرك التحقيق الرقمي',
+    reasoningSequenceAr: ['الدليل الرقمي','الاختصاص الإلكتروني','إجراءات الضبط الرقمي','التحليل الجنائي الرقمي','الاستنتاج'],
+    outputsAr: ['منهجية الضبط الرقمي','الأدلة الإلكترونية المطلوبة','تقييم الاختصاص'],
+    characteristicsAr: [
+      'تحديد الأدلة الرقمية المطلوبة وأسلوب ضبطها',
+      'تقييم الاختصاص المكاني في الجرائم الإلكترونية العابرة للحدود',
+      'ضبط إجراءات التحقيق الجنائي الرقمي',
+      'بيان التشريعات الإلكترونية ذات الصلة',
+    ],
+    outputStructureAr: [
+      'الدليل الرقمي — تحديد الأدلة الإلكترونية وأسلوب ضبطها',
+      'الاختصاص الإلكتروني — تحديد الجهة المختصة والتشريع الواجب التطبيق',
+      'إجراءات الضبط الرقمي — الخطوات الإجرائية لضبط الجرائم الإلكترونية',
+      'التحليل الجنائي الرقمي — المنهجية العلمية لتحليل الأدلة الرقمية',
+      'التوصية — الإجراء التالي وفق التشريعات الإلكترونية النافذة',
+    ],
+  },
+
+  community_policing_officer: {
+    nameAr: 'ضابط الشرطة المجتمعية — محرك الوقاية والشراكة',
+    reasoningSequenceAr: ['المسألة المجتمعية','الإطار القانوني','آليات الوقاية','الشراكة المجتمعية','الاستنتاج'],
+    outputsAr: ['آليات الوقاية','الشراكة المجتمعية المطلوبة','الإجراء الوقائي'],
+    characteristicsAr: [
+      'التركيز على الوقاية والتدخل المبكر قبل تصاعد المشكلة',
+      'تحديد آليات الشراكة مع المجتمع والمؤسسات المحلية',
+      'بيان الإطار القانوني للتدخل المجتمعي وحدود الصلاحية',
+      'توظيف أدوات الحوار والوساطة المجتمعية',
+      'تقييم الأثر الاجتماعي للإجراءات الشرطية المقترحة',
+    ],
+    outputStructureAr: [
+      'المسألة المجتمعية — تحديد طبيعة الإشكالية وأبعادها',
+      'الإطار القانوني — التشريعات والأنظمة ذات الصلة',
+      'آليات الوقاية — التدخلات الوقائية المناسبة',
+      'الشراكة المجتمعية — الجهات الشريكة والأدوار المطلوبة',
+      'التوصية — خطة العمل الوقائية المقترحة',
+    ],
+  },
+
+  child_protection_officer: {
+    nameAr: 'ضابط حماية الطفل — محرك حماية الطفولة',
+    reasoningSequenceAr: ['وضع الطفل','الإطار التشريعي','إجراءات الحماية','التنسيق المؤسسي','الاستنتاج'],
+    outputsAr: ['الإجراء الحمائي الفوري','التنسيق المطلوب','التقرير الإجرائي'],
+    characteristicsAr: [
+      'إعلاء مبدأ مصلحة الطفل الفضلى في كل إجراء دون استثناء',
+      'تحديد إجراءات الحماية الفورية الواجبة وفق درجة الخطر',
+      'بيان التشريعات الحمائية للطفل والمعايير الدولية المعتمدة',
+      'توضيح متطلبات التنسيق مع الجهات المعنية (الصحة / التعليم / الشؤون)',
+      'توثيق كل إجراء لضمان سلامة الملف القانوني الحمائي',
+    ],
+    outputStructureAr: [
+      'وضع الطفل — تقييم الخطر والوضع الحمائي',
+      'الإطار التشريعي — حقوق الطفل والتشريعات الحمائية',
+      'إجراءات الحماية الفورية — الخطوات الواجبة اتخاذها فوراً',
+      'التنسيق المؤسسي — الجهات الواجب إخطارها والتنسيق معها',
+      'التوصية — الإجراء الأمثل لضمان سلامة الطفل وحقوقه',
+    ],
+  },
+
+  juvenile_affairs_officer: {
+    nameAr: 'ضابط الأحداث — محرك قضاء الأحداث',
+    reasoningSequenceAr: ['وضع الحدث','الإطار التشريعي للأحداث','الإجراءات الخاصة','التأهيل والإصلاح','الاستنتاج'],
+    outputsAr: ['الإجراء الإصلاحي المناسب','متطلبات قضاء الأحداث','التوصية التأهيلية'],
+    characteristicsAr: [
+      'تطبيق قواعد قضاء الأحداث المتميزة عن الجنائي العام بدقة',
+      'مراعاة مبدأ مصلحة الحدث الفضلى في كل مرحلة إجرائية',
+      'التركيز على التأهيل والإصلاح بدلاً من العقوبة الجزائية',
+      'بيان الإجراءات الخاصة بالحدث وكيفية الانتهاء لوساطة أو برنامج تأهيل',
+      'إشراك الأسرة والمؤسسات التأهيلية في مسار معالجة قضية الحدث',
+    ],
+    outputStructureAr: [
+      'وضع الحدث — السن وطبيعة الواقعة والخلفية الاجتماعية',
+      'الإطار التشريعي — أحكام الأحداث والاختصاصات الخاصة',
+      'الإجراءات الخاصة — ما يختلف في معاملة الأحداث عن البالغين',
+      'التأهيل والإصلاح — البدائل التأهيلية المتاحة',
+      'التوصية — الإجراء الأنسب بمراعاة مصلحة الحدث الفضلى',
+    ],
+  },
+
+  // ── V4.0 — Training Engines ──────────────────────────────────────────────────
+
+  police_trainee: {
+    nameAr: 'المتدرب الشرطي — محرك التدريب الأساسي',
+    reasoningSequenceAr: ['المفهوم الإجرائي','الإطار القانوني','التطبيق العملي','الأخطاء الشائعة','الخلاصة'],
+    outputsAr: ['الشرح التعليمي','الإطار القانوني','التطبيق العملي'],
+    characteristicsAr: [
+      'شرح الإجراءات الشرطية بلغة واضحة ومتدرجة',
+      'تعريف المصطلحات الإجرائية قبل استخدامها',
+      'تقديم أمثلة تطبيقية من الواقع العملي',
+      'تحديد الأخطاء الشائعة والتحذير منها',
+      'التركيز على الفهم والاستيعاب لا على الممارسة المتقدمة',
+    ],
+    outputStructureAr: [
+      'المفهوم الإجرائي — شرح مبسط للإجراء أو القاعدة',
+      'الإطار القانوني — النص القانوني ذو الصلة مع شرح مبسط',
+      'التطبيق العملي — مثال من الواقع يوضح التطبيق',
+      'الأخطاء الشائعة — ما يجب تجنبه وعواقب كل خطأ',
+      'الخلاصة التعليمية — الدرس الجوهري المستخلص',
+    ],
+  },
+
+  judicial_intern: {
+    nameAr: 'المتدرب القضائي — محرك التدريب القضائي التعليمي',
+    reasoningSequenceAr: ['المفهوم القضائي','الإطار القانوني','منهجية الاستدلال','تطبيق عملي','الخلاصة'],
+    outputsAr: ['الشرح التعليمي القضائي','منهجية الاستدلال','التطبيق المرشَّد'],
+    characteristicsAr: [
+      'شرح المفاهيم القضائية بأسلوب تعليمي متدرج يناسب المتدرب',
+      'إيضاح منهجية الاستدلال القضائي من الوقائع إلى الحكم خطوة بخطوة',
+      'ربط النصوص القانونية بالتطبيق القضائي الفعلي بأمثلة واقعية',
+      'تقديم نماذج على صياغة الأحكام والقرارات القضائية',
+      'الإشارة إلى الأخطاء الإجرائية الشائعة التي يقع فيها المبتدئون',
+    ],
+    outputStructureAr: [
+      'المفهوم القضائي — شرح المبدأ القضائي بلغة تعليمية واضحة',
+      'الإطار القانوني — النص والسابقة القضائية ذات الصلة',
+      'منهجية الاستدلال — مسار التفكير من الوقائع إلى الحكم',
+      'تطبيق عملي — نموذج تطبيقي يوضح التطبيق الصحيح',
+      'الخلاصة التعليمية — الدرس القضائي الجوهري',
+    ],
+  },
+
+  // ── V4.0 — Enforcement Judge ─────────────────────────────────────────────────
+
+  enforcement_judge: {
+    nameAr: 'قاضي التنفيذ — محرك قضاء التنفيذ',
+    reasoningSequenceAr: ['السند التنفيذي','إجراءات التنفيذ','الإشكاليات التنفيذية','وسائل التنفيذ الجبري','الاستنتاج'],
+    outputsAr: ['قرار التنفيذ','الوسيلة التنفيذية المناسبة','معالجة الإشكاليات'],
+    characteristicsAr: [
+      'التحقق من صحة السند التنفيذي واكتمال شروطه الموضوعية والشكلية',
+      'تحديد وسيلة التنفيذ الجبري الأنسب بناءً على نوع الالتزام',
+      'معالجة الإشكاليات التنفيذية والاعتراضات بقرارات معللة',
+      'مراعاة الضمانات الإجرائية وحقوق المنفذ ضده في كل مرحلة',
+      'تحديد القواعد الخاصة بالتنفيذ الجزئي أو التراخي أو الوقف المؤقت',
+    ],
+    outputStructureAr: [
+      'السند التنفيذي — مراجعة صحة السند واكتمال شروطه القانونية',
+      'إجراءات التنفيذ — الخطوات الإجرائية الواجبة للشروع في التنفيذ',
+      'الإشكاليات التنفيذية — الاعتراضات والعوائق وكيفية معالجتها',
+      'وسائل التنفيذ الجبري — الحجز والبيع والإكراه المناسب',
+      'قرار التنفيذ — الأمر القضائي المُعلَّل بالإذن أو الرفض',
+    ],
+  },
+
+  // ── V4.0 — Arbitrator ────────────────────────────────────────────────────────
+
+  arbitrator: {
+    nameAr: 'المحكّم — محرك التحكيم التجاري والمدني',
+    reasoningSequenceAr: ['الاختصاص التحكيمي','الوقائع والأدلة','القانون الواجب التطبيق','التحليل التحكيمي','قرار التحكيم'],
+    outputsAr: ['قرار التحكيم المُعلَّل','القانون الواجب التطبيق','التوصية للأطراف'],
+    characteristicsAr: [
+      'التحقق من اتفاق التحكيم وصحة اختصاص الهيئة',
+      'تطبيق قواعد التحكيم المتفق عليها',
+      'تحليل الوقائع والأدلة بموضوعية محايدة',
+      'تطبيق القانون المختار من الأطراف أو الأنسب',
+      'صياغة قرار التحكيم بمعايير قابلية التنفيذ',
+    ],
+    outputStructureAr: [
+      'الاختصاص التحكيمي — صحة الاتفاق وأهلية الأطراف',
+      'الوقائع والأدلة — الوقائع الثابتة والمتنازع عليها',
+      'القانون الواجب التطبيق — الاختيار المُبرَّر للقانون الحاكم',
+      'التحليل التحكيمي — تطبيق القانون على الوقائع بموضوعية',
+      'قرار التحكيم — المنطوق المُعلَّل القابل للتنفيذ',
+    ],
+  },
+
+  // ── V4.0 — Legislative Researcher ───────────────────────────────────────────
+
+  legislative_researcher: {
+    nameAr: 'الباحث التشريعي — محرك البحث التشريعي المقارن',
+    reasoningSequenceAr: ['الفجوة التشريعية','الإطار التشريعي الحالي','القانون المقارن','المقترح التشريعي','التوصية'],
+    outputsAr: ['الفجوة التشريعية المحددة','المقترح التشريعي','الأثر المتوقع'],
+    characteristicsAr: [
+      'تحديد الفجوات التشريعية ومسوّغات التدخل التشريعي',
+      'مراجعة الإطار التشريعي الحالي وكفايته',
+      'إجراء مقارنة تشريعية مع الأنظمة القانونية المرجعية',
+      'صياغة مقترحات تشريعية دقيقة وقابلة للتطبيق',
+      'تقييم الأثر المتوقع للتعديل التشريعي',
+    ],
+    outputStructureAr: [
+      'الفجوة التشريعية — المشكلة التي يعالجها النص المقترح',
+      'الإطار التشريعي الحالي — ما يوجد وما ينقص',
+      'القانون المقارن — كيف عالجت الأنظمة الأخرى المسألة ذاتها',
+      'المقترح التشريعي — نص مقترح أو مبادئ توجيهية للصياغة',
+      'الأثر المتوقع — التداعيات القانونية والمجتمعية المتوقعة',
+    ],
+  },
+
+  // ── Future modules reserved (military justice, customs, financial crimes…) ──
 };
 
 /** Build the role-specific reasoning block injected into the AI prompt.
@@ -1235,23 +1556,38 @@ function buildEngineBlock(userType: UserType): string {
 // ─── Special Police Module ────────────────────────────────────────────────────
 // Injected as an additional mandatory section for all police identity types.
 
+// V4.0 — expanded to 9 police engine types
 const POLICE_IDENTITY_TYPES = new Set<UserType>([
-  'police_officer_new', 'police_station_officer', 'evidence_officer', 'investigation_officer',
+  // V3 legacy
+  'police_officer_new', 'evidence_officer', 'investigation_officer',
+  // V4.0 engines
+  'police_recruit_officer', 'police_station_officer',
+  'evidence_collection_officer', 'criminal_investigation_officer',
+  'forensic_laboratory_officer', 'cybercrime_officer',
+  'community_policing_officer', 'child_protection_officer', 'juvenile_affairs_officer',
+  // Training
+  'police_trainee',
 ]);
 
+// V4.0 — upgraded from 10 to 15 mandatory items
 const POLICE_MODULE_BLOCK = `
-[الوحدة الخاصة بالشرطة — 10 محاور إلزامية تُضاف بعد التحليل الرئيسي]
-بعد إتمام التحليل القانوني أعلاه، أضف هذه المحاور العشرة بترتيبها:
-  ١. قائمة الأدلة الواجب جمعها — حدّد بدقة الأدلة المادية والرقمية والشهادات المطلوبة.
-  ٢. مبادئ التحقيق الاستدلالي — الخطوات الإجرائية الأساسية للتحقيق السليم.
-  ٣. التحقق من صحة المحضر — هل المحضر المُعدّ مستوفٍ للشروط الشكلية والموضوعية؟
-  ٤. مراجعة المشروعية الإجرائية — هل الإجراءات المتخذة مطابقة للقانون بشكل كامل؟
-  ٥. تحذيرات الأخطاء الجسيمة — الأخطاء التي قد تُبطل القضية أو تُضعف الاتهام.
-  ٦. مراجعة سلسلة الحيازة — تقييم سلامة الحفاظ على الأدلة وتوثيق انتقالها.
-  ٧. تقييم جاهزية الإحالة — هل الملف جاهز للإحالة إلى النيابة العامة؟ وما الناقص؟
-  ٨. تحديد الأدلة الناقصة — ما لم يُجمع بعد وكيفية الحصول عليه.
-  ٩. رصد العيوب الإجرائية — الإجراءات المعيبة التي تُخلّ بمشروعية الملف.
-  ١٠. درجة اكتمال التحقيق — تقييم نسبي (%) لمدى اكتمال الملف مع توصيات التحسين.
+[وحدة الشرطة مفعلة — 15 محوراً إلزامياً تُضاف بعد التحليل الرئيسي]
+بعد إتمام التحليل القانوني أعلاه، أضف هذه المحاور الخمسة عشر بترتيبها:
+  ١. قائمة الأدلة الواجب جمعها — الأدلة المادية والرقمية والشهادات المطلوبة لكل ركن جنائي.
+  ٢. أسس ومبادئ جمع الاستدلالات — الخطوات الإجرائية المعتمدة للتحقيق السليم.
+  ٣. متطلبات صحة المحضر — هل المحضر مستوفٍ للشروط الشكلية والموضوعية كافة؟
+  ٤. مراجعة المشروعية الإجرائية — هل كل إجراء متخذ مطابق للقانون بشكل كامل؟
+  ٥. مراجعة الاختصاص المكاني والنوعي — هل الجهة المختصة هي الجهة الصحيحة؟
+  ٦. مراجعة سلسلة الحيازة للأدلة — سلامة الحفاظ على الأدلة وتوثيق انتقالها منذ اللحظة الأولى.
+  ٧. التحذير من الأخطاء الإجرائية الجسيمة — كل خطأ قد يُبطل الدليل أو يُسقط الاتهام.
+  ٨. تحديد الأدلة الناقصة — ما لم يُجمع بعد وسُبل الحصول عليه قانوناً.
+  ٩. تقييم جاهزية الإحالة للنيابة العامة — هل الملف مكتمل للإحالة؟ وما العقبات؟
+  ١٠. نسبة اكتمال ملف التحقيق (%) — تقدير نسبي مُبرَّر مع تحديد النواقص الجوهرية.
+  ١١. قائمة إجراءات ما قبل الإحالة — الخطوات الواجب استيفاؤها قبل إحالة الملف.
+  ١٢. قائمة إجراءات ما بعد الإحالة — ما يتبع الإحالة من متابعات وإجراءات لازمة.
+  ١٣. تقييم قوة الأدلة — [ضعيف / متوسط / قوي] مع تبرير لكل تصنيف.
+  ١٤. بيان احتمالية الطعن الإجرائي مستقبلاً — نقاط الضعف التي قد يستند إليها الدفاع طعناً.
+  ١٥. توصيات تحسين الملف التحقيقي — إجراءات مقترحة لرفع جودة الملف قبل الإحالة.
 `;
 
 // Al-Shamsi keyword auto-detection
@@ -1418,48 +1754,82 @@ const EXPERT_MODE_PREFIX =
   '[وضع الرأي القانوني الخبير] أنت مستشار قانوني خبير. قدّم رأيك القانوني الاحترافي بشأن ما يلي، متضمناً: الرأي القانوني الواضح، نقاط القوة، نقاط الضعف، مخاطر التقاضي، احتمالية النجاح في أي نزاع، والإجراء القانوني الموصى به. صرّح في البداية بأن هذا رأي قانوني غير ملزم.\n\n';
 
 // Prefix injected for Scenario Builder mode — educational, completeness-first.
-const SCENARIO_BUILDER_PREFIX = `\
-[وضع تعليم السيناريوهات / بناء القضية — MLOS Scenario Builder]
+// ─── Scenario Engine — Training Mode ──────────────────────────────────────────
 
-أنت مرشد قانوني تعليمي. مهمتك ليست إصدار حكم فوري، بل تقييم مدى اكتمال السيناريو القانوني المقدَّم، ثم توجيه المستخدم لبناء قضية قانونية متكاملة وفق المعايير الإجرائية المعتمدة.
+interface ScenarioConfig {
+  caseType:        'criminal' | 'administrative' | 'civil' | 'family' | 'commercial' | 'cyber';
+  complexity:      'basic' | 'intermediate' | 'advanced';
+  proceduralStage: 'investigation' | 'prosecution' | 'trial' | 'appeal' | 'execution';
+}
 
-قبل أي شيء، قيّم السيناريو بناءً على العناصر التسعة التالية:
-١. أطراف القضية: الجهة الإدارية + صاحب المصلحة + أي طرف ثالث مؤثر.
-٢. الوقائع: ماذا حدث؟ متى؟ أين؟ ما القرار أو التصرف محل النزاع؟
-٣. القرار الإداري: نوعه، تاريخه، الجهة المُصدِرة، شفهي أم مكتوب؟ هل تم التبليغ؟
-٤. سبب القرار: السبب المُعلن، المستندات، هل السبب حقيقي أم محل نزاع؟
-٥. الإجراءات: هل سُمع دفاع صاحب الشأن؟ هل أُنذر؟ هل مُكِّن من الرد؟ هل توجد لجنة أو محضر؟
-٦. الضرر: مالي / وظيفي / معنوي / حرمان من خدمة / إلغاء ترخيص.
-٧. الطلبات: إلغاء القرار / وقف التنفيذ / التعويض / إعادة الحال / تفسير القرار.
-٨. الإطار القانوني: الإمارات / فرنسا / مقارن / نظرية الشامسي.
-٩. إن كانت القضية تتعلق بقرار ذكي أو خوارزمي: ما النظام المستخدم؟ هل القرار آلي بالكامل؟ هل وُجد تدخل بشري؟ ما البيانات المستخدمة؟ هل شُرح سبب القرار؟ هل يمكن الاعتراض عليه؟
+const DEFAULT_SCENARIO_CONFIG: ScenarioConfig = {
+  caseType: 'criminal', complexity: 'basic', proceduralStage: 'investigation',
+};
 
-أَخرِج إجابتك حصراً بهذا الهيكل السباعي:
+const SCENARIO_CASE_TYPES: { value: ScenarioConfig['caseType']; ar: string; emoji: string }[] = [
+  { value: 'criminal',       ar: 'جنائية',          emoji: '🔍' },
+  { value: 'administrative', ar: 'إدارية',           emoji: '🏛️' },
+  { value: 'civil',          ar: 'مدنية',            emoji: '⚖️' },
+  { value: 'family',         ar: 'أحوال شخصية',      emoji: '👨‍👩‍👧' },
+  { value: 'commercial',     ar: 'تجارية',           emoji: '💼' },
+  { value: 'cyber',          ar: 'إلكترونية',        emoji: '💻' },
+];
 
-أ) تقييم اكتمال السيناريو
-اذكر بوضوح: [مكتمل] أو [ناقص] أو [يحتاج توضيح]، مع تبرير موجز.
+const SCENARIO_COMPLEXITY: { value: ScenarioConfig['complexity']; ar: string }[] = [
+  { value: 'basic',         ar: 'أساسية' },
+  { value: 'intermediate',  ar: 'متوسطة' },
+  { value: 'advanced',      ar: 'متقدمة' },
+];
 
-ب) النواقص الجوهرية
-اسرد كل عنصر مفقود أو غامض يؤثر في سلامة القضية.
+const SCENARIO_STAGES: { value: ScenarioConfig['proceduralStage']; ar: string }[] = [
+  { value: 'investigation', ar: 'التحقيق' },
+  { value: 'prosecution',   ar: 'الادعاء' },
+  { value: 'trial',         ar: 'المحاكمة' },
+  { value: 'appeal',        ar: 'الاستئناف' },
+  { value: 'execution',     ar: 'التنفيذ' },
+];
 
-ج) أسئلة استكمال القضية
-اطرح على المستخدم أسئلة محددة ومرقّمة للحصول على المعلومات الناقصة.
+function buildScenarioPrefix(sc: ScenarioConfig, userType: UserType): string {
+  const ct = SCENARIO_CASE_TYPES.find((x) => x.value === sc.caseType)?.ar ?? sc.caseType;
+  const cx = SCENARIO_COMPLEXITY.find((x) => x.value === sc.complexity)?.ar ?? sc.complexity;
+  const st = SCENARIO_STAGES.find((x) => x.value === sc.proceduralStage)?.ar ?? sc.proceduralStage;
+  const identity = USER_TYPE_CONFIG[userType]?.ar ?? userType;
+  return `[محرك السيناريو التعليمي — MLOS Scenario Engine v4.0]
+الهوية المهنية: ${identity} | نوع القضية: ${ct} | مستوى التعقيد: ${cx} | المرحلة الإجرائية: ${st}
 
-د) صياغة قانونية محسّنة للوقائع
-أعِد صياغة ما قدّمه المستخدم بأسلوب قانوني رسمي، مع الحفاظ على الوقائع كما هي.
+أنت مُدرِّب قانوني متخصص. استنِد إلى الهوية المهنية ونوع القضية والمرحلة الإجرائية المحددة أعلاه لتخصيص السيناريو تخصيصاً كاملاً.
 
-هـ) المسألة القانونية محل البحث
-حدّد المسألة القانونية الجوهرية بدقة في جملتين أو ثلاث.
+أَخرِج إجابتك حصراً بهذا الهيكل الثماني الإلزامي:
 
-و) التحليل الأولي
-قدّم توجهاً قانونياً أولياً فقط — لا حكم نهائي — مع الإشارة إلى المبادئ والنصوص ذات الصلة.
+١) وقائع القضية
+اذكر وقائع السيناريو المُقدَّم بوضوح، مع تحديد الأطراف والحدث المحوري.
 
-ز) الحكم أو النتيجة المتوقعة
-قدّم هذا القسم فقط إذا كانت الوقائع كافية وواضحة. إن كانت ناقصة، اكتفِ بـ: "يتعذر إصدار حكم دون استكمال البيانات المطلوبة أعلاه."
+٢) الأدلة المتاحة
+اسرد الأدلة الموجودة وقوّتها الإثباتية.
 
-ملاحظة: هذا الوضع تعليمي وتوجيهي. لا تُصدر حكماً نهائياً قبل اكتمال السيناريو.
+٣) الأدلة الناقصة
+حدّد ما يجب جمعه أو استكماله وتأثيره على القضية.
+
+٤) التكييف القانوني
+وصّف الواقعة قانوناً وحدد النص الحاكم وفق نوع القضية والمرحلة الإجرائية.
+
+٥) المخاطر الإجرائية
+اذكر العيوب الإجرائية والأخطاء المحتملة التي قد تُضعف القضية.
+
+٦) النتيجة القضائية المتوقعة
+قدّم التوجه المتوقع بناءً على الأدلة والإطار القانوني.
+
+٧) الإجراءات المقترحة
+اقترح الخطوات التالية الأنسب للهوية المهنية المحددة.
+
+٨) تقييم التدريب
+قيّم اكتمال الملف وجاهزيته بنسبة مئوية، مع نقاط القوة والضعف وتوصيات التحسين.
 
 السيناريو المُقدَّم:\n\n`;
+}
+
+// Keep original prefix as fallback (used when scenario config not injected)
+const SCENARIO_BUILDER_PREFIX = buildScenarioPrefix(DEFAULT_SCENARIO_CONFIG, 'unspecified');
 
 // Prefix for Exemplary (نموذجي) mode — judicial-style model analysis with educational dimension.
 const EXEMPLARY_MODE_PREFIX = `\
@@ -2026,6 +2396,69 @@ function CfgSection({ title, icon, children }: { title: string; icon: string; ch
   );
 }
 
+// ─── Scenario Input Panel ────────────────────────────────────────────────────
+
+function ScenarioInputPanel({
+  config, onChange, disabled,
+}: {
+  config: ScenarioConfig;
+  onChange: (c: ScenarioConfig) => void;
+  disabled?: boolean;
+}) {
+  const t = (ar: string, en: string) => ar;
+  const sel = 'text-[11px] rounded-lg border border-border bg-background px-2 py-1 text-foreground cursor-pointer disabled:opacity-50';
+  return (
+    <div
+      className="mb-2 rounded-xl border border-teal-200 bg-teal-50/60 px-3 py-2 flex flex-wrap gap-3 items-center"
+      dir="rtl"
+    >
+      <span className="text-[10px] font-semibold text-teal-700 shrink-0">🧩 {t('محرك السيناريو', 'Scenario Engine')}</span>
+      {/* Case type */}
+      <div className="flex items-center gap-1">
+        <label className="text-[10px] text-muted-foreground">{t('نوع القضية', 'Case type')}</label>
+        <select
+          className={sel}
+          value={config.caseType}
+          onChange={(e) => onChange({ ...config, caseType: e.target.value as ScenarioConfig['caseType'] })}
+          disabled={disabled}
+        >
+          {SCENARIO_CASE_TYPES.map((ct) => (
+            <option key={ct.value} value={ct.value}>{ct.emoji} {ct.ar}</option>
+          ))}
+        </select>
+      </div>
+      {/* Complexity */}
+      <div className="flex items-center gap-1">
+        <label className="text-[10px] text-muted-foreground">{t('التعقيد', 'Complexity')}</label>
+        <select
+          className={sel}
+          value={config.complexity}
+          onChange={(e) => onChange({ ...config, complexity: e.target.value as ScenarioConfig['complexity'] })}
+          disabled={disabled}
+        >
+          {SCENARIO_COMPLEXITY.map((cx) => (
+            <option key={cx.value} value={cx.value}>{cx.ar}</option>
+          ))}
+        </select>
+      </div>
+      {/* Procedural stage */}
+      <div className="flex items-center gap-1">
+        <label className="text-[10px] text-muted-foreground">{t('المرحلة الإجرائية', 'Stage')}</label>
+        <select
+          className={sel}
+          value={config.proceduralStage}
+          onChange={(e) => onChange({ ...config, proceduralStage: e.target.value as ScenarioConfig['proceduralStage'] })}
+          disabled={disabled}
+        >
+          {SCENARIO_STAGES.map((st) => (
+            <option key={st.value} value={st.value}>{st.ar}</option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+}
+
 // ─── Pre-analysis panel ───────────────────────────────────────────────────────
 
 function PreAnalysisPanel({
@@ -2111,7 +2544,7 @@ function PreAnalysisPanel({
               </p>
               {isPolice && (
                 <p className="text-[10px] text-blue-700 font-medium">
-                  🔍 تُفعَّل الوحدة الخاصة بالشرطة — 10 محاور إجرائية إضافية في كل إجابة
+                  🔍 تُفعَّل الوحدة الخاصة بالشرطة — 15 محوراً إجرائياً إضافياً في كل إجابة
                 </p>
               )}
               <p className="text-muted-foreground leading-relaxed mt-0.5">
@@ -2920,6 +3353,9 @@ export default function AiAssistant() {
   /** True once user dismisses the pre-analysis panel for the current session. */
   const [configCommitted, setConfigCommitted] = useState(false);
 
+  // ── Scenario Engine config ─────────────────────────────────────────────────
+  const [scenarioConfig, setScenarioConfig] = useState<ScenarioConfig>(DEFAULT_SCENARIO_CONFIG);
+
   // ── Stage 5 — Smart Administrative Court Mode ─────────────────────────────
   const [courtMode, setCourtMode] = useState(false);
   const [supremeCourtMode, setSupremeCourtMode] = useState(false);
@@ -3087,7 +3523,7 @@ export default function AiAssistant() {
     const content = configPfx + (
       mode === 'expert'            ? EXPERT_MODE_PREFIX + text :
       mode === 'exemplary'         ? EXEMPLARY_MODE_PREFIX + text :
-      mode === 'scenario_builder'  ? SCENARIO_BUILDER_PREFIX + text :
+      mode === 'scenario_builder'  ? buildScenarioPrefix(scenarioConfig, sessionConfig.userType) + text :
       text
     );
 
@@ -3740,6 +4176,15 @@ export default function AiAssistant() {
             {/* Expert options panel */}
             {activeSession && expertMode && configCommitted && (
               <ExpertOptionsPanel options={expertOptions} onChange={setExpertOptions} />
+            )}
+
+            {/* Scenario Engine inputs — shown only when scenario_builder mode is active */}
+            {activeSession && currentMode === 'scenario_builder' && (
+              <ScenarioInputPanel
+                config={scenarioConfig}
+                onChange={setScenarioConfig}
+                disabled={sending || !canUseAi}
+              />
             )}
 
             {/* Response mode selector */}

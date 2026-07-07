@@ -1,0 +1,190 @@
+MARSAD PLATFORM UPDATE V4.0
+Professional Identity Expansion + Specialized Judicial & Police Engines
+
+1) Expand Professional Identity Dropdown
+
+Replace the current identities with the following structured hierarchy:
+
+■ العموم
+- مواطن / مستخدم عام
+
+■ التعليم والتدريب
+- طالب قانون
+- باحث أكاديمي
+- متدرب قضائي
+- متدرب شرطي
+
+■ الشرطة والتحقيق
+- ضابط حديث التعيين
+- ضابط مركز شرطة
+- ضابط جمع الاستدلالات
+- ضابط التحقيق الجنائي
+- ضابط الأدلة الجنائية
+- ضابط الجرائم الإلكترونية
+- ضابط الشرطة المجتمعية
+- ضابط حماية الطفل
+- ضابط الأحداث
+- ضابط المختبر الجنائي
+
+■ النيابة العامة
+- وكيل نيابة جديد
+- وكيل نيابة
+- رئيس نيابة
+- محام عام
+
+■ القضاء
+- ملازم قضائي
+- قاضٍ ابتدائي
+- قاضٍ جزائي
+- قاضٍ إداري
+- قاضي تنفيذ
+- قاضي أحوال شخصية
+- قاضي استئناف
+- قاضي تمييز
+
+■ المحاماة والاستشارات
+- محامٍ
+- مستشار قانوني
+- محكم
+
+■ السلطة التشريعية
+- مشرّع
+- باحث تشريعي
+
+■ الجهات الحكومية والتنظيمية
+- صانع سياسات
+- ممثل جهة حكومية
+- ممثل جهة تنظيمية
+- مسؤول امتثال
+
+2) Enhanced Police Procedural Module
+
+When any police identity is selected, automatically append the following procedural outputs to every answer:
+
+1. قائمة الأدلة الواجب جمعها.
+2. أسس ومبادئ جمع الاستدلالات.
+3. متطلبات صحة المحضر.
+4. مراجعة المشروعية الإجرائية.
+5. مراجعة الاختصاص المكاني والنوعي.
+6. مراجعة سلسلة الحيازة للأدلة.
+7. التحذير من الأخطاء الإجرائية الجسيمة.
+8. تحديد الأدلة الناقصة.
+9. تقييم جاهزية الإحالة للنيابة العامة.
+10. نسبة اكتمال ملف التحقيق (%).
+11. قائمة إجراءات ما قبل الإحالة.
+12. قائمة إجراءات ما بعد الإحالة.
+13. تقييم قوة الأدلة (ضعيف - متوسط - قوي).
+14. بيان احتمالية الطعن الإجرائي مستقبلاً.
+15. توصيات تحسين الملف التحقيقي.
+
+Display badge:
+"وحدة الشرطة مفعلة"
+
+3) New Specialized Police Engines
+
+Create the following engines:
+
+- police_recruit_officer
+- police_station_officer
+- evidence_collection_officer
+- criminal_investigation_officer
+- forensic_laboratory_officer
+- cybercrime_officer
+- community_policing_officer
+- child_protection_officer
+- juvenile_affairs_officer
+
+4) Judicial Engines Expansion
+
+Create dedicated judicial engines:
+
+- judicial_trainee
+- first_instance_judge
+- criminal_judge
+- administrative_judge
+- enforcement_judge
+- family_judge
+- appeal_judge
+- cassation_judge
+
+Each judicial engine must automatically adapt:
+- Legal reasoning depth.
+- Evidentiary standard.
+- Procedural review level.
+- Citation methodology.
+- Judgment drafting style.
+
+5) Scenario Engine (Training Mode)
+
+Create a dedicated legal scenario simulator.
+
+Inputs:
+- Professional identity.
+- Case type.
+- Complexity level.
+- Procedural stage.
+
+Outputs:
+1. Case facts.
+2. Available evidence.
+3. Missing evidence.
+4. Legal characterization.
+5. Procedural risks.
+6. Expected judicial outcome.
+7. Suggested actions.
+8. Training evaluation score.
+
+6) Intelligent Adaptive Response System
+
+The AI must automatically adapt responses based on the selected professional identity.
+
+Examples:
+
+Student:
+- Educational explanation.
+- Definitions and references.
+- Simplified language.
+
+Police Officer:
+- Operational procedures.
+- Evidence requirements.
+- Investigative sequence.
+
+Prosecutor:
+- Legal sufficiency analysis.
+- Charging recommendations.
+
+Judge:
+- Legal reasoning.
+- Jurisdiction analysis.
+- Judgment structure.
+
+Lawyer:
+- Defense strategy.
+- Litigation risks.
+- Alternative arguments.
+
+Legislator:
+- Regulatory impact.
+- Comparative legislation.
+- Draft amendment proposals.
+
+7) Future Institutional Expansion
+
+Reserve future modules for:
+
+- Military Justice
+- Customs Investigations
+- Financial Crimes
+- Anti-Money Laundering
+- National Security Cases
+- Artificial Intelligence Governance
+- Regulatory Compliance Authorities
+
+8) Strategic Objective
+
+Transform MARSAD from a legal assistant platform into:
+
+"An adaptive professional legal intelligence ecosystem that changes its legal reasoning, procedural depth, evidentiary standards and response methodology according to the user's actual institutional role."
+
+End of Update.
