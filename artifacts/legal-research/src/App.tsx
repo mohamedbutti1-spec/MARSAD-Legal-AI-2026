@@ -62,6 +62,8 @@ import JreSession from '@/pages/jre-session';
 // Phase 59 — Judicial Deliberation Chamber
 import JdcPage    from '@/pages/jdc';
 import JdcChamber from '@/pages/jdc-chamber';
+// Stage 4 — Legal Intelligence Brain
+import LegalBrain from '@/pages/legal-brain';
 // SPG — Smart Professional Guidance
 import SpgPage    from '@/pages/spg';
 import SpgSession from '@/pages/spg-session';
@@ -339,6 +341,13 @@ function Router() {
         <Route path="/pgf">
           <RouteGuard allow={canUseAi}>
             <PgfPage />
+          </RouteGuard>
+        </Route>
+
+        {/* Stage 4 — Legal Intelligence Brain */}
+        <Route path="/legal-brain">
+          <RouteGuard allow={canUseAi}>
+            <LegalBrain />
           </RouteGuard>
         </Route>
 

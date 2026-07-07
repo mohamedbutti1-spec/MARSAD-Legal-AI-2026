@@ -225,6 +225,21 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
       ],
     },
     {
+      id: 'legal-brain',
+      titleAr: 'الدماغ القانوني الذكي',
+      titleEn: 'Legal Intelligence Brain',
+      items: [
+        {
+          href: '/legal-brain',
+          labelAr: 'الدماغ القانوني',
+          labelEn: 'Legal Intelligence Brain',
+          icon: <Brain className="w-4.5 h-4.5" />,
+          show: canUseAi,
+          badge: 'Stage 4',
+        },
+      ],
+    },
+    {
       id: 'jdt',
       titleAr: 'التحليل القانوني',
       titleEn: 'Legal Analysis',

@@ -57,6 +57,8 @@ import spgRouter           from "./spg";
 import pgfRouter           from "./pgf";
 // PCS — Professional Case Simulator
 import pcsRouter           from "./pcs";
+// Stage 4 — Legal Intelligence Brain
+import legalBrainRouter    from "./legal-brain";
 // Beta — Reviewer Feedback
 import betaRouter          from "./beta";
 
@@ -104,6 +106,8 @@ router.use(cilRouter);
 router.use(jdtRouter);
 // NAIP — National Administrative Intelligence Platform
 router.use(naipRouter);
+// Stage 4 — Legal Intelligence Brain
+router.use(legalBrainRouter);
 // Beta — Reviewer Feedback (registered before workspace/adkg/kb — those routers
 // apply requireAnyRole globally, which would intercept /beta/* paths and
 // return 403 for the citizen role before betaRouter is ever reached)
