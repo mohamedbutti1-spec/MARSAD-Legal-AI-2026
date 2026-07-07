@@ -32,11 +32,14 @@ if (process.env.ALLOWED_ORIGIN) {
   });
 }
 
-if (IS_PRODUCTION) {
-  // Always allow *.replit.app — Replit deployment domains are same-origin
-  // for the static frontend. Belt-and-suspenders in case ALLOWED_ORIGIN is
-  // missing or the deployment domain changes without updating the env var.
-  ALLOWED_ORIGINS.push(/^https:\/\/[a-z0-9-]+\.replit\.app$/);
+if (IS_PRODUCTION && ALLOWED_ORIGINS.length === 0) {
+  // ALLOWED_ORIGIN env var is required in production. Log a warning — do NOT
+  // add a wildcard fallback; that would let any sibling *.replit.app subdomain
+  // make credentialed cross-origin requests against this API.
+  logger.warn(
+    "ALLOWED_ORIGIN is not set in production. All cross-origin requests will be rejected. " +
+    "Set ALLOWED_ORIGIN to the exact deployment URL (e.g. https://your-app.replit.app).",
+  );
 }
 
 if (!IS_PRODUCTION) {
@@ -85,25 +88,11 @@ app.use(
   }),
 );
 
-// ── C3 Fix: Block unauthenticated direct API access in production ─────────────
-// Rejects requests that carry neither Origin nor Referer — the signature of
-// raw curl/script access that bypasses the browser security model.
-// Exemptions:
-//   • /api/healthz and /healthz — load-balancer / uptime probes
-//   • Any request with a Referer header — covers PWA standalone on iOS
-//     (iOS Safari omits Origin on navigations but always sends Referer)
-if (IS_PRODUCTION) {
-  app.use((req: Request, res: Response, next: NextFunction) => {
-    if (req.path === "/api/healthz" || req.path === "/healthz") {
-      return next();
-    }
-    if (!req.headers.origin && !req.headers.referer) {
-      res.status(403).json({ error: "Direct API access is not permitted in production." });
-      return;
-    }
-    next();
-  });
-}
+// No no-origin gate: same-origin browser requests (Safari, PWA standalone)
+// legitimately omit the Origin header. Blocking on its absence only hurts
+// iOS Safari / installed PWAs — it does not prevent any real attack because
+// cross-origin requests always include Origin (handled by CORS below) and
+// unauthenticated same-origin requests are rejected by the JWT middleware.
 
 // ── CORS ─────────────────────────────────────────────────────────────────────
 // Credentials mode: the session cookie is sent on every API request.
@@ -111,10 +100,12 @@ if (IS_PRODUCTION) {
 app.use(
   cors({
     origin: (origin, cb) => {
-      // In development: allow no-origin requests (curl, Replit shell scripts)
-      if (!origin) {
-        return IS_PRODUCTION ? cb(new Error("CORS_NO_ORIGIN")) : cb(null, true);
-      }
+      // No Origin header = same-origin browser request (Safari, PWA standalone,
+      // mobile fetch). Same-origin requests are inherently safe — the cookie is
+      // HttpOnly + SameSite=Lax, and cross-origin attacks always include Origin.
+      // Rejecting no-origin requests breaks iOS Safari's GET /api/auth/me call.
+      if (!origin) return cb(null, true);
+
       const allowed = ALLOWED_ORIGINS.some((o) =>
         typeof o === "string" ? o === origin : o.test(origin),
       );
