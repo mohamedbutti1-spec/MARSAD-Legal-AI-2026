@@ -43,3 +43,4 @@
 - [JWT Auth Architecture](jwt-auth-architecture.md) — cookie session, strip-then-backfill pattern for legacy headers, demo account seeding, frontend AuthGate design
 - [Express 5 router.use() bleed](express5-router-bleed.md) — router.use(requireAnyRole) without path prefix blocks citizen from ALL later routers; register citizen routes BEFORE workspace/kb/adkg
 - [iOS SameSite Auth](ios-samesite-auth.md) — SameSite=Strict breaks iOS PWA standalone; use Lax + refreshSession() not window.location.href after login
+- [MLOS Stage 3 — Production Intelligence Layer](mlos-stage3.md) — 11 engines, NDJSON streaming (reader.releaseLock in finally), comparative law mode, Shamsi 11 dims, streaming guards on action blocks

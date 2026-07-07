@@ -60,6 +60,8 @@ type UserType =
   | 'minister' | 'undersecretary' | 'director_general' | 'compliance_officer' | 'risk_officer' | 'government'
   // Legal Professions
   | 'lawyer' | 'legal_consultant' | 'professor' | 'researcher' | 'legal_author' | 'graduate_student'
+  // Legal Specialisations (Stage 3)
+  | 'admin_law_specialist' | 'constitutional_specialist' | 'criminal_specialist' | 'civil_specialist'
   // Public Users
   | 'citizen' | 'institution'
   // AI & Governance
@@ -86,6 +88,8 @@ interface SessionConfig {
   depth: ResearchDepth;
   /** Whether the المعيار المتقدم (Al-Shamsi Theory) is activated for this session */
   applyAdvancedStandard: boolean;
+  /** UAE ↔ France comparative law mode */
+  comparativeMode: boolean;
 }
 
 interface ExpertOptions {
@@ -104,7 +108,7 @@ interface ExpertOptions {
 const DEFAULT_SESSION_CONFIG: SessionConfig = {
   userType: 'lawyer', userGoal: 'legal_opinion', answerMode: 'standard', jurisdiction: 'uae',
   sources: ['all'], citStyle: 'uae', depth: 'detailed',
-  applyAdvancedStandard: false,
+  applyAdvancedStandard: false, comparativeMode: false,
 };
 
 const DEFAULT_EXPERT_OPTIONS: ExpertOptions = {
@@ -133,6 +137,11 @@ const USER_TYPE_CONFIG: Record<UserType, { ar: string; emoji: string }> = {
   researcher:             { ar: 'باحث قانوني',                    emoji: '🎓' },
   legal_author:           { ar: 'مؤلف قانوني',                    emoji: '✍' },
   graduate_student:       { ar: 'طالب دراسات عليا',              emoji: '🎓' },
+  // Legal Specialisations (Stage 3)
+  admin_law_specialist:       { ar: 'متخصص قانون إداري',          emoji: '🏛' },
+  constitutional_specialist:  { ar: 'متخصص قانون دستوري',         emoji: '📜' },
+  criminal_specialist:        { ar: 'متخصص قانون جنائي',          emoji: '🔍' },
+  civil_specialist:           { ar: 'متخصص قانون مدني',           emoji: '⚖' },
   // Public Users
   citizen:                { ar: 'مواطن',                          emoji: '👤' },
   institution:            { ar: 'شركة / مؤسسة',                  emoji: '🏢' },
@@ -148,6 +157,7 @@ const USER_TYPE_GROUPS: { labelAr: string; types: UserType[] }[] = [
   { labelAr: 'السلطة التشريعية',              types: ['legislator', 'legislative_committee'] },
   { labelAr: 'السلطة التنفيذية',              types: ['minister', 'undersecretary', 'director_general', 'compliance_officer', 'risk_officer', 'government'] },
   { labelAr: 'المهن القانونية',               types: ['lawyer', 'legal_consultant', 'professor', 'researcher', 'legal_author', 'graduate_student'] },
+  { labelAr: 'التخصصات القانونية',           types: ['admin_law_specialist', 'constitutional_specialist', 'criminal_specialist', 'civil_specialist'] },
   { labelAr: 'المستخدمون العامون',            types: ['citizen', 'institution'] },
   { labelAr: 'الذكاء الاصطناعي والحوكمة',    types: ['ai_engineer', 'algorithm_reviewer', 'algorithmic_auditor'] },
 ];
@@ -369,13 +379,111 @@ const ROLE_ENGINES: Partial<Record<UserType, RoleEngine>> = {
     ],
   },
 
-  // ── Future engines go here without modifying the above ──
-  // risk_officer: { ... }
-  // compliance_officer: { ... }
-  // minister: { ... }
-  // ai_engineer: { ... }
-  // algorithm_reviewer: { ... }
-  // algorithmic_auditor: { ... }
+  // 7 — Lawyer Engine
+  lawyer: {
+    nameAr: 'المحاماة — محرك الدفاع القانوني',
+    reasoningSequenceAr: [
+      'الوقائع والوقائع المادية',
+      'تحديد المسائل القانونية',
+      'القانون الواجب التطبيق',
+      'التحليل القانوني التطبيقي',
+      'الحجج المضادة والدفوع',
+      'تقييم قوة الموقف',
+      'الاستنتاج والتوصيات',
+    ],
+    outputsAr: [
+      'الرأي القانوني المهني',
+      'استراتيجية الدفاع',
+      'المخاطر والفرص',
+      'خطة الإجراء القانوني',
+    ],
+  },
+
+  // 8 — Administrative Law Specialist Engine
+  admin_law_specialist: {
+    nameAr: 'القانون الإداري — محرك التخصص الإداري',
+    reasoningSequenceAr: [
+      'الوقائع وتحديد المسائل الإدارية',
+      'أركان القرار الإداري (الاختصاص · الشكل · السبب · المحل · الغاية)',
+      'القانون الواجب التطبيق (تراتبياً: دستوري → تشريعي → لائحي)',
+      'تحليل مشروعية القرار الإداري',
+      'الحجج المضادة والتفسيرات البديلة',
+      'السوابق القضائية للمحاكم الإدارية',
+      'الاستنتاج: صحة أو بطلان القرار',
+      'التوصيات وسبل الطعن',
+    ],
+    outputsAr: [
+      'حكم مشروعية القرار',
+      'ركن الإخلال وأثره',
+      'مسار الطعن المناسب',
+      'احتمالية الإلغاء',
+    ],
+  },
+
+  // 9 — Constitutional Law Specialist Engine
+  constitutional_specialist: {
+    nameAr: 'القانون الدستوري — المحرك الدستوري',
+    reasoningSequenceAr: [
+      'الوقائع وتحديد المسألة الدستورية',
+      'القواعد الدستورية الحاكمة',
+      'القانون الواجب التطبيق (الدستور الاتحادي أولاً)',
+      'التحليل الدستوري: التوافق أو التعارض',
+      'الحجج الدستورية المضادة',
+      'الرقابة الدستورية وأثر الإلغاء',
+      'الاستنتاج الدستوري',
+      'التوصيات والإصلاح التشريعي المقترح',
+    ],
+    outputsAr: [
+      'حكم الدستورية',
+      'النص الدستوري الحاكم',
+      'أثر اللادستورية',
+      'المسار الإصلاحي المقترح',
+    ],
+  },
+
+  // 10 — Criminal Law Specialist Engine
+  criminal_specialist: {
+    nameAr: 'القانون الجنائي — محرك التحليل الجنائي',
+    reasoningSequenceAr: [
+      'الوقائع والوقائع المادية للجريمة',
+      'تحديد التكييف الجنائي',
+      'القانون الجنائي الواجب التطبيق',
+      'أركان الجريمة: الركن المادي + الركن المعنوي',
+      'الأدلة وعبء الإثبات',
+      'الحجج المضادة ودفوع البراءة',
+      'التكييف المرجَّح والعقوبة المقررة',
+      'التوصيات الإجرائية والموضوعية',
+    ],
+    outputsAr: [
+      'التكييف الجنائي المرجَّح',
+      'العقوبة المحتملة',
+      'جدوى الدفاع',
+      'استراتيجية المحاكمة',
+    ],
+  },
+
+  // 11 — Civil Law Specialist Engine
+  civil_specialist: {
+    nameAr: 'القانون المدني — محرك التحليل المدني',
+    reasoningSequenceAr: [
+      'الوقائع والعلاقة القانونية المدنية',
+      'تحديد المسائل المدنية (عقد · ضمان · مسؤولية · حقوق عينية)',
+      'القانون المدني الواجب التطبيق',
+      'التحليل: تكوين العقد / الإخلال / أركان المسؤولية',
+      'الأضرار والتعويض المطالب به',
+      'الحجج المضادة والدفوع المدنية',
+      'السوابق القضائية المدنية',
+      'الاستنتاج والتوصيات العملية',
+    ],
+    outputsAr: [
+      'قوة الدعوى المدنية',
+      'التعويض المقدَّر',
+      'فرص التسوية الودية',
+      'استراتيجية التقاضي',
+    ],
+  },
+
+  // ── Future engines (ai_engineer, algorithm_reviewer, etc.) go here ──
 };
 
 /** Build the role-specific reasoning block injected into the AI prompt.
@@ -422,22 +530,34 @@ function buildConfigPrefix(config: SessionConfig, expertMode: boolean, opts: Exp
   } else {
     p += `ترتيب الاستجابة المطلوب: ١. التحليل القانوني → ٢. التحليل القضائي → ٣. الفقه القانوني → ٤. القانون المقارن\n`;
   }
+  // Comparative Law mode — UAE ↔ France native layer
+  if (config.comparativeMode) {
+    p += `\n[وضع القانون المقارن — الإمارات ↔ فرنسا]\n`;
+    p += `هذه الجلسة في وضع المقارنة التشريعية المباشرة بين القانون الإماراتي والقانون الفرنسي.\n`;
+    p += `المطلوب في كل إجابة:\n`;
+    p += `  أ. الموقف الإماراتي: النص الإماراتي الصريح + سابقة قضائية إماراتية إن وجدت\n`;
+    p += `  ب. الموقف الفرنسي: النص الفرنسي المقابل + سابقة قضائية فرنسية إن وجدت\n`;
+    p += `  ج. أوجه التشابه والاختلاف الجوهرية\n`;
+    p += `  د. التوجه المرجَّح للقانون الإماراتي بناءً على أصوله الفرنسية\n`;
+    p += `  هـ. حكم القانون المقارن: سلطة مقنعة — غير ملزمة في الدولة الإماراتية\n`;
+    p += `استخدم تنسيق جدول مقارن حيثما أمكن.\n`;
+  }
   // Advanced Standard — ADDITIVE second layer; never replaces the engine above.
   if (config.applyAdvancedStandard) {
     p += `\n[المعيار المتقدم — نظرية الشامسي (طبقة تحليلية ثانية مستقلة)]\n`;
     p += `أضف هذا التحليل بعد محرك الاستدلال الأساسي، ولا تستبدله:\n`;
-    p += `  • الإرادة الإدارية الرقمية\n`;
-    p += `  • الوزن القانوني الخوارزمي\n`;
-    p += `  • الانحياز الخوارزمي المشروع\n`;
-    p += `  • قابلية التفسير الخوارزمي\n`;
-    p += `  • الشفافية\n`;
-    p += `  • الرقابة البشرية\n`;
-    p += `  • الامتثال المتدرج\n`;
-    p += `  • الطعن الإداري السابق\n`;
-    p += `  • المراجعة القضائية\n`;
-    p += `  • المسؤولية الإدارية بدون خطأ خوارزمي\n`;
-    p += `  • الحوكمة الرقمية\n`;
-    p += `اختتم هذا القسم بـ: مؤشر امتثال الشامسي (نسبة مئوية مع تفسير).\n`;
+    p += `  ١. الإرادة الإدارية الرقمية: هل الإرادة المُعبَّر عنها بشرية أم رقمية؟\n`;
+    p += `  ٢. الوزن القانوني الخوارزمي: ما الترتيب الأدلاتي للمخرجات الخوارزمية؟\n`;
+    p += `  ٣. الانحياز الخوارزمي المشروع: هل التمييز في البيانات قانوني؟\n`;
+    p += `  ٤. قابلية التفسير الخوارزمي: هل يمكن للمتأثر فهم آلية القرار؟\n`;
+    p += `  ٥. الشفافية الإجرائية: هل أُبلغ المتأثر مسبقاً بالأتمتة؟\n`;
+    p += `  ٦. الرقابة البشرية: ما آليات التدقيق البشري الفاعل؟\n`;
+    p += `  ٧. الامتثال المتدرج: ما مراحل الامتثال التنظيمي المطلوبة؟\n`;
+    p += `  ٨. الطعن الإداري السابق: ما مسارات التظلم قبل اللجوء للقضاء؟\n`;
+    p += `  ٩. المراجعة القضائية: ما حدود رقابة القاضي على القرار الخوارزمي؟\n`;
+    p += `  ١٠. المسؤولية الإدارية بدون خطأ خوارزمي: هل تقوم المسؤولية الموضوعية؟\n`;
+    p += `  ١١. الحوكمة الرقمية: الإطار التنظيمي الإماراتي للذكاء الاصطناعي\n`;
+    p += `اختتم هذا القسم بـ: مؤشر امتثال الشامسي (نسبة مئوية مع تفسير تفصيلي لكل بُعد).\n`;
   }
   if (extras.length > 0) p += `الخيارات الخبيرة: يرجى تضمين: ${extras.join('، ')}\n`;
   return p + '\n';
@@ -699,13 +819,14 @@ function CollapsibleSection({
 // ─── Structured response body ─────────────────────────────────────────────────
 
 function StructuredBody({
-  text, citations, prefix, maxSections, collapsible = false,
+  text, citations, prefix, maxSections, collapsible = false, streamingCursor,
 }: {
   text: string;
   citations: Citation[];
   prefix: string;
   maxSections?: number;
   collapsible?: boolean;
+  streamingCursor?: React.ReactNode;
 }) {
   const segments = segmentResponse(text);
   const isStructured = segments.some((s) => s.kind === 'header');
@@ -714,6 +835,7 @@ function StructuredBody({
     return (
       <p className="whitespace-pre-wrap break-words leading-7 text-sm">
         {parseCitationTokens(text, citations, `${prefix}-plain`)}
+        {streamingCursor}
       </p>
     );
   }
@@ -955,12 +1077,13 @@ function AnswerStrengthIndicator({ text, citations }: { text: string; citations:
 // ─── AssistantContent — mode-aware ───────────────────────────────────────────
 
 function AssistantContent({
-  content, citations, mode, isExpanded,
+  content, citations, mode, isExpanded, streamingCursor,
 }: {
   content: string;
   citations: Citation[];
   mode: ResponseMode;
   isExpanded: boolean;
+  streamingCursor?: React.ReactNode;
 }) {
   const { binding, theory, label } = splitTheoryContent(content);
 
@@ -989,6 +1112,7 @@ function AssistantContent({
         prefix="binding"
         maxSections={isExpanded ? undefined : cfg.maxSections}
         collapsible={effectiveMode === 'professional' || (effectiveMode === 'expert')}
+        streamingCursor={streamingCursor}
       />
 
       {/* Theory Lens section */}
@@ -1008,7 +1132,7 @@ function AssistantContent({
       )}
 
       {/* Answer Strength Indicator — Professional & Expert only (never for expanded quick/standard) */}
-      {(mode === 'professional' || mode === 'expert') && (
+      {(mode === 'professional' || mode === 'expert') && !streamingCursor && (
         <AnswerStrengthIndicator text={displayBinding} citations={citations} />
       )}
     </div>
@@ -1165,6 +1289,24 @@ function PreAnalysisPanel({
             </CfgSection>
           </div>
 
+          {/* Comparative Law Mode — UAE ↔ France */}
+          <label htmlFor="comparativeMode" className="flex items-start gap-3 rounded-xl px-3 py-2.5 cursor-pointer bg-indigo-50 border border-indigo-200">
+            <input
+              type="checkbox"
+              id="comparativeMode"
+              checked={config.comparativeMode}
+              onChange={() => onChange({ ...config, comparativeMode: !config.comparativeMode })}
+              className="w-4 h-4 mt-0.5 shrink-0 accent-indigo-700"
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-bold leading-tight text-indigo-800">🇦🇪↔🇫🇷 القانون المقارن: الإمارات ↔ فرنسا</p>
+              <p className="text-[10px] font-medium text-indigo-600">Comparative Law Mode</p>
+              <p className="text-[9px] leading-relaxed mt-1 text-indigo-500">
+                مقارنة منهجية بين الموقف الإماراتي والموقف الفرنسي في كل إجابة، مع جدول مقارن وتحديد وجه الاستئناس.
+              </p>
+            </div>
+          </label>
+
           {/* Advanced Standard (Al-Shamsi Theory) checkbox */}
           <label htmlFor="applyAdvancedStandard" className="flex items-start gap-3 rounded-xl px-3 py-2.5 cursor-pointer"
             style={{ background: '#EAF2FF', border: '1px solid #a8c4f0' }}
@@ -1178,9 +1320,9 @@ function PreAnalysisPanel({
             />
             <div className="flex-1 min-w-0">
               <p className="text-[11px] font-bold leading-tight" style={{ color: '#1a3a6e' }}>🧠 تطبيق المعيار المتقدم</p>
-              <p className="text-[10px] font-medium" style={{ color: '#2B5F9E' }}>(نظرية الشامسي)</p>
+              <p className="text-[10px] font-medium" style={{ color: '#2B5F9E' }}>(نظرية الشامسي — طبقة نظرية الذكاء الاصطناعي)</p>
               <p className="text-[9px] leading-relaxed mt-1" style={{ color: '#3a6fa8' }}>
-                تحليل إضافي للمسائل المرتبطة بالذكاء الاصطناعي والقرارات الإدارية الذكية والخوارزميات.
+                تحليل إضافي للمسائل المرتبطة بالذكاء الاصطناعي والقرارات الإدارية الذكية والخوارزميات وفق المبادئ الأحد عشر.
               </p>
             </div>
           </label>
@@ -1234,6 +1376,11 @@ function SessionConfigBar({ config, expertMode, onEdit }: {
       <span className="text-[10px] bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-medium">
         🔍 {DEPTH_CFG[config.depth]}
       </span>
+      {config.comparativeMode && (
+        <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+          🇦🇪↔🇫🇷 مقارنة إماراتي–فرنسي
+        </span>
+      )}
       {config.applyAdvancedStandard && (
         <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
           style={{ background: '#EAF2FF', color: '#1a3a6e', border: '1px solid #a8c4f0' }}
@@ -1587,8 +1734,17 @@ function ResponseModeSelector({
 
 // ─── Message bubble ───────────────────────────────────────────────────────────
 
+function StreamingCursor() {
+  return (
+    <span
+      className="inline-block w-0.5 h-3.5 bg-primary/70 ms-0.5 align-middle animate-pulse rounded-sm"
+      aria-label="جاري الكتابة"
+    />
+  );
+}
+
 function MessageBubble({
-  msg, displayMeta, onAction, actionDisabled, expertMode, applyAdvancedStandard, onDirectSend,
+  msg, displayMeta, onAction, actionDisabled, expertMode, applyAdvancedStandard, onDirectSend, isStreaming,
 }: {
   msg: Message;
   displayMeta?: MsgDisplayMeta;
@@ -1597,6 +1753,7 @@ function MessageBubble({
   expertMode: boolean;
   applyAdvancedStandard: boolean;
   onDirectSend: (text: string) => void;
+  isStreaming?: boolean;
 }) {
   const isUser = msg.role === 'user';
   const citations = (msg.meta?.citations ?? []) as Citation[];
@@ -1640,14 +1797,25 @@ function MessageBubble({
             <p className="whitespace-pre-wrap break-words">{msg.content}</p>
           ) : (
             <>
-              <AssistantContent
-                content={msg.content}
-                citations={citations}
-                mode={mode}
-                isExpanded={isExpanded}
-              />
-              {/* Recommended actions + reliability — every assistant response */}
-              {displayMeta && (
+              {isStreaming && !msg.content ? (
+                /* Empty streaming message — show minimal typing indicator */
+                <div className="flex items-center gap-1.5 py-1">
+                  {[0, 150, 300].map((delay) => (
+                    <span key={delay} className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce"
+                      style={{ animationDelay: `${delay}ms` }} />
+                  ))}
+                </div>
+              ) : (
+                <AssistantContent
+                  content={msg.content}
+                  citations={citations}
+                  mode={mode}
+                  isExpanded={isExpanded}
+                  streamingCursor={isStreaming ? <StreamingCursor /> : undefined}
+                />
+              )}
+              {/* Recommended actions + reliability — every complete assistant response */}
+              {displayMeta && !isStreaming && (
                 <>
                   <RecommendedActionsBlock
                     onAction={(a) => onDirectSend(`${a} بشأن: ${userQuery}`)}
@@ -1656,7 +1824,7 @@ function MessageBubble({
                 </>
               )}
               {/* Action buttons */}
-              {displayMeta && (
+              {displayMeta && !isStreaming && (
                 <ActionButtons
                   mode={mode}
                   isExpanded={isExpanded}
@@ -1668,7 +1836,7 @@ function MessageBubble({
                 />
               )}
               {/* Al-Shamsi Theory card — auto when keywords detected OR Expert Mode active */}
-              {showShamsi && (
+              {showShamsi && !isStreaming && (
                 <ShamsiTheoryCard
                   onActivate={() => onAction(msg.id, 'shamsi', userQuery)}
                   disabled={actionDisabled}
@@ -1891,6 +2059,8 @@ export default function AiAssistant() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+  /** ID of the placeholder message currently being streamed in real-time */
+  const [streamingMsgId, setStreamingMsgId] = useState<number | null>(null);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [showSessionsDrawer, setShowSessionsDrawer] = useState(false);
   const [showPinPanel, setShowPinPanel] = useState(false);
@@ -2050,10 +2220,9 @@ export default function AiAssistant() {
     setInput('');
     setSending(true);
 
-    const tempId = Date.now();
-    // Display the original text to the user (never the prefixed version)
+    const tempUserMsgId = Date.now();
     const userMsg: Message = {
-      id: tempId, sessionId: activeSession.id, role: 'user',
+      id: tempUserMsgId, sessionId: activeSession.id, role: 'user',
       content: text, createdAt: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, userMsg]);
@@ -2062,35 +2231,136 @@ export default function AiAssistant() {
     const configPfx = buildConfigPrefix(sessionConfig, expertMode, expertOptions);
     const content = configPfx + (mode === 'expert' ? EXPERT_MODE_PREFIX + text : text);
 
+    const body = JSON.stringify({
+      content,
+      documentIds: pinnedDocs.length > 0 ? pinnedDocs : undefined,
+      legalSourceIds: pinnedSrcs.length > 0 ? pinnedSrcs : undefined,
+      theoryLensId: theoryLens.lensId !== 'uae_only' ? theoryLens.lensId : undefined,
+      customTheoryText: theoryLens.lensId === 'custom' ? theoryLens.customText : undefined,
+    });
+
+    // ── Streaming path (NDJSON) ──────────────────────────────────────────────
     try {
-      const r = await apiFetch(`/api/assistant/sessions/${activeSession.id}/messages`, {
+      const streamR = await apiFetch(`/api/assistant/sessions/${activeSession.id}/messages`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          content,
-          documentIds: pinnedDocs.length > 0 ? pinnedDocs : undefined,
-          legalSourceIds: pinnedSrcs.length > 0 ? pinnedSrcs : undefined,
-          theoryLensId: theoryLens.lensId !== 'uae_only' ? theoryLens.lensId : undefined,
-          customTheoryText: theoryLens.lensId === 'custom' ? theoryLens.customText : undefined,
-        }),
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/x-ndjson' },
+        body,
       });
-      if (r.ok) {
-        const data = await r.json();
+
+      if (streamR.ok && streamR.headers.get('content-type')?.includes('ndjson') && streamR.body) {
+        // Insert streaming placeholder
+        const streamTempId = Date.now() + 1;
+        setStreamingMsgId(streamTempId);
+        const streamPlaceholder: Message = {
+          id: streamTempId, sessionId: activeSession.id, role: 'assistant',
+          content: '', createdAt: new Date().toISOString(),
+        };
+        setMessages((prev) => [...prev, streamPlaceholder]);
+
+        const reader = streamR.body.getReader();
+        const decoder = new TextDecoder();
+        let lineBuffer = '';
+        let fullContent = '';
+        let receivedDone = false;
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            lineBuffer += decoder.decode(value, { stream: true });
+            let newlineIdx: number;
+            while ((newlineIdx = lineBuffer.indexOf('\n')) !== -1) {
+              const line = lineBuffer.slice(0, newlineIdx).trim();
+              lineBuffer = lineBuffer.slice(newlineIdx + 1);
+              if (!line) continue;
+              try {
+                const parsed = JSON.parse(line) as Record<string, unknown>;
+                if (typeof parsed.delta === 'string') {
+                  fullContent += parsed.delta;
+                  setMessages((prev) =>
+                    prev.map((m) => m.id === streamTempId ? { ...m, content: fullContent } : m)
+                  );
+                } else if (parsed.done && parsed.message) {
+                  receivedDone = true;
+                  const finalMsg = parsed.message as Message;
+                  const finalCitations = (parsed.citations ?? []) as Citation[];
+                  const msgWithMeta: Message = {
+                    ...finalMsg,
+                    meta: { ...(finalMsg.meta ?? {}), citations: finalCitations },
+                  };
+                  setMsgDisplayMetaMap((prev) => ({
+                    ...prev,
+                    [finalMsg.id]: { mode, userQuery: text },
+                  }));
+                  setMessages((prev) =>
+                    prev.map((m) => m.id === streamTempId ? msgWithMeta : m)
+                  );
+                  fetchSessions();
+                } else if (parsed.error) {
+                  toast({
+                    title: t('خطأ في الإرسال', 'Send failed'),
+                    description: String(parsed.error),
+                    variant: 'destructive',
+                  });
+                  // Remove the streaming placeholder on server-emitted error
+                  setMessages((prev) => prev.filter((m) => m.id !== streamTempId));
+                }
+              } catch { /* malformed NDJSON line — skip */ }
+            }
+          }
+          // EOF without a `done` line — treat as a post-processing error on the server
+          if (!receivedDone) {
+            toast({
+              title: t('انقطع الاتصال', 'Stream interrupted'),
+              description: t('انتهى البث قبل اكتمال الرد', 'Stream ended before response completed'),
+              variant: 'destructive',
+            });
+            // If we have partial content leave the bubble, otherwise remove it
+            if (!fullContent) {
+              setMessages((prev) => prev.filter((m) => m.id !== streamTempId));
+            }
+          }
+        } catch (readerErr) {
+          // Network / reader failure — remove placeholder, keep user message
+          toast({
+            title: t('خطأ في البث', 'Streaming error'),
+            description: t('انقطع البث بشكل غير متوقع', 'Stream was interrupted unexpectedly'),
+            variant: 'destructive',
+          });
+          setMessages((prev) => prev.filter((m) => m.id !== streamTempId));
+        } finally {
+          // Always release reader lock and clear streaming state
+          try { reader.releaseLock(); } catch { /* already released */ }
+          setStreamingMsgId(null);
+        }
+        return;
+      }
+
+      // ── Non-streaming fallback ─────────────────────────────────────────────
+      if (streamR.ok) {
+        const data = await streamR.json();
         setMsgDisplayMetaMap((prev) => ({
           ...prev,
           [data.message.id]: { mode, userQuery: text },
         }));
-        setMessages((prev) => [...prev.filter((m) => m.id !== tempId), userMsg, data.message]);
+        setMessages((prev) => [...prev.filter((m) => m.id !== tempUserMsgId), userMsg, data.message]);
         fetchSessions();
       } else {
-        const errData = await r.json().catch(() => ({}));
+        const errData = await streamR.json().catch(() => ({}));
         toast({
           title: t('خطأ في الإرسال', 'Send failed'),
           description: (errData as { error?: string }).error,
           variant: 'destructive',
         });
-        setMessages((prev) => prev.filter((m) => m.id !== tempId));
+        setMessages((prev) => prev.filter((m) => m.id !== tempUserMsgId));
       }
+    } catch (fetchErr) {
+      toast({
+        title: t('خطأ في الاتصال', 'Connection error'),
+        description: t('تعذّر الاتصال بالخادم', 'Could not reach the server'),
+        variant: 'destructive',
+      });
+      setMessages((prev) => prev.filter((m) => m.id !== tempUserMsgId));
     } finally {
       setSending(false);
       inputRef.current?.focus();
@@ -2384,9 +2654,11 @@ export default function AiAssistant() {
                     expertMode={expertMode}
                     applyAdvancedStandard={sessionConfig.applyAdvancedStandard}
                     onDirectSend={(text) => sendMessage(text, 'professional')}
+                    isStreaming={streamingMsgId !== null && msg.id === streamingMsgId}
                   />
                 ))}
-                {sending && (
+                {/* Generic "waiting for response" indicator — only when NOT streaming (stream has its own cursor) */}
+                {sending && streamingMsgId === null && (
                   <div className="flex justify-end mb-3" dir="rtl">
                     <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center me-2 mt-1 shrink-0">
                       <Bot className="w-4 h-4 text-primary-foreground" aria-hidden />

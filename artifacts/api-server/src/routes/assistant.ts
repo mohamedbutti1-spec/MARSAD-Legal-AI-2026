@@ -489,6 +489,82 @@ ${ragContext
     res.status(503).json({ error: (err as Error).message }); return;
   }
 
+  // ── Determine whether the client wants a streaming NDJSON response ──────────
+  const wantsStream = req.headers["accept"]?.includes("application/x-ndjson");
+
+  if (wantsStream && typeof provider.streamChunks === "function") {
+    // ── Streaming path: emit each AI delta as an NDJSON line ─────────────────
+    res.setHeader("Content-Type", "application/x-ndjson; charset=utf-8");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("X-Accel-Buffering", "no");
+    res.flushHeaders();
+
+    function emitLine(obj: unknown): void {
+      try { res.write(JSON.stringify(obj) + "\n"); } catch {}
+    }
+
+    let fullText = "";
+    try {
+      for await (const chunk of provider.streamChunks!({
+        taskType: TaskType.RAG,
+        prompt: fullPrompt,
+        systemPrompt,
+        maxTokens: 8000,
+      })) {
+        fullText += chunk;
+        emitLine({ delta: chunk });
+      }
+    } catch (err) {
+      req.log.error({ err }, "Assistant streaming failed");
+      emitLine({ error: "AI streaming failed. Please try again." });
+      res.end();
+      return;
+    }
+
+    // Post-stream phase: citation resolution, DB save, session update, audit.
+    // Headers are already flushed so we can no longer send HTTP status codes —
+    // emit a structured error NDJSON line and close deterministically on any failure.
+    try {
+      const { theoryLabel, theoryAnalysis } = parseTheoryResponse(fullText);
+      const rawTokens = extractCitationTokens(fullText);
+      const citations = await resolveCitations(rawTokens, sourceIndex, uid);
+
+      const [assistantMsg] = await db.insert(chatMessagesTable).values({
+        sessionId,
+        role: "assistant",
+        content: fullText,
+        meta: {
+          citations,
+          theoryLensId: theoryLensId !== "uae_only" ? theoryLensId : undefined,
+          theoryLabel: theoryLabel ?? undefined,
+          hasTheorySection: !!theoryAnalysis,
+        },
+      }).returning();
+
+      const [session] = await db
+        .select({ title: chatSessionsTable.title })
+        .from(chatSessionsTable)
+        .where(eq(chatSessionsTable.id, sessionId));
+      if (session) {
+        const updates =
+          !session.title || session.title === "محادثة جديدة"
+            ? { title: content.slice(0, 70), updatedAt: new Date() }
+            : { updatedAt: new Date() };
+        await db.update(chatSessionsTable).set(updates).where(eq(chatSessionsTable.id, sessionId));
+      }
+
+      await logAudit(req, "ai.assistant-chat", { entityType: "chat_session", entityId: sessionId });
+      emitLine({ done: true, message: assistantMsg, citations });
+    } catch (postErr) {
+      req.log.error({ postErr }, "Assistant stream post-processing failed");
+      emitLine({ error: "Stream post-processing failed. Message may not have been saved." });
+    } finally {
+      res.end();
+    }
+    return;
+  }
+
+  // ── Non-streaming path (fallback / clients without NDJSON support) ──────────
   try {
     const aiResult = await provider.complete({
       taskType: TaskType.RAG,
