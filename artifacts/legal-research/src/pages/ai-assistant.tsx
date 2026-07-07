@@ -55,7 +55,13 @@ type CitFmt = 'harvard' | 'apa' | 'uaeGov';
 
 // Judicial Authority
 type UserType =
+  // Judiciary
   | 'judge' | 'prosecutor'
+  | 'judicial_trainee' | 'judge_first_instance' | 'judge_appeal' | 'judge_cassation'
+  | 'judge_admin' | 'judge_criminal' | 'judge_civil' | 'judge_personal_status'
+  // Prosecution
+  | 'prosecution_member' | 'prosecution_deputy' | 'prosecution_first_deputy'
+  | 'prosecution_chief' | 'public_attorney'
   // Legislative Authority
   | 'legislator' | 'legislative_committee'
   // Executive Authority
@@ -64,12 +70,12 @@ type UserType =
   | 'lawyer' | 'legal_consultant' | 'professor' | 'researcher' | 'legal_author' | 'graduate_student'
   // Legal Specialisations (Stage 3)
   | 'admin_law_specialist' | 'constitutional_specialist' | 'criminal_specialist' | 'civil_specialist'
-  // Academic
-  | 'law_student'
+  // Academic & Training
+  | 'law_student' | 'academic_researcher' | 'legal_intern'
   // Public Users
   | 'citizen' | 'institution'
   // General Public
-  | 'general_user' | 'individual' | 'company_rep'
+  | 'general_user' | 'individual' | 'company_rep' | 'government_entity'
   // AI & Governance
   | 'ai_engineer' | 'algorithm_reviewer' | 'algorithmic_auditor'
   // Fallback
@@ -126,8 +132,22 @@ const DEFAULT_EXPERT_OPTIONS: ExpertOptions = {
 
 const USER_TYPE_CONFIG: Record<UserType, { ar: string; emoji: string }> = {
   // Judicial
-  judge:                  { ar: 'قاضٍ',                          emoji: '⚖' },
-  prosecutor:             { ar: 'مدعٍ عام',                       emoji: '⚖' },
+  judge:                      { ar: 'قاضٍ',                          emoji: '⚖' },
+  prosecutor:                 { ar: 'مدعٍ عام',                       emoji: '⚖' },
+  judicial_trainee:           { ar: 'ملازم قضائي',                   emoji: '🎓' },
+  judge_first_instance:       { ar: 'قاضٍ ابتدائي',                  emoji: '⚖' },
+  judge_appeal:               { ar: 'قاضٍ استئناف',                  emoji: '⚖' },
+  judge_cassation:            { ar: 'قاضٍ تمييز',                    emoji: '⚖' },
+  judge_admin:                { ar: 'قاضٍ إداري',                    emoji: '🏛' },
+  judge_criminal:             { ar: 'قاضٍ جزائي',                    emoji: '🔍' },
+  judge_civil:                { ar: 'قاضٍ مدني',                     emoji: '⚖' },
+  judge_personal_status:      { ar: 'قاضٍ أحوال شخصية',              emoji: '👨‍👩‍👧' },
+  // Prosecution
+  prosecution_member:         { ar: 'عضو نيابة',                     emoji: '⚖' },
+  prosecution_deputy:         { ar: 'وكيل نيابة',                    emoji: '⚖' },
+  prosecution_first_deputy:   { ar: 'وكيل نيابة أول',               emoji: '⚖' },
+  prosecution_chief:          { ar: 'رئيس نيابة',                    emoji: '⚖' },
+  public_attorney:            { ar: 'محامٍ عام',                     emoji: '⚖' },
   // Legislative
   legislator:             { ar: 'مشرّع',                          emoji: '📜' },
   legislative_committee:  { ar: 'لجنة تشريعية',                  emoji: '🏛' },
@@ -150,8 +170,10 @@ const USER_TYPE_CONFIG: Record<UserType, { ar: string; emoji: string }> = {
   constitutional_specialist:  { ar: 'متخصص قانون دستوري',         emoji: '📜' },
   criminal_specialist:        { ar: 'متخصص قانون جنائي',          emoji: '🔍' },
   civil_specialist:           { ar: 'متخصص قانون مدني',           emoji: '⚖' },
-  // Academic
+  // Academic & Training
   law_student:            { ar: 'طالب قانون',                     emoji: '📖' },
+  academic_researcher:    { ar: 'باحث أكاديمي',                   emoji: '🔬' },
+  legal_intern:           { ar: 'متدرب قانوني',                   emoji: '📋' },
   // Public Users
   citizen:                { ar: 'مواطن',                          emoji: '👤' },
   institution:            { ar: 'شركة / مؤسسة',                  emoji: '🏢' },
@@ -159,6 +181,7 @@ const USER_TYPE_CONFIG: Record<UserType, { ar: string; emoji: string }> = {
   general_user:           { ar: 'مستخدم عام',                     emoji: '👥' },
   individual:             { ar: 'فرد',                            emoji: '👤' },
   company_rep:            { ar: 'ممثل شركة',                      emoji: '🏢' },
+  government_entity:      { ar: 'جهة حكومية',                     emoji: '🏛' },
   // AI & Governance
   ai_engineer:            { ar: 'مهندس أنظمة ذكية',              emoji: '🤖' },
   algorithm_reviewer:     { ar: 'مدقق خوارزميات',                emoji: '🔍' },
@@ -168,17 +191,17 @@ const USER_TYPE_CONFIG: Record<UserType, { ar: string; emoji: string }> = {
   unspecified:            { ar: 'غير محدد',                       emoji: '–' },
 };
 
-// Role groups for grouped rendering in the config panel
-const USER_TYPE_GROUPS: { labelAr: string; types: UserType[] }[] = [
-  { labelAr: 'غير محدد / أخرى',              types: ['unspecified', 'other'] },
-  { labelAr: 'السلطة القضائية',               types: ['judge', 'prosecutor'] },
-  { labelAr: 'السلطة التشريعية',              types: ['legislator', 'legislative_committee'] },
-  { labelAr: 'السلطة التنفيذية',              types: ['minister', 'undersecretary', 'director_general', 'compliance_officer', 'risk_officer', 'government'] },
-  { labelAr: 'المهن القانونية',               types: ['lawyer', 'legal_consultant', 'professor', 'researcher', 'legal_author', 'graduate_student'] },
-  { labelAr: 'التخصصات القانونية',           types: ['admin_law_specialist', 'constitutional_specialist', 'criminal_specialist', 'civil_specialist'] },
-  { labelAr: 'الأكاديميون والطلاب',          types: ['law_student'] },
-  { labelAr: 'المستخدمون العامون',            types: ['citizen', 'individual', 'general_user', 'company_rep', 'institution'] },
-  { labelAr: 'الذكاء الاصطناعي والحوكمة',    types: ['ai_engineer', 'algorithm_reviewer', 'algorithmic_auditor'] },
+// Role groups — used by the accordion role selector in PreAnalysisPanel
+const USER_TYPE_GROUPS: { labelAr: string; icon: string; types: UserType[] }[] = [
+  { labelAr: 'غير محدد / أخرى',              icon: '–',   types: ['unspecified', 'other'] },
+  { labelAr: 'القضاء',                        icon: '⚖️',  types: ['judicial_trainee', 'judge_first_instance', 'judge_appeal', 'judge_cassation', 'judge_admin', 'judge_criminal', 'judge_civil', 'judge_personal_status', 'judge', 'prosecutor'] },
+  { labelAr: 'النيابة العامة',                icon: '⚖️',  types: ['prosecution_member', 'prosecution_deputy', 'prosecution_first_deputy', 'prosecution_chief', 'public_attorney'] },
+  { labelAr: 'المحاماة والاستشارات',          icon: '🧑‍⚖️', types: ['lawyer', 'legal_consultant', 'researcher'] },
+  { labelAr: 'التعليم والتدريب القانوني',     icon: '🎓',  types: ['law_student', 'graduate_student', 'academic_researcher', 'legal_intern'] },
+  { labelAr: 'الجهات الحكومية',               icon: '🏛️', types: ['minister', 'undersecretary', 'director_general', 'government', 'compliance_officer', 'risk_officer'] },
+  { labelAr: 'مستخدمون آخرون',               icon: '👤',  types: ['general_user', 'company_rep', 'government_entity', 'individual', 'citizen', 'institution', 'other', 'unspecified'] },
+  { labelAr: 'التخصصات القانونية',           icon: '📜',  types: ['admin_law_specialist', 'constitutional_specialist', 'criminal_specialist', 'civil_specialist', 'professor', 'legal_author', 'legal_consultant'] },
+  { labelAr: 'الذكاء الاصطناعي والحوكمة',    icon: '🤖',  types: ['ai_engineer', 'algorithm_reviewer', 'algorithmic_auditor'] },
 ];
 
 const USER_GOAL_CFG: Record<UserGoal, { ar: string; emoji: string }> = {
@@ -599,6 +622,174 @@ const ROLE_ENGINES: Partial<Record<UserType, RoleEngine>> = {
     ],
   },
 
+  // ── Judiciary educational engines (with mentoring dimension) ──
+
+  judicial_trainee: {
+    nameAr: 'الملازم القضائي — المحرك التعليمي القضائي',
+    reasoningSequenceAr: [
+      'الوقائع ذات الأثر القانوني — ما الذي يهم قانوناً وما لا يهم',
+      'الأدلة المطلوبة — ما الذي يجب إثباته وكيف',
+      'الأسئلة القانونية الجوهرية التي يجب على القاضي طرحها',
+      'الإشكاليات الإجرائية التي تؤثر على سير الدعوى',
+      'مسار التفكير القضائي: من الوقائع إلى القانون إلى الحكم',
+      'الحجج المضادة المتوقعة ومواطن الضعف',
+      'الاستنتاج القضائي المعلَّل',
+    ],
+    outputsAr: [
+      'شرح تعليمي مرحلي للمسألة',
+      'دليل الأدلة المطلوبة',
+      'مسار التفكير القضائي',
+      'تنبيهات إجرائية',
+    ],
+  },
+
+  judge_first_instance: {
+    nameAr: 'القاضٍ الابتدائي — المحرك القضائي الأول',
+    reasoningSequenceAr: [
+      'الاختصاص والقبول الشكلي للدعوى',
+      'الوقائع المثبتة والمتنازع عليها',
+      'القانون الواجب التطبيق',
+      'التحليل القانوني للموضوع',
+      'الحجج المضادة والردود عليها',
+      'الاستنتاج والحكم المُعلَّل',
+    ],
+    outputsAr: [
+      'الحكم المُقترح مع التعليل',
+      'نقاط الطعن المحتملة',
+      'الإشكاليات الإجرائية',
+    ],
+  },
+
+  judge_appeal: {
+    nameAr: 'القاضٍ الاستئنافي — محرك مراجعة الحكم',
+    reasoningSequenceAr: [
+      'مراجعة وقائع الحكم المستأنف',
+      'أوجه الطعن المُثارة من المستأنف',
+      'رد المستأنف عليه',
+      'تقييم مدى صواب الحكم الابتدائي',
+      'القانون الواجب التطبيق في مرحلة الاستئناف',
+      'التعديل أو التأييد أو الإلغاء',
+    ],
+    outputsAr: [
+      'توجه محكمة الاستئناف',
+      'جوانب التعديل المحتملة',
+      'احتمالية النقض',
+    ],
+  },
+
+  judge_cassation: {
+    nameAr: 'القاضٍ في محكمة التمييز — محرك الرقابة القانونية',
+    reasoningSequenceAr: [
+      'أسباب الطعن بالتمييز',
+      'مدى قبول الطعن شكلاً',
+      'مخالفة القانون أو الخطأ في تطبيقه',
+      'القصور في التسبيب',
+      'مخالفة قواعد الاختصاص',
+      'الاستنتاج: نقض أم رفض',
+    ],
+    outputsAr: [
+      'قابلية الطعن للقبول',
+      'احتمالية النقض',
+      'المبدأ القانوني المستخلص',
+    ],
+  },
+
+  judge_admin:    { nameAr: 'القاضٍ الإداري — المحرك القضائي الإداري',   reasoningSequenceAr: ['الاختصاص الإداري','مشروعية القرار الإداري (السبب · المحل · الإجراء · الشكل · الغاية)','مبدأ المشروعية والتناسب','قواعد الإثبات في القضاء الإداري','الاستنتاج'], outputsAr: ['الحكم بالإلغاء أو الرفض','التعويض المقترح','المبدأ الإداري المُرسَّخ'] },
+  judge_criminal: { nameAr: 'القاضٍ الجزائي — المحرك الجنائي',           reasoningSequenceAr: ['الوقائع المادية للجريمة','التكييف الجنائي','القانون الجنائي الواجب التطبيق','الأركان: المادي + المعنوي','الأدلة وعبء الإثبات','الحجج المضادة','الحكم المُعلَّل'], outputsAr: ['التكييف الجنائي','العقوبة المقررة','جدوى الدفاع'] },
+  judge_civil:    { nameAr: 'القاضٍ المدني — المحرك المدني',              reasoningSequenceAr: ['الوقائع والعلاقة المدنية','تكييف الدعوى','القانون المدني الواجب التطبيق','الإثبات والأدلة','التعويض المطالب به','الاستنتاج'], outputsAr: ['الحكم المدني','التعويض المقدَّر','قوة الدعوى'] },
+  judge_personal_status: { nameAr: 'قاضٍ الأحوال الشخصية', reasoningSequenceAr: ['الوقائع وطبيعة العلاقة الأسرية','القانون الشخصي الواجب التطبيق','أحكام الشريعة الإسلامية ذات الصلة','الأطراف والمصالح الواجبة الحماية (خاصة القاصرون)','الاستنتاج'], outputsAr: ['الحكم الشرعي والقانوني','حقوق الأطراف','التوصيات الحمائية'] },
+
+  // ── Prosecution educational engines ──
+
+  prosecution_member: {
+    nameAr: 'عضو النيابة — المحرك التعليمي للتحقيق',
+    reasoningSequenceAr: [
+      'الوقائع المُبلَّغ عنها وتمحيصها',
+      'تحديد الجريمة المُشتَبه بها',
+      'إجراءات التحقيق الواجبة',
+      'الأدلة المطلوبة وطرق جمعها',
+      'اشتراطات الاحتجاز والإفراج',
+      'قرار الحفظ أو الإحالة',
+    ],
+    outputsAr: [
+      'التوصية بالتحقيق أو الحفظ',
+      'الإجراءات الفورية المطلوبة',
+      'الأدلة الواجب تأمينها',
+    ],
+  },
+
+  prosecution_deputy: {
+    nameAr: 'وكيل النيابة — المحرك الاستدلالي',
+    reasoningSequenceAr: [
+      'مراجعة ملف التحقيق',
+      'تقييم كفاية الأدلة',
+      'التكييف الجنائي المُقترح',
+      'الإحالة للمحكمة أو الحفظ',
+      'صياغة قرار الاتهام',
+    ],
+    outputsAr: [
+      'قرار الإحالة أو الحفظ',
+      'التكييف الجنائي',
+      'نقاط الاتهام',
+    ],
+  },
+
+  prosecution_first_deputy: { nameAr: 'وكيل النيابة الأول', reasoningSequenceAr: ['مراجعة ملف القضية','تقييم الأدلة والتكييف','الإشراف على إجراءات التحقيق','قرار الإحالة'], outputsAr: ['قرار الإحالة أو الحفظ','توجيهات التحقيق'] },
+  prosecution_chief:        { nameAr: 'رئيس النيابة',        reasoningSequenceAr: ['الإشراف على القضية','مراجعة قرارات الإحالة','التنسيق مع الجهات القضائية'], outputsAr: ['القرار النهائي','التوجيهات الإجرائية'] },
+  public_attorney:          { nameAr: 'المحامي العام',        reasoningSequenceAr: ['مراجعة ملفات القضايا الكبرى','تمثيل النيابة أمام المحاكم العليا','صياغة الحجج القانونية المعقدة'], outputsAr: ['الموقف القانوني للنيابة','الحجج أمام المحكمة'] },
+
+  // ── Academic & Training engines ──
+
+  academic_researcher: {
+    nameAr: 'الباحث الأكاديمي — المحرك البحثي المتخصص',
+    reasoningSequenceAr: [
+      'مشكلة البحث والفرضية',
+      'الإطار النظري والمفاهيمي',
+      'مراجعة الأدبيات القانونية',
+      'الفجوة البحثية',
+      'المنهجية والتحليل المقارن',
+      'النتائج والإسهام الأكاديمي',
+      'التوصيات والبحث المستقبلي',
+    ],
+    outputsAr: [
+      'الهيكل البحثي الأكاديمي',
+      'المراجع الجوهرية',
+      'الإسهام المعرفي',
+    ],
+  },
+
+  legal_intern: {
+    nameAr: 'المتدرب القانوني — المحرك التعليمي التطبيقي',
+    reasoningSequenceAr: [
+      'تحديد المسألة القانونية بلغة بسيطة',
+      'القواعد القانونية الأساسية ذات الصلة',
+      'تطبيق القانون على الوقائع خطوة بخطوة',
+      'الاستنتاج والتوصية العملية',
+    ],
+    outputsAr: [
+      'شرح مبسط للمسألة',
+      'القانون المنطبق',
+      'الخطوات العملية',
+    ],
+  },
+
+  // ── General Public / Fallback engines ──
+  government_entity: {
+    nameAr: 'الجهة الحكومية — الإرشاد القانوني المؤسسي',
+    reasoningSequenceAr: [
+      'الإطار القانوني للجهة الحكومية',
+      'الصلاحيات والالتزامات القانونية',
+      'متطلبات الامتثال',
+      'المخاطر القانونية',
+      'التوصيات المؤسسية',
+    ],
+    outputsAr: [
+      'ملخص الوضع القانوني',
+      'متطلبات الامتثال',
+      'التوصيات',
+    ],
+  },
+
   // ── Future engines (ai_engineer, algorithm_reviewer, etc.) go here ──
 };
 
@@ -637,6 +828,8 @@ function buildConfigPrefix(config: SessionConfig, expertMode: boolean, opts: Exp
   const sources = config.sources.includes('all') ? SOURCE_CFG['all'] : config.sources.map((s) => SOURCE_CFG[s]).join('، ');
   let p = `[تكوين جلسة MLOS — Marsad Legal Operating System · نرصد · نحلل · نحكم]\n`;
   p += `المستخدم: ${USER_TYPE_CONFIG[config.userType].ar} | الهدف: ${USER_GOAL_CFG[config.userGoal].ar} | الأسلوب: ${CONFIG_ANSWER_MODE_CFG[config.answerMode].ar}\n`;
+  // Role Neutrality Rule — always injected to prevent role bias in legal findings
+  p += `[قاعدة الحياد القانوني] الصفة المهنية تؤثر على: الأسلوب، المصطلحات، عمق الشرح، التوصيات العملية فقط. لا تؤثر أبداً على: القواعد القانونية، الاستدلال، النتائج، تقييم المشروعية، أو حكم القانون. نفس الوقائع + نفس القانون = نفس النتيجة القانونية بصرف النظر عن هوية المستخدم.\n`;
   p += `الاختصاص: ${JURISDICTION_CFG[config.jurisdiction].ar} | العمق: ${DEPTH_CFG[config.depth]} | الاستشهاد: ${CIT_STYLE_CFG[config.citStyle]} | المصادر: ${sources}\n`;
   // Role Intelligence Engine — injects role-specific reasoning sequence + outputs.
   // Falls back to generic sequence for roles that don't yet have a dedicated engine.
@@ -681,7 +874,7 @@ function buildConfigPrefix(config: SessionConfig, expertMode: boolean, opts: Exp
 
 // ─── Response modes ───────────────────────────────────────────────────────────
 
-type ResponseMode = 'quick' | 'standard' | 'professional' | 'expert' | 'scenario_builder';
+type ResponseMode = 'quick' | 'standard' | 'professional' | 'expert' | 'exemplary' | 'court_full' | 'shamsi_theory' | 'scenario_builder';
 
 interface MsgDisplayMeta { mode: ResponseMode; userQuery: string; }
 
@@ -728,6 +921,33 @@ const MODE_CONFIG: Record<ResponseMode, {
     descAr: 'تحليل قانوني متخصص · حصري',
     activeClass: 'bg-amber-500 text-white border-amber-500',
     badgeClass: 'bg-amber-50 text-amber-700 border-amber-200',
+    maxSections: undefined,
+  },
+  exemplary: {
+    icon: <span aria-hidden>🏛️</span>,
+    ar: 'نموذجي',
+    en: 'Exemplary',
+    descAr: 'تحليل قضائي نموذجي — يُعلِّم المسار الصحيح للاستدلال والحكم',
+    activeClass: 'bg-slate-700 text-white border-slate-700',
+    badgeClass: 'bg-slate-50 text-slate-700 border-slate-200',
+    maxSections: undefined,
+  },
+  court_full: {
+    icon: <span aria-hidden>⚖️</span>,
+    ar: 'جلسة محكمة كاملة',
+    en: 'Full Court Session',
+    descAr: 'جلسة محاكمة كاملة — ASEP + نظرية الشامسي + الإرادة الرقمية',
+    activeClass: 'bg-amber-600 text-white border-amber-600',
+    badgeClass: 'bg-amber-50 text-amber-700 border-amber-200',
+    maxSections: undefined,
+  },
+  shamsi_theory: {
+    icon: <span aria-hidden>🧠</span>,
+    ar: 'نظرية الشامسي',
+    en: 'Al-Shamsi Theory',
+    descAr: 'تحليل مُعمَّق بنظرية الشامسي — 11 بُعداً للقرار الخوارزمي والذكاء الاصطناعي',
+    activeClass: 'bg-blue-700 text-white border-blue-700',
+    badgeClass: 'bg-blue-50 text-blue-700 border-blue-200',
     maxSections: undefined,
   },
   scenario_builder: {
@@ -789,6 +1009,22 @@ const SCENARIO_BUILDER_PREFIX = `\
 ملاحظة: هذا الوضع تعليمي وتوجيهي. لا تُصدر حكماً نهائياً قبل اكتمال السيناريو.
 
 السيناريو المُقدَّم:\n\n`;
+
+// Prefix for Exemplary (نموذجي) mode — judicial-style model analysis with educational dimension.
+const EXEMPLARY_MODE_PREFIX = `\
+[وضع التحليل النموذجي — المحرك القضائي التعليمي]
+
+قدّم هذه المسألة بأسلوب حكم قضائي نموذجي يُعلِّم القارئ المسار الصحيح للاستدلال. التزم بهذا الهيكل:
+١. الوقائع المثبتة والمسألة القانونية محل الفصل.
+٢. القانون الواجب التطبيق — مع الإشارة الصريحة إلى النصوص.
+٣. تسلسل الاستدلال القانوني خطوة بخطوة.
+٤. الحجج المضادة وكيفية الرد عليها.
+٥. الاستنتاج القضائي المُعلَّل.
+٦. الدرس القانوني المستخلص — ما الذي يُعلِّمنا هذا الحكم؟
+
+الأسلوب: رسمي قضائي، واضح، تعليمي — مناسب للقضاة والمتدربين والمحامين والطلاب على حدٍّ سواء.
+
+المسألة:\n\n`;
 
 /** Heuristic auto-detection of intent from query text. */
 function detectMode(query: string): ResponseMode {
@@ -1351,6 +1587,12 @@ function PreAnalysisPanel({
   onToggleExpert: () => void;
   currentInput?: string;
 }) {
+  // Accordion state — auto-expand the group containing the active role
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(() => {
+    const active = USER_TYPE_GROUPS.find((g) => g.types.includes(config.userType));
+    return active?.labelAr ?? USER_TYPE_GROUPS[0].labelAr;
+  });
+
   function toggleSource(s: SourceType) {
     if (s === 'all') { onChange({ ...config, sources: ['all'] }); return; }
     const without = config.sources.filter((x) => x !== 'all' && x !== s);
@@ -1392,25 +1634,60 @@ function PreAnalysisPanel({
         </div>
 
         <div className="space-y-3">
-          {/* User Role — grouped */}
-          <CfgSection title="الصفة المهنية" icon="👤">
-            <div className="space-y-2">
-              {USER_TYPE_GROUPS.map(({ labelAr, types }) => (
-                <div key={labelAr}>
-                  <p className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-wide mb-1">{labelAr}</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {types.map((k) => {
-                      const v = USER_TYPE_CONFIG[k];
-                      return (
-                        <ConfigChip key={k} value={k} selected={config.userType}
-                          label={`${v.emoji} ${v.ar}`} onSelect={(val) => onChange({ ...config, userType: val })} />
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
+          {/* User Role — accordion hierarchy (mobile-friendly) */}
+          <div className="bg-card border border-border/60 rounded-xl overflow-hidden">
+            {/* Header showing current selection */}
+            <div className="px-3 py-2.5 border-b border-border/40 flex items-center justify-between">
+              <p className="text-[11px] font-bold text-foreground flex items-center gap-1.5">
+                <span>👤</span>الصفة المهنية
+              </p>
+              <span className="text-[11px] font-medium text-primary bg-primary/8 border border-primary/20 px-2 py-0.5 rounded-lg">
+                {USER_TYPE_CONFIG[config.userType].emoji} {USER_TYPE_CONFIG[config.userType].ar}
+              </span>
             </div>
-          </CfgSection>
+            {/* Accordion groups */}
+            <div className="divide-y divide-border/30">
+              {USER_TYPE_GROUPS.map(({ labelAr, icon, types }) => {
+                const isOpen = expandedGroup === labelAr;
+                const hasActive = types.includes(config.userType);
+                return (
+                  <div key={labelAr}>
+                    <button
+                      type="button"
+                      onClick={() => setExpandedGroup(isOpen ? null : labelAr)}
+                      className={`w-full flex items-center justify-between px-3 py-2 text-start transition-colors ${
+                        hasActive ? 'bg-primary/5' : 'hover:bg-muted/30'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2 text-[11px] font-semibold text-foreground/80">
+                        <span>{icon}</span>
+                        <span>{labelAr}</span>
+                        {hasActive && (
+                          <span className="text-[9px] font-bold text-primary">●</span>
+                        )}
+                      </span>
+                      <ChevronDown
+                        className={`w-3.5 h-3.5 text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                      />
+                    </button>
+                    {isOpen && (
+                      <div className="px-3 pb-3 pt-1.5 flex flex-wrap gap-1.5 bg-muted/20">
+                        {types.map((k) => {
+                          const v = USER_TYPE_CONFIG[k];
+                          return (
+                            <ConfigChip key={k} value={k} selected={config.userType}
+                              label={`${v.emoji} ${v.ar}`}
+                              onSelect={(val) => { onChange({ ...config, userType: val }); setExpandedGroup(null); }}
+                            />
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
           {/* User Goal */}
           <CfgSection title="الهدف من الاستعلام" icon="🎯">
@@ -2379,6 +2656,18 @@ export default function AiAssistant() {
     setCurrentMode(detectMode(input));
   }, [input, modeLocked]);
 
+  // Sync court mode when court_full response mode is selected
+  useEffect(() => {
+    if (currentMode === 'court_full') setCourtMode(true);
+  }, [currentMode]);
+
+  // Sync Al-Shamsi when shamsi_theory response mode is selected
+  useEffect(() => {
+    if (currentMode === 'shamsi_theory') {
+      setSessionConfig((c) => ({ ...c, applyAdvancedStandard: true }));
+    }
+  }, [currentMode]);
+
   async function createSession() {
     const r = await apiFetch('/api/assistant/sessions', {
       method: 'POST',
@@ -2422,6 +2711,7 @@ export default function AiAssistant() {
     const configPfx = buildConfigPrefix(sessionConfig, expertMode, expertOptions);
     const content = configPfx + (
       mode === 'expert'            ? EXPERT_MODE_PREFIX + text :
+      mode === 'exemplary'         ? EXEMPLARY_MODE_PREFIX + text :
       mode === 'scenario_builder'  ? SCENARIO_BUILDER_PREFIX + text :
       text
     );

@@ -1,0 +1,224 @@
+MARSAD UX Enhancement Patch v2.0
+(Complementary Patch - Do NOT overwrite previous improvements)
+
+Apply the following additional enhancements to MARSAD Legal Intelligence Platform.
+
+====================================================
+1) Professional Category Selector
+====================================================
+
+Replace the flat professional role list with a hierarchical dropdown system.
+
+Main field:
+
+"الفئة المهنية"
+
+Default value:
+
+"غير محدد"
+
+When clicked, show grouped categories.
+
+----------------------------------------------------
+⚖️ القضاء
+----------------------------------------------------
+
+Expandable submenu:
+
+- ملازم قضائي
+- قاضٍ ابتدائي
+- قاضٍ استئناف
+- قاضٍ تمييز
+- قاضٍ إداري
+- قاضٍ جزائي
+- قاضٍ مدني
+- قاضٍ أحوال شخصية
+
+----------------------------------------------------
+⚖️ النيابة العامة
+----------------------------------------------------
+
+Expandable submenu:
+
+- عضو نيابة
+- وكيل نيابة
+- وكيل نيابة أول
+- رئيس نيابة
+- محامٍ عام
+
+----------------------------------------------------
+⚖️ المحاماة والاستشارات
+----------------------------------------------------
+
+- محامٍ
+- مستشار قانوني
+- باحث قانوني
+
+----------------------------------------------------
+🎓 التعليم والتدريب القانوني
+----------------------------------------------------
+
+- طالب قانون
+- طالب دراسات عليا
+- باحث أكاديمي
+- متدرب قانوني
+
+----------------------------------------------------
+🏛️ الجهات الحكومية
+----------------------------------------------------
+
+- وزير
+- وكيل وزارة
+- مدير عام
+- موظف حكومي
+- مسؤول امتثال
+- مسؤول مخاطر
+
+----------------------------------------------------
+👤 مستخدمون آخرون
+----------------------------------------------------
+
+- مستخدم عام
+- ممثل شركة
+- جهة حكومية
+- أخرى
+- غير محدد
+
+====================================================
+2) Role Behaviour Rules
+====================================================
+
+Professional category must influence ONLY:
+
+- terminology
+- wording style
+- explanation depth
+- practical recommendations
+
+Professional category MUST NEVER influence:
+
+- legal rules
+- legal reasoning
+- legal findings
+- legality assessment
+- legal outcome
+
+The same facts and laws must always produce the same legal result.
+
+====================================================
+3) Response Mode Selector
+====================================================
+
+Add a second independent dropdown:
+
+"مستوى الإجابة"
+
+Default:
+
+"معياري"
+
+Available modes:
+
+⚡ سريع
+📖 معياري
+⭐ احترافي
+🏛️ نموذجي
+⚖️ جلسة محكمة كاملة
+🧠 نظرية الشامسي
+🧩 تعليم السيناريوهات وبناء القضية
+
+====================================================
+4) Scenario Learning Mode
+====================================================
+
+When:
+
+"🧩 تعليم السيناريوهات وبناء القضية"
+
+is selected:
+
+The AI must prioritize education and case construction before judgment.
+
+Required stages:
+
+1- Identification of parties.
+2- Facts timeline.
+3- Administrative decision details.
+4- Decision reasoning.
+5- Procedures followed.
+6- Damage assessment.
+7- Requested remedies.
+8- Applicable legal framework.
+9- Algorithmic decision factors if AI was involved.
+
+Output order:
+
+A) Scenario completeness assessment.
+
+B) Missing information.
+
+C) Required questions.
+
+D) Rewrite scenario in proper legal form.
+
+E) Define legal issue.
+
+F) Preliminary analysis.
+
+G) Final conclusion only if facts are sufficient.
+
+====================================================
+5) Educational Judicial Guidance
+====================================================
+
+For:
+
+- ملازم قضائي
+- قاضٍ ابتدائي
+- طالب قانون
+- طالب دراسات عليا
+- عضو نيابة
+- وكيل نيابة
+
+Provide additional guidance such as:
+
+- Which facts matter legally.
+- Which evidence is required.
+- Which legal questions should be asked.
+- Which procedural issues should be checked.
+- Which judicial reasoning path should be followed.
+
+This mode transforms MARSAD into:
+
+- legal advisor
+- judicial trainer
+- educational simulator
+- case-building assistant
+
+====================================================
+6) Mobile UX Requirements
+====================================================
+
+Requirements:
+
+- Use dropdown menus only.
+- Avoid long visible lists.
+- Maintain clean iPhone layout.
+- Ensure one-handed usability.
+- Preserve fast interaction.
+
+====================================================
+7) Validation
+====================================================
+
+Verify:
+
+✅ Professional categories visible.
+✅ Categories grouped correctly.
+✅ Response modes operational.
+✅ Scenario mode operational.
+✅ Educational mode operational.
+✅ No screen clutter.
+✅ Mobile layout preserved.
+
+Generate implementation report after deployment.
