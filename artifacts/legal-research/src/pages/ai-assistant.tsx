@@ -7,6 +7,8 @@ import {
   Bot, Plus, Trash2, Send, Loader2, MessageSquare, Sparkles,
   FileText, BookOpen, Copy, Check, ChevronDown, ChevronUp,
   X, Pin, PinOff, Scale, Menu, ChevronRight, FlaskConical,
+  Zap, GraduationCap, Star, Globe, Brain, FileOutput,
+  BarChart2, Gavel, BookMarked, Maximize2, Minimize2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -30,7 +32,6 @@ interface MessageMeta {
   inputTokens?: number;
   outputTokens?: number;
   citations?: Citation[];
-  // Theory lens fields (populated when a non-UAE-only lens was active)
   theoryLensId?: string;
   theoryLabel?: string;
   hasTheorySection?: boolean;
@@ -48,6 +49,85 @@ interface Message {
 interface LegalSource { id: number; title: string; titleAr?: string | null; jurisdiction: string; }
 
 type CitFmt = 'harvard' | 'apa' | 'uaeGov';
+
+// ─── Response modes ───────────────────────────────────────────────────────────
+
+type ResponseMode = 'quick' | 'standard' | 'professional' | 'expert';
+
+interface MsgDisplayMeta { mode: ResponseMode; userQuery: string; }
+
+const MODE_CONFIG: Record<ResponseMode, {
+  icon: React.ReactNode;
+  ar: string;
+  en: string;
+  descAr: string;
+  activeClass: string;
+  badgeClass: string;
+  maxSections?: number;
+}> = {
+  quick: {
+    icon: <Zap className="w-3 h-3" />,
+    ar: 'سريع',
+    en: 'Quick',
+    descAr: 'إجابة مباشرة · 2–5 ثوانٍ',
+    activeClass: 'bg-sky-600 text-white border-sky-600',
+    badgeClass: 'bg-sky-50 text-sky-700 border-sky-200',
+    maxSections: 2,
+  },
+  standard: {
+    icon: <BookOpen className="w-3 h-3" />,
+    ar: 'معياري',
+    en: 'Standard',
+    descAr: 'تحليل قانوني · 5–10 ثوانٍ',
+    activeClass: 'bg-indigo-600 text-white border-indigo-600',
+    badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+    maxSections: 6,
+  },
+  professional: {
+    icon: <GraduationCap className="w-3 h-3" />,
+    ar: 'احترافي',
+    en: 'Professional',
+    descAr: 'تقرير كامل · 10–30 ثانية',
+    activeClass: 'bg-violet-600 text-white border-violet-600',
+    badgeClass: 'bg-violet-50 text-violet-700 border-violet-200',
+    maxSections: undefined,
+  },
+  expert: {
+    icon: <Star className="w-3 h-3" />,
+    ar: 'رأي خبير',
+    en: 'Expert Opinion',
+    descAr: 'رأي قانوني خبير · حصري',
+    activeClass: 'bg-amber-500 text-white border-amber-500',
+    badgeClass: 'bg-amber-50 text-amber-700 border-amber-200',
+    maxSections: undefined,
+  },
+};
+
+// Prefix injected into the message content for Expert Opinion mode.
+// This is pure orchestration — no backend or prompt changes.
+const EXPERT_MODE_PREFIX =
+  '[وضع الرأي القانوني الخبير] أنت مستشار قانوني خبير. قدّم رأيك القانوني الاحترافي بشأن ما يلي، متضمناً: الرأي القانوني الواضح، نقاط القوة، نقاط الضعف، مخاطر التقاضي، احتمالية النجاح في أي نزاع، والإجراء القانوني الموصى به. صرّح في البداية بأن هذا رأي قانوني غير ملزم.\n\n';
+
+/** Heuristic auto-detection of intent from query text. */
+function detectMode(query: string): ResponseMode {
+  const q = query.trim();
+  const lower = q.toLowerCase();
+
+  // Professional: long queries, reports, memoranda, comparisons
+  if (
+    q.length > 140 ||
+    /مذكرة|تقرير|مقارن|comparative|memorandum|report|دراسة|اشرح بالتفصيل|تحليل معمّق/.test(lower)
+  ) return 'professional';
+
+  // Standard: research questions, multi-concept queries
+  if (
+    q.length > 60 ||
+    /قارن|تحليل|شرح|حقوق|مسؤوليات|إجراءات|نظام|شروط|انواع|متطلبات|compare|analys|rights|procedure/.test(lower)
+  ) return 'standard';
+
+  // Default: quick
+  return 'quick';
+}
 
 // ─── Citation chip ────────────────────────────────────────────────────────────
 
@@ -130,19 +210,13 @@ function CitationChip({ token, citation }: { token: string; citation?: Citation 
 }
 
 // ─── Structured response renderer ─────────────────────────────────────────────
-//
-// The Legal Intelligence Engine formats responses with ## N. Section headers.
-// We segment the text on those headers and render each section distinctly.
-// Non-structured responses (legacy / short answers) fall back to plain rendering.
 
 type ContentSegment =
   | { kind: 'header'; num: string; title: string }
-  /** sectionNum: the ## N. number this text belongs to (undefined = preamble) */
   | { kind: 'text'; content: string; sectionNum?: string };
 
 const SECTION_HEADER_RE = /^##\s+(\d+)\.\s+(.+)$/;
 
-/** Split an assistant response into header + text segments. */
 function segmentResponse(text: string): ContentSegment[] {
   const segments: ContentSegment[] = [];
   const lines = text.split('\n');
@@ -169,7 +243,6 @@ function segmentResponse(text: string): ContentSegment[] {
   return segments;
 }
 
-/** Inline citation token → CitationChip substitution within a text block. */
 function parseCitationTokens(text: string, citations: Citation[], keyPrefix: string): React.ReactNode[] {
   if (!citations || citations.length === 0) return [text];
   const pattern = /\[(DOC|SRC):\d+\]/g;
@@ -200,9 +273,47 @@ function splitTheoryContent(text: string): { binding: string; theory?: string; l
   return { binding, theory, label };
 }
 
+// ─── Collapsible section ──────────────────────────────────────────────────────
+
+function CollapsibleSection({
+  num, title, children, defaultOpen = true,
+}: {
+  num: string; title: string; children: React.ReactNode; defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="border border-border/50 rounded-xl overflow-hidden mb-2">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center gap-2.5 px-3 py-2 bg-muted/30 hover:bg-muted/50 transition-colors text-start"
+      >
+        <span className="flex-none w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center shrink-0">
+          {num}
+        </span>
+        <h3 className="flex-1 text-xs font-bold text-foreground tracking-wide min-w-0 truncate">{title}</h3>
+        {open ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground shrink-0" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
+      </button>
+      {open && (
+        <div className="px-3 py-2.5 text-sm">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Structured response body ─────────────────────────────────────────────────
 
-function StructuredBody({ text, citations, prefix }: { text: string; citations: Citation[]; prefix: string }) {
+function StructuredBody({
+  text, citations, prefix, maxSections, collapsible = false,
+}: {
+  text: string;
+  citations: Citation[];
+  prefix: string;
+  maxSections?: number;
+  collapsible?: boolean;
+}) {
   const segments = segmentResponse(text);
   const isStructured = segments.some((s) => s.kind === 'header');
 
@@ -214,9 +325,97 @@ function StructuredBody({ text, citations, prefix }: { text: string; citations: 
     );
   }
 
+  // Group segments into sections for collapsible rendering
+  if (collapsible) {
+    type Section = { header: { num: string; title: string }; texts: ContentSegment[] };
+    const sections: Section[] = [];
+    let preamble: ContentSegment[] = [];
+    let current: Section | null = null;
+    let sectionCount = 0;
+
+    for (const seg of segments) {
+      if (seg.kind === 'header') {
+        if (maxSections !== undefined && sectionCount >= maxSections) break;
+        if (current) sections.push(current);
+        current = { header: seg, texts: [] };
+        sectionCount++;
+      } else if (current) {
+        current.texts.push(seg);
+      } else {
+        preamble.push(seg);
+      }
+    }
+    if (current) sections.push(current);
+
+    function renderTextSegments(segs: ContentSegment[], secNum?: string) {
+      return segs.map((seg, idx) => {
+        if (seg.kind === 'header') return null;
+        const isSection9 = (seg.sectionNum ?? secNum) === '9';
+        const lines = seg.content.split('\n');
+        return (
+          <div key={idx} className="space-y-1">
+            {lines.map((line, li) => {
+              if (!line.trim()) return null;
+              if (isSection9) {
+                const colonIdx = line.indexOf(':');
+                const isLabelLine =
+                  colonIdx > 0 &&
+                  !line.trim().startsWith('[') &&
+                  !line.trim().startsWith('•') &&
+                  !line.trim().startsWith('http');
+                if (isLabelLine) {
+                  const labelPart = line.slice(0, colonIdx + 1);
+                  const rest = line.slice(colonIdx + 1);
+                  return (
+                    <p key={li} className="text-sm leading-7 break-words">
+                      <span className="font-semibold text-foreground">{labelPart}</span>
+                      {parseCitationTokens(rest, citations, `${prefix}-${idx}-${li}`)}
+                    </p>
+                  );
+                }
+              }
+              return (
+                <p key={li} className="text-sm leading-7 break-words whitespace-pre-wrap">
+                  {parseCitationTokens(line, citations, `${prefix}-${idx}-${li}`)}
+                </p>
+              );
+            })}
+          </div>
+        );
+      });
+    }
+
+    return (
+      <div className="space-y-0">
+        {preamble.length > 0 && (
+          <div className="mb-3 pb-3 border-b border-border/30">
+            {renderTextSegments(preamble)}
+          </div>
+        )}
+        {sections.map((sec, si) => (
+          <CollapsibleSection key={si} num={sec.header.num} title={sec.header.title} defaultOpen={si < 2}>
+            {renderTextSegments(sec.texts, sec.header.num)}
+          </CollapsibleSection>
+        ))}
+      </div>
+    );
+  }
+
+  // Non-collapsible (quick / standard truncation) — flat rendering
+  let sectionCount = 0;
+  let truncated = false;
+  const visible: ContentSegment[] = [];
+  for (const seg of segments) {
+    if (seg.kind === 'header') {
+      if (maxSections !== undefined && sectionCount >= maxSections) { truncated = true; break; }
+      sectionCount++;
+    }
+    visible.push(seg);
+  }
+
   return (
     <div className="space-y-0">
-      {segments.map((seg, idx) => {
+      {visible.map((seg, idx) => {
         if (seg.kind === 'header') {
           return (
             <div
@@ -246,11 +445,11 @@ function StructuredBody({ text, citations, prefix }: { text: string; citations: 
                   !line.trim().startsWith('•') &&
                   !line.trim().startsWith('http');
                 if (isLabelLine) {
-                  const label = line.slice(0, colonIdx + 1);
+                  const labelPart = line.slice(0, colonIdx + 1);
                   const rest = line.slice(colonIdx + 1);
                   return (
                     <p key={li} className="text-sm leading-7 break-words">
-                      <span className="font-semibold text-foreground">{label}</span>
+                      <span className="font-semibold text-foreground">{labelPart}</span>
                       {parseCitationTokens(rest, citations, `${prefix}-${idx}-${li}`)}
                     </p>
                   );
@@ -265,29 +464,57 @@ function StructuredBody({ text, citations, prefix }: { text: string; citations: 
           </div>
         );
       })}
+      {truncated && (
+        <p className="text-[11px] text-muted-foreground mt-2 italic">
+          … {segments.filter((s) => s.kind === 'header').length - sectionCount} أقسام أخرى (وسّع الإجابة لعرضها)
+        </p>
+      )}
     </div>
   );
 }
 
-/**
- * Render a structured (multi-section) or plain assistant response.
- * When a theory lens was active the model emits a ---THEORY LENS: {label}---
- * separator. We detect it and render two visually distinct blocks:
- *   1. UAE Binding Analysis (normal style)
- *   2. Theory Lens section (distinct left-border card)
- */
-function AssistantContent({ content, citations }: { content: string; citations: Citation[] }) {
+// ─── AssistantContent — mode-aware ───────────────────────────────────────────
+
+function AssistantContent({
+  content, citations, mode, isExpanded,
+}: {
+  content: string;
+  citations: Citation[];
+  mode: ResponseMode;
+  isExpanded: boolean;
+}) {
   const { binding, theory, label } = splitTheoryContent(content);
+
+  // Strip the expert prefix from display if present
+  const displayBinding = binding.startsWith('[وضع الرأي القانوني الخبير]')
+    ? binding.replace(/^\[وضع الرأي القانوني الخبير\][^\n]*\n\n?/, '')
+    : binding;
+
+  const effectiveMode = isExpanded ? 'professional' : mode;
+  const cfg = MODE_CONFIG[effectiveMode];
 
   return (
     <div className="space-y-3">
-      {/* ── UAE Binding Analysis ── */}
-      <StructuredBody text={binding} citations={citations} prefix="binding" />
+      {/* Expert opinion header banner */}
+      {mode === 'expert' && (
+        <div className="flex items-center gap-2 px-2.5 py-1.5 bg-amber-50 border border-amber-200 rounded-lg mb-2">
+          <Star className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+          <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wide">رأي قانوني خبير — غير ملزم</span>
+        </div>
+      )}
 
-      {/* ── Theory Lens section ── */}
+      {/* Main content */}
+      <StructuredBody
+        text={displayBinding}
+        citations={citations}
+        prefix="binding"
+        maxSections={isExpanded ? undefined : cfg.maxSections}
+        collapsible={effectiveMode === 'professional' || (effectiveMode === 'expert')}
+      />
+
+      {/* Theory Lens section */}
       {theory && (
         <div className="mt-4 border-l-4 border-violet-400 pl-3 rounded-r-lg bg-violet-50/60 py-2 pr-2 space-y-1">
-          {/* Header */}
           <div className="flex items-center gap-1.5 mb-2">
             <FlaskConical className="w-3.5 h-3.5 text-violet-600 shrink-0" />
             <span className="text-[11px] font-bold text-violet-700 uppercase tracking-wide">
@@ -304,12 +531,151 @@ function AssistantContent({ content, citations }: { content: string; citations: 
   );
 }
 
+// ─── Action buttons ───────────────────────────────────────────────────────────
+
+type ActionKey =
+  | 'expand' | 'collapse'
+  | 'legislation' | 'cases'
+  | 'french' | 'shamsi'
+  | 'memorandum'
+  | 'export_pdf' | 'export_word';
+
+const ACTION_CONFIG: {
+  key: ActionKey;
+  icon: React.ReactNode;
+  ar: string;
+  className: string;
+  hideWhenExpanded?: boolean;
+  showWhenExpanded?: boolean;
+}[] = [
+  { key: 'expand',      icon: <Maximize2 className="w-3 h-3" />,  ar: 'توسيع الإجابة',           className: 'border-primary/30 text-primary hover:bg-primary/5',          hideWhenExpanded: true },
+  { key: 'collapse',    icon: <Minimize2 className="w-3 h-3" />,  ar: 'تصغير',                   className: 'border-border text-muted-foreground hover:bg-muted/30',        showWhenExpanded: true },
+  { key: 'legislation', icon: <BookMarked className="w-3 h-3" />, ar: 'عرض التشريعات',           className: 'border-border text-muted-foreground hover:bg-muted/30' },
+  { key: 'cases',       icon: <Gavel className="w-3 h-3" />,      ar: 'عرض القضايا',             className: 'border-border text-muted-foreground hover:bg-muted/30' },
+  { key: 'french',      icon: <Globe className="w-3 h-3" />,      ar: 'مقارنة بالقانون الفرنسي', className: 'border-border text-muted-foreground hover:bg-muted/30' },
+  { key: 'shamsi',      icon: <Brain className="w-3 h-3" />,      ar: 'تحليل بنظرية الشامسي',    className: 'border-border text-muted-foreground hover:bg-muted/30' },
+  { key: 'memorandum',  icon: <FileText className="w-3 h-3" />,   ar: 'توليد مذكرة قانونية',     className: 'border-border text-muted-foreground hover:bg-muted/30' },
+  { key: 'export_pdf',  icon: <FileOutput className="w-3 h-3" />, ar: 'تصدير PDF',               className: 'border-border text-muted-foreground hover:bg-muted/30' },
+  { key: 'export_word', icon: <BarChart2 className="w-3 h-3" />,  ar: 'تصدير Word',              className: 'border-border text-muted-foreground hover:bg-muted/30' },
+];
+
+function ActionButtons({
+  mode, isExpanded, userQuery, onExpand, onCollapse, onAction, disabled,
+}: {
+  mode: ResponseMode;
+  isExpanded: boolean;
+  userQuery: string;
+  onExpand: () => void;
+  onCollapse: () => void;
+  onAction: (key: ActionKey, query: string) => void;
+  disabled: boolean;
+}) {
+  return (
+    <div className="flex flex-wrap gap-1 mt-2.5 pt-2 border-t border-border/30" dir="rtl">
+      {ACTION_CONFIG.map(({ key, icon, ar, className, hideWhenExpanded, showWhenExpanded }) => {
+        if (hideWhenExpanded && isExpanded) return null;
+        if (showWhenExpanded && !isExpanded) return null;
+        // Hide expand button for professional mode (already full)
+        if (key === 'expand' && (mode === 'professional' || mode === 'expert')) return null;
+
+        return (
+          <button
+            key={key}
+            type="button"
+            disabled={disabled}
+            onClick={() => {
+              if (key === 'expand') { onExpand(); return; }
+              if (key === 'collapse') { onCollapse(); return; }
+              if (key === 'export_pdf' || key === 'export_word') {
+                onAction(key, userQuery);
+                return;
+              }
+              onAction(key, userQuery);
+            }}
+            className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-lg border transition-colors disabled:opacity-40 ${className}`}
+          >
+            {icon}
+            {ar}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Build display meta for a full loaded message list (history restore). */
+function buildMetaMapFromMessages(msgs: Message[]): Record<number, MsgDisplayMeta> {
+  const map: Record<number, MsgDisplayMeta> = {};
+  for (let i = 0; i < msgs.length; i++) {
+    const msg = msgs[i];
+    if (msg.role === 'assistant') {
+      // Walk backwards to find the nearest preceding user message
+      const userMsg = msgs.slice(0, i).reverse().find((m) => m.role === 'user');
+      // Historical messages default to 'professional' so the full collapsible
+      // view is shown — we can't know the original mode after the fact.
+      map[msg.id] = {
+        mode: 'professional',
+        userQuery: userMsg?.content ?? '',
+      };
+    }
+  }
+  return map;
+}
+
+// ─── Response mode selector ───────────────────────────────────────────────────
+
+function ResponseModeSelector({
+  value, onChange, disabled,
+}: {
+  value: ResponseMode;
+  onChange: (m: ResponseMode) => void;
+  disabled: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-1 flex-wrap" dir="rtl">
+      {(Object.keys(MODE_CONFIG) as ResponseMode[]).map((m) => {
+        const cfg = MODE_CONFIG[m];
+        const isActive = value === m;
+        return (
+          <button
+            key={m}
+            type="button"
+            disabled={disabled}
+            onClick={() => onChange(m)}
+            title={cfg.descAr}
+            className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-lg border transition-all disabled:opacity-40 ${
+              isActive ? cfg.activeClass : 'border-border text-muted-foreground hover:border-border/80 hover:bg-muted/30'
+            }`}
+          >
+            {cfg.icon}
+            {cfg.ar}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 // ─── Message bubble ───────────────────────────────────────────────────────────
 
-function MessageBubble({ msg }: { msg: Message }) {
+function MessageBubble({
+  msg, displayMeta, onAction, actionDisabled,
+}: {
+  msg: Message;
+  displayMeta?: MsgDisplayMeta;
+  onAction: (id: number, key: ActionKey, userQuery: string) => void;
+  actionDisabled: boolean;
+}) {
   const isUser = msg.role === 'user';
   const citations = (msg.meta?.citations ?? []) as Citation[];
   const [showSources, setShowSources] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const mode = displayMeta?.mode ?? 'professional';
+  const userQuery = displayMeta?.userQuery ?? msg.content;
+
+  function handleExpand() { setIsExpanded(true); }
+  function handleCollapse() { setIsExpanded(false); }
 
   return (
     <div className={`flex ${isUser ? 'justify-start' : 'justify-end'} mb-3 sm:mb-4`} dir="rtl">
@@ -320,6 +686,16 @@ function MessageBubble({ msg }: { msg: Message }) {
       )}
 
       <div className={`max-w-[92%] sm:max-w-[86%] ${isUser ? 'order-first' : ''}`}>
+        {/* Mode badge for assistant messages */}
+        {!isUser && displayMeta && (
+          <div className="flex items-center gap-1.5 mb-1 ms-0.5" dir="rtl">
+            <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full border ${MODE_CONFIG[displayMeta.mode].badgeClass}`}>
+              {MODE_CONFIG[displayMeta.mode].icon}
+              {MODE_CONFIG[displayMeta.mode].ar}
+            </span>
+          </div>
+        )}
+
         <div
           className={`rounded-2xl px-3 py-2.5 sm:px-4 sm:py-3 text-sm leading-relaxed ${
             isUser
@@ -330,10 +706,30 @@ function MessageBubble({ msg }: { msg: Message }) {
           {isUser ? (
             <p className="whitespace-pre-wrap break-words">{msg.content}</p>
           ) : (
-            <AssistantContent content={msg.content} citations={citations} />
+            <>
+              <AssistantContent
+                content={msg.content}
+                citations={citations}
+                mode={mode}
+                isExpanded={isExpanded}
+              />
+              {/* Action buttons */}
+              {displayMeta && (
+                <ActionButtons
+                  mode={mode}
+                  isExpanded={isExpanded}
+                  userQuery={userQuery}
+                  onExpand={handleExpand}
+                  onCollapse={handleCollapse}
+                  onAction={(key, query) => onAction(msg.id, key, query)}
+                  disabled={actionDisabled}
+                />
+              )}
+            </>
           )}
         </div>
 
+        {/* Sources toggle */}
         {!isUser && citations.length > 0 && (
           <div className="mt-1.5 ms-1">
             <button
@@ -359,6 +755,7 @@ function MessageBubble({ msg }: { msg: Message }) {
           </div>
         )}
 
+        {/* Meta footer */}
         {!isUser && (msg.meta?.theoryLensId || msg.meta?.provider) && (
           <div className="flex items-center gap-1.5 mt-1 ms-1 flex-wrap">
             {msg.meta?.theoryLensId && (
@@ -395,15 +792,7 @@ const SUGGESTIONS = [
 // ─── Sessions drawer (mobile) ─────────────────────────────────────────────────
 
 function SessionsDrawer({
-  open,
-  sessions,
-  activeId,
-  onSelect,
-  onDelete,
-  onCreate,
-  onClose,
-  canUseAi,
-  t,
+  open, sessions, activeId, onSelect, onDelete, onCreate, onClose, canUseAi, t,
 }: {
   open: boolean;
   sessions: Session[];
@@ -418,10 +807,7 @@ function SessionsDrawer({
   return (
     <>
       {open && (
-        <div
-          className="md:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
-          onClick={onClose}
-        />
+        <div className="md:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       )}
       <div
         className={`md:hidden fixed inset-x-0 bottom-0 z-50 bg-card border-t border-border rounded-t-2xl transition-transform duration-300 ${
@@ -429,7 +815,6 @@ function SessionsDrawer({
         }`}
         style={{ maxHeight: '70dvh' }}
       >
-        {/* Handle */}
         <div className="flex justify-center pt-2.5 pb-1">
           <div className="w-10 h-1 rounded-full bg-border" />
         </div>
@@ -449,7 +834,6 @@ function SessionsDrawer({
           {sessions.length === 0 ? (
             <p className="text-xs text-muted-foreground text-center py-6">{t('لا توجد محادثات', 'No conversations yet')}</p>
           ) : sessions.map((s) => (
-            /* Plain div wrapper — two sibling buttons, no nesting */
             <div
               key={s.id}
               className={`flex items-center rounded-xl border text-xs transition-all group ${
@@ -550,13 +934,7 @@ export default function AiAssistant() {
   const { toast } = useToast();
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  /** Strict-Mode guard: ensures the mount-only auto-start effect runs exactly once. */
   const autoStartGuardRef = useRef(false);
-  /**
-   * Set to true while the home-composer auto-send flow is in flight.
-   * Prevents the [activeSession] message-fetch effect from firing a competing
-   * GET /sessions/:id/messages that would overwrite the optimistic message state.
-   */
   const autoStartingRef = useRef(false);
 
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -570,8 +948,14 @@ export default function AiAssistant() {
   const [pinnedDocs, setPinnedDocs] = useState<number[]>([]);
   const [pinnedSrcs, setPinnedSrcs] = useState<number[]>([]);
   const [legalSources, setLegalSources] = useState<LegalSource[]>([]);
-  /** Theory Lens — persists for the duration of the research session (session-only in v1). */
   const [theoryLens, setTheoryLens] = useState<TheoryLensState>({ lensId: 'uae_only', customText: '' });
+
+  /** Current response mode — auto-detected but user-overridable. */
+  const [currentMode, setCurrentMode] = useState<ResponseMode>('quick');
+  /** Whether user has manually locked the mode (overriding auto-detect). */
+  const [modeLocked, setModeLocked] = useState(false);
+  /** Per-assistant-message display metadata (mode + original user query). */
+  const [msgDisplayMetaMap, setMsgDisplayMetaMap] = useState<Record<number, MsgDisplayMeta>>({});
 
   const { data: documents } = useListDocuments();
 
@@ -582,42 +966,20 @@ export default function AiAssistant() {
 
   useEffect(() => { fetchSessions(); }, [fetchSessions]);
 
-  // ── Auto-start from home composer ─────────────────────────────────────────
-  // When the user types on the home screen and presses Send, the query is
-  // stored as 'pendingAssistantQuery' and the app navigates to /assistant.
-  // On mount we read it, create a fresh session, show an optimistic user
-  // bubble, send the message, and display the assistant reply — so the user
-  // lands directly in a live conversation.
-  //
-  // Fixes applied:
-  //  • autoStartGuardRef prevents Strict Mode's double-invocation from firing
-  //    the flow twice (refs survive the Strict Mode unmount/remount cycle).
-  //  • autoStartingRef blocks the [activeSession] message-fetch effect from
-  //    issuing a competing GET that would overwrite the optimistic state.
-  //  • sessionStorage key is removed only AFTER session creation succeeds;
-  //    on failure it is restored so the user doesn't lose their query.
+  // ── Auto-start from home composer ──────────────────────────────────────────
   useEffect(() => {
-    // Strict Mode idempotency: refs persist across Strict Mode's synthetic
-    // unmount/remount, so this guard reliably fires the effect exactly once.
     if (autoStartGuardRef.current) return;
-
     const pending = sessionStorage.getItem('pendingAssistantQuery');
     if (!pending) return;
-
     autoStartGuardRef.current = true;
     const query = pending.trim();
-    if (!query) {
-      sessionStorage.removeItem('pendingAssistantQuery');
-      return;
-    }
+    if (!query) { sessionStorage.removeItem('pendingAssistantQuery'); return; }
 
-    // Signal to the [activeSession] effect that we own setMessages right now.
     autoStartingRef.current = true;
     setSending(true);
 
     (async () => {
       try {
-        // 1. Create a session titled after the query
         const title = query.length > 60 ? query.slice(0, 57) + '…' : query;
         const sr = await apiFetch('/api/assistant/sessions', {
           method: 'POST',
@@ -625,7 +987,6 @@ export default function AiAssistant() {
           body: JSON.stringify({ title }),
         });
         if (!sr.ok) {
-          // Restore the key so the user can retry after a page refresh
           sessionStorage.setItem('pendingAssistantQuery', query);
           toast({
             title: t('تعذّر بدء المحادثة', 'Could not start conversation'),
@@ -634,46 +995,36 @@ export default function AiAssistant() {
           });
           return;
         }
-
-        // Key confirmed saved server-side — safe to remove from storage
         sessionStorage.removeItem('pendingAssistantQuery');
-
         const session: Session = await sr.json();
         setSessions((prev) => [session, ...prev]);
-        // Setting activeSession would trigger the [activeSession] effect, but
-        // autoStartingRef.current === true so that effect returns immediately.
         setActiveSession(session);
 
-        // 2. Show the user bubble optimistically
         const tempId = Date.now();
-        const userMsg: Message = {
-          id: tempId,
-          sessionId: session.id,
-          role: 'user',
-          content: query,
-          createdAt: new Date().toISOString(),
-        };
+        const mode = detectMode(query);
+        setCurrentMode(mode);
+        const userMsg: Message = { id: tempId, sessionId: session.id, role: 'user', content: query, createdAt: new Date().toISOString() };
         setMessages([userMsg]);
 
-        // 3. Send to the assistant
+        const content = mode === 'expert' ? EXPERT_MODE_PREFIX + query : query;
         const mr = await apiFetch(`/api/assistant/sessions/${session.id}/messages`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content: query }),
+          body: JSON.stringify({ content }),
         });
         if (mr.ok) {
           const data = await mr.json();
+          setMsgDisplayMetaMap((prev) => ({ ...prev, [data.message.id]: { mode, userQuery: query } }));
           setMessages([userMsg, data.message]);
-          fetchSessions(); // session title may have been updated by the API
+          fetchSessions();
         }
-        // On send failure the user bubble stays visible so the user can retry
       } finally {
         autoStartingRef.current = false;
         setSending(false);
         setTimeout(() => inputRef.current?.focus(), 100);
       }
     })();
-  }, []); // intentionally mount-only — reads a one-shot sessionStorage key
+  }, []); // mount-only
 
   useEffect(() => {
     apiFetch('/api/legal-sources?limit=80')
@@ -684,18 +1035,32 @@ export default function AiAssistant() {
 
   useEffect(() => {
     if (!activeSession) { setMessages([]); return; }
-    // Skip when auto-start is in flight — it owns setMessages for this session.
     if (autoStartingRef.current) return;
     setLoadingMessages(true);
     apiFetch(`/api/assistant/sessions/${activeSession.id}/messages`)
       .then((r) => r.ok ? r.json() : null)
-      .then((d) => { if (d) setMessages(d.messages ?? []); })
+      .then((d) => {
+        if (d) {
+          const msgs: Message[] = d.messages ?? [];
+          setMessages(msgs);
+          // Reconstruct display meta for history — assign 'professional' mode
+          // so collapsible sections and action buttons always appear.
+          setMsgDisplayMetaMap((prev) => ({ ...buildMetaMapFromMessages(msgs), ...prev }));
+        }
+      })
       .finally(() => setLoadingMessages(false));
   }, [activeSession]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, sending]);
+
+  // Auto-detect mode from input — respects user lock
+  useEffect(() => {
+    if (modeLocked) return;
+    if (!input.trim()) { setCurrentMode('quick'); return; }
+    setCurrentMode(detectMode(input));
+  }, [input, modeLocked]);
 
   async function createSession() {
     const r = await apiFetch('/api/assistant/sessions', {
@@ -720,25 +1085,31 @@ export default function AiAssistant() {
     if (activeSession?.id === session.id) { setActiveSession(null); setMessages([]); }
   }
 
-  async function sendMessage(overrideText?: string) {
+  async function sendMessage(overrideText?: string, overrideMode?: ResponseMode) {
     const text = (overrideText ?? input).trim();
     if (!text || !activeSession || sending) return;
+    const mode = overrideMode ?? currentMode;
+
     setInput('');
     setSending(true);
 
     const tempId = Date.now();
+    // Display the original text to the user (never the prefixed version)
     const userMsg: Message = {
       id: tempId, sessionId: activeSession.id, role: 'user',
       content: text, createdAt: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, userMsg]);
 
+    // Build API content — Expert mode prepends an instruction
+    const content = mode === 'expert' ? EXPERT_MODE_PREFIX + text : text;
+
     try {
       const r = await apiFetch(`/api/assistant/sessions/${activeSession.id}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          content: text,
+          content,
           documentIds: pinnedDocs.length > 0 ? pinnedDocs : undefined,
           legalSourceIds: pinnedSrcs.length > 0 ? pinnedSrcs : undefined,
           theoryLensId: theoryLens.lensId !== 'uae_only' ? theoryLens.lensId : undefined,
@@ -747,6 +1118,10 @@ export default function AiAssistant() {
       });
       if (r.ok) {
         const data = await r.json();
+        setMsgDisplayMetaMap((prev) => ({
+          ...prev,
+          [data.message.id]: { mode, userQuery: text },
+        }));
         setMessages((prev) => [...prev.filter((m) => m.id !== tempId), userMsg, data.message]);
         fetchSessions();
       } else {
@@ -764,16 +1139,44 @@ export default function AiAssistant() {
     }
   }
 
+  /** Handle action button clicks from MessageBubble. */
+  function handleAction(_msgId: number, key: ActionKey, userQuery: string) {
+    if (key === 'export_pdf' || key === 'export_word') {
+      toast({
+        title: t('قيد التطوير', 'Coming soon'),
+        description: key === 'export_pdf'
+          ? t('تصدير PDF سيتوفر قريباً', 'PDF export will be available soon')
+          : t('تصدير Word سيتوفر قريباً', 'Word export will be available soon'),
+      });
+      return;
+    }
+
+    const queryMap: Record<string, string> = {
+      legislation: `اعرض التشريعات والمواد القانونية ذات الصلة بهذا السؤال: ${userQuery}`,
+      cases:       `اعرض أبرز أحكام المحاكم والسوابق القضائية المتعلقة بـ: ${userQuery}`,
+      french:      `قارن بين موقف القانون الإماراتي والقانون الفرنسي في المسألة التالية: ${userQuery}`,
+      shamsi:      `حلّل المسألة التالية وفق نظرية الشامسي للقانون الإداري الذكي: ${userQuery}`,
+      memorandum:  `أعد مذكرة قانونية احترافية ومنظمة بشأن: ${userQuery}`,
+    };
+
+    const followUpQuery = queryMap[key];
+    if (followUpQuery) {
+      // Follow-up action queries always use Professional mode for a complete response
+      sendMessage(followUpQuery, 'professional');
+    }
+  }
+
   function handleKey(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   }
 
-  /** Reset theory lens (and pins) whenever the user switches or creates a session. */
   function switchSession(s: Session) {
     setActiveSession(s);
     setPinnedDocs([]);
     setPinnedSrcs([]);
     setTheoryLens({ lensId: 'uae_only', customText: '' });
+    setModeLocked(false);
+    setCurrentMode('quick');
   }
 
   const toggleDoc = (id: number) =>
@@ -815,7 +1218,6 @@ export default function AiAssistant() {
                 {t('لا توجد محادثات', 'No conversations yet')}
               </p>
             ) : sessions.map((s) => (
-              /* Plain div wrapper — two sibling buttons, no nesting */
               <div
                 key={s.id}
                 className={`flex items-center rounded-lg border text-xs transition-all group ${
@@ -858,7 +1260,6 @@ export default function AiAssistant() {
 
           {/* Chat header */}
           <div className="px-3 sm:px-5 py-2.5 sm:py-3 border-b border-border/50 flex items-center gap-2.5 shrink-0 bg-card">
-            {/* Mobile: sessions menu button */}
             <button
               type="button"
               onClick={() => setShowSessionsDrawer(true)}
@@ -897,7 +1298,6 @@ export default function AiAssistant() {
           {/* Messages area */}
           <div className="flex-1 overflow-y-auto px-3 sm:px-5 py-3 sm:py-4">
             {!activeSession ? (
-              /* Welcome / landing state */
               <div className="h-full flex flex-col items-center justify-center gap-4 sm:gap-6 text-center" dir="rtl">
                 <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
                   <Sparkles className="w-7 h-7 sm:w-8 sm:h-8 text-primary/70" aria-hidden />
@@ -919,7 +1319,6 @@ export default function AiAssistant() {
                       <Plus className="w-4 h-4" />
                       {t('محادثة جديدة', 'New conversation')}
                     </Button>
-                    {/* Suggested prompts — horizontal scroll on mobile, grid on sm+ */}
                     <div className="w-full max-w-md px-2">
                       <div className="flex gap-2 overflow-x-auto pb-2 sm:hidden" style={{ scrollbarWidth: 'none' }}>
                         {SUGGESTIONS.map((s, i) => (
@@ -954,13 +1353,11 @@ export default function AiAssistant() {
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
               </div>
             ) : messages.length === 0 ? (
-              /* Empty session prompt chips */
               <div className="h-full flex flex-col items-center justify-center gap-4 text-center" dir="rtl">
                 <Bot className="w-10 h-10 text-muted-foreground/30" aria-hidden />
                 <p className="text-sm text-muted-foreground px-4">
                   {t('اطرح سؤالاً قانونياً للبدء', 'Ask a legal question to begin')}
                 </p>
-                {/* Horizontal scroll on mobile, grid on sm+ */}
                 <div className="w-full max-w-md px-2">
                   <div className="flex gap-2 overflow-x-auto pb-2 sm:hidden" style={{ scrollbarWidth: 'none' }}>
                     {SUGGESTIONS.map((s, i) => (
@@ -990,18 +1387,29 @@ export default function AiAssistant() {
               </div>
             ) : (
               <>
-                {messages.map((msg) => <MessageBubble key={msg.id} msg={msg} />)}
+                {messages.map((msg) => (
+                  <MessageBubble
+                    key={msg.id}
+                    msg={msg}
+                    displayMeta={msg.role === 'assistant' ? msgDisplayMetaMap[msg.id] : undefined}
+                    onAction={handleAction}
+                    actionDisabled={sending}
+                  />
+                ))}
                 {sending && (
                   <div className="flex justify-end mb-3" dir="rtl">
                     <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center me-2 mt-1 shrink-0">
                       <Bot className="w-4 h-4 text-primary-foreground" aria-hidden />
                     </div>
-                    <div className="bg-primary text-primary-foreground rounded-2xl rounded-se-none px-4 py-3 flex items-center gap-2">
+                    <div className="bg-card border border-border rounded-2xl rounded-se-none px-4 py-3 flex items-center gap-2 shadow-sm">
+                      <span className="text-[11px] text-muted-foreground me-1">
+                        {MODE_CONFIG[currentMode].ar}
+                      </span>
                       <div className="flex gap-1">
                         {[0, 150, 300].map((delay) => (
                           <span
                             key={delay}
-                            className="w-1.5 h-1.5 rounded-full bg-primary-foreground/60 animate-bounce"
+                            className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce"
                             style={{ animationDelay: `${delay}ms` }}
                           />
                         ))}
@@ -1028,6 +1436,26 @@ export default function AiAssistant() {
                 onClose={() => setShowPinPanel(false)}
                 t={t}
               />
+            )}
+
+            {/* Response mode selector */}
+            {activeSession && (
+              <div className="mb-2 flex items-center justify-between gap-2 flex-wrap">
+                <ResponseModeSelector
+                  value={currentMode}
+                  onChange={(m) => { setCurrentMode(m); setModeLocked(true); }}
+                  disabled={sending || !canUseAi}
+                />
+                {modeLocked && (
+                  <button
+                    type="button"
+                    onClick={() => { setModeLocked(false); if (input.trim()) setCurrentMode(detectMode(input)); else setCurrentMode('quick'); }}
+                    className="text-[9px] text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                  >
+                    {t('كشف تلقائي', 'Auto-detect')}
+                  </button>
+                )}
+              </div>
             )}
 
             {/* Theory Lens Selector */}

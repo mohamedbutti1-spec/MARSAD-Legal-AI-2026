@@ -1,0 +1,149 @@
+UI/UX Upgrade Request – Do NOT change any backend logic.
+
+The platform is now working correctly. Authentication, session handling, AI responses, citations, and legal sources are functioning.
+
+I want to redesign the user experience to make it much faster and more professional.
+
+==========================
+1. RESPONSE MODES
+==========================
+
+Add four response modes above the chat input.
+
+⚡ Quick Answer
+📘 Standard Answer
+🎓 Professional Report
+⭐ Expert Legal Opinion
+
+Quick Answer must be the default.
+
+==========================
+2. QUICK ANSWER
+==========================
+
+Target response time: 2–5 seconds.
+
+Display only:
+
+• Direct answer (3–6 lines)
+• Main legal article
+• One leading court principle if available
+• Confidence score
+• Sources
+
+Hide the long report.
+
+==========================
+3. STANDARD ANSWER
+==========================
+
+Target response time: 5–10 seconds.
+
+Include:
+
+• Executive summary
+• Legal definition
+• Relevant legislation
+• Court precedents
+• Legal reasoning
+• Sources
+
+==========================
+4. PROFESSIONAL REPORT
+==========================
+
+Target response time: 10–30 seconds.
+
+Generate the complete report including:
+
+• Executive summary
+• Constitutional basis
+• Legislation
+• Court precedents
+• Comparative law
+• Research gaps
+• Quality report
+• Confidence analysis
+• Citations
+
+==========================
+5. EXPERT LEGAL OPINION
+==========================
+
+This is unique to MARSAD.
+
+Instead of only citing the law, provide:
+
+• Legal opinion
+• Strengths
+• Weaknesses
+• Litigation risks
+• Probability of success
+• Recommended legal action
+
+Clearly label this as Expert Opinion.
+
+==========================
+6. SMART MODE DETECTION
+==========================
+
+Automatically detect the user's intent.
+
+Simple questions
+→ Quick Answer
+
+Research questions
+→ Standard Answer
+
+Requests for legal reports, memoranda, comparisons or analysis
+→ Professional Report
+
+The user may still manually change the mode.
+
+==========================
+7. AFTER EACH ANSWER
+==========================
+
+Show action buttons:
+
+Expand Answer
+
+Show Legislation
+
+Show Court Cases
+
+Compare with French Law
+
+Analyze using Al-Shamsi Theory
+
+Generate Legal Memorandum
+
+Export to PDF
+
+Export to Word
+
+==========================
+8. VISUAL IMPROVEMENTS
+==========================
+
+Use clean government-grade cards.
+
+Reduce unnecessary long scrolling.
+
+Collapse large sections.
+
+Make citations expandable.
+
+Improve spacing and typography.
+
+Do NOT change the current legal engine.
+
+Do NOT modify authentication.
+
+Do NOT modify database.
+
+Do NOT modify AI prompts unless necessary.
+
+Only improve the presentation layer and response orchestration.
+
+Keep all existing legal capabilities intact.
