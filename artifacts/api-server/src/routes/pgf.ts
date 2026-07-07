@@ -353,25 +353,30 @@ router.post("/pgf/sessions/:id/finalize", requireAnyRole, aiAnalysisLimit, async
   const answers:        PgfSessionAnswers = safe<PgfSessionAnswers>(row.answers, {});
   const triggeredFlags: string[]          = safe<string[]>(row.triggeredFlags, []);
 
-  await db.update(pgfSessionsTable).set({ status: "finalizing", updatedAt: new Date() })
-    .where(eq(pgfSessionsTable.id, id));
+  const [finalizing] = await db.update(pgfSessionsTable)
+    .set({ status: "finalizing", updatedAt: new Date() })
+    .where(eq(pgfSessionsTable.id, id))
+    .returning();
 
-  try {
-    const output = await runPgfAssessment({ config, answers, triggeredFlags });
+  // Return 202 immediately — client polls GET /pgf/sessions/:id for completion
+  res.status(202).json({ session: sessionToApi(finalizing) });
 
-    const [updated] = await db.update(pgfSessionsTable).set({
-      status:    "complete",
-      output:    JSON.stringify(output),
-      updatedAt: new Date(),
-    }).where(eq(pgfSessionsTable.id, id)).returning();
+  // Run assessment in background (non-blocking)
+  setImmediate(async () => {
+    try {
+      const output = await runPgfAssessment({ config, answers, triggeredFlags });
 
-    res.json({ session: sessionToApi(updated) });
-  } catch (err) {
-    req.log?.error({ err }, "PGF finalize failed");
-    await db.update(pgfSessionsTable).set({ status: "error", updatedAt: new Date() })
-      .where(eq(pgfSessionsTable.id, id));
-    res.status(500).json({ error: "Assessment generation failed. Please try again." });
-  }
+      await db.update(pgfSessionsTable).set({
+        status:    "complete",
+        output:    JSON.stringify(output),
+        updatedAt: new Date(),
+      }).where(eq(pgfSessionsTable.id, id));
+    } catch (err) {
+      req.log?.error({ err }, "PGF background finalize failed");
+      await db.update(pgfSessionsTable).set({ status: "error", updatedAt: new Date() })
+        .where(eq(pgfSessionsTable.id, id));
+    }
+  });
 });
 
 // ─── DELETE /pgf/sessions/:id ─────────────────────────────────────────────────

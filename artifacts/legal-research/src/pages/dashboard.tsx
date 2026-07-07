@@ -44,7 +44,7 @@ type NavChip = {
   action: 'navigate';
   href: string;
 };
-type QuickChip = FillChip | NavChip;
+type QuickChip = (FillChip | NavChip) & { requiresAi?: boolean };
 
 const QUICK_CHIPS: QuickChip[] = [
   {
@@ -54,6 +54,7 @@ const QUICK_CHIPS: QuickChip[] = [
     labelEn: 'Analyze Decision',
     action: 'fill',
     fill: 'حلل القرار الإداري رقم ...',
+    requiresAi: true,
   },
   {
     id: 'caselaw',
@@ -78,6 +79,7 @@ const QUICK_CHIPS: QuickChip[] = [
     labelEn: 'Compare Two Laws',
     action: 'fill',
     fill: 'قارن بين قانون ... وقانون ... من حيث:',
+    requiresAi: true,
   },
   {
     id: 'review-memo',
@@ -86,6 +88,7 @@ const QUICK_CHIPS: QuickChip[] = [
     labelEn: 'Review Legal Memo',
     action: 'fill',
     fill: 'راجع المذكرة القانونية التالية:',
+    requiresAi: true,
   },
   {
     id: 'draft-opinion',
@@ -94,6 +97,7 @@ const QUICK_CHIPS: QuickChip[] = [
     labelEn: 'Draft Legal Opinion',
     action: 'fill',
     fill: 'أنشئ رأياً قانونياً بشأن:',
+    requiresAi: true,
   },
   {
     id: 'spg',
@@ -102,6 +106,7 @@ const QUICK_CHIPS: QuickChip[] = [
     labelEn: 'Smart Professional Guidance',
     action: 'navigate',
     href: '/spg',
+    requiresAi: true,
   },
   {
     id: 'pgf',
@@ -110,13 +115,14 @@ const QUICK_CHIPS: QuickChip[] = [
     labelEn: 'Professional Guidance Framework',
     action: 'navigate',
     href: '/pgf',
+    requiresAi: true,
   },
 ];
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
-  const { lang } = useUserContext();
+  const { lang, canUseAi } = useUserContext();
   const t = useT();
   const [, navigate] = useLocation();
 
@@ -344,7 +350,7 @@ export default function Dashboard() {
 
             {/* Quick-action chips ─────────────────────────────────────── */}
             <div className="flex flex-wrap justify-center gap-2 sm:gap-2.5 w-full">
-              {QUICK_CHIPS.map((chip, idx) => {
+              {QUICK_CHIPS.filter((c) => canUseAi || !c.requiresAi).map((chip, idx) => {
                 const Icon = chip.icon;
                 return (
                   <button

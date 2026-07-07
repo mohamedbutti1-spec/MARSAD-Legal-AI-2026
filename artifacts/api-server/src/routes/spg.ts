@@ -156,40 +156,37 @@ router.post("/spg/sessions/:id/run", requireAnyRole, aiAnalysisLimit, async (req
   }
 
   // Mark as analyzing and persist answers
-  await db.update(spgSessionsTable).set({
+  const [analyzing] = await db.update(spgSessionsTable).set({
     status:    "analyzing",
     answers:   JSON.stringify(answers),
     updatedAt: new Date(),
-  }).where(eq(spgSessionsTable.id, id));
+  }).where(eq(spgSessionsTable.id, id)).returning();
 
-  try {
-    const output = await runSpgGuidance({
-      sectorId:     session.sectorId,
-      sectorNameAr: session.sectorNameAr,
-      roleId:       session.roleId,
-      roleNameAr:   session.roleNameAr,
-      answers,
-    });
+  // Return 202 immediately — client polls GET /spg/sessions/:id for completion
+  res.status(202).json({ session: { ...analyzing, answers, output: null } });
 
-    const [updated] = await db.update(spgSessionsTable).set({
-      status:    "complete",
-      output:    JSON.stringify(output),
-      updatedAt: new Date(),
-    }).where(eq(spgSessionsTable.id, id)).returning();
-
-    res.json({
-      session: {
-        ...updated,
+  // Run guidance in background (non-blocking)
+  setImmediate(async () => {
+    try {
+      const output = await runSpgGuidance({
+        sectorId:     session.sectorId,
+        sectorNameAr: session.sectorNameAr,
+        roleId:       session.roleId,
+        roleNameAr:   session.roleNameAr,
         answers,
-        output,
-      },
-    });
-  } catch (err) {
-    req.log?.error({ err }, "SPG analysis failed");
-    await db.update(spgSessionsTable).set({ status: "error", updatedAt: new Date() })
-      .where(eq(spgSessionsTable.id, id));
-    res.status(500).json({ error: "Guidance generation failed. Please try again." });
-  }
+      });
+
+      await db.update(spgSessionsTable).set({
+        status:    "complete",
+        output:    JSON.stringify(output),
+        updatedAt: new Date(),
+      }).where(eq(spgSessionsTable.id, id));
+    } catch (err) {
+      req.log?.error({ err }, "SPG background analysis failed");
+      await db.update(spgSessionsTable).set({ status: "error", updatedAt: new Date() })
+        .where(eq(spgSessionsTable.id, id));
+    }
+  });
 });
 
 // ─── DELETE /spg/sessions/:id ─────────────────────────────────────────────────
