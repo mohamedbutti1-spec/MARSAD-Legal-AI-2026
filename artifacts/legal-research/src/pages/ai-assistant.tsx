@@ -104,7 +104,9 @@ type UserGoal =
   | 'risk_assessment' | 'compliance_review' | 'ai_decision_analysis';
 
 type ConfigAnswerMode = 'quick' | 'standard' | 'academic' | 'judicial' | 'memorandum' | 'legislative' | 'executive_report' | 'comparative' | 'scientific';
-type Jurisdiction    = 'uae' | 'france' | 'saudi' | 'egypt' | 'eu' | 'comparative';
+type Jurisdiction    = 'uae' | 'france' | 'saudi' | 'egypt' | 'eu' | 'gcc' | 'comparative';
+// V5.0 — Professional Maturity levels (4 per profession group)
+type MaturityLevel   = 'trainee' | 'junior' | 'mid' | 'expert';
 type SourceType      = 'all' | 'legislation' | 'judicial' | 'doctrine' | 'regulations' | 'circulars' | 'international' | 'academic_research';
 type CitStyle        = 'harvard' | 'apa' | 'oscola' | 'bluebook' | 'uae';
 type ResearchDepth   = 'short' | 'medium' | 'detailed' | 'comprehensive' | 'unlimited';
@@ -121,6 +123,8 @@ interface SessionConfig {
   applyAdvancedStandard: boolean;
   /** UAE ↔ France comparative law mode */
   comparativeMode: boolean;
+  /** V5.0 — Professional Maturity Engine */
+  maturityLevel: MaturityLevel;
 }
 
 interface ExpertOptions {
@@ -140,6 +144,7 @@ const DEFAULT_SESSION_CONFIG: SessionConfig = {
   userType: 'unspecified', userGoal: 'legal_opinion', answerMode: 'standard', jurisdiction: 'uae',
   sources: ['all'], citStyle: 'uae', depth: 'detailed',
   applyAdvancedStandard: false, comparativeMode: false,
+  maturityLevel: 'mid',
 };
 
 const DEFAULT_EXPERT_OPTIONS: ExpertOptions = {
@@ -322,7 +327,8 @@ const JURISDICTION_CFG: Record<Jurisdiction, { ar: string; flag: string }> = {
   saudi:       { ar: 'المملكة العربية السعودية', flag: '🇸🇦' },
   egypt:       { ar: 'مصر',                      flag: '🇪🇬' },
   eu:          { ar: 'الاتحاد الأوروبي',         flag: '🇪🇺' },
-  comparative: { ar: 'تحليل مقارن',             flag: '🌐' },
+  gcc:         { ar: 'دول مجلس التعاون',        flag: '🌙' },
+  comparative: { ar: 'قانون مقارن',              flag: '🌐' },
 };
 
 const SOURCE_CFG: Record<SourceType, string> = {
@@ -1655,13 +1661,34 @@ function buildConfigPrefix(config: SessionConfig, expertMode: boolean, opts: Exp
   if (POLICE_IDENTITY_TYPES.has(config.userType)) {
     p += POLICE_MODULE_BLOCK;
   }
+  // V5.0 § 6 — Professional Maturity Engine
+  const maturity = MATURITY_CFG[config.maturityLevel];
+  p += `\n[محرك النضج المهني — المستوى: ${maturity.ar}]\n`;
+  p += `عمق الإجابة ومستوى اللغة المطلوب: ${maturity.depth}\n`;
+  // V5.0 § 7 — National Jurisdiction Engine (expanded adaptation)
+  if (config.jurisdiction === 'gcc') {
+    p += `\n[محرك الاختصاص الوطني — دول مجلس التعاون الخليجي]\n`;
+    p += `تناول المسألة بمنظور خليجي مقارن: الإمارات، السعودية، الكويت، قطر، البحرين، عُمان.\n`;
+    p += `اذكر أوجه التوافق والاختلاف بين التشريعات الخليجية، مع إبراز الموقف الإماراتي تفصيلاً.\n`;
+  } else if (config.jurisdiction === 'saudi') {
+    p += `\n[محرك الاختصاص الوطني — المملكة العربية السعودية]\n`;
+    p += `استخدم التشريعات السعودية (نظام المرافعات، نظام العمل، نظام الإجراءات الجزائية).\n`;
+    p += `الجهة القضائية: ديوان المظالم للقضاء الإداري | اللغة: مصطلحات القضاء السعودي.\n`;
+  } else if (config.jurisdiction === 'egypt') {
+    p += `\n[محرك الاختصاص الوطني — جمهورية مصر العربية]\n`;
+    p += `استخدم التشريعات المصرية والمبادئ المستقرة أمام مجلس الدولة والمحكمة الدستورية العليا.\n`;
+  }
+  // V5.0 § 2 — Legal Quality Assurance Engine (always on)
+  p += QA_ENGINE_BLOCK;
+  // V5.0 § 4 + § 8 — XAI + Knowledge Traceability (always on)
+  p += XAI_TRACEABILITY_BLOCK;
   if (extras.length > 0) p += `الخيارات الخبيرة: يرجى تضمين: ${extras.join('، ')}\n`;
   return p + '\n';
 }
 
 // ─── Response modes ───────────────────────────────────────────────────────────
 
-type ResponseMode = 'quick' | 'standard' | 'professional' | 'expert' | 'exemplary' | 'court_full' | 'shamsi_theory' | 'scenario_builder';
+type ResponseMode = 'quick' | 'standard' | 'professional' | 'expert' | 'exemplary' | 'court_full' | 'shamsi_theory' | 'scenario_builder' | 'judicial_review' | 'risk_analysis';
 
 interface MsgDisplayMeta { mode: ResponseMode; userQuery: string; }
 
@@ -1746,6 +1773,26 @@ const MODE_CONFIG: Record<ResponseMode, {
     badgeClass: 'bg-teal-50 text-teal-700 border-teal-200',
     maxSections: undefined,
   },
+  // V5.0 — Section 3: Judicial Review Simulator
+  judicial_review: {
+    icon: <span aria-hidden>🏛️</span>,
+    ar: 'المراجعة القضائية الافتراضية',
+    en: 'Judicial Review Simulator',
+    descAr: '5 وجهات نظر متمايزة + احتمالية تأييد / تعديل / إلغاء / إعادة التحقيق',
+    activeClass: 'bg-rose-700 text-white border-rose-700',
+    badgeClass: 'bg-rose-50 text-rose-700 border-rose-200',
+    maxSections: undefined,
+  },
+  // V5.0 — Section 5: Legal Risk Engine
+  risk_analysis: {
+    icon: <span aria-hidden>⚠️</span>,
+    ar: 'محرك تحليل المخاطر',
+    en: 'Legal Risk Engine',
+    descAr: '8 أصناف مخاطر × 4 مستويات خطورة — إجرائي، موضوعي، إثباتي، تشريعي، دستوري…',
+    activeClass: 'bg-orange-600 text-white border-orange-600',
+    badgeClass: 'bg-orange-50 text-orange-700 border-orange-200',
+    maxSections: undefined,
+  },
 };
 
 // Prefix injected into the message content for Expert Opinion mode.
@@ -1758,12 +1805,15 @@ const EXPERT_MODE_PREFIX =
 
 interface ScenarioConfig {
   caseType:        'criminal' | 'administrative' | 'civil' | 'family' | 'commercial' | 'cyber';
-  complexity:      'basic' | 'intermediate' | 'advanced';
+  complexity:      'basic' | 'intermediate' | 'advanced' | 'expert';
   proceduralStage: 'investigation' | 'prosecution' | 'trial' | 'appeal' | 'execution';
+  // V5.0 — Advanced Scenario Engine (Section 9)
+  scenarioType:    'training' | 'real' | 'crisis' | 'public_opinion' | 'multi_party';
 }
 
 const DEFAULT_SCENARIO_CONFIG: ScenarioConfig = {
   caseType: 'criminal', complexity: 'basic', proceduralStage: 'investigation',
+  scenarioType: 'training',
 };
 
 const SCENARIO_CASE_TYPES: { value: ScenarioConfig['caseType']; ar: string; emoji: string }[] = [
@@ -1776,9 +1826,19 @@ const SCENARIO_CASE_TYPES: { value: ScenarioConfig['caseType']; ar: string; emoj
 ];
 
 const SCENARIO_COMPLEXITY: { value: ScenarioConfig['complexity']; ar: string }[] = [
-  { value: 'basic',         ar: 'أساسية' },
-  { value: 'intermediate',  ar: 'متوسطة' },
-  { value: 'advanced',      ar: 'متقدمة' },
+  { value: 'basic',        ar: 'مبتدئ' },
+  { value: 'intermediate', ar: 'متوسط' },
+  { value: 'advanced',     ar: 'متقدم' },
+  { value: 'expert',       ar: 'خبير' },
+];
+
+// V5.0 — Advanced Scenario Engine (Section 9): 5 scenario types
+const SCENARIO_TYPES: { value: ScenarioConfig['scenarioType']; ar: string; emoji: string }[] = [
+  { value: 'training',       ar: 'تدريبي',             emoji: '📚' },
+  { value: 'real',           ar: 'واقعي',              emoji: '🔍' },
+  { value: 'crisis',         ar: 'أزمة',               emoji: '🚨' },
+  { value: 'public_opinion', ar: 'رأي عام',            emoji: '📢' },
+  { value: 'multi_party',    ar: 'متعدد الجهات',        emoji: '🤝' },
 ];
 
 const SCENARIO_STAGES: { value: ScenarioConfig['proceduralStage']; ar: string }[] = [
@@ -1793,9 +1853,10 @@ function buildScenarioPrefix(sc: ScenarioConfig, userType: UserType): string {
   const ct = SCENARIO_CASE_TYPES.find((x) => x.value === sc.caseType)?.ar ?? sc.caseType;
   const cx = SCENARIO_COMPLEXITY.find((x) => x.value === sc.complexity)?.ar ?? sc.complexity;
   const st = SCENARIO_STAGES.find((x) => x.value === sc.proceduralStage)?.ar ?? sc.proceduralStage;
+  const stype = SCENARIO_TYPES.find((x) => x.value === sc.scenarioType)?.ar ?? sc.scenarioType;
   const identity = USER_TYPE_CONFIG[userType]?.ar ?? userType;
-  return `[محرك السيناريو التعليمي — MLOS Scenario Engine v4.0]
-الهوية المهنية: ${identity} | نوع القضية: ${ct} | مستوى التعقيد: ${cx} | المرحلة الإجرائية: ${st}
+  return `[محرك السيناريو التعليمي — MLOS Scenario Engine v5.0]
+الهوية المهنية: ${identity} | نوع السيناريو: ${stype} | نوع القضية: ${ct} | مستوى التعقيد: ${cx} | المرحلة الإجرائية: ${st}
 
 أنت مُدرِّب قانوني متخصص. استنِد إلى الهوية المهنية ونوع القضية والمرحلة الإجرائية المحددة أعلاه لتخصيص السيناريو تخصيصاً كاملاً.
 
@@ -1830,6 +1891,146 @@ function buildScenarioPrefix(sc: ScenarioConfig, userType: UserType): string {
 
 // Keep original prefix as fallback (used when scenario config not injected)
 const SCENARIO_BUILDER_PREFIX = buildScenarioPrefix(DEFAULT_SCENARIO_CONFIG, 'unspecified');
+
+// ─── V5.0 Engine Prefixes ────────────────────────────────────────────────────
+
+// § Section 1 — Case Lifecycle Engine (10 procedural stages)
+const CASE_LIFECYCLE_STAGES: { id: number; ar: string; emoji: string }[] = [
+  { id: 1,  ar: 'البلاغ',              emoji: '📋' },
+  { id: 2,  ar: 'جمع الاستدلالات',     emoji: '🔍' },
+  { id: 3,  ar: 'التحقيق',             emoji: '🕵️' },
+  { id: 4,  ar: 'الاتهام أو الحفظ',   emoji: '⚖️' },
+  { id: 5,  ar: 'المحاكمة',            emoji: '🏛️' },
+  { id: 6,  ar: 'الاستئناف',           emoji: '📁' },
+  { id: 7,  ar: 'التمييز',             emoji: '⚖️' },
+  { id: 8,  ar: 'التنفيذ',             emoji: '✅' },
+  { id: 9,  ar: 'الأرشفة',             emoji: '🗂️' },
+  { id: 10, ar: 'التعلم المؤسسي',      emoji: '🎓' },
+];
+
+function buildLifecyclePrefix(stage: number): string {
+  const current = CASE_LIFECYCLE_STAGES.find((s) => s.id === stage);
+  const prev    = CASE_LIFECYCLE_STAGES.find((s) => s.id === stage - 1);
+  const next    = CASE_LIFECYCLE_STAGES.find((s) => s.id === stage + 1);
+  const pct     = Math.round((stage / 10) * 100);
+  return `\n[محرك دورة حياة القضية — المرحلة ${stage} من 10]
+المرحلة الحالية: ${current?.emoji ?? ''} ${current?.ar ?? ''}
+المرحلة السابقة: ${prev ? `${prev.emoji} ${prev.ar}` : '—'}
+المرحلة اللاحقة: ${next ? `${next.emoji} ${next.ar}` : '—'}
+نسبة الإنجاز الكلية: ${pct}%
+ضع هذا السياق في الاعتبار عند صياغة إجابتك — التحليل والتوصيات يجب أن يتناسبا مع هذه المرحلة الإجرائية تحديداً.\n`;
+}
+
+// § Section 2 — Legal Quality Assurance Engine (8 checks)
+const QA_ENGINE_BLOCK = `
+[محرك ضمان الجودة القانونية — 8 فحوصات إلزامية]
+قبل تقديم إجابتك النهائية، نفّذ هذه الفحوصات الثمانية داخلياً وأضف ملخص نتائجها في نهاية إجابتك:
+  ① فحص الاختصاص — هل الجهة والقانون المختص محدد بدقة؟
+  ② فحص المواعيد القانونية — هل المواعيد والمدد الإجرائية مراعاة؟
+  ③ فحص سلامة الإجراءات — هل الإجراءات المتخذة مطابقة للقانون؟
+  ④ فحص التسبيب — هل القرار أو الرأي مُعلَّل تعليلاً كافياً؟
+  ⑤ فحص الأدلة — هل الأدلة المستخدمة كافية ومشروعة؟
+  ⑥ فحص سلامة الاستدلال — هل المنطق القانوني متسق ولا ثغرات فيه؟
+  ⑦ فحص التعارضات — هل ثمة تعارض مع نصوص أو مبادئ أخرى؟
+  ⑧ فحص احتمالية الإلغاء أو الطعن — ما نقاط الضعف التي قد يستغلها الطعن؟
+
+اختتم بـ:
+[درجة الجودة القانونية]: __% — [ممتاز | جيد | متوسط | ضعيف | خطر إجرائي مرتفع]
+`;
+
+// § Section 3 — Judicial Review Simulator (5 viewpoints + 4 outcomes)
+const JUDICIAL_REVIEW_PREFIX = `\
+[محرك المراجعة القضائية الافتراضية — MLOS Judicial Review Simulator v5.0]
+
+أنت هيئة قضائية متخيلة من خمسة. حلّل القضية من وجهات نظر مستقلة متمايزة، ثم أصدر تقديرات احتمالية مُبرَّرة.
+
+أَخرِج إجابتك بهذا الهيكل الإلزامي:
+
+١) وجهة نظر القاضي
+حلّل القضية من منظور قضائي بحت: الوقائع، التكييف، الاستدلال، الحكم المتوقع.
+
+٢) وجهة نظر النيابة
+حلّل من منظور الادعاء العام: أدلة الإدانة، الوصف الجنائي، الطلبات.
+
+٣) وجهة نظر الدفاع
+حلّل من منظور الدفاع: نقاط الضعف في الاتهام، حجج البراءة أو التخفيف.
+
+٤) وجهة نظر جهة الإدارة
+حلّل من منظور الجهة الإدارية: مشروعية قراراتها، حجج الدفاع المؤسسي.
+
+٥) وجهة نظر جهة الطعن
+حلّل من منظور المراجعة القضائية: أسباب الطعن، مدى قبوله، احتمالية نجاحه.
+
+٦) تقديرات الاحتمالية القضائية [مُبرَّرة]
+  • تأييد القرار:       __% — [السبب]
+  • تعديله:            __% — [السبب]
+  • إلغائه:            __% — [السبب]
+  • إعادة التحقيق:     __% — [السبب]
+  (مجموع الاحتمالات = 100%)
+
+القضية:\n\n`;
+
+// § Section 5 — Legal Risk Engine (8 categories × 4 severity levels)
+const RISK_ENGINE_PREFIX = `\
+[محرك تحليل المخاطر القانونية — MLOS Legal Risk Engine v5.0]
+
+أنت محلل مخاطر قانوني متخصص. صنّف مخاطر هذه القضية عبر الأصناف الثمانية التالية، مع تقدير الخطورة لكل صنف.
+
+أَخرِج إجابتك بهذا الهيكل الإلزامي:
+
+١) الخطر الإجرائي — [منخفض | متوسط | مرتفع | حرج]
+وصف المخاطر الناجمة عن العيوب أو الأخطاء الإجرائية.
+
+٢) الخطر الموضوعي — [منخفض | متوسط | مرتفع | حرج]
+وصف مخاطر ضعف الموقف القانوني الموضوعي.
+
+٣) الخطر الإثباتي — [منخفض | متوسط | مرتفع | حرج]
+وصف مخاطر ضعف الأدلة أو صعوبة الإثبات.
+
+٤) الخطر التشريعي — [منخفض | متوسط | مرتفع | حرج]
+وصف مخاطر الغموض التشريعي أو التعارض بين النصوص.
+
+٥) الخطر الدستوري — [منخفض | متوسط | مرتفع | حرج]
+وصف مخاطر التعارض مع أحكام أو مبادئ دستورية.
+
+٦) الخطر الرقابي — [منخفض | متوسط | مرتفع | حرج]
+وصف مخاطر التدخل الرقابي أو العقوبات التنظيمية.
+
+٧) الخطر الإعلامي — [منخفض | متوسط | مرتفع | حرج]
+وصف مخاطر التغطية الإعلامية السلبية وتأثيرها.
+
+٨) خطر السمعة المؤسسية — [منخفض | متوسط | مرتفع | حرج]
+وصف مخاطر الضرر بسمعة الجهة أو المؤسسة.
+
+٩) المؤشر الإجمالي للمخاطر
+[منخفض | متوسط | مرتفع | حرج] — مع ترتيب أولوية المعالجة وخطة التخفيف.
+
+القضية:\n\n`;
+
+// § Section 4 — Explainable AI (XAI) + § Section 8 — Knowledge Traceability (always-on injections)
+const XAI_TRACEABILITY_BLOCK = `
+[طبقة الذكاء الاصطناعي القابل للتفسير — XAI + تتبع المعرفة القانونية]
+في نهاية كل استنتاج رئيسي، أضف:
+  [لماذا هذه النتيجة؟] اشرح المسار المنطقي من الوقائع إلى الاستنتاج.
+  [الأدلة المستخدمة] اذكر الأدلة أو المعطيات التي استندت إليها.
+  [النصوص القانونية] المادة القانونية المحددة + رقمها + المرجع التشريعي.
+  [السوابق القضائية] المرجع القضائي المستخدم + الجهة القضائية + السنة.
+  [المرجع الفقهي] الفقيه أو المرجع الفقهي عند توافره.
+  [درجة الثقة]: __% — [مرتفعة جداً | مرتفعة | متوسطة | منخفضة] مع السبب.
+`;
+
+// § Section 6 — Professional Maturity Engine
+const MATURITY_CFG: Record<MaturityLevel, { ar: string; depth: string }> = {
+  trainee: { ar: 'متدرب',         depth: 'شرح تعليمي بسيط مع تعريف كل مصطلح واستخدام أمثلة تطبيقية' },
+  junior:  { ar: 'مبتدئ',         depth: 'شرح وافٍ مع تحليل إجرائي واضح دون افتراض خبرة مسبقة' },
+  mid:     { ar: 'متوسط الخبرة',  depth: 'تحليل قانوني كامل مع الإشارة إلى الخلافات الفقهية والسوابق القضائية' },
+  expert:  { ar: 'خبير',          depth: 'تحليل متعمق حصري مع المقارنة الفقهية والتحليل النقدي والرأي الاستشاري المتخصص' },
+};
+
+// Groups that use the maturity selector
+const MATURITY_APPLICABLE_GROUPS: Set<string> = new Set([
+  'الشرطة والتحقيق', 'القضاء', 'النيابة العامة', 'المحاماة والاستشارات', 'التعليم والتدريب',
+]);
 
 // Prefix for Exemplary (نموذجي) mode — judicial-style model analysis with educational dimension.
 const EXEMPLARY_MODE_PREFIX = `\
@@ -2455,6 +2656,20 @@ function ScenarioInputPanel({
           ))}
         </select>
       </div>
+      {/* V5.0 § 9 — Scenario type */}
+      <div className="flex items-center gap-1">
+        <label className="text-[10px] text-muted-foreground">{t('نوع السيناريو', 'Scenario type')}</label>
+        <select
+          className={sel}
+          value={config.scenarioType}
+          onChange={(e) => onChange({ ...config, scenarioType: e.target.value as ScenarioConfig['scenarioType'] })}
+          disabled={disabled}
+        >
+          {SCENARIO_TYPES.map((st) => (
+            <option key={st.value} value={st.value}>{st.emoji} {st.ar}</option>
+          ))}
+        </select>
+      </div>
     </div>
   );
 }
@@ -2477,6 +2692,9 @@ function PreAnalysisPanel({
 
   // Whether the selected identity triggers the Special Police Module
   const isPolice = POLICE_IDENTITY_TYPES.has(config.userType);
+
+  // V5.0 § 6 — whether this role group gets a maturity selector
+  const showMaturity = MATURITY_APPLICABLE_GROUPS.has(selectedIdentity.groupAr);
 
   return (
     <div className="flex-1 overflow-y-auto px-3 sm:px-5 py-4" dir="rtl">
@@ -2552,6 +2770,26 @@ function PreAnalysisPanel({
               </p>
             </div>
           </div>
+
+          {/* ── V5.0 § 6 — Professional Maturity (shown for applicable role groups) */}
+          {showMaturity && (
+            <CfgSection title="مستوى النضج المهني" icon="📊">
+              <div className="flex flex-wrap gap-1.5">
+                {(Object.entries(MATURITY_CFG) as [MaturityLevel, { ar: string; depth: string }][]).map(([k, v]) => (
+                  <ConfigChip
+                    key={k}
+                    value={k}
+                    selected={config.maturityLevel}
+                    label={v.ar}
+                    onSelect={(val) => onChange({ ...config, maturityLevel: val as MaturityLevel })}
+                  />
+                ))}
+              </div>
+              <p className="text-[9px] text-muted-foreground mt-1 leading-relaxed">
+                {MATURITY_CFG[config.maturityLevel].depth}
+              </p>
+            </CfgSection>
+          )}
 
           {/* ── Jurisdiction ─────────────────────────────────────────────── */}
           <CfgSection title="الاختصاص القضائي" icon="🌐">
@@ -3313,6 +3551,64 @@ function PinPanel({
   );
 }
 
+// ─── V5.0 § 1 — Case Lifecycle Tracker component ─────────────────────────────
+
+function CaseLifecycleTracker({
+  stage, onStageChange, onClose,
+}: {
+  stage: number;
+  onStageChange: (s: number) => void;
+  onClose: () => void;
+}) {
+  const pct = Math.round((stage / 10) * 100);
+  return (
+    <div className="mb-2 rounded-xl border border-indigo-200 bg-indigo-50/60 px-3 py-2" dir="rtl">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[10px] font-semibold text-indigo-700">⚖️ محرك دورة حياة القضية — المرحلة {stage} من 10</span>
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-[9px] text-indigo-400 hover:text-indigo-700 transition-colors"
+        >
+          إغلاق
+        </button>
+      </div>
+      {/* Progress bar */}
+      <div className="w-full bg-indigo-100 rounded-full h-1.5 mb-2">
+        <div
+          className="bg-indigo-600 h-1.5 rounded-full transition-all"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      {/* Stage pills */}
+      <div className="flex flex-wrap gap-1">
+        {CASE_LIFECYCLE_STAGES.map((s) => (
+          <button
+            key={s.id}
+            type="button"
+            onClick={() => onStageChange(s.id)}
+            className={`text-[9px] px-2 py-0.5 rounded-full border transition-colors ${
+              s.id === stage
+                ? 'bg-indigo-600 text-white border-indigo-600'
+                : s.id < stage
+                  ? 'bg-indigo-100 text-indigo-600 border-indigo-200'
+                  : 'bg-white text-muted-foreground border-border'
+            }`}
+          >
+            {s.emoji} {s.ar}
+          </button>
+        ))}
+      </div>
+      <p className="text-[9px] text-indigo-500 mt-1.5">
+        {stage < 10
+          ? `التالية: ${CASE_LIFECYCLE_STAGES[stage]?.emoji} ${CASE_LIFECYCLE_STAGES[stage]?.ar} · الإنجاز الكلي ${pct}%`
+          : `✅ القضية مكتملة — ${pct}% إنجاز`
+        }
+      </p>
+    </div>
+  );
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function AiAssistant() {
@@ -3355,6 +3651,10 @@ export default function AiAssistant() {
 
   // ── Scenario Engine config ─────────────────────────────────────────────────
   const [scenarioConfig, setScenarioConfig] = useState<ScenarioConfig>(DEFAULT_SCENARIO_CONFIG);
+
+  // ── V5.0 § 1 — Case Lifecycle Engine (0 = off, 1–10 = active stage) ────────
+  const [lifecycleStage, setLifecycleStage] = useState<number>(0);
+  const [showLifecycle, setShowLifecycle] = useState(false);
 
   // ── Stage 5 — Smart Administrative Court Mode ─────────────────────────────
   const [courtMode, setCourtMode] = useState(false);
@@ -3520,10 +3820,14 @@ export default function AiAssistant() {
 
     // Build API content — config prefix + optional mode instruction
     const configPfx = buildConfigPrefix(sessionConfig, expertMode, expertOptions);
-    const content = configPfx + (
+    // V5.0 § 1 — prepend case lifecycle context when a stage is active
+    const lifecyclePfx = lifecycleStage > 0 ? buildLifecyclePrefix(lifecycleStage) : '';
+    const content = lifecyclePfx + configPfx + (
       mode === 'expert'            ? EXPERT_MODE_PREFIX + text :
       mode === 'exemplary'         ? EXEMPLARY_MODE_PREFIX + text :
       mode === 'scenario_builder'  ? buildScenarioPrefix(scenarioConfig, sessionConfig.userType) + text :
+      mode === 'judicial_review'   ? JUDICIAL_REVIEW_PREFIX + text :
+      mode === 'risk_analysis'     ? RISK_ENGINE_PREFIX + text :
       text
     );
 
@@ -4178,6 +4482,15 @@ export default function AiAssistant() {
               <ExpertOptionsPanel options={expertOptions} onChange={setExpertOptions} />
             )}
 
+            {/* V5.0 § 1 — Case Lifecycle Tracker */}
+            {activeSession && showLifecycle && lifecycleStage > 0 && (
+              <CaseLifecycleTracker
+                stage={lifecycleStage}
+                onStageChange={setLifecycleStage}
+                onClose={() => { setShowLifecycle(false); setLifecycleStage(0); }}
+              />
+            )}
+
             {/* Scenario Engine inputs — shown only when scenario_builder mode is active */}
             {activeSession && currentMode === 'scenario_builder' && (
               <ScenarioInputPanel
@@ -4254,6 +4567,23 @@ export default function AiAssistant() {
                     🔬 {supremeCourtMode ? 'المحكمة العليا — فعّال' : 'اختبار المحكمة العليا'}
                   </button>
                 )}
+
+                {/* V5.0 § 1 — Case Lifecycle toggle */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!showLifecycle) { setShowLifecycle(true); if (lifecycleStage === 0) setLifecycleStage(1); }
+                    else { setShowLifecycle(false); setLifecycleStage(0); }
+                  }}
+                  disabled={sending}
+                  className={`flex items-center gap-1.5 text-[11px] font-medium px-3 py-1.5 rounded-full border transition-colors disabled:opacity-40 ${
+                    showLifecycle && lifecycleStage > 0
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                      : 'bg-background text-muted-foreground border-border hover:border-indigo-400 hover:text-indigo-700'
+                  }`}
+                >
+                  ⚖️ {showLifecycle && lifecycleStage > 0 ? `دورة الحياة — م${lifecycleStage}` : 'دورة حياة القضية'}
+                </button>
               </div>
             )}
 
