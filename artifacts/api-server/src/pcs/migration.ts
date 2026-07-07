@@ -20,6 +20,12 @@ export async function migratePcs(): Promise<void> {
     )
   `);
 
+  // ── Additive column migrations (idempotent) ──────────────────────────────
+  // user_id was added after initial deploy — backfill the column if missing
+  await db.execute(sql`
+    ALTER TABLE pcs_sessions ADD COLUMN IF NOT EXISTS user_id INTEGER NOT NULL DEFAULT 0
+  `);
+
   await db.execute(sql`
     CREATE INDEX IF NOT EXISTS pcs_sess_scope_idx
       ON pcs_sessions (sector_id, profession_id)

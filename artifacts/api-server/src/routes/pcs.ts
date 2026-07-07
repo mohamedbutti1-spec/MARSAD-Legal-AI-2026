@@ -120,23 +120,29 @@ router.get(
   "/pcs/sessions",
   requireAnyRole,
   async (req, res): Promise<void> => {
+    await ensureMigrated();
     const uid = getUserId(req);
     const { sectorId, professionId } = req.query as Record<string, string>;
     try {
-      const conditions: ReturnType<typeof eq>[] = [eq(pcsSessionsTable.userId, uid)];
-      if (sectorId)     conditions.push(eq(pcsSessionsTable.sectorId,     sectorId));
-      if (professionId) conditions.push(eq(pcsSessionsTable.professionId, professionId));
-
+      // Use and() with explicit undefined guards — drizzle ignores undefined args cleanly
       const sessions = await db
         .select()
         .from(pcsSessionsTable)
-        .where(and(...(conditions as [ReturnType<typeof eq>])))
+        .where(
+          and(
+            eq(pcsSessionsTable.userId, uid),
+            sectorId     ? eq(pcsSessionsTable.sectorId,     sectorId)     : undefined,
+            professionId ? eq(pcsSessionsTable.professionId, professionId) : undefined,
+          ),
+        )
         .orderBy(desc(pcsSessionsTable.createdAt))
         .limit(20);
 
       res.json({ sessions });
-    } catch {
-      res.status(500).json({ error: "Failed to list sessions" });
+    } catch (err) {
+      const e = err as Error & { cause?: Error };
+      const msg = e.cause?.message ?? e.message ?? String(err);
+      res.status(500).json({ error: "Failed to list sessions", detail: msg });
     }
   },
 );
