@@ -57,6 +57,8 @@ import spgRouter           from "./spg";
 import pgfRouter           from "./pgf";
 // PCS — Professional Case Simulator
 import pcsRouter           from "./pcs";
+// Beta — Reviewer Feedback
+import betaRouter          from "./beta";
 
 const router: IRouter = Router();
 
@@ -102,6 +104,9 @@ router.use(cilRouter);
 router.use(jdtRouter);
 // NAIP — National Administrative Intelligence Platform
 router.use(naipRouter);
+// Beta — Reviewer Feedback (must come before workspace/kb/adkg which apply
+// requireAnyRole globally; citizen reviewers must reach /beta/* routes)
+router.use(betaRouter);
 // Phase 57 — Legal Research Workspace
 router.use(workspaceRouter);
 // Phase 58 — Administrative Decision Knowledge Graph

@@ -18,6 +18,7 @@ import { migratePgf }               from "./pgf/migration.js";
 import { seedInstitutionalMemory }    from "./pgf/im-seed.js";
 import { seedProfessionalWorkflows } from "./pgf/pwe-seed.js";
 import { migratePcs }               from "./pcs/migration.js";
+import { migrateBeta }              from "./beta/migration.js";
 
 const sampleRows = [
   {
@@ -157,6 +158,12 @@ export async function seedDatabase() {
     logger.warn({ err }, "PCS migration failed (non-fatal)"),
   );
   logger.info("PCS migration complete");
+
+  // ─── Beta feedback table ─────────────────────────────────────────────────────
+  await migrateBeta().catch((err) =>
+    logger.warn({ err }, "Beta migration failed (non-fatal)"),
+  );
+  logger.info("Beta feedback table ready");
 
   // ─── Users ──────────────────────────────────────────────────────────────────
   // All 14 demo accounts are handled by migrateAuth() above.

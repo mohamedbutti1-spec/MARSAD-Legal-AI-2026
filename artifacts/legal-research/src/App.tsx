@@ -7,6 +7,7 @@ import { UserProvider, useUserContext } from '@/lib/user-context';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { RouteGuard } from '@/components/ui/route-guard';
 import Login from '@/pages/login';
+import { BetaFeedbackWidget } from '@/components/beta/FeedbackWidget';
 
 // ─── Pages ────────────────────────────────────────────────────────────────────
 import NotFound           from '@/pages/not-found';
@@ -379,6 +380,7 @@ function App() {
             <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
               <Router />
             </WouterRouter>
+            <BetaFeedbackWidget />
           </AuthGate>
           <Toaster />
         </TooltipProvider>
