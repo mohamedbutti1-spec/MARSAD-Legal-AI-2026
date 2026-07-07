@@ -104,8 +104,9 @@ router.use(cilRouter);
 router.use(jdtRouter);
 // NAIP — National Administrative Intelligence Platform
 router.use(naipRouter);
-// Beta — Reviewer Feedback (must come before workspace/kb/adkg which apply
-// requireAnyRole globally; citizen reviewers must reach /beta/* routes)
+// Beta — Reviewer Feedback (registered before workspace/adkg/kb — those routers
+// apply requireAnyRole globally, which would intercept /beta/* paths and
+// return 403 for the citizen role before betaRouter is ever reached)
 router.use(betaRouter);
 // Phase 57 — Legal Research Workspace
 router.use(workspaceRouter);
