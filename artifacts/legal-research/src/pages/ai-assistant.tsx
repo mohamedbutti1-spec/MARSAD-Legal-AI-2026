@@ -51,15 +51,34 @@ type CitFmt = 'harvard' | 'apa' | 'uaeGov';
 
 // ─── Pre-analysis config types ────────────────────────────────────────────────
 
-type UserType        = 'judge' | 'prosecutor' | 'lawyer' | 'researcher' | 'professor' | 'government' | 'citizen' | 'institution';
-type ConfigAnswerMode = 'quick' | 'standard' | 'academic' | 'research' | 'memorandum' | 'lawsuit' | 'report';
+// Judicial Authority
+type UserType =
+  | 'judge' | 'prosecutor'
+  // Legislative Authority
+  | 'legislator' | 'legislative_committee'
+  // Executive Authority
+  | 'minister' | 'undersecretary' | 'director_general' | 'compliance_officer' | 'risk_officer' | 'government'
+  // Legal Professions
+  | 'lawyer' | 'legal_consultant' | 'professor' | 'researcher' | 'legal_author' | 'graduate_student'
+  // Public Users
+  | 'citizen' | 'institution'
+  // AI & Governance
+  | 'ai_engineer' | 'algorithm_reviewer' | 'algorithmic_auditor';
+
+type UserGoal =
+  | 'understand' | 'legal_opinion' | 'judicial_judgment' | 'memorandum'
+  | 'legislative_draft' | 'academic_research' | 'phd_thesis'
+  | 'risk_assessment' | 'compliance_review' | 'ai_decision_analysis';
+
+type ConfigAnswerMode = 'quick' | 'standard' | 'academic' | 'judicial' | 'memorandum' | 'legislative' | 'executive_report' | 'comparative' | 'scientific';
 type Jurisdiction    = 'uae' | 'france' | 'saudi' | 'egypt' | 'eu' | 'comparative';
-type SourceType      = 'all' | 'legislation' | 'judicial' | 'doctrine' | 'regulations' | 'circulars' | 'international';
+type SourceType      = 'all' | 'legislation' | 'judicial' | 'doctrine' | 'regulations' | 'circulars' | 'international' | 'academic_research';
 type CitStyle        = 'harvard' | 'apa' | 'oscola' | 'bluebook' | 'uae';
 type ResearchDepth   = 'short' | 'medium' | 'detailed' | 'comprehensive' | 'unlimited';
 
 interface SessionConfig {
   userType: UserType;
+  userGoal: UserGoal;
   answerMode: ConfigAnswerMode;
   jurisdiction: Jurisdiction;
   sources: SourceType[];
@@ -83,7 +102,7 @@ interface ExpertOptions {
 }
 
 const DEFAULT_SESSION_CONFIG: SessionConfig = {
-  userType: 'lawyer', answerMode: 'standard', jurisdiction: 'uae',
+  userType: 'lawyer', userGoal: 'legal_opinion', answerMode: 'standard', jurisdiction: 'uae',
   sources: ['all'], citStyle: 'uae', depth: 'detailed',
   applyAdvancedStandard: false,
 };
@@ -94,24 +113,68 @@ const DEFAULT_EXPERT_OPTIONS: ExpertOptions = {
 };
 
 const USER_TYPE_CONFIG: Record<UserType, { ar: string; emoji: string }> = {
-  judge:       { ar: 'قاضٍ',                       emoji: '⚖' },
-  prosecutor:  { ar: 'مدعٍ عام',                    emoji: '⚖' },
-  lawyer:      { ar: 'محامٍ',                       emoji: '🧑‍⚖️' },
-  researcher:  { ar: 'باحث قانوني / طالب دكتوراه', emoji: '🎓' },
-  professor:   { ar: 'أستاذ / أكاديمي',             emoji: '🏫' },
-  government:  { ar: 'موظف حكومي',                  emoji: '🏛' },
-  citizen:     { ar: 'مواطن',                       emoji: '👤' },
-  institution: { ar: 'شركة / مؤسسة',               emoji: '🏢' },
+  // Judicial
+  judge:                  { ar: 'قاضٍ',                          emoji: '⚖' },
+  prosecutor:             { ar: 'مدعٍ عام',                       emoji: '⚖' },
+  // Legislative
+  legislator:             { ar: 'مشرّع',                          emoji: '📜' },
+  legislative_committee:  { ar: 'لجنة تشريعية',                  emoji: '🏛' },
+  // Executive
+  minister:               { ar: 'وزير',                           emoji: '🏛' },
+  undersecretary:         { ar: 'وكيل وزارة',                    emoji: '🏛' },
+  director_general:       { ar: 'مدير عام',                      emoji: '🏢' },
+  compliance_officer:     { ar: 'مسؤول الامتثال',                emoji: '✅' },
+  risk_officer:           { ar: 'مسؤول المخاطر',                  emoji: '⚠' },
+  government:             { ar: 'موظف حكومي',                     emoji: '🏛' },
+  // Legal Professions
+  lawyer:                 { ar: 'محامٍ',                          emoji: '🧑‍⚖️' },
+  legal_consultant:       { ar: 'مستشار قانوني',                  emoji: '🧑‍⚖️' },
+  professor:              { ar: 'أستاذ / أكاديمي',                emoji: '🏫' },
+  researcher:             { ar: 'باحث قانوني',                    emoji: '🎓' },
+  legal_author:           { ar: 'مؤلف قانوني',                    emoji: '✍' },
+  graduate_student:       { ar: 'طالب دراسات عليا',              emoji: '🎓' },
+  // Public Users
+  citizen:                { ar: 'مواطن',                          emoji: '👤' },
+  institution:            { ar: 'شركة / مؤسسة',                  emoji: '🏢' },
+  // AI & Governance
+  ai_engineer:            { ar: 'مهندس أنظمة ذكية',              emoji: '🤖' },
+  algorithm_reviewer:     { ar: 'مدقق خوارزميات',                emoji: '🔍' },
+  algorithmic_auditor:    { ar: 'مدقق الامتثال الخوارزمي',       emoji: '🔬' },
+};
+
+// Role groups for grouped rendering in the config panel
+const USER_TYPE_GROUPS: { labelAr: string; types: UserType[] }[] = [
+  { labelAr: 'السلطة القضائية',               types: ['judge', 'prosecutor'] },
+  { labelAr: 'السلطة التشريعية',              types: ['legislator', 'legislative_committee'] },
+  { labelAr: 'السلطة التنفيذية',              types: ['minister', 'undersecretary', 'director_general', 'compliance_officer', 'risk_officer', 'government'] },
+  { labelAr: 'المهن القانونية',               types: ['lawyer', 'legal_consultant', 'professor', 'researcher', 'legal_author', 'graduate_student'] },
+  { labelAr: 'المستخدمون العامون',            types: ['citizen', 'institution'] },
+  { labelAr: 'الذكاء الاصطناعي والحوكمة',    types: ['ai_engineer', 'algorithm_reviewer', 'algorithmic_auditor'] },
+];
+
+const USER_GOAL_CFG: Record<UserGoal, { ar: string; emoji: string }> = {
+  understand:           { ar: 'فهم الموضوع',                   emoji: '🔎' },
+  legal_opinion:        { ar: 'رأي قانوني',                    emoji: '⚖' },
+  judicial_judgment:    { ar: 'حكم قضائي',                    emoji: '🏛' },
+  memorandum:           { ar: 'مذكرة قانونية',                 emoji: '📝' },
+  legislative_draft:    { ar: 'مسودة تشريعية',                emoji: '📜' },
+  academic_research:    { ar: 'بحث أكاديمي',                  emoji: '📚' },
+  phd_thesis:           { ar: 'أطروحة دكتوراه / ماجستير',     emoji: '🎓' },
+  risk_assessment:      { ar: 'تقييم مخاطر',                  emoji: '⚠' },
+  compliance_review:    { ar: 'مراجعة امتثال',                emoji: '✅' },
+  ai_decision_analysis: { ar: 'تحليل قرار إداري ذكي',         emoji: '🧠' },
 };
 
 const CONFIG_ANSWER_MODE_CFG: Record<ConfigAnswerMode, { ar: string; emoji: string }> = {
-  quick:      { ar: 'إجابة سريعة',         emoji: '⚡' },
-  standard:   { ar: 'تحليل قانوني معياري', emoji: '📘' },
-  academic:   { ar: 'تحليل أكاديمي',       emoji: '🎓' },
-  research:   { ar: 'بحث علمي',            emoji: '📚' },
-  memorandum: { ar: 'مذكرة قانونية',       emoji: '⚖' },
-  lawsuit:    { ar: 'مسودة دعوى / طعن',    emoji: '📝' },
-  report:     { ar: 'تقرير قانوني حكومي', emoji: '📊' },
+  quick:            { ar: 'إجابة سريعة',          emoji: '⚡' },
+  standard:         { ar: 'تحليل قانوني معياري',  emoji: '📘' },
+  academic:         { ar: 'إجابة أكاديمية',        emoji: '🎓' },
+  judicial:         { ar: 'حكم قضائي',             emoji: '🏛' },
+  memorandum:       { ar: 'مذكرة قانونية',         emoji: '⚖' },
+  legislative:      { ar: 'مسودة تشريعية',        emoji: '📜' },
+  executive_report: { ar: 'تقرير تنفيذي',         emoji: '📊' },
+  comparative:      { ar: 'دراسة مقارنة',          emoji: '🌐' },
+  scientific:       { ar: 'بحث علمي',             emoji: '📚' },
 };
 
 const JURISDICTION_CFG: Record<Jurisdiction, { ar: string; flag: string }> = {
@@ -127,6 +190,7 @@ const SOURCE_CFG: Record<SourceType, string> = {
   all: 'جميع المصادر', legislation: 'التشريعات', judicial: 'الأحكام القضائية',
   doctrine: 'الفقه القانوني', regulations: 'اللوائح التنفيذية',
   circulars: 'التعاميم الإدارية', international: 'الصكوك الدولية',
+  academic_research: 'البحث الأكاديمي',
 };
 
 const CIT_STYLE_CFG: Record<CitStyle, string> = {
@@ -156,9 +220,9 @@ function buildConfigPrefix(config: SessionConfig, expertMode: boolean, opts: Exp
     if (opts.actionPlan)         extras.push('خطة الإجراء القانوني الموصى بها');
   }
   const sources = config.sources.includes('all') ? SOURCE_CFG['all'] : config.sources.map((s) => SOURCE_CFG[s]).join('، ');
-  let p = `[تكوين جلسة MLOS — Marsad Legal Operating System]\n`;
-  p += `المستخدم: ${USER_TYPE_CONFIG[config.userType].ar} | الأسلوب: ${CONFIG_ANSWER_MODE_CFG[config.answerMode].ar} | الاختصاص: ${JURISDICTION_CFG[config.jurisdiction].ar}\n`;
-  p += `العمق: ${DEPTH_CFG[config.depth]} | الاستشهاد: ${CIT_STYLE_CFG[config.citStyle]} | المصادر: ${sources}\n`;
+  let p = `[تكوين جلسة MLOS — Marsad Legal Operating System · نرصد · نحلل · نحكم]\n`;
+  p += `المستخدم: ${USER_TYPE_CONFIG[config.userType].ar} | الهدف: ${USER_GOAL_CFG[config.userGoal].ar} | الأسلوب: ${CONFIG_ANSWER_MODE_CFG[config.answerMode].ar}\n`;
+  p += `الاختصاص: ${JURISDICTION_CFG[config.jurisdiction].ar} | العمق: ${DEPTH_CFG[config.depth]} | الاستشهاد: ${CIT_STYLE_CFG[config.citStyle]} | المصادر: ${sources}\n`;
   p += `ترتيب الاستجابة المطلوب: ١. التحليل القانوني → ٢. التحليل القضائي → ٣. الفقه القانوني → ٤. القانون المقارن\n`;
   if (config.applyAdvancedStandard) {
     p += `المعيار المتقدم: تطبيق نظرية الشامسي — تحليل الإرادة الإدارية الرقمية والوزن القانوني الخوارزمي والامتثال المتدرج\n`;
@@ -795,20 +859,44 @@ function PreAnalysisPanel({
   return (
     <div className="flex-1 overflow-y-auto px-3 sm:px-5 py-4" dir="rtl">
       <div className="max-w-2xl mx-auto">
+        {/* MLOS identity header */}
         <div className="text-center mb-5">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 mb-3">
-            <Sparkles className="w-6 h-6 text-primary" />
+          <div className="inline-flex items-center gap-2 mb-2">
+            <span className="text-[10px] font-mono font-bold tracking-widest text-primary/60 uppercase">MLOS</span>
+            <span className="text-border select-none">·</span>
+            <span className="text-[10px] text-muted-foreground">Marsad Legal Operating System</span>
           </div>
-          <h2 className="text-base font-bold text-foreground">لوحة التهيئة المتقدمة</h2>
-          <p className="text-xs text-muted-foreground mt-1">خصّص تجربتك القانونية قبل بدء التحليل</p>
+          <h2 className="text-base font-bold text-foreground">كيف تريد تحليل هذه المسألة؟</h2>
+          <p className="text-xs text-muted-foreground mt-1">نرصد · نحلل · نحكم</p>
         </div>
 
         <div className="space-y-3">
-          <CfgSection title="نوع المستخدم" icon="👤">
+          {/* User Role — grouped */}
+          <CfgSection title="الصفة المهنية" icon="👤">
+            <div className="space-y-2">
+              {USER_TYPE_GROUPS.map(({ labelAr, types }) => (
+                <div key={labelAr}>
+                  <p className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-wide mb-1">{labelAr}</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {types.map((k) => {
+                      const v = USER_TYPE_CONFIG[k];
+                      return (
+                        <ConfigChip key={k} value={k} selected={config.userType}
+                          label={`${v.emoji} ${v.ar}`} onSelect={(val) => onChange({ ...config, userType: val })} />
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CfgSection>
+
+          {/* User Goal */}
+          <CfgSection title="الهدف من الاستعلام" icon="🎯">
             <div className="flex flex-wrap gap-1.5">
-              {(Object.entries(USER_TYPE_CONFIG) as [UserType, { ar: string; emoji: string }][]).map(([k, v]) => (
-                <ConfigChip key={k} value={k} selected={config.userType}
-                  label={`${v.emoji} ${v.ar}`} onSelect={(val) => onChange({ ...config, userType: val })} />
+              {(Object.entries(USER_GOAL_CFG) as [UserGoal, { ar: string; emoji: string }][]).map(([k, v]) => (
+                <ConfigChip key={k} value={k} selected={config.userGoal}
+                  label={`${v.emoji} ${v.ar}`} onSelect={(val) => onChange({ ...config, userGoal: val })} />
               ))}
             </div>
           </CfgSection>
@@ -921,6 +1009,9 @@ function SessionConfigBar({ config, expertMode, onEdit }: {
       >تعديل</button>
       <span className="text-[10px] bg-primary/8 text-primary border border-primary/20 px-2 py-0.5 rounded-full font-medium">
         {USER_TYPE_CONFIG[config.userType].emoji} {USER_TYPE_CONFIG[config.userType].ar}
+      </span>
+      <span className="text-[10px] bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-medium">
+        {USER_GOAL_CFG[config.userGoal].emoji} {USER_GOAL_CFG[config.userGoal].ar}
       </span>
       <span className="text-[10px] bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-medium">
         {CONFIG_ANSWER_MODE_CFG[config.answerMode].emoji} {CONFIG_ANSWER_MODE_CFG[config.answerMode].ar}

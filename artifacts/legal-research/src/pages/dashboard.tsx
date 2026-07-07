@@ -246,6 +246,31 @@ export default function Dashboard() {
               </p>
             </div>
 
+            {/* MLOS identity card ─────────────────────────────────────── */}
+            <div className="w-full border border-primary/15 rounded-2xl px-5 py-4 bg-primary/[0.03] text-center" dir="rtl">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <span className="text-[10px] font-mono font-bold tracking-widest text-primary/50 uppercase select-none">MLOS</span>
+                <span className="text-border/60 select-none">·</span>
+                <span className="text-[10px] text-muted-foreground/70 font-medium">Marsad Legal Operating System</span>
+              </div>
+              <p className="text-sm font-bold text-foreground tracking-wide mb-1.5">
+                {t('نرصد · نحلل · نحكم', 'Observe. Analyse. Decide.')}
+              </p>
+              <p className="text-[11px] text-muted-foreground leading-relaxed max-w-md mx-auto">
+                {t(
+                  'منظومة تشغيل قانونية قابلة للتفسير — تدمج التحليل القانوني والقضائي والبحث والصياغة والحوكمة ودعم القرار الإداري الذكي في بيئة احترافية موحدة.',
+                  'An explainable legal operating system integrating legal reasoning, judicial analysis, research, drafting, governance, and intelligent administrative decision support in one unified environment.',
+                )}
+              </p>
+              <div className="mt-3 flex flex-wrap justify-center gap-1.5">
+                {(['التحليل القانوني', 'التحليل القضائي', 'الفقه', 'القانون المقارن', 'المعيار المتقدم', 'الصياغة', 'دعم القرار'] as const).map((tag) => (
+                  <span key={tag} className="text-[9px] font-medium px-2 py-0.5 rounded-full bg-primary/8 text-primary/70 border border-primary/10">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+
             {/* Composer card ─────────────────────────────────────────── */}
             <div className="w-full">
               <div className="bg-card rounded-2xl border border-border shadow-xl overflow-hidden">

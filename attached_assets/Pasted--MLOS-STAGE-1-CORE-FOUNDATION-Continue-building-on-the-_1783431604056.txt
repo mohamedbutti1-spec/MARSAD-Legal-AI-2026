@@ -1,0 +1,144 @@
+# MLOS STAGE 1 — CORE FOUNDATION
+
+Continue building on the approved MLOS Constitution.
+Do not redesign the platform.
+Do not remove any existing feature.
+Do not create a new project.
+Only enhance the current Marsad system.
+
+Goal:
+Make the user clearly experience MLOS as a legal operating system, not just a dashboard.
+
+Implement the following:
+
+1. Show the official identity clearly:
+Brand: مرصد
+System: MLOS — Marsad Legal Operating System
+Arabic tagline: نرصد · نحلل · نحكم
+English tagline: Observe. Analyse. Decide.
+
+2. Add a visible MLOS section or hero card on the home page explaining:
+MLOS is an explainable legal operating system for legal reasoning, judicial analysis, research, drafting, governance, and decision support.
+
+3. Before any legal question, display a Pre-Analysis Panel titled:
+كيف تريد تحليل هذه المسألة؟
+
+4. Add professional user roles grouped as follows:
+
+Judicial Authority:
+- Judge
+- Public Prosecutor
+
+Legislative Authority:
+- Legislator
+- Legislative Committee
+
+Executive Authority:
+- Minister
+- Undersecretary
+- Director General
+- Compliance Officer
+- Risk Officer
+- Government Employee
+
+Legal Professions:
+- Lawyer
+- Legal Consultant
+- Professor
+- Researcher
+- Legal Author
+- Graduate Student
+
+Public Users:
+- Citizen
+- Company / Institution
+
+AI & Governance:
+- Smart Systems Engineer
+- Algorithm Reviewer
+- Algorithmic Compliance Auditor
+
+5. Add User Goal:
+- Understand Topic
+- Legal Opinion
+- Judicial Judgment
+- Legal Memorandum
+- Legislative Draft
+- Academic Research
+- PhD / Master Thesis
+- Risk Assessment
+- Compliance Review
+- Intelligent Administrative Decision Analysis
+
+6. Add Answer Mode:
+- Quick
+- Standard
+- Academic
+- Judicial
+- Legal Memorandum
+- Legislative Draft
+- Executive Report
+- Comparative Study
+- Scientific Research
+
+7. Add Jurisdiction:
+- UAE
+- France
+- European Union
+- Saudi Arabia
+- Egypt
+- Comparative
+
+8. Add Sources:
+- Legislation
+- Judgments
+- Doctrine
+- Regulations
+- Circulars
+- International Instruments
+- Academic Research
+
+9. Add Citation Style:
+- UAE
+- Harvard
+- APA
+- OSCOLA
+- Bluebook
+
+10. Add Research Depth:
+- Brief
+- Medium
+- Detailed
+- Comprehensive
+- Unlimited
+
+11. Add a premium blue card:
+🧠 المعيار المتقدم
+يعتمد على نظرية الشامسي
+
+Include checkbox:
+تفعيل المعيار المتقدم
+
+Description:
+تحليل إضافي للمسائل المرتبطة بالذكاء الاصطناعي والقرارات الإدارية الذكية والخوارزميات.
+
+12. Add or improve the main chat interface after the configuration panel.
+The selected configuration must be visible above the chat.
+
+13. The selected role, goal, answer mode, jurisdiction, sources, citation style, depth, and Advanced Standard status must be stored in state and passed to the answer generation logic.
+
+14. Do not implement the full advanced legal reasoning yet.
+Only make the full configuration foundation work cleanly.
+
+Acceptance Criteria:
+- MLOS name is visible.
+- User can choose role, goal, answer mode, jurisdiction, sources, citation style, and depth.
+- Advanced Standard appears as a premium blue card.
+- Chat interface is visible and ready.
+- All selections are preserved and passed forward.
+- Existing features still work.
+- Build must complete with zero errors.
+
+When finished, reply:
+✅ MLOS Stage 1 Complete
+Ready for Stage 2
