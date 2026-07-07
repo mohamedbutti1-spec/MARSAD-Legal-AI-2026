@@ -1,0 +1,170 @@
+MARSAD UX/UI Improvement Patch v1.0
+
+Apply the following mandatory usability and product improvements to the MARSAD Legal Intelligence Platform.
+
+---------------------------------------
+1) MLOS branding visibility
+---------------------------------------
+
+The current display:
+
+Marsad Legal Operating System · MLOS
+
+is too small and visually weak.
+
+Requirements:
+
+- Create a dedicated MLOS identity block directly below the MARSAD logo.
+- Increase visibility by at least 200%.
+- Display:
+
+MLOS
+Marsad Legal Operating System
+نظام مرصد للتشغيل القانوني الذكي
+
+- Use stronger typography and visual hierarchy.
+- Add optional legal-tech iconography.
+- Ensure readability on mobile devices.
+
+---------------------------------------
+2) Remove context mismatch
+---------------------------------------
+
+Current text:
+
+"كيف تريد تحليل هذه المسألة؟"
+
+creates confusion because no issue or case exists yet.
+
+Replace logic with:
+
+IF no question entered:
+
+"أدخل سؤالك القانوني أو وقائع القضية أولاً."
+
+or
+
+"ابدأ بكتابة وقائع القضية أو السؤال القانوني."
+
+IF text exists:
+
+"كيف ترغب في تحليل هذه القضية؟"
+
+This must update dynamically.
+
+---------------------------------------
+3) Unify question entry points
+---------------------------------------
+
+Currently users see two apparent input locations.
+
+Only one input field must exist as the active legal question input.
+
+Requirements:
+
+- The bottom input becomes the primary and only legal input.
+- Remove inactive upper input areas.
+- If upper containers remain for design purposes, they must redirect automatically to the same underlying input state.
+
+There must never be an input area that accepts text but produces no analysis.
+
+---------------------------------------
+4) Professional role expansion
+---------------------------------------
+
+Current role list is incomplete.
+
+Add the following additional roles:
+
+Academic:
+- طالب قانون
+- طالب دراسات عليا
+- باحث قانوني
+
+General:
+- مستخدم عام
+- فرد
+- ممثل شركة
+- جهة حكومية
+
+Fallback:
+- أخرى
+- غير محدد
+
+Set:
+
+"غير محدد"
+
+as default role.
+
+---------------------------------------
+5) Smart role behavior
+---------------------------------------
+
+Response style should adapt to role:
+
+Judge:
+- judicial reasoning
+- legality review
+- proportionality analysis
+
+Lawyer:
+- arguments
+- legal defenses
+- litigation drafting
+
+Government official:
+- administrative legality
+- procedure compliance
+
+Academic:
+- doctrinal explanation
+- references and legal theory
+
+Student:
+- simplified educational explanation
+
+General user:
+- plain language legal guidance
+
+---------------------------------------
+6) Empty-state onboarding
+---------------------------------------
+
+When no case is entered show:
+
+"مرحباً بك في مرصد.
+
+ابدأ بكتابة سؤالك القانوني أو وقائع القضية، ثم اختر طريقة التحليل المناسبة."
+
+Display example placeholder:
+
+"مثال:
+أصدرت جهة إدارية قراراً بفصل موظف عام بسبب مخالفة إدارية..."
+
+---------------------------------------
+7) Mobile UX optimization
+---------------------------------------
+
+Optimize for iPhone viewport.
+
+Requirements:
+
+- No overlapping controls.
+- No floating controls hiding input areas.
+- Ensure keyboard does not obscure text fields.
+- Maintain one-handed usability.
+
+---------------------------------------
+8) Final validation
+---------------------------------------
+
+Verify:
+
+- Zero dead inputs.
+- Zero duplicated question areas.
+- Clear role selection.
+- Clear first action for new users.
+- MLOS branding visible and recognizable.
+
+Generate final report after implementation.

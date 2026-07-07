@@ -64,10 +64,16 @@ type UserType =
   | 'lawyer' | 'legal_consultant' | 'professor' | 'researcher' | 'legal_author' | 'graduate_student'
   // Legal Specialisations (Stage 3)
   | 'admin_law_specialist' | 'constitutional_specialist' | 'criminal_specialist' | 'civil_specialist'
+  // Academic
+  | 'law_student'
   // Public Users
   | 'citizen' | 'institution'
+  // General Public
+  | 'general_user' | 'individual' | 'company_rep'
   // AI & Governance
-  | 'ai_engineer' | 'algorithm_reviewer' | 'algorithmic_auditor';
+  | 'ai_engineer' | 'algorithm_reviewer' | 'algorithmic_auditor'
+  // Fallback
+  | 'other' | 'unspecified';
 
 type UserGoal =
   | 'understand' | 'legal_opinion' | 'judicial_judgment' | 'memorandum'
@@ -108,7 +114,7 @@ interface ExpertOptions {
 }
 
 const DEFAULT_SESSION_CONFIG: SessionConfig = {
-  userType: 'lawyer', userGoal: 'legal_opinion', answerMode: 'standard', jurisdiction: 'uae',
+  userType: 'unspecified', userGoal: 'legal_opinion', answerMode: 'standard', jurisdiction: 'uae',
   sources: ['all'], citStyle: 'uae', depth: 'detailed',
   applyAdvancedStandard: false, comparativeMode: false,
 };
@@ -144,23 +150,34 @@ const USER_TYPE_CONFIG: Record<UserType, { ar: string; emoji: string }> = {
   constitutional_specialist:  { ar: 'متخصص قانون دستوري',         emoji: '📜' },
   criminal_specialist:        { ar: 'متخصص قانون جنائي',          emoji: '🔍' },
   civil_specialist:           { ar: 'متخصص قانون مدني',           emoji: '⚖' },
+  // Academic
+  law_student:            { ar: 'طالب قانون',                     emoji: '📖' },
   // Public Users
   citizen:                { ar: 'مواطن',                          emoji: '👤' },
   institution:            { ar: 'شركة / مؤسسة',                  emoji: '🏢' },
+  // General Public
+  general_user:           { ar: 'مستخدم عام',                     emoji: '👥' },
+  individual:             { ar: 'فرد',                            emoji: '👤' },
+  company_rep:            { ar: 'ممثل شركة',                      emoji: '🏢' },
   // AI & Governance
   ai_engineer:            { ar: 'مهندس أنظمة ذكية',              emoji: '🤖' },
   algorithm_reviewer:     { ar: 'مدقق خوارزميات',                emoji: '🔍' },
   algorithmic_auditor:    { ar: 'مدقق الامتثال الخوارزمي',       emoji: '🔬' },
+  // Fallback
+  other:                  { ar: 'أخرى',                           emoji: '•' },
+  unspecified:            { ar: 'غير محدد',                       emoji: '–' },
 };
 
 // Role groups for grouped rendering in the config panel
 const USER_TYPE_GROUPS: { labelAr: string; types: UserType[] }[] = [
+  { labelAr: 'غير محدد / أخرى',              types: ['unspecified', 'other'] },
   { labelAr: 'السلطة القضائية',               types: ['judge', 'prosecutor'] },
   { labelAr: 'السلطة التشريعية',              types: ['legislator', 'legislative_committee'] },
   { labelAr: 'السلطة التنفيذية',              types: ['minister', 'undersecretary', 'director_general', 'compliance_officer', 'risk_officer', 'government'] },
   { labelAr: 'المهن القانونية',               types: ['lawyer', 'legal_consultant', 'professor', 'researcher', 'legal_author', 'graduate_student'] },
   { labelAr: 'التخصصات القانونية',           types: ['admin_law_specialist', 'constitutional_specialist', 'criminal_specialist', 'civil_specialist'] },
-  { labelAr: 'المستخدمون العامون',            types: ['citizen', 'institution'] },
+  { labelAr: 'الأكاديميون والطلاب',          types: ['law_student'] },
+  { labelAr: 'المستخدمون العامون',            types: ['citizen', 'individual', 'general_user', 'company_rep', 'institution'] },
   { labelAr: 'الذكاء الاصطناعي والحوكمة',    types: ['ai_engineer', 'algorithm_reviewer', 'algorithmic_auditor'] },
 ];
 
@@ -342,6 +359,103 @@ const ROLE_ENGINES: Partial<Record<UserType, RoleEngine>> = {
       'الهيكل البحثي الأكاديمي',
       'المراجع المقترحة',
       'توجهات البحث المستقبلي',
+    ],
+  },
+
+  // Academic — Law Student Engine (simplified educational explanation)
+  law_student: {
+    nameAr: 'طالب القانون — المحرك التعليمي',
+    reasoningSequenceAr: [
+      'تحديد المفاهيم القانونية الأساسية',
+      'الشرح التعليمي المبسط للمسألة',
+      'النصوص القانونية ذات الصلة',
+      'أمثلة تطبيقية وحالات عملية',
+      'الأسئلة الجوهرية للفهم',
+      'الخلاصة والتوصيات الدراسية',
+    ],
+    outputsAr: [
+      'شرح مبسط مناسب للدراسة',
+      'المواد القانونية المرجعية',
+      'أمثلة تطبيقية',
+    ],
+  },
+
+  // General Public — plain-language guidance
+  general_user: {
+    nameAr: 'المستخدم العام — الإرشاد القانوني بلغة واضحة',
+    reasoningSequenceAr: [
+      'فهم المشكلة بمصطلحات يومية',
+      'الحقوق والالتزامات الأساسية',
+      'الخيارات المتاحة',
+      'الخطوات العملية الموصى بها',
+      'متى يجب استشارة محامٍ',
+    ],
+    outputsAr: [
+      'إجابة واضحة بلغة بسيطة',
+      'الخطوات العملية',
+      'تنبيهات مهمة',
+    ],
+  },
+
+  individual: {
+    nameAr: 'الفرد — الإرشاد القانوني الشخصي',
+    reasoningSequenceAr: [
+      'فهم الوضع الشخصي',
+      'الحقوق القانونية للفرد',
+      'الخيارات المتاحة',
+      'المسار الأنسب للحل',
+      'متى يجب استشارة محامٍ',
+    ],
+    outputsAr: [
+      'الحقوق المتاحة',
+      'الخطوات العملية',
+      'المخاطر والتنبيهات',
+    ],
+  },
+
+  company_rep: {
+    nameAr: 'ممثل الشركة — الإرشاد التجاري والقانوني',
+    reasoningSequenceAr: [
+      'تحديد المسألة التجارية والقانونية',
+      'الإطار التنظيمي المنطبق على الشركات',
+      'التزامات الامتثال',
+      'المخاطر القانونية',
+      'الخيارات والحلول المتاحة',
+      'التوصيات العملية للإدارة',
+    ],
+    outputsAr: [
+      'ملخص المخاطر القانونية',
+      'متطلبات الامتثال',
+      'التوصيات العملية',
+    ],
+  },
+
+  // Fallback engines
+  unspecified: {
+    nameAr: 'المستخدم — التحليل القانوني العام',
+    reasoningSequenceAr: [
+      'تحديد المسألة القانونية',
+      'النصوص القانونية ذات الصلة',
+      'التحليل القانوني',
+      'الاستنتاج والتوصيات',
+    ],
+    outputsAr: [
+      'التحليل القانوني',
+      'التوصيات',
+    ],
+  },
+
+  other: {
+    nameAr: 'مستخدم آخر — التحليل القانوني العام',
+    reasoningSequenceAr: [
+      'تحديد المسألة القانونية',
+      'النصوص القانونية ذات الصلة',
+      'التحليل القانوني',
+      'الاستنتاج والتوصيات',
+    ],
+    outputsAr: [
+      'التحليل القانوني',
+      'التوصيات',
     ],
   },
 
@@ -1175,13 +1289,14 @@ function CfgSection({ title, icon, children }: { title: string; icon: string; ch
 // ─── Pre-analysis panel ───────────────────────────────────────────────────────
 
 function PreAnalysisPanel({
-  config, onChange, onStart, expertMode, onToggleExpert,
+  config, onChange, onStart, expertMode, onToggleExpert, currentInput,
 }: {
   config: SessionConfig;
   onChange: (c: SessionConfig) => void;
   onStart: () => void;
   expertMode: boolean;
   onToggleExpert: () => void;
+  currentInput?: string;
 }) {
   function toggleSource(s: SourceType) {
     if (s === 'all') { onChange({ ...config, sources: ['all'] }); return; }
@@ -1198,14 +1313,29 @@ function PreAnalysisPanel({
     <div className="flex-1 overflow-y-auto px-3 sm:px-5 py-4" dir="rtl">
       <div className="max-w-2xl mx-auto">
         {/* MLOS identity header */}
-        <div className="text-center mb-5">
-          <div className="inline-flex items-center gap-2 mb-2">
-            <span className="text-[10px] font-mono font-bold tracking-widest text-primary/60 uppercase">MLOS</span>
-            <span className="text-border select-none">·</span>
-            <span className="text-[10px] text-muted-foreground">Marsad Legal Operating System</span>
+        <div className="text-center mb-6">
+          <div className="inline-flex flex-col items-center gap-1 mb-4">
+            {/* MLOS badge */}
+            <div className="inline-flex items-center gap-2.5 bg-primary/8 border border-primary/20 rounded-xl px-4 py-2 mb-1">
+              <Scale className="w-5 h-5 text-primary/80" aria-hidden />
+              <span className="text-2xl font-black tracking-[0.12em] text-primary">MLOS</span>
+            </div>
+            {/* English subtitle */}
+            <span className="text-sm font-semibold text-foreground/80 tracking-wide">
+              Marsad Legal Operating System
+            </span>
+            {/* Arabic subtitle */}
+            <span className="text-sm font-medium text-muted-foreground" dir="rtl">
+              نظام مرصد للتشغيل القانوني الذكي
+            </span>
+            {/* Tagline */}
+            <span className="text-[11px] text-primary/50 tracking-widest mt-0.5">نرصد · نحلل · نحكم</span>
           </div>
-          <h2 className="text-base font-bold text-foreground">كيف تريد تحليل هذه المسألة؟</h2>
-          <p className="text-xs text-muted-foreground mt-1">نرصد · نحلل · نحكم</p>
+          <h2 className="text-base font-bold text-foreground mt-2">
+            {currentInput?.trim()
+              ? 'كيف ترغب في تحليل هذه القضية؟'
+              : 'أدخل سؤالك القانوني أو وقائع القضية أولاً.'}
+          </h2>
         </div>
 
         <div className="space-y-3">
@@ -2700,18 +2830,28 @@ export default function AiAssistant() {
           {/* Messages area */}
           <div className="flex-1 overflow-y-auto px-3 sm:px-5 py-3 sm:py-4">
             {!activeSession ? (
-              <div className="h-full flex flex-col items-center justify-center gap-4 sm:gap-6 text-center" dir="rtl">
+              <div className="h-full flex flex-col items-center justify-center gap-4 sm:gap-5 text-center px-4" dir="rtl">
                 <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-                  <Sparkles className="w-7 h-7 sm:w-8 sm:h-8 text-primary/70" aria-hidden />
+                  <Scale className="w-7 h-7 sm:w-8 sm:h-8 text-primary/70" aria-hidden />
                 </div>
                 <div>
-                  <h3 className="font-bold text-foreground mb-1 text-base sm:text-lg">
-                    {t('ابدأ محادثة قانونية', 'Start a legal conversation')}
+                  <h3 className="font-bold text-foreground mb-2 text-base sm:text-lg leading-snug">
+                    {t('مرحباً بك في مرصد.', 'Welcome to Marsad.')}
                   </h3>
-                  <p className="text-sm text-muted-foreground max-w-sm px-4">
+                  <p className="text-sm text-muted-foreground max-w-sm">
                     {t(
-                      'المساعد يبحث في مكتبتك والمصادر القانونية ويستشهد بكل مصدر.',
-                      'Searches your library and legal sources, citing every reference.',
+                      'ابدأ بكتابة سؤالك القانوني أو وقائع القضية، ثم اختر طريقة التحليل المناسبة.',
+                      'Start by entering your legal question or case facts, then choose your analysis method.',
+                    )}
+                  </p>
+                </div>
+                {/* Example placeholder */}
+                <div className="w-full max-w-sm bg-muted/40 border border-border/50 rounded-xl p-3 text-start" dir="rtl">
+                  <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-wide mb-1.5">{t('مثال', 'Example')}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {t(
+                      'أصدرت جهة إدارية قراراً بفصل موظف عام بسبب مخالفة إدارية...',
+                      'An administrative authority issued a decision to dismiss a public employee due to an administrative violation...',
                     )}
                   </p>
                 </div>
@@ -2719,15 +2859,16 @@ export default function AiAssistant() {
                   <>
                     <Button className="gap-1.5 text-sm" onClick={createSession}>
                       <Plus className="w-4 h-4" />
-                      {t('محادثة جديدة', 'New conversation')}
+                      {t('ابدأ محادثة جديدة', 'Start a new conversation')}
                     </Button>
                     <div className="w-full max-w-md px-2">
+                      <p className="text-[10px] text-muted-foreground/60 mb-2">{t('أو جرّب أحد الأسئلة التالية', 'Or try one of these')}</p>
                       <div className="flex gap-2 overflow-x-auto pb-2 sm:hidden" style={{ scrollbarWidth: 'none' }}>
                         {SUGGESTIONS.map((s, i) => (
                           <button
                             key={i}
                             type="button"
-                            onClick={() => createSession()}
+                            onClick={async () => { setInput(t(s.ar, s.en)); await createSession(); }}
                             className="flex-none text-start text-xs px-3 py-2.5 rounded-xl border border-border/60 hover:border-primary/30 hover:bg-primary/5 transition-all text-muted-foreground hover:text-foreground whitespace-nowrap"
                           >
                             {t(s.ar, s.en)}
@@ -2739,7 +2880,7 @@ export default function AiAssistant() {
                           <button
                             key={i}
                             type="button"
-                            onClick={() => createSession()}
+                            onClick={async () => { setInput(t(s.ar, s.en)); await createSession(); }}
                             className="text-start text-xs p-3 rounded-xl border border-border/60 hover:border-primary/30 hover:bg-primary/5 transition-all text-muted-foreground hover:text-foreground"
                           >
                             {t(s.ar, s.en)}
@@ -2771,6 +2912,7 @@ export default function AiAssistant() {
                   onStart={() => setConfigCommitted(true)}
                   expertMode={expertMode}
                   onToggleExpert={() => setExpertMode((v) => !v)}
+                  currentInput={input}
                 />
               ) : (
               <div className="h-full flex flex-col items-center justify-center gap-4 text-center" dir="rtl">

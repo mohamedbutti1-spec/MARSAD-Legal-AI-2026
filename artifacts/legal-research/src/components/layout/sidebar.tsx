@@ -457,15 +457,21 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
         {!collapsed && (
           <div className="flex items-center gap-3 min-w-0">
             {/* Emblem */}
-            <div className="w-9 h-9 rounded-lg bg-accent/20 border border-accent/30 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-accent/20 border border-accent/30 flex items-center justify-center shrink-0">
               <Scale className="w-5 h-5 text-accent" />
             </div>
             <div className="min-w-0">
-              <div className="font-bold text-sidebar-foreground text-base leading-tight">
-                مرصد
+              {/* MLOS badge */}
+              <div className="flex items-baseline gap-1.5 leading-none mb-0.5">
+                <span className="font-black text-lg tracking-[0.1em] text-sidebar-foreground">MLOS</span>
+                <span className="text-sidebar-foreground/30 text-xs select-none">·</span>
+                <span className="font-bold text-xs text-sidebar-foreground/80">مرصد</span>
               </div>
-              <div className="text-sidebar-foreground/45 text-[10px] tracking-widest uppercase font-medium leading-tight">
-                Marsad · منصة قانونية
+              <div className="text-sidebar-foreground/55 text-[10px] font-medium leading-tight truncate">
+                Marsad Legal Operating System
+              </div>
+              <div className="text-sidebar-foreground/40 text-[9px] leading-tight truncate" dir="rtl">
+                نظام مرصد للتشغيل القانوني الذكي
               </div>
             </div>
           </div>
