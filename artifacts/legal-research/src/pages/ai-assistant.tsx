@@ -49,6 +49,116 @@ interface LegalSource { id: number; title: string; titleAr?: string | null; juri
 
 type CitFmt = 'harvard' | 'apa' | 'uaeGov';
 
+// ─── Pre-analysis config types ────────────────────────────────────────────────
+
+type UserType        = 'judge' | 'prosecutor' | 'lawyer' | 'researcher' | 'government' | 'citizen' | 'institution';
+type ConfigAnswerMode = 'quick' | 'standard' | 'academic' | 'research' | 'memorandum' | 'lawsuit' | 'report';
+type Jurisdiction    = 'uae' | 'france' | 'saudi' | 'egypt' | 'eu' | 'comparative';
+type SourceType      = 'all' | 'legislation' | 'judicial' | 'doctrine' | 'regulations' | 'circulars' | 'international';
+type CitStyle        = 'harvard' | 'apa' | 'oscola' | 'bluebook' | 'uae';
+type ResearchDepth   = 'short' | 'medium' | 'detailed' | 'comprehensive' | 'unlimited';
+
+interface SessionConfig {
+  userType: UserType;
+  answerMode: ConfigAnswerMode;
+  jurisdiction: Jurisdiction;
+  sources: SourceType[];
+  citStyle: CitStyle;
+  depth: ResearchDepth;
+}
+
+interface ExpertOptions {
+  confidence: boolean;
+  reasoning: boolean;
+  minority: boolean;
+  burden: boolean;
+  evidence: boolean;
+  appealProb: boolean;
+  gaps: boolean;
+  latestJudgments: boolean;
+  legislativeUpdates: boolean;
+  actionPlan: boolean;
+}
+
+const DEFAULT_SESSION_CONFIG: SessionConfig = {
+  userType: 'lawyer', answerMode: 'standard', jurisdiction: 'uae',
+  sources: ['all'], citStyle: 'uae', depth: 'detailed',
+};
+
+const DEFAULT_EXPERT_OPTIONS: ExpertOptions = {
+  confidence: true, reasoning: false, minority: false, burden: false, evidence: false,
+  appealProb: false, gaps: false, latestJudgments: false, legislativeUpdates: false, actionPlan: false,
+};
+
+const USER_TYPE_CONFIG: Record<UserType, { ar: string; emoji: string }> = {
+  judge:       { ar: 'قاضٍ',                       emoji: '⚖' },
+  prosecutor:  { ar: 'مدعٍ عام',                    emoji: '⚖' },
+  lawyer:      { ar: 'محامٍ',                       emoji: '🧑‍⚖️' },
+  researcher:  { ar: 'باحث قانوني / طالب دكتوراه', emoji: '🎓' },
+  government:  { ar: 'موظف حكومي',                  emoji: '🏛' },
+  citizen:     { ar: 'مواطن',                       emoji: '👤' },
+  institution: { ar: 'شركة / مؤسسة',               emoji: '🏢' },
+};
+
+const CONFIG_ANSWER_MODE_CFG: Record<ConfigAnswerMode, { ar: string; emoji: string }> = {
+  quick:      { ar: 'إجابة سريعة',         emoji: '⚡' },
+  standard:   { ar: 'تحليل قانوني معياري', emoji: '📘' },
+  academic:   { ar: 'تحليل أكاديمي',       emoji: '🎓' },
+  research:   { ar: 'بحث علمي',            emoji: '📚' },
+  memorandum: { ar: 'مذكرة قانونية',       emoji: '⚖' },
+  lawsuit:    { ar: 'مسودة دعوى / طعن',    emoji: '📝' },
+  report:     { ar: 'تقرير قانوني حكومي', emoji: '📊' },
+};
+
+const JURISDICTION_CFG: Record<Jurisdiction, { ar: string; flag: string }> = {
+  uae:         { ar: 'الإمارات العربية المتحدة', flag: '🇦🇪' },
+  france:      { ar: 'فرنسا',                    flag: '🇫🇷' },
+  saudi:       { ar: 'المملكة العربية السعودية', flag: '🇸🇦' },
+  egypt:       { ar: 'مصر',                      flag: '🇪🇬' },
+  eu:          { ar: 'الاتحاد الأوروبي',         flag: '🇪🇺' },
+  comparative: { ar: 'تحليل مقارن',             flag: '🌐' },
+};
+
+const SOURCE_CFG: Record<SourceType, string> = {
+  all: 'جميع المصادر', legislation: 'التشريعات', judicial: 'الأحكام القضائية',
+  doctrine: 'الفقه القانوني', regulations: 'اللوائح التنفيذية',
+  circulars: 'التعاميم الإدارية', international: 'الصكوك الدولية',
+};
+
+const CIT_STYLE_CFG: Record<CitStyle, string> = {
+  harvard: 'Harvard', apa: 'APA', oscola: 'OSCOLA', bluebook: 'Bluebook', uae: 'الاستشهاد الإماراتي',
+};
+
+const DEPTH_CFG: Record<ResearchDepth, string> = {
+  short: 'مختصر', medium: 'متوسط', detailed: 'تفصيلي', comprehensive: 'شامل', unlimited: 'غير محدود',
+};
+
+// Al-Shamsi keyword auto-detection
+const SHAMSI_AUTO_RE = /ذكاء اصطناعي|خوارزم|حكومة رقمية|تعلم آلي|قرار آلي|منصة رقمية|بيانات ضخمة|شفافية خوارزم|انحياز خوارزم|قرار ذكي|وكيل ذكي|أتمتة|نظام رقمي|AI\b|artificial intelligence|algorithm|machine learning|digital government|automated decision|big data|agentic|algorithmic/i;
+function detectShamsiKeywords(text: string): boolean { return SHAMSI_AUTO_RE.test(text); }
+
+function buildConfigPrefix(config: SessionConfig, expertMode: boolean, opts: ExpertOptions): string {
+  const extras: string[] = [];
+  if (expertMode) {
+    if (opts.confidence)         extras.push('درجة الثقة في كل استنتاج');
+    if (opts.reasoning)          extras.push('مسار الاستدلال القانوني');
+    if (opts.minority)           extras.push('الرأي الفقهي الأقلي');
+    if (opts.burden)             extras.push('عبء الإثبات');
+    if (opts.evidence)           extras.push('الأدلة المطلوبة');
+    if (opts.appealProb)         extras.push('احتمالية نجاح الطعن');
+    if (opts.gaps)               extras.push('ثغرات البحث القانوني');
+    if (opts.latestJudgments)    extras.push('أحدث الأحكام القضائية');
+    if (opts.legislativeUpdates) extras.push('التعديلات التشريعية الأخيرة');
+    if (opts.actionPlan)         extras.push('خطة الإجراء القانوني الموصى بها');
+  }
+  const sources = config.sources.includes('all') ? SOURCE_CFG['all'] : config.sources.map((s) => SOURCE_CFG[s]).join('، ');
+  let p = `[تكوين الجلسة المتقدم]\n`;
+  p += `المستخدم: ${USER_TYPE_CONFIG[config.userType].ar} | الأسلوب: ${CONFIG_ANSWER_MODE_CFG[config.answerMode].ar} | الاختصاص: ${JURISDICTION_CFG[config.jurisdiction].ar}\n`;
+  p += `العمق: ${DEPTH_CFG[config.depth]} | الاستشهاد: ${CIT_STYLE_CFG[config.citStyle]} | المصادر: ${sources}\n`;
+  if (extras.length > 0) p += `الخيارات الخبيرة: يرجى تضمين: ${extras.join('، ')}\n`;
+  return p + '\n';
+}
+
 // ─── Response modes ───────────────────────────────────────────────────────────
 
 type ResponseMode = 'quick' | 'standard' | 'professional' | 'expert';
@@ -621,6 +731,328 @@ function AssistantContent({
   );
 }
 
+// ─── Config chip ─────────────────────────────────────────────────────────────
+
+function ConfigChip<T extends string>({
+  value, selected, label, onSelect,
+}: { value: T; selected: T; label: string; onSelect: (v: T) => void }) {
+  const active = value === selected;
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(value)}
+      className={`inline-flex items-center text-[11px] font-medium px-2.5 py-1 rounded-lg border transition-all ${
+        active ? 'bg-primary text-primary-foreground border-primary'
+               : 'border-border text-muted-foreground hover:border-primary/40 hover:text-foreground'
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+function CfgSection({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-card border border-border/60 rounded-xl p-3">
+      <p className="text-[11px] font-bold text-foreground mb-2 flex items-center gap-1.5">
+        <span>{icon}</span>{title}
+      </p>
+      {children}
+    </div>
+  );
+}
+
+// ─── Pre-analysis panel ───────────────────────────────────────────────────────
+
+function PreAnalysisPanel({
+  config, onChange, onStart, expertMode, onToggleExpert,
+}: {
+  config: SessionConfig;
+  onChange: (c: SessionConfig) => void;
+  onStart: () => void;
+  expertMode: boolean;
+  onToggleExpert: () => void;
+}) {
+  function toggleSource(s: SourceType) {
+    if (s === 'all') { onChange({ ...config, sources: ['all'] }); return; }
+    const without = config.sources.filter((x) => x !== 'all' && x !== s);
+    const adding  = !config.sources.includes(s);
+    const next    = adding ? [...without, s] : without;
+    onChange({ ...config, sources: next.length === 0 ? ['all'] : next });
+  }
+  function isActive(s: SourceType) {
+    return s === 'all' ? config.sources.includes('all') : config.sources.includes(s) && !config.sources.includes('all');
+  }
+
+  return (
+    <div className="flex-1 overflow-y-auto px-3 sm:px-5 py-4" dir="rtl">
+      <div className="max-w-2xl mx-auto">
+        <div className="text-center mb-5">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 mb-3">
+            <Sparkles className="w-6 h-6 text-primary" />
+          </div>
+          <h2 className="text-base font-bold text-foreground">لوحة التهيئة المتقدمة</h2>
+          <p className="text-xs text-muted-foreground mt-1">خصّص تجربتك القانونية قبل بدء التحليل</p>
+        </div>
+
+        <div className="space-y-3">
+          <CfgSection title="نوع المستخدم" icon="👤">
+            <div className="flex flex-wrap gap-1.5">
+              {(Object.entries(USER_TYPE_CONFIG) as [UserType, { ar: string; emoji: string }][]).map(([k, v]) => (
+                <ConfigChip key={k} value={k} selected={config.userType}
+                  label={`${v.emoji} ${v.ar}`} onSelect={(val) => onChange({ ...config, userType: val })} />
+              ))}
+            </div>
+          </CfgSection>
+
+          <CfgSection title="أسلوب الإجابة" icon="📋">
+            <div className="flex flex-wrap gap-1.5">
+              {(Object.entries(CONFIG_ANSWER_MODE_CFG) as [ConfigAnswerMode, { ar: string; emoji: string }][]).map(([k, v]) => (
+                <ConfigChip key={k} value={k} selected={config.answerMode}
+                  label={`${v.emoji} ${v.ar}`} onSelect={(val) => onChange({ ...config, answerMode: val })} />
+              ))}
+            </div>
+          </CfgSection>
+
+          <CfgSection title="الاختصاص القضائي" icon="🌐">
+            <div className="flex flex-wrap gap-1.5">
+              {(Object.entries(JURISDICTION_CFG) as [Jurisdiction, { ar: string; flag: string }][]).map(([k, v]) => (
+                <ConfigChip key={k} value={k} selected={config.jurisdiction}
+                  label={`${v.flag} ${v.ar}`} onSelect={(val) => onChange({ ...config, jurisdiction: val })} />
+              ))}
+            </div>
+          </CfgSection>
+
+          <CfgSection title="المصادر" icon="📚">
+            <div className="flex flex-wrap gap-1.5">
+              {(Object.keys(SOURCE_CFG) as SourceType[]).map((s) => (
+                <button key={s} type="button" onClick={() => toggleSource(s)}
+                  className={`inline-flex items-center text-[11px] font-medium px-2.5 py-1 rounded-lg border transition-all ${
+                    isActive(s) ? 'bg-primary text-primary-foreground border-primary'
+                                : 'border-border text-muted-foreground hover:border-primary/40 hover:text-foreground'
+                  }`}
+                >
+                  {SOURCE_CFG[s]}
+                </button>
+              ))}
+            </div>
+          </CfgSection>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <CfgSection title="أسلوب الاستشهاد" icon="📎">
+              <div className="flex flex-wrap gap-1.5">
+                {(Object.entries(CIT_STYLE_CFG) as [CitStyle, string][]).map(([k, v]) => (
+                  <ConfigChip key={k} value={k} selected={config.citStyle}
+                    label={v} onSelect={(val) => onChange({ ...config, citStyle: val })} />
+                ))}
+              </div>
+            </CfgSection>
+            <CfgSection title="عمق البحث" icon="🔍">
+              <div className="flex flex-wrap gap-1.5">
+                {(Object.entries(DEPTH_CFG) as [ResearchDepth, string][]).map(([k, v]) => (
+                  <ConfigChip key={k} value={k} selected={config.depth}
+                    label={v} onSelect={(val) => onChange({ ...config, depth: val })} />
+                ))}
+              </div>
+            </CfgSection>
+          </div>
+
+          <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
+            <div>
+              <p className="text-xs font-bold text-amber-800">وضع الخبير</p>
+              <p className="text-[10px] text-amber-700">خيارات التحليل المتقدمة وتفعيل المعيار المتقدم (نظرية الشامسي)</p>
+            </div>
+            <button type="button" onClick={onToggleExpert}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors shrink-0 ${expertMode ? 'bg-amber-500' : 'bg-muted border border-border'}`}
+            >
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${expertMode ? 'translate-x-4' : 'translate-x-0.5'}`} />
+            </button>
+          </div>
+
+          <button type="button" onClick={onStart}
+            className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+          >
+            <Send className="w-4 h-4" />
+            ابدأ التحليل القانوني
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Session config bar (compact summary) ─────────────────────────────────────
+
+function SessionConfigBar({ config, expertMode, onEdit }: {
+  config: SessionConfig; expertMode: boolean; onEdit: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-1.5 mb-2 flex-wrap" dir="rtl">
+      <button type="button" onClick={onEdit}
+        className="text-[9px] font-bold px-2 py-0.5 rounded border border-dashed border-border text-muted-foreground hover:text-foreground shrink-0"
+      >تعديل</button>
+      <span className="text-[10px] bg-primary/8 text-primary border border-primary/20 px-2 py-0.5 rounded-full font-medium">
+        {USER_TYPE_CONFIG[config.userType].emoji} {USER_TYPE_CONFIG[config.userType].ar}
+      </span>
+      <span className="text-[10px] bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-medium">
+        {CONFIG_ANSWER_MODE_CFG[config.answerMode].emoji} {CONFIG_ANSWER_MODE_CFG[config.answerMode].ar}
+      </span>
+      <span className="text-[10px] bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-medium">
+        {JURISDICTION_CFG[config.jurisdiction].flag} {JURISDICTION_CFG[config.jurisdiction].ar}
+      </span>
+      <span className="text-[10px] bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-medium">
+        🔍 {DEPTH_CFG[config.depth]}
+      </span>
+      {expertMode && (
+        <span className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-bold">
+          ⭐ وضع الخبير
+        </span>
+      )}
+    </div>
+  );
+}
+
+// ─── Expert options panel ─────────────────────────────────────────────────────
+
+const EXPERT_OPT_LABELS: { key: keyof ExpertOptions; ar: string }[] = [
+  { key: 'confidence',         ar: 'درجة الثقة' },
+  { key: 'reasoning',          ar: 'مسار الاستدلال' },
+  { key: 'minority',           ar: 'الرأي الأقلي' },
+  { key: 'burden',             ar: 'عبء الإثبات' },
+  { key: 'evidence',           ar: 'الأدلة المطلوبة' },
+  { key: 'appealProb',         ar: 'احتمال الطعن' },
+  { key: 'gaps',               ar: 'ثغرات البحث' },
+  { key: 'latestJudgments',    ar: 'أحدث الأحكام' },
+  { key: 'legislativeUpdates', ar: 'التعديلات التشريعية' },
+  { key: 'actionPlan',         ar: 'خطة الإجراء' },
+];
+
+function ExpertOptionsPanel({ options, onChange }: {
+  options: ExpertOptions; onChange: (o: ExpertOptions) => void;
+}) {
+  return (
+    <div className="mb-2 bg-amber-50/60 border border-amber-200/70 rounded-xl px-3 py-2" dir="rtl">
+      <p className="text-[10px] font-bold text-amber-800 mb-1.5 uppercase tracking-wide">خيارات الخبير</p>
+      <div className="flex flex-wrap gap-x-4 gap-y-1">
+        {EXPERT_OPT_LABELS.map(({ key, ar }) => (
+          <label key={key} className="flex items-center gap-1.5 cursor-pointer">
+            <input type="checkbox" checked={options[key]}
+              onChange={(e) => onChange({ ...options, [key]: e.target.checked })}
+              className="w-3 h-3 rounded accent-amber-600"
+            />
+            <span className="text-[10px] text-amber-800 font-medium">{ar}</span>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Al-Shamsi Theory card ────────────────────────────────────────────────────
+
+const SHAMSI_ELEMENTS = [
+  'مشروعية القرار الذكي', 'الإرادة الإدارية الرقمية', 'الوزن القانوني الخوارزمي',
+  'التحيز الخوارزمي المشروع', 'قابلية التفسير الخوارزمي', 'الشفافية',
+  'الرقابة البشرية', 'الامتثال المتدرج', 'الطعن الإداري المسبق',
+  'الرقابة القضائية', 'المسؤولية الإدارية',
+];
+
+function ShamsiTheoryCard({ onActivate, disabled }: { onActivate: () => void; disabled: boolean }) {
+  return (
+    <div className="mt-3 rounded-xl border-2 p-3.5"
+      style={{ background: '#EAF2FF', borderColor: '#2B5F9E' }}
+      dir="rtl"
+    >
+      <div className="flex items-start gap-2.5">
+        <span className="text-xl shrink-0 mt-0.5">🧠</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-[12px] font-extrabold mb-0.5 leading-snug" style={{ color: '#1a3a6e' }}>
+            Advanced Standard (Al-Shamsi Theory)
+          </p>
+          <p className="text-[10px] leading-relaxed mb-2.5" style={{ color: '#2B5F9E' }}>
+            إطار قانوني متقدم لتحليل القرارات الإدارية الذكية ومنظومة صنع القرار الخوارزمي والحكومة الرقمية وأنظمة الذكاء الاصطناعي وفق نظرية الشامسي لتشكيل الإرادة الإدارية الرقمية.
+          </p>
+          <div className="flex flex-wrap gap-1 mb-3">
+            {SHAMSI_ELEMENTS.map((item) => (
+              <span key={item} className="text-[9px] px-1.5 py-0.5 rounded-full font-medium"
+                style={{ background: '#c8dcf8', color: '#1a3a6e', border: '1px solid #a8c4f0' }}
+              >✓ {item}</span>
+            ))}
+          </div>
+          <button type="button" disabled={disabled} onClick={onActivate}
+            className="text-[11px] font-bold px-4 py-1.5 rounded-lg text-white transition-opacity disabled:opacity-50"
+            style={{ background: '#2B5F9E' }}
+          >
+            تطبيق المعيار المتقدم
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Recommended legal actions ────────────────────────────────────────────────
+
+const RECOMMENDED_LEGAL_ACTIONS = [
+  { emoji: '📝', ar: 'تقديم تظلم إداري' },
+  { emoji: '🗂',  ar: 'جمع الأدلة والمستندات' },
+  { emoji: '⚖',  ar: 'رفع دعوى قضائية' },
+  { emoji: '⏸',  ar: 'طلب وقف التنفيذ' },
+  { emoji: '📋', ar: 'الطعن بالاستئناف' },
+];
+
+function RecommendedActionsBlock({ onAction }: { onAction: (a: string) => void }) {
+  return (
+    <div className="mt-3 pt-3 border-t border-border/30" dir="rtl">
+      <p className="text-[10px] font-bold text-muted-foreground mb-2 uppercase tracking-wide">الإجراء القانوني الموصى به</p>
+      <div className="flex flex-wrap gap-1.5">
+        {RECOMMENDED_LEGAL_ACTIONS.map(({ emoji, ar }) => (
+          <button key={ar} type="button" onClick={() => onAction(ar)}
+            className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-lg bg-primary/5 border border-primary/20 text-primary hover:bg-primary/10 transition-colors"
+          >
+            <span>{emoji}</span>{ar}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Reliability block ────────────────────────────────────────────────────────
+
+function ReliabilityRow({ label, value, warn = false }: { label: string; value: string; warn?: boolean }) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <span className="text-muted-foreground">{label}:</span>
+      <span className={`font-semibold ${warn ? 'text-amber-600' : 'text-foreground'}`}>{value}</span>
+    </div>
+  );
+}
+
+function ReliabilityBlock({ citations, text }: { citations: Citation[]; text: string }) {
+  const srcCount = citations.filter((c) => c.type === 'legal_source').length + (text.match(/\[SRC:\d+\]/g) ?? []).length;
+  const docCount = citations.filter((c) => c.type === 'document').length   + (text.match(/\[DOC:\d+\]/g) ?? []).length;
+  const total    = srcCount + docCount;
+  const authority   = srcCount >= 3 ? 'تشريعية عليا' : srcCount >= 1 ? 'قانونية مقبولة' : 'توجيهية';
+  const consistency = total  >= 3 ? 'متسق' : total >= 1 ? 'جزئي' : 'لم يُتحقق';
+  const conflictKw  = /تعارض|تناقض|في المقابل|بينما قرر|بينما أشار/.test(text);
+  return (
+    <div className="mt-2 rounded-xl border border-border/40 bg-muted/15 px-3 py-2.5 text-[11px] space-y-1" dir="rtl">
+      <p className="font-bold text-foreground text-[11px] mb-1.5">لماذا هذه الإجابة موثوقة؟</p>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+        <ReliabilityRow label="عدد المصادر"   value={`${total} مصدر`} />
+        <ReliabilityRow label="مستوى السلطة"  value={authority} />
+        <ReliabilityRow label="اتساق المصادر" value={consistency} />
+        <ReliabilityRow label="أحدث تشريع"   value={`${new Date().getFullYear()}`} />
+      </div>
+      <div className="pt-1 border-t border-border/30">
+        <ReliabilityRow label="التعارضات المرصودة"
+          value={conflictKw ? 'تم رصد تعارض محتمل' : 'لا تعارض مرصود'} warn={conflictKw} />
+      </div>
+    </div>
+  );
+}
+
 // ─── Action buttons ───────────────────────────────────────────────────────────
 
 type ActionKey =
@@ -765,12 +1197,14 @@ function ResponseModeSelector({
 // ─── Message bubble ───────────────────────────────────────────────────────────
 
 function MessageBubble({
-  msg, displayMeta, onAction, actionDisabled,
+  msg, displayMeta, onAction, actionDisabled, expertMode, onDirectSend,
 }: {
   msg: Message;
   displayMeta?: MsgDisplayMeta;
   onAction: (id: number, key: ActionKey, userQuery: string) => void;
   actionDisabled: boolean;
+  expertMode: boolean;
+  onDirectSend: (text: string) => void;
 }) {
   const isUser = msg.role === 'user';
   const citations = (msg.meta?.citations ?? []) as Citation[];
@@ -779,6 +1213,7 @@ function MessageBubble({
 
   const mode = displayMeta?.mode ?? 'professional';
   const userQuery = displayMeta?.userQuery ?? msg.content;
+  const showShamsi = !isUser && !!displayMeta && (expertMode || detectShamsiKeywords(userQuery));
 
   function handleExpand() { setIsExpanded(true); }
   function handleCollapse() { setIsExpanded(false); }
@@ -819,6 +1254,15 @@ function MessageBubble({
                 mode={mode}
                 isExpanded={isExpanded}
               />
+              {/* Recommended actions + reliability — every assistant response */}
+              {displayMeta && (
+                <>
+                  <RecommendedActionsBlock
+                    onAction={(a) => onDirectSend(`${a} بشأن: ${userQuery}`)}
+                  />
+                  <ReliabilityBlock citations={citations} text={msg.content} />
+                </>
+              )}
               {/* Action buttons */}
               {displayMeta && (
                 <ActionButtons
@@ -828,6 +1272,13 @@ function MessageBubble({
                   onExpand={handleExpand}
                   onCollapse={handleCollapse}
                   onAction={(key, query) => onAction(msg.id, key, query)}
+                  disabled={actionDisabled}
+                />
+              )}
+              {/* Al-Shamsi Theory card — auto when keywords detected OR Expert Mode active */}
+              {showShamsi && (
+                <ShamsiTheoryCard
+                  onActivate={() => onAction(msg.id, 'shamsi', userQuery)}
                   disabled={actionDisabled}
                 />
               )}
@@ -1063,6 +1514,13 @@ export default function AiAssistant() {
   /** Per-assistant-message display metadata (mode + original user query). */
   const [msgDisplayMetaMap, setMsgDisplayMetaMap] = useState<Record<number, MsgDisplayMeta>>({});
 
+  // ── Pre-analysis config state ──────────────────────────────────────────────
+  const [sessionConfig, setSessionConfig] = useState<SessionConfig>(DEFAULT_SESSION_CONFIG);
+  const [expertMode, setExpertMode] = useState(false);
+  const [expertOptions, setExpertOptions] = useState<ExpertOptions>(DEFAULT_EXPERT_OPTIONS);
+  /** True once user dismisses the pre-analysis panel for the current session. */
+  const [configCommitted, setConfigCommitted] = useState(false);
+
   const { data: documents } = useListDocuments();
 
   const fetchSessions = useCallback(async () => {
@@ -1181,6 +1639,7 @@ export default function AiAssistant() {
       setMessages([]);
       setPinnedDocs([]);
       setPinnedSrcs([]);
+      setConfigCommitted(false); // show pre-analysis panel for new session
     }
   }
 
@@ -1207,8 +1666,9 @@ export default function AiAssistant() {
     };
     setMessages((prev) => [...prev, userMsg]);
 
-    // Build API content — Expert mode prepends an instruction
-    const content = mode === 'expert' ? EXPERT_MODE_PREFIX + text : text;
+    // Build API content — config prefix + optional expert-mode instruction
+    const configPfx = buildConfigPrefix(sessionConfig, expertMode, expertOptions);
+    const content = configPfx + (mode === 'expert' ? EXPERT_MODE_PREFIX + text : text);
 
     try {
       const r = await apiFetch(`/api/assistant/sessions/${activeSession.id}/messages`, {
@@ -1247,6 +1707,7 @@ export default function AiAssistant() {
 
   /** Handle action button clicks from MessageBubble. */
   function handleAction(_msgId: number, key: ActionKey, userQuery: string) {
+    if (key === 'expand' || key === 'collapse') return; // handled locally in ActionButtons
     if (key === 'export_pdf' || key === 'export_word') {
       toast({
         title: t('قيد التطوير', 'Coming soon'),
@@ -1394,6 +1855,19 @@ export default function AiAssistant() {
                 {t('القانون الإماراتي · الفرنسي · الأوروبي', 'UAE · French · EU law')}
               </p>
             </div>
+            {/* Expert Mode toggle */}
+            <button
+              type="button"
+              onClick={() => setExpertMode((v) => !v)}
+              className={`hidden sm:inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-colors shrink-0 ${
+                expertMode
+                  ? 'bg-amber-500 text-white border-amber-500'
+                  : 'border-border text-muted-foreground hover:bg-muted/30'
+              }`}
+              title={t('وضع الخبير', 'Expert Mode')}
+            >
+              ⭐ {expertMode ? t('مفعّل', 'Active') : t('وضع الخبير', 'Expert Mode')}
+            </button>
             {activeSession && (
               <button
                 type="button"
@@ -1464,6 +1938,15 @@ export default function AiAssistant() {
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
               </div>
             ) : messages.length === 0 ? (
+              !configCommitted ? (
+                <PreAnalysisPanel
+                  config={sessionConfig}
+                  onChange={setSessionConfig}
+                  onStart={() => setConfigCommitted(true)}
+                  expertMode={expertMode}
+                  onToggleExpert={() => setExpertMode((v) => !v)}
+                />
+              ) : (
               <div className="h-full flex flex-col items-center justify-center gap-4 text-center" dir="rtl">
                 <Bot className="w-10 h-10 text-muted-foreground/30" aria-hidden />
                 <p className="text-sm text-muted-foreground px-4">
@@ -1496,6 +1979,7 @@ export default function AiAssistant() {
                   </div>
                 </div>
               </div>
+              )
             ) : (
               <>
                 {messages.map((msg) => (
@@ -1505,6 +1989,8 @@ export default function AiAssistant() {
                     displayMeta={msg.role === 'assistant' ? msgDisplayMetaMap[msg.id] : undefined}
                     onAction={handleAction}
                     actionDisabled={sending}
+                    expertMode={expertMode}
+                    onDirectSend={(text) => sendMessage(text, 'professional')}
                   />
                 ))}
                 {sending && (
@@ -1547,6 +2033,20 @@ export default function AiAssistant() {
                 onClose={() => setShowPinPanel(false)}
                 t={t}
               />
+            )}
+
+            {/* Session config compact bar */}
+            {activeSession && configCommitted && (
+              <SessionConfigBar
+                config={sessionConfig}
+                expertMode={expertMode}
+                onEdit={() => setConfigCommitted(false)}
+              />
+            )}
+
+            {/* Expert options panel */}
+            {activeSession && expertMode && configCommitted && (
+              <ExpertOptionsPanel options={expertOptions} onChange={setExpertOptions} />
             )}
 
             {/* Response mode selector */}

@@ -1,0 +1,317 @@
+# MARSAD V2 – Advanced Professional Legal Experience
+
+Implement the following UI/UX and functional enhancements. These are mandatory improvements and should integrate seamlessly with the existing architecture without removing any current features.
+
+------------------------------------------------------------
+1. PRE-ANALYSIS PANEL
+------------------------------------------------------------
+
+Before the user submits any question, display a professional configuration panel.
+
+Section 1 – User Type
+
+Allow the user to choose:
+
+• Judge
+• Public Prosecutor
+• Lawyer
+• Legal Researcher / PhD Student
+• Government Employee
+• Citizen
+• Company / Institution
+
+This selection should influence the structure, tone and depth of the answer.
+
+------------------------------------------------------------
+
+Section 2 – Answer Mode
+
+Provide selectable modes:
+
+⚡ Quick Answer
+📘 Standard Legal Analysis
+🎓 Academic Analysis
+📚 Scientific Research
+⚖ Legal Memorandum
+📝 Lawsuit / Appeal Draft
+📊 Government Legal Report
+
+------------------------------------------------------------
+
+Section 3 – Jurisdiction
+
+Selectable jurisdictions:
+
+United Arab Emirates
+
+France
+
+Saudi Arabia
+
+Egypt
+
+European Union
+
+Comparative Analysis
+
+------------------------------------------------------------
+
+Section 4 – Sources
+
+Allow selecting:
+
+Legislation
+
+Judicial Decisions
+
+Legal Doctrine
+
+Executive Regulations
+
+Administrative Circulars
+
+International Instruments
+
+All Sources
+
+------------------------------------------------------------
+
+Section 5 – Citation Style
+
+Harvard
+
+APA
+
+OSCOLA
+
+Bluebook
+
+UAE Legal Citation
+
+------------------------------------------------------------
+
+Section 6 – Research Depth
+
+Short
+
+Medium
+
+Detailed
+
+Comprehensive
+
+Unlimited
+
+------------------------------------------------------------
+2. ADVANCED STANDARD (AL-SHAMSI THEORY)
+------------------------------------------------------------
+
+Create a NEW professional card.
+
+The title MUST be:
+
+🧠 Advanced Standard (Al-Shamsi Theory)
+
+Do NOT make it a normal button.
+
+Design it as an independent premium analysis module.
+
+Card Style:
+
+Background:
+#EAF2FF
+
+Border:
+#2B5F9E
+
+Rounded corners
+
+Professional premium appearance
+
+------------------------------------------------------------
+
+Description:
+
+Advanced legal framework for analysing intelligent administrative decisions, algorithmic decision-making, digital government and AI systems according to Al-Shamsi Theory of Digital Administrative Will Formation.
+
+------------------------------------------------------------
+
+This module should automatically appear ONLY when the question relates to:
+
+Artificial Intelligence
+
+Administrative AI
+
+Digital Government
+
+Algorithms
+
+Machine Learning
+
+Agentic AI
+
+Automated Administrative Decisions
+
+Digital Platforms
+
+Big Data
+
+Algorithmic Transparency
+
+Algorithmic Bias
+
+Smart Administrative Decisions
+
+------------------------------------------------------------
+
+Allow manual activation through Expert Mode.
+
+------------------------------------------------------------
+
+Inside the card analyse:
+
+✓ Legitimacy of Intelligent Administrative Decision
+
+✓ Formation of Digital Administrative Will
+
+✓ Algorithmic Legal Weight
+
+✓ Legitimate Algorithmic Bias
+
+✓ Algorithmic Explainability
+
+✓ Transparency
+
+✓ Human Oversight
+
+✓ Graduated Compliance
+
+✓ Prior Administrative Challenge
+
+✓ Judicial Review
+
+✓ Administrative Liability without Algorithmic Fault
+
+------------------------------------------------------------
+3. AL-SHAMSI COMPLIANCE INDEX
+------------------------------------------------------------
+
+At the end of this analysis display:
+
+Al-Shamsi Compliance Index
+
+🟢 Fully Compliant
+
+🟡 Compliant with Observations
+
+🟠 Needs Improvement
+
+🔴 Non-Compliant
+
+Explain WHY.
+
+------------------------------------------------------------
+4. EXPERT OPTIONS
+------------------------------------------------------------
+
+Allow optional switches:
+
+Show Confidence Level
+
+Show Legal Reasoning
+
+Show Minority Opinion
+
+Show Burden of Proof
+
+Show Required Evidence
+
+Show Appeal Probability
+
+Show Research Gaps
+
+Show Latest Judgments
+
+Show Legislative Updates
+
+Show Legal Action Plan
+
+------------------------------------------------------------
+5. END OF EVERY ANSWER
+------------------------------------------------------------
+
+Automatically append:
+
+Recommended Legal Action
+
+Example:
+
+Administrative Grievance
+
+Collect Evidence
+
+File Lawsuit
+
+Request Interim Relief
+
+Appeal
+
+------------------------------------------------------------
+
+Then display:
+
+Why this answer is reliable
+
+Number of sources
+
+Authority level of sources
+
+Date of latest legislation
+
+Consistency between sources
+
+Detected conflicts (if any)
+
+------------------------------------------------------------
+6. EXPERT MODE
+------------------------------------------------------------
+
+Create an "Expert Mode".
+
+When enabled:
+
+Always display advanced options.
+
+Allow manual activation of:
+
+🧠 Advanced Standard (Al-Shamsi Theory)
+
+even if AI was not automatically detected.
+
+------------------------------------------------------------
+7. IMPORTANT DESIGN RULE
+------------------------------------------------------------
+
+The "Advanced Standard (Al-Shamsi Theory)" must NEVER replace the traditional legal analysis.
+
+It is an OPTIONAL advanced analytical framework.
+
+When activated:
+
+Display it AFTER the traditional legal analysis as a separate blue professional section.
+
+------------------------------------------------------------
+8. PERFORMANCE
+------------------------------------------------------------
+
+Do not increase response latency unnecessarily.
+
+Use lazy loading for advanced components.
+
+Keep the interface clean.
+
+Maintain full mobile responsiveness.
+
+Do not remove or modify existing features.
+
+Only enhance the platform.
