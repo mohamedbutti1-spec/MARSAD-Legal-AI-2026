@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, boolean, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -12,9 +12,13 @@ export const usersTable = pgTable("users", {
   createdAt:    timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   // ── Auth fields (v1.1 JWT hardening) ─────────────────────────────────────
   // Stored lowercase. Unique index enforced in DB (partial: WHERE username IS NOT NULL).
-  username:     text("username").unique(),
+  username:        text("username").unique(),
   // bcrypt hash (10 rounds). NULL until the account has been provisioned.
-  passwordHash: text("password_hash"),
+  passwordHash:    text("password_hash"),
+  // TRUE for seeded demo/test accounts. Logins are blocked in production.
+  isDemo:          boolean("is_demo").notNull().default(false),
+  // Bumped whenever demo passwords are rotated in seed.ts — triggers re-hash on next start.
+  passwordVersion: integer("password_version").notNull().default(0),
 });
 
 export const insertUserSchema = createInsertSchema(usersTable).omit({

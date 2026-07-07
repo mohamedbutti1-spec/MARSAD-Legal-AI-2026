@@ -16,6 +16,10 @@ const router: IRouter = Router();
 
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
+// Precomputed once at startup — keeps bcrypt timing constant regardless of whether
+// a username exists in the database, preventing timing-based username enumeration.
+const TIMING_SENTINEL = bcrypt.hashSync("marsad-timing-sentinel", 10);
+
 // Organisation string for org-scoped roles (real deployments pull from HR system)
 const DEMO_ORG =
   "وزارة الصحة ووقاية المجتمع — الإدارة العامة للرقابة والتفتيش الصحي — إمارة أبوظبي";
@@ -48,9 +52,10 @@ router.post("/auth/login", async (req, res): Promise<void> => {
     .from(usersTable)
     .where(eq(usersTable.username, username.trim().toLowerCase()));
 
-  // Always run bcrypt to prevent timing-based username enumeration
-  const dummyHash = "$2b$10$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
-  const storedHash = user?.passwordHash ?? dummyHash;
+  // Always run bcrypt to prevent timing-based username enumeration.
+  // TIMING_SENTINEL is a real 10-round hash precomputed at startup, so the
+  // work-factor is identical whether or not the username exists.
+  const storedHash = user?.passwordHash ?? TIMING_SENTINEL;
   const valid = await bcrypt.compare(password, storedHash);
 
   if (!user || !valid || !user.passwordHash) {
@@ -61,6 +66,13 @@ router.post("/auth/login", async (req, res): Promise<void> => {
 
   if (!user.isActive) {
     res.status(403).json({ error: "Account is deactivated. Contact your administrator." });
+    return;
+  }
+
+  // Demo accounts are blocked in production — they exist for development and
+  // private-beta review only. Permanent accounts (isDemo = false) are unaffected.
+  if (user.isDemo && IS_PRODUCTION) {
+    res.status(403).json({ error: "Demo accounts are not available in this environment. Contact your administrator." });
     return;
   }
 
