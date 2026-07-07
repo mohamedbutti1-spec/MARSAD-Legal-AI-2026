@@ -29,6 +29,7 @@ import {
   Cpu,
   Brain,
   Compass,
+  UserCircle,
 } from 'lucide-react';
 import { useUserContext } from '@/lib/user-context';
 
@@ -199,7 +200,6 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
         },
       ],
     },
-    // ── Legal Decision Analysis ───────────────────────────────────────────────
     // ── Smart Professional Guidance ───────────────────────────────────────────
     {
       id: 'spg',
@@ -229,13 +229,6 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
       titleAr: 'التحليل القانوني',
       titleEn: 'Legal Analysis',
       items: [
-        {
-          href: '/decisions',
-          labelAr: 'تحليل القرار القانوني',
-          labelEn: 'Legal Decision Analysis',
-          icon: <Brain className="w-4.5 h-4.5" />,
-          show: canViewJdtSimulation,
-        },
         {
           href: '/jre',
           labelAr: 'محرك التفكير القضائي',
@@ -324,6 +317,13 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
       titleAr: 'المصادر القانونية',
       titleEn: 'Legal Sources',
       items: [
+        {
+          href: '/citizen',
+          labelAr: 'بوابة المواطن',
+          labelEn: 'Citizen Portal',
+          icon: <UserCircle className="w-4.5 h-4.5" />,
+          show: true,
+        },
         {
           href: '/legislation/uae',
           labelAr: 'التشريعات الإماراتية',
