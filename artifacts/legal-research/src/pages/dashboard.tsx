@@ -4,6 +4,7 @@ import { apiFetch } from '@/lib/api-fetch';
 import {
   Scale, ScrollText, Gavel, FileCheck, PenLine,
   ArrowUp, Mic, Paperclip, GitCompareArrows, Compass, BookOpen,
+  FileUp, History,
 } from 'lucide-react';
 import { useUserContext, useT } from '@/lib/user-context';
 import { useLocation } from 'wouter';
@@ -18,22 +19,23 @@ interface DashStats {
 // ─── Guided front-door selectors ──────────────────────────────────────────────
 
 type UserCategoryId =
-  | 'student' | 'researcher' | 'lawyer' | 'prosecutor' | 'judge' | 'new_judge'
-  | 'legislator' | 'minister' | 'police_station_officer' | 'admin_employee' | 'general_user';
+  | 'student' | 'researcher' | 'police_station_officer' | 'prosecutor' | 'judge'
+  | 'lawyer' | 'consultant' | 'legislator' | 'minister' | 'general_user';
 
 const USER_CATEGORIES: { id: UserCategoryId; labelAr: string; userType: string }[] = [
-  { id: 'student',                labelAr: 'طالب',                                              userType: 'law_student' },
-  { id: 'researcher',             labelAr: 'باحث',                                              userType: 'academic_researcher' },
-  { id: 'lawyer',                 labelAr: 'محامٍ',                                             userType: 'lawyer' },
-  { id: 'prosecutor',             labelAr: 'وكيل نيابة',                                        userType: 'prosecution_deputy' },
-  { id: 'judge',                  labelAr: 'قاضٍ',                                              userType: 'judge_first_instance' },
-  { id: 'new_judge',              labelAr: 'قاضٍ ابتدائي / ملازم قضائي / قاضٍ جديد',            userType: 'judicial_trainee' },
-  { id: 'legislator',             labelAr: 'مشرّع',                                             userType: 'legislator' },
-  { id: 'minister',               labelAr: 'وزير / صانع قرار',                                  userType: 'minister' },
-  { id: 'police_station_officer', labelAr: 'ضابط مركز شرطة',                                    userType: 'police_station_officer' },
-  { id: 'admin_employee',         labelAr: 'موظف إداري',                                        userType: 'government' },
-  { id: 'general_user',           labelAr: 'مستخدم عام',                                        userType: 'citizen' },
+  { id: 'student',                labelAr: 'طالب',              userType: 'law_student' },
+  { id: 'researcher',             labelAr: 'باحث',              userType: 'academic_researcher' },
+  { id: 'police_station_officer', labelAr: 'ضابط مركز',         userType: 'police_station_officer' },
+  { id: 'prosecutor',             labelAr: 'وكيل نيابة',        userType: 'prosecution_deputy' },
+  { id: 'judge',                  labelAr: 'قاضٍ',              userType: 'judge_first_instance' },
+  { id: 'lawyer',                 labelAr: 'محامٍ',             userType: 'lawyer' },
+  { id: 'consultant',             labelAr: 'مستشار',            userType: 'legal_consultant' },
+  { id: 'legislator',             labelAr: 'مشرّع',             userType: 'legislator' },
+  { id: 'minister',               labelAr: 'وزير',              userType: 'minister' },
+  { id: 'general_user',           labelAr: 'متعامل عام',        userType: 'citizen' },
 ];
+
+const USER_CATEGORY_STORAGE_KEY = 'marsad_user_category';
 
 type AnswerStyleId = 'quick' | 'standard' | 'detailed';
 const ANSWER_STYLES: { id: AnswerStyleId; labelAr: string }[] = [
@@ -170,6 +172,23 @@ const QUICK_CHIPS: QuickChip[] = [
     href: '/pgf',
     requiresAi: true,
   },
+  {
+    id: 'upload-doc',
+    icon: FileUp,
+    labelAr: 'رفع مستند',
+    labelEn: 'Upload Document',
+    action: 'navigate',
+    href: '/library',
+  },
+  {
+    id: 'previous-file',
+    icon: History,
+    labelAr: 'متابعة ملف سابق',
+    labelEn: 'Continue a Previous File',
+    action: 'navigate',
+    href: '/workspace',
+    requiresAi: true,
+  },
 ];
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -185,7 +204,19 @@ export default function Dashboard() {
   const [listening, setListening] = useState(false);
 
   // ── Guided front-door selectors ────────────────────────────────────────────
-  const [userCategory, setUserCategory] = useState<UserCategoryId>('general_user');
+  // "اختر فئتك" is asked once; the choice is remembered and reused automatically.
+  const [userCategory, setUserCategoryState] = useState<UserCategoryId>(() => {
+    const saved = typeof window !== 'undefined' ? window.localStorage.getItem(USER_CATEGORY_STORAGE_KEY) : null;
+    return (USER_CATEGORIES.find((c) => c.id === saved)?.id ?? 'general_user') as UserCategoryId;
+  });
+  const [categoryChosenBefore, setCategoryChosenBefore] = useState<boolean>(
+    () => typeof window !== 'undefined' && !!window.localStorage.getItem(USER_CATEGORY_STORAGE_KEY),
+  );
+  function setUserCategory(id: UserCategoryId) {
+    setUserCategoryState(id);
+    setCategoryChosenBefore(true);
+    if (typeof window !== 'undefined') window.localStorage.setItem(USER_CATEGORY_STORAGE_KEY, id);
+  }
   const [answerStyle, setAnswerStyle]   = useState<AnswerStyleId>('standard');
   const [legalReference, setLegalReference] = useState<LegalRefId>('uae');
   const [legalBranch, setLegalBranch]   = useState<LegalBranchId>('admin');
@@ -346,7 +377,7 @@ export default function Dashboard() {
               {/* فئة المستخدم */}
               <div className="flex items-center gap-2 flex-wrap justify-center">
                 <label htmlFor="user-category" className="text-xs font-semibold text-muted-foreground shrink-0">
-                  فئة المستخدم
+                  {categoryChosenBefore ? 'فئة المستخدم' : 'اختر فئتك'}
                 </label>
                 <select
                   id="user-category"

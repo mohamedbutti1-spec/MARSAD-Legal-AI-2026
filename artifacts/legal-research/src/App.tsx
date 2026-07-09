@@ -12,6 +12,7 @@ import { BetaFeedbackWidget } from '@/components/beta/FeedbackWidget';
 // ─── Pages ────────────────────────────────────────────────────────────────────
 import NotFound           from '@/pages/not-found';
 import Dashboard          from '@/pages/dashboard';
+import LegalSearchHub     from '@/pages/legal-search-hub';
 
 // Research Tools
 import LegalResearch      from '@/pages/legal-research';
@@ -82,7 +83,6 @@ import NaipJudge           from '@/pages/naip-judge';
 import NaipHome      from '@/pages/naip-home';
 import NaipDashboard from '@/pages/naip-dashboard';
 import NaipKpi       from '@/pages/naip-kpi';
-import NaipSearch    from '@/pages/naip-search';
 
 // Admin
 import UserManagement     from '@/pages/user-management';
@@ -90,7 +90,6 @@ import Settings           from '@/pages/settings';
 import AdminLegalOS       from '@/pages/admin-legal-os';
 
 // Legacy route aliases (keep old URLs working)
-import AiSearch           from '@/pages/ai-search';
 import UaeFrance          from '@/pages/uae-france';
 import Comparisons        from '@/pages/comparisons';
 import Documents          from '@/pages/documents';
@@ -150,7 +149,9 @@ function Router() {
         <Route path="/naip"           component={NaipHome} />
         <Route path="/naip/dashboard" component={NaipDashboard} />
         <Route path="/naip/kpi"       component={NaipKpi} />
-        <Route path="/naip/search"    component={NaipSearch} />
+        <Route path="/naip/search">
+          <Redirect to="/search" />
+        </Route>
 
         {/* ── Module 1 — Intelligent Administrative Decision ───────── */}
         <Route path="/decisions/new">
@@ -258,11 +259,16 @@ function Router() {
           </RouteGuard>
         </Route>
 
-        {/* ── Legacy aliases ────────────────────────────────────────── */}
-        <Route path="/ai-search">
+        {/* ── Unified search hub ───────────────────────────────────── */}
+        <Route path="/search">
           <RouteGuard allow={canUseAi}>
-            <AiSearch />
+            <LegalSearchHub />
           </RouteGuard>
+        </Route>
+
+        {/* ── Legacy aliases (redirect into the unified hub) ─────────── */}
+        <Route path="/ai-search">
+          <Redirect to="/search" />
         </Route>
         <Route path="/uae-france">
           <RouteGuard allow={canUseAi}>

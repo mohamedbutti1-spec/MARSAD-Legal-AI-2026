@@ -58,7 +58,7 @@ interface NavSection {
 
 export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: SidebarProps) {
   const [location] = useLocation();
-  const { role, lang, canManageUsers, canManageSettings, canUseAi, canViewAudit, canViewGovernanceDashboard, canViewRiskDashboard, canViewCilDashboard, canViewNaipDashboard, canViewNaipSearch, canViewJdtSimulation } = useUserContext();
+  const { role, lang, canManageUsers, canManageSettings, canUseAi, canViewAudit, canViewGovernanceDashboard, canViewRiskDashboard, canViewCilDashboard, canViewNaipDashboard, canViewJdtSimulation } = useUserContext();
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
 
   const toggleSection = (id: string) => {
@@ -155,13 +155,6 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           labelEn: 'National KPI Center',
           icon: <Target className="w-4.5 h-4.5" />,
           show: canViewNaipDashboard,
-        },
-        {
-          href: '/naip/search',
-          labelAr: 'البحث الوطني الموحد',
-          labelEn: 'Global Search',
-          icon: <Search className="w-4.5 h-4.5" />,
-          show: canViewNaipSearch,
         },
         {
           href: '/naip/minister',
@@ -263,9 +256,9 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           badge: 'جديد',
         },
         {
-          href: '/kb-search',
-          labelAr: 'بحث قاعدة المعرفة',
-          labelEn: 'Knowledge Base Search',
+          href: '/search',
+          labelAr: 'البحث القانوني الذكي',
+          labelEn: 'Smart Legal Search',
           icon: <Search className="w-4.5 h-4.5" />,
           show: canUseAi,
         },

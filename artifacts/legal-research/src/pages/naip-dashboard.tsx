@@ -404,10 +404,10 @@ export default function NaipDashboard() {
               <ArrowUpRight className="w-3 h-3" />
             </div>
           </Link>
-          <Link href="/naip/search">
+          <Link href="/search">
             <div className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground border border-border hover:border-border/60 rounded-lg px-3 py-2 transition-colors cursor-pointer">
               <Activity className="w-3.5 h-3.5" />
-              {t('البحث الوطني الموحد', 'Global Search')}
+              {t('البحث القانوني الذكي', 'Smart Legal Search')}
               <ArrowUpRight className="w-3 h-3" />
             </div>
           </Link>

@@ -1,0 +1,118 @@
+MARSAD UX SIMPLIFICATION PASS
+No new features. This pass focuses entirely on user experience,
+clarity, discoverability, and reducing cognitive load.
+
+GOAL:
+A first-time government user must be able to reach any desired
+result within 3 clicks maximum.
+
+═══════════════════════════════
+1) SIDEBAR SIMPLIFICATION
+═══════════════════════════════
+
+Keep ONLY:
+
+1. الخدمة الإرشادية
+2. التأهيل والتدريب
+3. الوضع التنفيذي
+4. مكتبي
+
+Remove duplicate or hidden navigation paths.
+
+═══════════════════════════════
+2) SEARCH CONSOLIDATION
+═══════════════════════════════
+
+Merge all search experiences into ONE unified entry:
+
+البحث القانوني الذكي
+
+Inside it provide tabs:
+
+- تشريعي
+- قضائي
+- فقهي
+- مقارن
+- ذكاء اصطناعي
+
+Remove:
+ai-search
+kb-search
+naip-search
+assistant-search
+research-search
+
+═══════════════════════════════
+3) PROFESSIONAL ROLE FLOW
+═══════════════════════════════
+
+Before the first query ask only once:
+
+"اختر فئتك"
+
+- طالب
+- باحث
+- ضابط مركز
+- وكيل نيابة
+- قاضٍ
+- محامٍ
+- مستشار
+- مشرع
+- وزير
+- متعامل عام
+
+Store the selection and adapt responses automatically.
+
+═══════════════════════════════
+4) TERMINOLOGY CLEANUP
+═══════════════════════════════
+
+Hide technical internal names from users:
+
+ADKG
+JDC
+JRE
+PGF
+SPG
+
+Replace them with clear Arabic names.
+
+═══════════════════════════════
+5) CLICK REDUCTION
+═══════════════════════════════
+
+Audit all flows and ensure:
+
+- Search result <= 3 clicks
+- Upload document <= 3 clicks
+- Compare laws <= 3 clicks
+- Generate memo <= 3 clicks
+
+═══════════════════════════════
+6) SMART HOME PAGE
+═══════════════════════════════
+
+Homepage should show:
+
+- بحث سريع
+- رفع مستند
+- مقارنة قانونية
+- إنشاء مذكرة
+- متابعة ملف سابق
+
+These must be visible immediately without scrolling.
+
+═══════════════════════════════
+7) VISUAL PRIORITY
+═══════════════════════════════
+
+Large buttons.
+Government dignity.
+Arabic RTL first.
+No technical clutter.
+No duplicated modules.
+No hidden pages without navigation links.
+
+SUCCESS METRIC:
+A new user with zero training can use the platform in less than
+five minutes.
