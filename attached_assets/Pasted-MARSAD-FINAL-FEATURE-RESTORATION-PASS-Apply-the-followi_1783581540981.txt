@@ -1,0 +1,86 @@
+MARSAD FINAL FEATURE RESTORATION PASS
+
+Apply the following updates without deleting existing working features.
+
+1. Keep the approved identity:
+- Platform name: MARSAD / مرصد
+- Internal analytical framework abbreviation: MLOS
+- Arabic positioning: منصة القرارات الإدارية الذكية وفق إطار الشامسي الدستوري
+- Visual identity: modern judicial dignity, navy and gold, Arabic RTL first.
+
+2. Add user category selector:
+Create a dropdown titled "فئة المستخدم" with:
+- طالب
+- باحث
+- محامٍ
+- وكيل نيابة
+- قاضٍ
+- قاضٍ ابتدائي / ملازم قضائي / قاضٍ جديد
+- مشرّع
+- وزير / صانع قرار
+- ضابط مركز شرطة
+- موظف إداري
+- مستخدم عام
+
+The answer must adapt according to the selected category.
+
+3. Keep answer style selector:
+- إجابة سريعة
+- إجابة نموذجية
+- إجابة مفصلة
+
+4. Add legal reference chips:
+- القانون الإماراتي
+- القانون الفرنسي
+- القانون المقارن
+- نظرية الشامسي
+- أخرى
+
+When a chip is selected, show its sub-reference dropdown directly below it.
+
+5. Add "سيناريوهات تدريبية" mode:
+This mode should help students, prosecutors, judges, and officers understand:
+- وقائع القضية
+- المسألة القانونية
+- النصوص ذات الصلة
+- عناصر الإثبات
+- التكييف القانوني
+- القرار أو الحكم المتوقع
+- الأخطاء المحتملة
+- نموذج إجابة تدريبية
+
+6. Add dedicated police station officer pathway:
+Title: "مسار ضابط المركز"
+Include guidance modules for:
+- بيان جمع الاستدلالات
+- أسس التحقيق الابتدائي
+- تحرير المحضر
+- سماع الأقوال
+- التحفظ على الأدلة
+- الضمانات الإجرائية
+- أخطاء شائعة يجب تجنبها
+- نموذج محضر استرشادي
+
+This pathway must support both new and experienced officers.
+
+7. Preserve the main sidebar only as:
+- الخدمة الإرشادية
+- التأهيل والتدريب
+- الوضع التنفيذي
+- مكتبي
+
+Do not add extra sidebar items. Any new functions should appear inside these existing sections.
+
+8. Improve response logic:
+For every answer, internally consider:
+- user category
+- answer style
+- selected legal reference
+- whether the matter is advisory, training, or executive
+- whether the answer requires caution or referral to specialist review
+
+9. Add visible disclaimer:
+"المخرجات إرشادية وتدريبية ولا تغني عن المراجعة القانونية المختصة أو اعتماد الجهة الرسمية."
+
+10. Do not break existing login, routing, dashboard, or current UI.
+After applying changes, test the build and fix any TypeScript, React, routing, or styling errors.

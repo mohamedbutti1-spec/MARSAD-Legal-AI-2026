@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { TheoryLensSelector, TheoryLensBadge, type TheoryLensState } from '@/components/research/theory-lens-selector';
 import { CourtSessionPanel } from '@/components/research/court-session-panel';
 import type { CourtSessionData } from '@/lib/court-types';
+import type { GuidedAssistantConfig } from '@/pages/dashboard';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -3680,6 +3681,42 @@ export default function AiAssistant() {
     const query = pending.trim();
     if (!query) { sessionStorage.removeItem('pendingAssistantQuery'); return; }
 
+    // ── Apply the guided front-door config from the dashboard, if present ────
+    let guidedMode: ResponseMode | null = null;
+    let appliedSessionConfig: SessionConfig = DEFAULT_SESSION_CONFIG;
+    let appliedScenarioConfig: ScenarioConfig = DEFAULT_SCENARIO_CONFIG;
+    let guidedConfigApplied = false;
+    const rawCfg = sessionStorage.getItem('pendingAssistantConfig');
+    if (rawCfg) {
+      try {
+        const cfg = JSON.parse(rawCfg) as Partial<GuidedAssistantConfig>;
+        appliedSessionConfig = {
+          ...DEFAULT_SESSION_CONFIG,
+          userType: (cfg.userType as UserType) ?? DEFAULT_SESSION_CONFIG.userType,
+          answerMode: cfg.answerStyle === 'quick' ? 'quick' : 'standard',
+          depth: cfg.answerStyle === 'detailed' ? 'comprehensive' : cfg.answerStyle === 'standard' ? 'detailed' : DEFAULT_SESSION_CONFIG.depth,
+          jurisdiction: cfg.legalReference === 'france' ? 'france' : cfg.legalReference === 'comparative' ? 'comparative' : 'uae',
+          comparativeMode: cfg.legalReference === 'comparative',
+          applyAdvancedStandard: cfg.legalReference === 'shamsi',
+        };
+        setSessionConfig(appliedSessionConfig);
+        if (cfg.trainingMode) {
+          const branchToCaseType: Record<string, ScenarioConfig['caseType']> = {
+            admin: 'administrative', civil: 'civil', commercial: 'commercial', criminal: 'criminal',
+          };
+          appliedScenarioConfig = {
+            ...DEFAULT_SCENARIO_CONFIG,
+            scenarioType: 'training',
+            caseType: cfg.legalBranch ? (branchToCaseType[cfg.legalBranch] ?? DEFAULT_SCENARIO_CONFIG.caseType) : DEFAULT_SCENARIO_CONFIG.caseType,
+          };
+          setScenarioConfig(appliedScenarioConfig);
+          guidedMode = 'scenario_builder';
+        }
+        guidedConfigApplied = true;
+      } catch { /* ignore malformed config */ }
+    }
+    if (guidedConfigApplied) setConfigCommitted(true); // dashboard already collected the config — skip the panel
+
     autoStartingRef.current = true;
     setSending(true);
 
@@ -3693,6 +3730,7 @@ export default function AiAssistant() {
         });
         if (!sr.ok) {
           sessionStorage.setItem('pendingAssistantQuery', query);
+          if (rawCfg) sessionStorage.setItem('pendingAssistantConfig', rawCfg); // preserve guided selections for retry
           toast({
             title: t('تعذّر بدء المحادثة', 'Could not start conversation'),
             description: t('حاول مرة أخرى', 'Please try again'),
@@ -3701,17 +3739,22 @@ export default function AiAssistant() {
           return;
         }
         sessionStorage.removeItem('pendingAssistantQuery');
+        sessionStorage.removeItem('pendingAssistantConfig');
         const session: Session = await sr.json();
         setSessions((prev) => [session, ...prev]);
         setActiveSession(session);
 
         const tempId = Date.now();
-        const mode = detectMode(query);
+        const mode = guidedMode ?? detectMode(query);
         setCurrentMode(mode);
+        if (guidedMode) setModeLocked(true);
         const userMsg: Message = { id: tempId, sessionId: session.id, role: 'user', content: query, createdAt: new Date().toISOString() };
         setMessages([userMsg]);
 
-        const content = mode === 'expert' ? EXPERT_MODE_PREFIX + query : query;
+        const content =
+          mode === 'expert'           ? EXPERT_MODE_PREFIX + query :
+          mode === 'scenario_builder' ? buildScenarioPrefix(appliedScenarioConfig, appliedSessionConfig.userType) + query :
+          query;
         const mr = await apiFetch(`/api/assistant/sessions/${session.id}/messages`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

@@ -73,8 +73,8 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
   const sections: NavSection[] = [
     {
       id: 'main',
-      titleAr: 'الرئيسية',
-      titleEn: 'Main',
+      titleAr: 'الخدمة الإرشادية',
+      titleEn: 'Advisory Service',
       items: [
         {
           href: '/',
@@ -106,6 +106,14 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           icon: <Scale className="w-4.5 h-4.5" />,
           show: true,
         },
+      ],
+    },
+    // ── Executive Mode — governance, risk, constitutional review, NAIP ─────────
+    {
+      id: 'naip',
+      titleAr: 'الوضع التنفيذي',
+      titleEn: 'Executive Mode',
+      items: [
         {
           href: '/governance',
           labelAr: 'مركز الحوكمة التنفيذية',
@@ -127,14 +135,6 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           icon: <Scale className="w-4.5 h-4.5" />,
           show: canViewCilDashboard,
         },
-      ],
-    },
-    // ── National Administrative Intelligence Platform ──────────────────────────
-    {
-      id: 'naip',
-      titleAr: 'الاستخبارات الوطنية',
-      titleEn: 'National Intelligence',
-      items: [
         {
           href: '/naip',
           labelAr: 'منصة الذكاء الوطني',
@@ -200,11 +200,11 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
         },
       ],
     },
-    // ── Smart Professional Guidance ───────────────────────────────────────────
+    // ── التأهيل والتدريب — professional guidance & judicial reasoning training ─
     {
-      id: 'spg',
-      titleAr: 'الإرشاد المهني',
-      titleEn: 'Professional Guidance',
+      id: 'training',
+      titleAr: 'التأهيل والتدريب',
+      titleEn: 'Training & Qualification',
       items: [
         {
           href: '/spg',
@@ -222,28 +222,6 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           show: canUseAi,
           badge: 'جديد',
         },
-      ],
-    },
-    {
-      id: 'legal-brain',
-      titleAr: 'الدماغ القانوني الذكي',
-      titleEn: 'Legal Intelligence Brain',
-      items: [
-        {
-          href: '/legal-brain',
-          labelAr: 'الدماغ القانوني',
-          labelEn: 'Legal Intelligence Brain',
-          icon: <Brain className="w-4.5 h-4.5" />,
-          show: canUseAi,
-          badge: 'Stage 4',
-        },
-      ],
-    },
-    {
-      id: 'jdt',
-      titleAr: 'التحليل القانوني',
-      titleEn: 'Legal Analysis',
-      items: [
         {
           href: '/jre',
           labelAr: 'محرك التفكير القضائي',
@@ -262,11 +240,20 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
         },
       ],
     },
+    // ── مكتبي — desk: research, sources, productivity, admin ───────────────────
     {
-      id: 'research',
-      titleAr: 'أدوات البحث',
-      titleEn: 'Research Tools',
+      id: 'desk',
+      titleAr: 'مكتبي',
+      titleEn: 'My Desk',
       items: [
+        {
+          href: '/legal-brain',
+          labelAr: 'الدماغ القانوني',
+          labelEn: 'Legal Intelligence Brain',
+          icon: <Brain className="w-4.5 h-4.5" />,
+          show: canUseAi,
+          badge: 'Stage 4',
+        },
         {
           href: '/adkg',
           labelAr: 'سجل القرارات الإدارية',
@@ -325,13 +312,6 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           icon: <BookOpenText className="w-4.5 h-4.5" />,
           show: canUseAi,
         },
-      ],
-    },
-    {
-      id: 'sources',
-      titleAr: 'المصادر القانونية',
-      titleEn: 'Legal Sources',
-      items: [
         {
           href: '/citizen',
           labelAr: 'بوابة المواطن',
@@ -367,13 +347,6 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           icon: <Globe className="w-4.5 h-4.5" />,
           show: true,
         },
-      ],
-    },
-    {
-      id: 'productivity',
-      titleAr: 'أدوات الإنتاجية',
-      titleEn: 'Productivity',
-      items: [
         {
           href: '/citations',
           labelAr: 'مولّد الاستشهادات',
@@ -395,13 +368,6 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           icon: <Library className="w-4.5 h-4.5" />,
           show: true,
         },
-      ],
-    },
-    {
-      id: 'admin',
-      titleAr: 'الإدارة',
-      titleEn: 'Administration',
-      items: [
         {
           href: '/admin/users',
           labelAr: 'إدارة المستخدمين',

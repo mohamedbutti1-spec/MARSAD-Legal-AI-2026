@@ -15,6 +15,59 @@ interface DashStats {
   totalUsers: number;
 }
 
+// ─── Guided front-door selectors ──────────────────────────────────────────────
+
+type UserCategoryId =
+  | 'student' | 'researcher' | 'lawyer' | 'prosecutor' | 'judge' | 'new_judge'
+  | 'legislator' | 'minister' | 'police_station_officer' | 'admin_employee' | 'general_user';
+
+const USER_CATEGORIES: { id: UserCategoryId; labelAr: string; userType: string }[] = [
+  { id: 'student',                labelAr: 'طالب',                                              userType: 'law_student' },
+  { id: 'researcher',             labelAr: 'باحث',                                              userType: 'academic_researcher' },
+  { id: 'lawyer',                 labelAr: 'محامٍ',                                             userType: 'lawyer' },
+  { id: 'prosecutor',             labelAr: 'وكيل نيابة',                                        userType: 'prosecution_deputy' },
+  { id: 'judge',                  labelAr: 'قاضٍ',                                              userType: 'judge_first_instance' },
+  { id: 'new_judge',              labelAr: 'قاضٍ ابتدائي / ملازم قضائي / قاضٍ جديد',            userType: 'judicial_trainee' },
+  { id: 'legislator',             labelAr: 'مشرّع',                                             userType: 'legislator' },
+  { id: 'minister',               labelAr: 'وزير / صانع قرار',                                  userType: 'minister' },
+  { id: 'police_station_officer', labelAr: 'ضابط مركز شرطة',                                    userType: 'police_station_officer' },
+  { id: 'admin_employee',         labelAr: 'موظف إداري',                                        userType: 'government' },
+  { id: 'general_user',           labelAr: 'مستخدم عام',                                        userType: 'citizen' },
+];
+
+type AnswerStyleId = 'quick' | 'standard' | 'detailed';
+const ANSWER_STYLES: { id: AnswerStyleId; labelAr: string }[] = [
+  { id: 'quick',    labelAr: 'إجابة سريعة' },
+  { id: 'standard', labelAr: 'إجابة نموذجية' },
+  { id: 'detailed', labelAr: 'إجابة مفصلة' },
+];
+
+type LegalRefId = 'uae' | 'france' | 'comparative' | 'shamsi' | 'other';
+const LEGAL_REFERENCES: { id: LegalRefId; labelAr: string }[] = [
+  { id: 'uae',         labelAr: 'القانون الإماراتي' },
+  { id: 'france',      labelAr: 'القانون الفرنسي' },
+  { id: 'comparative', labelAr: 'القانون المقارن' },
+  { id: 'shamsi',      labelAr: 'نظرية الشامسي' },
+  { id: 'other',       labelAr: 'أخرى' },
+];
+
+type LegalBranchId = 'admin' | 'civil' | 'commercial' | 'criminal';
+const LEGAL_BRANCHES: { id: LegalBranchId; labelAr: string }[] = [
+  { id: 'admin',      labelAr: 'إداري' },
+  { id: 'civil',      labelAr: 'مدني' },
+  { id: 'commercial', labelAr: 'تجاري' },
+  { id: 'criminal',   labelAr: 'جنائي' },
+];
+
+export interface GuidedAssistantConfig {
+  userCategory: UserCategoryId;
+  userType: string;
+  answerStyle: AnswerStyleId;
+  legalReference: LegalRefId;
+  legalBranch: LegalBranchId | null;
+  trainingMode: boolean;
+}
+
 function toArabicNumeral(n: number): string {
   return n.toLocaleString('ar-EG');
 }
@@ -131,6 +184,13 @@ export default function Dashboard() {
   const [visible, setVisible]   = useState(false);
   const [listening, setListening] = useState(false);
 
+  // ── Guided front-door selectors ────────────────────────────────────────────
+  const [userCategory, setUserCategory] = useState<UserCategoryId>('general_user');
+  const [answerStyle, setAnswerStyle]   = useState<AnswerStyleId>('standard');
+  const [legalReference, setLegalReference] = useState<LegalRefId>('uae');
+  const [legalBranch, setLegalBranch]   = useState<LegalBranchId>('admin');
+  const [trainingMode, setTrainingMode] = useState(false);
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -161,7 +221,16 @@ export default function Dashboard() {
     const trimmed = query.trim();
     if (!trimmed) return;
     // Hand off to the full AI Legal Assistant (session-based, citations, history)
+    const guidedConfig: GuidedAssistantConfig = {
+      userCategory,
+      userType: USER_CATEGORIES.find((c) => c.id === userCategory)?.userType ?? 'citizen',
+      answerStyle,
+      legalReference,
+      legalBranch: legalReference === 'other' ? legalBranch : null,
+      trainingMode,
+    };
     sessionStorage.setItem('pendingAssistantQuery', trimmed);
+    sessionStorage.setItem('pendingAssistantConfig', JSON.stringify(guidedConfig));
     navigate('/assistant');
   }
 
@@ -271,6 +340,89 @@ export default function Dashboard() {
               </div>
             </div>
 
+            {/* Guided selectors ───────────────────────────────────────── */}
+            <div className="w-full flex flex-col gap-3" dir="rtl">
+
+              {/* فئة المستخدم */}
+              <div className="flex items-center gap-2 flex-wrap justify-center">
+                <label htmlFor="user-category" className="text-xs font-semibold text-muted-foreground shrink-0">
+                  فئة المستخدم
+                </label>
+                <select
+                  id="user-category"
+                  value={userCategory}
+                  onChange={(e) => setUserCategory(e.target.value as UserCategoryId)}
+                  className="rounded-lg border border-border bg-card px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+                >
+                  {USER_CATEGORIES.map((c) => (
+                    <option key={c.id} value={c.id}>{c.labelAr}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* أسلوب الإجابة */}
+              <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                {ANSWER_STYLES.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => setAnswerStyle(s.id)}
+                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                      answerStyle === s.id
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-card text-foreground border-border hover:border-primary/40'
+                    }`}
+                  >
+                    {s.labelAr}
+                  </button>
+                ))}
+              </div>
+
+              {/* المرجعية القانونية */}
+              <div className="flex flex-col items-center gap-2">
+                <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                  {LEGAL_REFERENCES.map((r) => (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => setLegalReference(r.id)}
+                      className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                        legalReference === r.id
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-card text-foreground border-border hover:border-primary/40'
+                      }`}
+                    >
+                      {r.labelAr}
+                    </button>
+                  ))}
+                </div>
+                {legalReference === 'other' && (
+                  <select
+                    value={legalBranch}
+                    onChange={(e) => setLegalBranch(e.target.value as LegalBranchId)}
+                    className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  >
+                    {LEGAL_BRANCHES.map((b) => (
+                      <option key={b.id} value={b.id}>{b.labelAr}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              {/* سيناريوهات تدريبية */}
+              <div className="flex items-center justify-center">
+                <label className="flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-border bg-card cursor-pointer text-xs font-medium">
+                  <input
+                    type="checkbox"
+                    checked={trainingMode}
+                    onChange={() => setTrainingMode((v) => !v)}
+                    className="w-3.5 h-3.5 accent-primary"
+                  />
+                  سيناريوهات تدريبية
+                </label>
+              </div>
+            </div>
+
             {/* Composer card ─────────────────────────────────────────── */}
             <div className="w-full">
               <div className="bg-card rounded-2xl border border-border shadow-xl overflow-hidden">
@@ -373,6 +525,20 @@ export default function Dashboard() {
               </p>
             </div>
 
+            {/* مسار ضابط المركز — dedicated pathway shortcut */}
+            <button
+              type="button"
+              onClick={() => {
+                setUserCategory('police_station_officer');
+                setQuery('أحتاج إرشاداً إجرائياً بشأن: ');
+                setTimeout(() => textareaRef.current?.focus(), 0);
+              }}
+              className="flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/[0.04] text-primary text-xs sm:text-sm font-semibold hover:bg-primary/[0.08] transition-colors"
+              dir="rtl"
+            >
+              🚔 مسار ضابط المركز
+            </button>
+
             {/* Quick-action chips ─────────────────────────────────────── */}
             <div className="flex flex-wrap justify-center gap-2 sm:gap-2.5 w-full">
               {QUICK_CHIPS.filter((c) => canUseAi || !c.requiresAi).map((chip, idx) => {
@@ -405,13 +571,16 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* ── Bottom privacy strip ──────────────────────────────────────── */}
-        <div className="shrink-0 py-3 px-4 text-center border-t border-border/30">
+        {/* ── Bottom privacy + disclaimer strip ─────────────────────────── */}
+        <div className="shrink-0 py-3 px-4 text-center border-t border-border/30 space-y-1">
           <p className="text-[10px] text-muted-foreground/50 select-none tracking-wide">
             {t(
               'مرصد يعمل على بيانات محلية آمنة — لا تُرسل بياناتك خارج المنظومة',
               'MARSAD operates on secure local data — your data never leaves the system',
             )}
+          </p>
+          <p className="text-[10px] text-amber-600/80 dark:text-amber-400/70 select-none tracking-wide font-medium" dir="rtl">
+            المخرجات إرشادية وتدريبية ولا تغني عن المراجعة القانونية المختصة أو اعتماد الجهة الرسمية.
           </p>
         </div>
 
