@@ -11,7 +11,7 @@
 import { Router, type IRouter } from "express";
 import { eq, desc, and } from "drizzle-orm";
 import { db, jreSessionsTable } from "@workspace/db";
-import { requireAnyRole } from "../middlewares/roleAuth";
+import { requireAnyRole, requireWriteRole } from "../middlewares/roleAuth";
 import { aiRouter, TaskType } from "../ai";
 import { parseModelJson } from "../ai/providers/interface";
 import { runJudicialAnalysis } from "../utils/judicial-reasoning-engine";
@@ -71,7 +71,7 @@ router.get("/jre/sessions/:id", requireAnyRole, async (req, res): Promise<void> 
 });
 
 // ─── POST /jre/sessions ────────────────────────────────────────────────────────
-router.post("/jre/sessions", requireAnyRole, aiSessionLimit, async (req, res): Promise<void> => {
+router.post("/jre/sessions", requireWriteRole, aiSessionLimit, async (req, res): Promise<void> => {
   const uid = getUserId(req);
   const {
     title,
@@ -175,7 +175,7 @@ router.post("/jre/sessions", requireAnyRole, aiSessionLimit, async (req, res): P
 });
 
 // ─── POST /jre/sessions/:id/follow-up ─────────────────────────────────────────
-router.post("/jre/sessions/:id/follow-up", requireAnyRole, aiAnalysisLimit, async (req, res): Promise<void> => {
+router.post("/jre/sessions/:id/follow-up", requireWriteRole, aiAnalysisLimit, async (req, res): Promise<void> => {
   const id      = parseInt(req.params.id as string, 10);
   const uid     = getUserId(req);
   const { message } = req.body as { message?: string };
@@ -230,7 +230,7 @@ ${JSON.stringify(judgment, null, 2)}
 });
 
 // ─── DELETE /jre/sessions/:id ──────────────────────────────────────────────────
-router.delete("/jre/sessions/:id", requireAnyRole, async (req, res): Promise<void> => {
+router.delete("/jre/sessions/:id", requireWriteRole, async (req, res): Promise<void> => {
   const id  = parseInt(req.params.id as string, 10);
   const uid = getUserId(req);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid session id" }); return; }

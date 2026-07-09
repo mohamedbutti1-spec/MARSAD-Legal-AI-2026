@@ -14,7 +14,7 @@
 import { Router, type IRouter }             from "express";
 import { eq, desc, and }                    from "drizzle-orm";
 import { db, pgfSessionsTable, pgfInstitutionalMemoryTable } from "@workspace/db";
-import { requireAnyRole }                   from "../middlewares/roleAuth.js";
+import { requireAnyRole, requireWriteRole } from "../middlewares/roleAuth.js";
 import {
   getSectorSummaries,
   findProfession,
@@ -26,7 +26,7 @@ import { runPgfAssessment }                 from "../pgf/engine.js";
 import { getStageMemory, VALID_CATEGORIES, VALID_SOURCE_TYPES } from "../pgf/institutional-memory.js";
 import { getStageWorkflow }                                      from "../pgf/workflow-steps.js";
 import type { PgfSessionAnswers }            from "../pgf/types.js";
-import { getUserId }                         from "../lib/route-helpers.js";
+import { getUserId, getValidatedRole }       from "../lib/route-helpers.js";
 import { aiAnalysisLimit } from "../middlewares/rateLimits.js";
 
 const router: IRouter = Router();
@@ -82,10 +82,11 @@ router.get(
 // Admin-only: create a new institutional memory entry
 router.post(
   "/pgf/memory",
-  requireAnyRole,
+  requireWriteRole,
   async (req, res): Promise<void> => {
-    // Only owners/supervisors may create entries
-    const role = (req.headers["x-user-role"] as string | undefined) ?? "viewer";
+    // Only owners/supervisors may create entries — trusted session role only,
+    // never a client-supplied header (which is spoofable).
+    const role = getValidatedRole(req);
     if (role !== "owner" && role !== "supervisor") {
       res.status(403).json({ error: "Insufficient permissions" });
       return;
@@ -173,7 +174,7 @@ router.get("/pgf/professions/:sectorId/:professionId", requireAnyRole, (req, res
 });
 
 // ─── POST /pgf/sessions ───────────────────────────────────────────────────────
-router.post("/pgf/sessions", requireAnyRole, async (req, res): Promise<void> => {
+router.post("/pgf/sessions", requireWriteRole, async (req, res): Promise<void> => {
   const uid = getUserId(req);
   const { sectorId, professionId } = req.body as { sectorId: string; professionId: string };
 
@@ -252,7 +253,7 @@ router.get("/pgf/sessions/:id", requireAnyRole, async (req, res): Promise<void> 
 });
 
 // ─── POST /pgf/sessions/:id/answer ───────────────────────────────────────────
-router.post("/pgf/sessions/:id/answer", requireAnyRole, async (req, res): Promise<void> => {
+router.post("/pgf/sessions/:id/answer", requireWriteRole, async (req, res): Promise<void> => {
   const id  = parseInt(req.params.id as string, 10);
   const uid = getUserId(req);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid session id" }); return; }
@@ -324,7 +325,7 @@ router.post("/pgf/sessions/:id/answer", requireAnyRole, async (req, res): Promis
 });
 
 // ─── POST /pgf/sessions/:id/finalize ─────────────────────────────────────────
-router.post("/pgf/sessions/:id/finalize", requireAnyRole, aiAnalysisLimit, async (req, res): Promise<void> => {
+router.post("/pgf/sessions/:id/finalize", requireWriteRole, aiAnalysisLimit, async (req, res): Promise<void> => {
   const id  = parseInt(req.params.id as string, 10);
   const uid = getUserId(req);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid session id" }); return; }
@@ -380,7 +381,7 @@ router.post("/pgf/sessions/:id/finalize", requireAnyRole, aiAnalysisLimit, async
 });
 
 // ─── DELETE /pgf/sessions/:id ─────────────────────────────────────────────────
-router.delete("/pgf/sessions/:id", requireAnyRole, async (req, res): Promise<void> => {
+router.delete("/pgf/sessions/:id", requireWriteRole, async (req, res): Promise<void> => {
   const id  = parseInt(req.params.id as string, 10);
   const uid = getUserId(req);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid session id" }); return; }

@@ -17,7 +17,7 @@ import { eq, and, desc }        from "drizzle-orm";
 import {
   db, pcsSessionsTable, pcsSessionStepsTable,
 } from "@workspace/db";
-import { requireAnyRole }                    from "../middlewares/roleAuth.js";
+import { requireAnyRole, requireWriteRole }  from "../middlewares/roleAuth.js";
 import { findScenario }                      from "../pcs/config.js";
 import { evaluateStep, buildFinalReport }    from "../pcs/ai-evaluator.js";
 import { migratePcs }                        from "../pcs/migration.js";
@@ -64,7 +64,7 @@ router.get(
 // ─── POST /pcs/sessions ───────────────────────────────────────────────────────
 router.post(
   "/pcs/sessions",
-  requireAnyRole,
+  requireWriteRole,
   async (req, res): Promise<void> => {
     await ensureMigrated();
     const uid = getUserId(req);
@@ -203,7 +203,7 @@ router.get(
 // ─── POST /pcs/sessions/:id/answer ───────────────────────────────────────────
 router.post(
   "/pcs/sessions/:id/answer",
-  requireAnyRole,
+  requireWriteRole,
   async (req, res): Promise<void> => {
     const uid = getUserId(req);
     const id  = parseInt(String(req.params.id), 10);

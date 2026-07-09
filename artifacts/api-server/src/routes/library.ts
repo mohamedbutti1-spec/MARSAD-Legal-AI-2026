@@ -9,7 +9,7 @@ import { Router, type IRouter } from "express";
 import { eq, and } from "drizzle-orm";
 import { z } from "zod";
 import { db, libraryItemsTable, documentsTable, legalSourcesTable } from "@workspace/db";
-import { requireAnyRole } from "../middlewares/roleAuth";
+import { requireAnyRole, requireWriteRole } from "../middlewares/roleAuth";
 import { getUserId } from "../lib/route-helpers";
 
 // ─── Zod schemas ─────────────────────────────────────────────────────────────
@@ -58,7 +58,7 @@ router.get("/library", requireAnyRole, async (req, res): Promise<void> => {
   res.json({ items: enriched });
 });
 
-router.post("/library", requireAnyRole, async (req, res): Promise<void> => {
+router.post("/library", requireWriteRole, async (req, res): Promise<void> => {
   const uid = getUserId(req);
   const parsed = LibrarySaveBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.errors[0]?.message ?? "Invalid body" }); return; }
@@ -87,7 +87,7 @@ router.post("/library", requireAnyRole, async (req, res): Promise<void> => {
   res.status(201).json(created);
 });
 
-router.patch("/library/:id", requireAnyRole, async (req, res): Promise<void> => {
+router.patch("/library/:id", requireWriteRole, async (req, res): Promise<void> => {
   const id = parseInt(req.params.id as string);
   const uid = getUserId(req);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
@@ -109,7 +109,7 @@ router.patch("/library/:id", requireAnyRole, async (req, res): Promise<void> => 
   res.json(updated);
 });
 
-router.delete("/library/:id", requireAnyRole, async (req, res): Promise<void> => {
+router.delete("/library/:id", requireWriteRole, async (req, res): Promise<void> => {
   const id = parseInt(req.params.id as string);
   const uid = getUserId(req);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }

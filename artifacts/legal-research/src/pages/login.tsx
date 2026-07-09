@@ -3,7 +3,7 @@ import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Shield, Lock, User, AlertCircle, ChevronDown } from 'lucide-react';
+import { Shield, Lock, User, AlertCircle, ChevronDown, Eye } from 'lucide-react';
 import { useUserContext } from '@/lib/user-context';
 
 // True when built for production (Vite replaces this at compile time).
@@ -20,6 +20,20 @@ async function apiLogin(username: string, password: string) {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error ?? 'Login failed');
+  return data as { userId: number; name: string; email: string; role: string; org: string };
+}
+
+// One-click, password-less entry into the permanent read-only "reviewer"
+// account (role "viewer"). Available in every environment, including
+// production, so external reviewers/QA/AI agents can exercise the full
+// journey without needing credentials or ever creating/editing/deleting data.
+async function apiGuestLogin() {
+  const res = await fetch(`${BASE}/api/auth/guest-login`, {
+    method: 'POST',
+    credentials: 'include',
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? 'Guest login failed');
   return data as { userId: number; name: string; email: string; role: string; org: string };
 }
 
@@ -48,6 +62,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showDemo, setShowDemo] = useState(false);
+  const [guestLoading, setGuestLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,6 +81,20 @@ export default function Login() {
       setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGuestLogin = async () => {
+    setError('');
+    setGuestLoading(true);
+    try {
+      await apiGuestLogin();
+      await refreshSession();
+      navigate('/');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Guest login failed. Please try again.');
+    } finally {
+      setGuestLoading(false);
     }
   };
 
@@ -181,6 +210,32 @@ export default function Login() {
               )}
             </Button>
           </form>
+
+          {/* Guest evaluation login — always available, including production.
+              Signs directly into the permanent read-only "reviewer" account
+              (role "viewer"): full read access to every module, dashboard and
+              the AI assistant, with no create/update/delete permissions. */}
+          <div className="mt-5">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleGuestLogin}
+              disabled={guestLoading || loading}
+              className="w-full border-amber-500/30 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10 font-medium"
+            >
+              {guestLoading ? (
+                <span className="flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
+                  جارٍ الدخول…
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <Eye className="w-4 h-4" />
+                  دخول كمقيّم — قراءة فقط / Guest Evaluation Login
+                </span>
+              )}
+            </Button>
+          </div>
 
           {/* Demo accounts panel — hidden in production (accounts are blocked there) */}
           {!IS_PROD && (

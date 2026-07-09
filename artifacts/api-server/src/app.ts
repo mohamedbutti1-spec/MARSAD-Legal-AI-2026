@@ -167,6 +167,7 @@ const loginLimiter = rateLimit({
   message: { error: "Too many login attempts. Please wait 15 minutes and try again." },
 });
 app.use("/api/auth/login", loginLimiter);
+app.use("/api/auth/guest-login", loginLimiter);
 
 // ── Audit middleware ─────────────────────────────────────────────────────────
 app.use(auditMiddleware);
@@ -177,7 +178,12 @@ app.use(auditMiddleware);
 //   /api/auth/…     — login / logout / session check (establishes auth)
 app.use("/api", (req: Request, res: Response, next: NextFunction) => {
   if (req.path === "/healthz") return next();
-  if (req.path === "/auth/login" || req.path === "/auth/logout" || req.path === "/auth/me") {
+  if (
+    req.path === "/auth/login" ||
+    req.path === "/auth/guest-login" ||
+    req.path === "/auth/logout" ||
+    req.path === "/auth/me"
+  ) {
     return next();
   }
   return authenticate(req, res, next);

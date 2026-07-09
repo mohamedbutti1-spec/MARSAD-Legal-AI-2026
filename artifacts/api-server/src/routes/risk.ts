@@ -398,7 +398,7 @@ router.delete("/risk/treatment/:id", requirePermission("canWriteRiskTreatment"),
 
 // ─── POST /risk/review/:decisionId ────────────────────────────────────────────
 
-router.post("/risk/review/:decisionId", requirePermission("canReadRiskAssessment"), async (req, res): Promise<void> => {
+router.post("/risk/review/:decisionId", requirePermission("canWriteRiskTreatment"), async (req, res): Promise<void> => {
   try {
     const decisionId = parseInt(req.params.decisionId as string, 10);
     if (isNaN(decisionId)) { e400(res, "Invalid decision ID"); return; }

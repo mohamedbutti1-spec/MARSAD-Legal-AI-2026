@@ -73,6 +73,22 @@ const PERMANENT_ACCOUNTS = [
     role:     "owner" as const,
     username: "shamsi",
     password: process.env.SHAMSI_BOOTSTRAP_PASSWORD ?? "Shamsi@2026!",
+    bootstrapEnvVar: "SHAMSI_BOOTSTRAP_PASSWORD",
+  },
+  // Permanent read-only evaluation account — for external reviewers, supervisors,
+  // and AI testing agents to exercise the full user journey without touching
+  // production data. Role "viewer" already grants: read access to every module,
+  // dashboard, and the AI assistant, while excluding all create/update/delete
+  // permissions (canUpload/canCreateDecision/canManageUsers/canManageSettings
+  // all require owner/supervisor — see lib/permissions.ts + user-context.tsx).
+  // Never blocked by the is_demo production gate, since is_demo = FALSE below.
+  {
+    name:     "حساب المراجعة — قراءة فقط",
+    email:    "reviewer@marsad.ae",
+    role:     "viewer" as const,
+    username: "reviewer",
+    password: process.env.REVIEWER_BOOTSTRAP_PASSWORD ?? "Review@2026",
+    bootstrapEnvVar: "REVIEWER_BOOTSTRAP_PASSWORD",
   },
 ];
 
@@ -148,10 +164,10 @@ async function migrateAuth() {
       [account.username],
     );
     if (existing.length === 0) {
-      if (IS_PRODUCTION_SEED && !process.env.SHAMSI_BOOTSTRAP_PASSWORD) {
+      if (IS_PRODUCTION_SEED && !process.env[account.bootstrapEnvVar]) {
         logger.warn(
           { username: account.username },
-          "SHAMSI_BOOTSTRAP_PASSWORD is not set — permanent account using fallback credential. Set this env var in production.",
+          `${account.bootstrapEnvVar} is not set — permanent account using fallback credential. Set this env var in production.`,
         );
       }
       const hash = await bcrypt.hash(account.password, 10);

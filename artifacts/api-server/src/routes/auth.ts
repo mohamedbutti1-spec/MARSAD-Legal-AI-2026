@@ -103,6 +103,61 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   });
 });
 
+// ── POST /api/auth/guest-login ───────────────────────────────────────────────
+// One-click, password-less entry point for external reviewers/QA/AI testing
+// agents. Always signs into the fixed permanent "reviewer" account (role
+// "viewer" — read-only across every module, no create/update/delete). This is
+// intentionally not gated by a client-supplied password: the target account
+// itself carries zero write permissions, so there is no meaningful escalation
+// risk, and it lets reviewers explore the full journey with a single click.
+router.post("/auth/guest-login", async (_req, res): Promise<void> => {
+  const [user] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.username, "reviewer"));
+
+  if (!user || !user.passwordHash) {
+    res.status(503).json({ error: "Evaluation account is not provisioned." });
+    return;
+  }
+  if (!user.isActive) {
+    res.status(403).json({ error: "Evaluation account is deactivated." });
+    return;
+  }
+  // Hard invariant: only ever sign a token for the fixed, read-only reviewer
+  // identity. If this account is ever misconfigured or its role escalated in
+  // the database, refuse rather than silently granting elevated guest access.
+  if (user.role !== "viewer" || user.isDemo) {
+    logger.error(
+      { userId: user.id, role: user.role, isDemo: user.isDemo },
+      "Guest evaluation account failed invariant check (role/is_demo) — refusing login",
+    );
+    res.status(503).json({ error: "Evaluation account is misconfigured." });
+    return;
+  }
+
+  const org = orgForRole(user.role);
+  const token = signToken({ userId: user.id, role: user.role, org });
+
+  res.cookie(COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: IS_PRODUCTION,
+    sameSite: "lax",
+    maxAge: COOKIE_MAX_AGE_MS,
+    path: "/",
+  });
+
+  logger.info({ userId: user.id, role: user.role }, "Guest evaluation session started");
+
+  res.json({
+    userId: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    org,
+  });
+});
+
 // ── GET /api/auth/me ─────────────────────────────────────────────────────────
 router.get("/auth/me", (req, res): void => {
   const cookies = req.cookies as Record<string, string> | undefined;

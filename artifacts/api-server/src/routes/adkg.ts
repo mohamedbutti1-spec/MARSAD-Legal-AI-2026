@@ -33,7 +33,7 @@ import {
   type DimensionResult,
 } from "../utils/admin-os-evaluator";
 import { getUserId } from "../lib/route-helpers.js";
-import { requireAnyRole } from "../middlewares/roleAuth.js";
+import { requireAnyRole, requireWriteRole } from "../middlewares/roleAuth.js";
 import { aiAnalysisLimit } from "../middlewares/rateLimits.js";
 
 const router: IRouter = Router();
@@ -110,7 +110,7 @@ router.get("/adkg/decisions", async (req: Request, res: Response): Promise<void>
 });
 
 /** POST /adkg/decisions — create a new decision */
-router.post("/adkg/decisions", async (req: Request, res: Response): Promise<void> => {
+router.post("/adkg/decisions", requireWriteRole, async (req: Request, res: Response): Promise<void> => {
   const userId = getUserId(req);
   const {
     decisionNumber, title, titleAr, issuerOrg, issuerOrgAr,
@@ -184,7 +184,7 @@ router.get("/adkg/decisions/:id", async (req: Request, res: Response): Promise<v
 });
 
 /** PUT /adkg/decisions/:id — update decision */
-router.put("/adkg/decisions/:id", async (req: Request, res: Response): Promise<void> => {
+router.put("/adkg/decisions/:id", requireWriteRole, async (req: Request, res: Response): Promise<void> => {
   const userId     = getUserId(req);
   const decisionId = parseInt(String(req.params.id), 10);
   if (!await assertDecisionOwner(decisionId, userId, res)) return;
@@ -221,7 +221,7 @@ router.put("/adkg/decisions/:id", async (req: Request, res: Response): Promise<v
 });
 
 /** DELETE /adkg/decisions/:id */
-router.delete("/adkg/decisions/:id", async (req: Request, res: Response): Promise<void> => {
+router.delete("/adkg/decisions/:id", requireWriteRole, async (req: Request, res: Response): Promise<void> => {
   const userId     = getUserId(req);
   const decisionId = parseInt(String(req.params.id), 10);
   if (!await assertDecisionOwner(decisionId, userId, res)) return;
@@ -234,7 +234,7 @@ router.delete("/adkg/decisions/:id", async (req: Request, res: Response): Promis
 // ─── Links ────────────────────────────────────────────────────────────────────
 
 /** POST /adkg/decisions/:id/links */
-router.post("/adkg/decisions/:id/links", async (req: Request, res: Response): Promise<void> => {
+router.post("/adkg/decisions/:id/links", requireWriteRole, async (req: Request, res: Response): Promise<void> => {
   const userId     = getUserId(req);
   const decisionId = parseInt(String(req.params.id), 10);
   if (!await assertDecisionOwner(decisionId, userId, res)) return;
@@ -271,7 +271,7 @@ router.post("/adkg/decisions/:id/links", async (req: Request, res: Response): Pr
 });
 
 /** DELETE /adkg/decisions/:id/links/:linkId */
-router.delete("/adkg/decisions/:id/links/:linkId", async (req: Request, res: Response): Promise<void> => {
+router.delete("/adkg/decisions/:id/links/:linkId", requireWriteRole, async (req: Request, res: Response): Promise<void> => {
   const userId     = getUserId(req);
   const decisionId = parseInt(String(req.params.id), 10);
   const linkId     = parseInt(String(req.params.linkId), 10);
@@ -292,7 +292,7 @@ router.delete("/adkg/decisions/:id/links/:linkId", async (req: Request, res: Res
 // ─── Timeline ─────────────────────────────────────────────────────────────────
 
 /** POST /adkg/decisions/:id/timeline */
-router.post("/adkg/decisions/:id/timeline", async (req: Request, res: Response): Promise<void> => {
+router.post("/adkg/decisions/:id/timeline", requireWriteRole, async (req: Request, res: Response): Promise<void> => {
   const userId     = getUserId(req);
   const decisionId = parseInt(String(req.params.id), 10);
   if (!await assertDecisionOwner(decisionId, userId, res)) return;
@@ -328,7 +328,7 @@ router.post("/adkg/decisions/:id/timeline", async (req: Request, res: Response):
 });
 
 /** DELETE /adkg/decisions/:id/timeline/:eventId */
-router.delete("/adkg/decisions/:id/timeline/:eventId", async (req: Request, res: Response): Promise<void> => {
+router.delete("/adkg/decisions/:id/timeline/:eventId", requireWriteRole, async (req: Request, res: Response): Promise<void> => {
   const userId     = getUserId(req);
   const decisionId = parseInt(String(req.params.id), 10);
   const eventId    = parseInt(String(req.params.eventId), 10);
@@ -349,7 +349,7 @@ router.delete("/adkg/decisions/:id/timeline/:eventId", async (req: Request, res:
 // ─── Graph Edges ──────────────────────────────────────────────────────────────
 
 /** POST /adkg/graph-edges — create a directed edge between two decisions */
-router.post("/adkg/graph-edges", async (req: Request, res: Response): Promise<void> => {
+router.post("/adkg/graph-edges", requireWriteRole, async (req: Request, res: Response): Promise<void> => {
   const userId = getUserId(req);
   const { fromDecisionId, toDecisionId, relationshipType, notes, confidence } = req.body as {
     fromDecisionId: number; toDecisionId: number;
@@ -376,7 +376,7 @@ router.post("/adkg/graph-edges", async (req: Request, res: Response): Promise<vo
 });
 
 /** DELETE /adkg/graph-edges/:edgeId */
-router.delete("/adkg/graph-edges/:edgeId", async (req: Request, res: Response): Promise<void> => {
+router.delete("/adkg/graph-edges/:edgeId", requireWriteRole, async (req: Request, res: Response): Promise<void> => {
   const userId = getUserId(req);
   const edgeId = parseInt(String(req.params.edgeId), 10);
 
@@ -564,7 +564,7 @@ router.get("/adkg/decisions/:id/export", async (req: Request, res: Response): Pr
  * Runs the 16-pillar Al-Shamsi evaluator against the stored ADKG decision content
  * and its linked authorities. Stores the result in citedAuthorities.pillarAnalysis.
  */
-router.post("/adkg/decisions/:id/analyze", aiAnalysisLimit, async (req: Request, res: Response): Promise<void> => {
+router.post("/adkg/decisions/:id/analyze", requireWriteRole, aiAnalysisLimit, async (req: Request, res: Response): Promise<void> => {
   const userId     = getUserId(req);
   const decisionId = parseInt(String(req.params.id), 10);
 

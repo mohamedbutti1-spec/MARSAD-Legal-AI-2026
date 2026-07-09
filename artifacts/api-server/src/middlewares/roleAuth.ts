@@ -68,3 +68,20 @@ export const requireAnyRole = requireRole(
  * requireGovernanceRead — alias for requireAnyRole.
  */
 export const requireGovernanceRead = requireAnyRole;
+
+/**
+ * requireWriteRole — any professional role EXCEPT "viewer" and "citizen".
+ *
+ * "viewer" is the platform's dedicated read-only role (used by the permanent
+ * evaluation/"reviewer" account so external reviewers, supervisors, and AI
+ * testing agents can exercise the full journey without touching production
+ * data). Use this instead of requireAnyRole on any endpoint that creates,
+ * updates, or deletes data — requireAnyRole alone would let viewer mutate.
+ */
+export const requireWriteRole = requireRole(
+  "owner", "supervisor",
+  "minister", "undersecretary", "assistant_undersecretary",
+  "director_general", "department_director", "legal_department",
+  "constitutional_reviewer", "internal_auditor", "external_auditor",
+  "judge",
+);

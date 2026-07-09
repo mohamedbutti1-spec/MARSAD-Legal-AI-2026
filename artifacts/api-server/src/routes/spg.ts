@@ -11,7 +11,7 @@
 import { Router, type IRouter } from "express";
 import { eq, desc, and }        from "drizzle-orm";
 import { db, spgSessionsTable } from "@workspace/db";
-import { requireAnyRole }       from "../middlewares/roleAuth";
+import { requireAnyRole, requireWriteRole } from "../middlewares/roleAuth";
 import { runSpgGuidance }       from "../utils/spg-engine";
 import { getUserId }            from "../lib/route-helpers";
 import { aiAnalysisLimit } from "../middlewares/rateLimits.js";
@@ -87,7 +87,7 @@ router.get("/spg/sessions/:id", requireAnyRole, async (req, res): Promise<void> 
 });
 
 // ─── POST /spg/sessions ───────────────────────────────────────────────────────
-router.post("/spg/sessions", requireAnyRole, async (req, res): Promise<void> => {
+router.post("/spg/sessions", requireWriteRole, async (req, res): Promise<void> => {
   const uid = getUserId(req);
   const {
     sectorId,
@@ -127,7 +127,7 @@ router.post("/spg/sessions", requireAnyRole, async (req, res): Promise<void> => 
 });
 
 // ─── POST /spg/sessions/:id/run ───────────────────────────────────────────────
-router.post("/spg/sessions/:id/run", requireAnyRole, aiAnalysisLimit, async (req, res): Promise<void> => {
+router.post("/spg/sessions/:id/run", requireWriteRole, aiAnalysisLimit, async (req, res): Promise<void> => {
   const id  = parseInt(req.params.id as string, 10);
   const uid = getUserId(req);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid session id" }); return; }
@@ -190,7 +190,7 @@ router.post("/spg/sessions/:id/run", requireAnyRole, aiAnalysisLimit, async (req
 });
 
 // ─── DELETE /spg/sessions/:id ─────────────────────────────────────────────────
-router.delete("/spg/sessions/:id", requireAnyRole, async (req, res): Promise<void> => {
+router.delete("/spg/sessions/:id", requireWriteRole, async (req, res): Promise<void> => {
   const id  = parseInt(req.params.id as string, 10);
   const uid = getUserId(req);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid session id" }); return; }

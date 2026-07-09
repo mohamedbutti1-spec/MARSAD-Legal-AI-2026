@@ -7,7 +7,7 @@
 import { Router, type IRouter } from "express";
 import { eq, desc } from "drizzle-orm";
 import { db, documentsTable, legalSourcesTable, citationsLogTable } from "@workspace/db";
-import { requireAnyRole } from "../middlewares/roleAuth";
+import { requireAnyRole, requireWriteRole } from "../middlewares/roleAuth";
 import { getUserId } from "../lib/route-helpers";
 
 const router: IRouter = Router();
@@ -32,7 +32,7 @@ function formatUaeGov(title: string, referenceNumber: string, year: number, juri
 }
 
 // POST /citations/generate
-router.post("/citations/generate", requireAnyRole, async (req, res): Promise<void> => {
+router.post("/citations/generate", requireWriteRole, async (req, res): Promise<void> => {
   const { sourceType = "document", sourceId, authorName, publicationYear, publisher, url } = req.body;
   const uid = getUserId(req);
 
@@ -83,7 +83,7 @@ router.post("/citations/generate", requireAnyRole, async (req, res): Promise<voi
 });
 
 // Legacy: POST /citations
-router.post("/citations", requireAnyRole, async (req, res): Promise<void> => {
+router.post("/citations", requireWriteRole, async (req, res): Promise<void> => {
   const { documentId, authorName, publicationYear, publisher, url } = req.body;
   if (!documentId) { res.status(400).json({ error: "documentId required" }); return; }
 
