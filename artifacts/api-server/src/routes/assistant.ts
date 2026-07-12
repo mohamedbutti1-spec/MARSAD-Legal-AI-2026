@@ -32,20 +32,13 @@ import {
   makeSrcCitations,
 } from "../utils/rag";
 import { buildTheoryPromptSuffix, parseTheoryResponse } from "../utils/theory-lenses.js";
+import { getUserId } from "../lib/route-helpers";
+import { aiAnalysisLimit } from "../middlewares/rateLimits.js";
 
 const router: IRouter = Router();
 
 /** How many past messages to include as conversation context */
 const SESSION_CONTEXT_MESSAGES = 12;
-
-function getUserId(req: import("express").Request): number {
-  const h = req.headers["x-user-id"];
-  if (!h) return -1;
-  const id = parseInt(Array.isArray(h) ? h[0] : h, 10);
-  // Return -1 (impossible DB id) when header is absent/invalid so ownership
-  // queries return no rows rather than accidentally exposing user-1 data.
-  return Number.isFinite(id) ? id : -1;
-}
 
 // ─── GET /assistant/sessions ───────────────────────────────────────────────────
 router.get("/assistant/sessions", requireAnyRole, async (req, res): Promise<void> => {
@@ -123,7 +116,7 @@ router.get("/assistant/sessions/:id/messages", requireAnyRole, async (req, res):
 });
 
 // ─── POST /assistant/sessions/:id/messages ────────────────────────────────────
-router.post("/assistant/sessions/:id/messages", requireSupervisorOrOwner, async (req, res): Promise<void> => {
+router.post("/assistant/sessions/:id/messages", requireSupervisorOrOwner, aiAnalysisLimit, async (req, res): Promise<void> => {
   const sessionId = parseInt(req.params.id as string, 10);
   const uid = getUserId(req);
   if (isNaN(sessionId)) { res.status(400).json({ error: "Invalid id" }); return; }

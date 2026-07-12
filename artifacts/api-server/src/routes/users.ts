@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db, usersTable } from "@workspace/db";
 import {
   GetUserParams,
@@ -13,10 +13,16 @@ import { logAudit } from "../middlewares/auditLog";
 
 const router: IRouter = Router();
 
-// GET /users
-router.get("/users", requireOwner, async (_req, res): Promise<void> => {
-  const users = await db.select().from(usersTable).orderBy(usersTable.createdAt);
-  res.json(users);
+// GET /users (paginated)
+router.get("/users", requireOwner, async (req, res): Promise<void> => {
+  const limit = Math.min(200, Math.max(1, parseInt(String(req.query.limit ?? "50"), 10) || 50));
+  const offset = Math.max(0, parseInt(String(req.query.offset ?? "0"), 10) || 0);
+
+  const [users, [countRow]] = await Promise.all([
+    db.select().from(usersTable).orderBy(usersTable.createdAt).limit(limit).offset(offset),
+    db.select({ cnt: sql<number>`count(*)::int` }).from(usersTable),
+  ]);
+  res.json({ users, total: countRow?.cnt ?? 0, limit, offset });
 });
 
 // POST /users

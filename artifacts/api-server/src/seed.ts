@@ -8,6 +8,7 @@ import {
   seedRiskCategories,
 } from "@workspace/db";
 import bcrypt from "bcryptjs";
+import { createHmac } from "crypto";
 import { logger } from "./lib/logger";
 import { migrateResearchWorkspace } from "./research-workspace/migration.js";
 import { migrateAdkg } from "./adkg/migration.js";
@@ -39,40 +40,50 @@ const sampleRows = [
 
 // ─── Seed version — bump this integer to force a password rotation on next startup ─
 // v1 = original MARSAD2024 passwords, v2 = secure random rotation (7 Jul 2026)
-const DEMO_SEED_VERSION = 2;
+// v3 = removed plaintext passwords from source; derived from DEMO_SEED_SECRET (12 Jul 2026)
+const DEMO_SEED_VERSION = 3;
 
 // ─── Demo accounts (one per role) ────────────────────────────────────────────
-// Passwords are secure-random (generated 7 Jul 2026). Bump DEMO_SEED_VERSION
-// and replace these values to rotate them again.
+// No plaintext passwords are stored in source. Each account's password is
+// derived deterministically from the DEMO_SEED_SECRET env var (see
+// deriveDemoPassword below). If DEMO_SEED_SECRET is unset, demo-account
+// seeding is skipped entirely — existing rows/hashes are left untouched.
 const DEMO_ACCOUNTS = [
-  { name: "محمد الشامسي",            email: "m.alshamsi@legal.ae",       role: "owner",                    username: "admin",          password: "7KW@ltkOeo3Qc6Ys" },
-  { name: "Sarah Al Mansoori",        email: "s.mansoori@legal.ae",       role: "supervisor",               username: "supervisor",     password: "QCBTr&Jnu9sesK11" },
-  { name: "Ahmed Khalil",             email: "a.khalil@legal.ae",         role: "viewer",                   username: "viewer",         password: "ODT6jy3nz7HxX3@3" },
-  { name: "القاضي سعيد المري",        email: "s.almarri@courts.ae",       role: "judge",                    username: "judge",          password: "2W8zzGLhWxLysxM&" },
-  { name: "مواطن — بوابة الخدمات",   email: "citizen@portal.ae",         role: "citizen",                  username: "citizen",        password: "CH94uTB2%Elu8RDA" },
-  { name: "معالي الوزير",            email: "minister@ministry.ae",      role: "minister",                 username: "minister",       password: "sDk9OZ^XR08NmK6a" },
-  { name: "وكيل الوزارة",            email: "undersec@ministry.ae",      role: "undersecretary",           username: "undersecretary", password: "iuyVisM7r#pgGCpi" },
-  { name: "وكيل الوزارة المساعد",    email: "asst.under@ministry.ae",    role: "assistant_undersecretary", username: "asst_undersec",  password: "YZ9yOO2MId#oiNi1" },
-  { name: "المدير العام",            email: "dirgen@ministry.ae",        role: "director_general",         username: "dir_general",    password: "ATm1W2%8A5yM92rg" },
-  { name: "مدير الإدارة",           email: "deptdir@ministry.ae",       role: "department_director",      username: "dept_director",  password: "0s^mlN3FeOcpwP7i" },
-  { name: "الشؤون القانونية",       email: "legal@ministry.ae",         role: "legal_department",         username: "legal_dept",     password: "O#vlNZVdSGz6jlN7" },
-  { name: "المراجع الدستوري",       email: "constrev@ministry.ae",      role: "constitutional_reviewer",  username: "const_reviewer", password: "AKN^2YD0Efnlgm2F" },
-  { name: "المدقق الداخلي",         email: "intaudit@ministry.ae",      role: "internal_auditor",         username: "int_auditor",    password: "jbSRQc0l1jRiMN&g" },
-  { name: "المدقق الخارجي",         email: "extaudit@ministry.ae",      role: "external_auditor",         username: "ext_auditor",    password: "gJuHBN$VPxg3hFx3" },
+  { name: "محمد الشامسي",            email: "m.alshamsi@legal.ae",       role: "owner",                    username: "admin" },
+  { name: "Sarah Al Mansoori",        email: "s.mansoori@legal.ae",       role: "supervisor",               username: "supervisor" },
+  { name: "Ahmed Khalil",             email: "a.khalil@legal.ae",         role: "viewer",                   username: "viewer" },
+  { name: "القاضي سعيد المري",        email: "s.almarri@courts.ae",       role: "judge",                    username: "judge" },
+  { name: "مواطن — بوابة الخدمات",   email: "citizen@portal.ae",         role: "citizen",                  username: "citizen" },
+  { name: "معالي الوزير",            email: "minister@ministry.ae",      role: "minister",                 username: "minister" },
+  { name: "وكيل الوزارة",            email: "undersec@ministry.ae",      role: "undersecretary",           username: "undersecretary" },
+  { name: "وكيل الوزارة المساعد",    email: "asst.under@ministry.ae",    role: "assistant_undersecretary", username: "asst_undersec" },
+  { name: "المدير العام",            email: "dirgen@ministry.ae",        role: "director_general",         username: "dir_general" },
+  { name: "مدير الإدارة",           email: "deptdir@ministry.ae",       role: "department_director",      username: "dept_director" },
+  { name: "الشؤون القانونية",       email: "legal@ministry.ae",         role: "legal_department",         username: "legal_dept" },
+  { name: "المراجع الدستوري",       email: "constrev@ministry.ae",      role: "constitutional_reviewer",  username: "const_reviewer" },
+  { name: "المدقق الداخلي",         email: "intaudit@ministry.ae",      role: "internal_auditor",         username: "int_auditor" },
+  { name: "المدقق الخارجي",         email: "extaudit@ministry.ae",      role: "external_auditor",         username: "ext_auditor" },
 ] as const;
+
+/**
+ * Derive a demo account's password deterministically from DEMO_SEED_SECRET.
+ * Never logged or persisted in plaintext — only the bcrypt hash is stored.
+ */
+function deriveDemoPassword(secret: string, username: string): string {
+  return createHmac("sha256", secret).update(username).digest("hex");
+}
 
 // ─── Permanent accounts — never marked demo, never disabled in production ─────
 // Provisioned once on first startup; existing records are never touched again.
-// In production, set SHAMSI_BOOTSTRAP_PASSWORD to avoid storing credentials
-// in source. Falls back to the literal below only outside production.
-const IS_PRODUCTION_SEED = process.env.NODE_ENV === "production";
+// No plaintext fallback password exists anywhere in source. If the bootstrap
+// env var is unset, provisioning is skipped (in every environment) — the
+// account simply does not exist until the secret is set and the app restarts.
 const PERMANENT_ACCOUNTS = [
   {
     name:     "مسؤول النظام — الشامسي",
     email:    "shamsi@marsad.ae",
     role:     "owner" as const,
     username: "shamsi",
-    password: process.env.SHAMSI_BOOTSTRAP_PASSWORD ?? "Shamsi@2026!",
     bootstrapEnvVar: "SHAMSI_BOOTSTRAP_PASSWORD",
   },
   // Permanent read-only evaluation account — for external reviewers, supervisors,
@@ -87,7 +98,6 @@ const PERMANENT_ACCOUNTS = [
     email:    "reviewer@marsad.ae",
     role:     "viewer" as const,
     username: "reviewer",
-    password: process.env.REVIEWER_BOOTSTRAP_PASSWORD ?? "Review@2026",
     bootstrapEnvVar: "REVIEWER_BOOTSTRAP_PASSWORD",
   },
 ];
@@ -115,62 +125,78 @@ async function migrateAuth() {
   );
 
   // ── Demo accounts ─────────────────────────────────────────────────────────
-  // Load current password_version for each demo email in one round-trip.
-  const emails = DEMO_ACCOUNTS.map((a) => a.email);
-  const { rows: versionRows } = await pool.query<{ email: string; password_version: number }>(
-    `SELECT email, password_version FROM users WHERE email = ANY($1)`,
-    [emails],
-  );
-  const versionMap = new Map(versionRows.map((r) => [r.email, r.password_version]));
+  // No plaintext passwords in source. Requires DEMO_SEED_SECRET to be set;
+  // if it is absent, seeding is skipped entirely and existing rows/hashes
+  // (from a prior run) are left exactly as they are.
+  const demoSeedSecret = process.env.DEMO_SEED_SECRET;
+  if (!demoSeedSecret) {
+    logger.warn(
+      "DEMO_SEED_SECRET is not set — skipping demo account seeding. " +
+        "Existing demo accounts (if any) are unaffected. Set the secret and restart to (re)provision them.",
+    );
+  } else {
+    // Load current password_version for each demo email in one round-trip.
+    const emails = DEMO_ACCOUNTS.map((a) => a.email);
+    const { rows: versionRows } = await pool.query<{ email: string; password_version: number }>(
+      `SELECT email, password_version FROM users WHERE email = ANY($1)`,
+      [emails],
+    );
+    const versionMap = new Map(versionRows.map((r) => [r.email, r.password_version]));
 
-  for (const account of DEMO_ACCOUNTS) {
-    const storedVersion = versionMap.get(account.email) ?? 0;
-    const needsRotation = storedVersion < DEMO_SEED_VERSION;
+    for (const account of DEMO_ACCOUNTS) {
+      const storedVersion = versionMap.get(account.email) ?? 0;
+      const needsRotation = storedVersion < DEMO_SEED_VERSION;
 
-    if (needsRotation) {
-      // Re-hash only when version is stale — avoids slow bcrypt on every restart.
-      const hash = await bcrypt.hash(account.password, 10);
-      await pool.query(
-        `INSERT INTO users (name, email, role, username, password_hash, is_demo, password_version)
-         VALUES ($1, $2, $3, $4, $5, TRUE, $6)
-         ON CONFLICT (email) DO UPDATE SET
-           username         = EXCLUDED.username,
-           password_hash    = EXCLUDED.password_hash,
-           role             = EXCLUDED.role,
-           is_demo          = TRUE,
-           password_version = EXCLUDED.password_version`,
-        [account.name, account.email, account.role, account.username, hash, DEMO_SEED_VERSION],
-      );
-    } else {
-      // Already at current version — ensure metadata columns are correct.
-      await pool.query(
-        `INSERT INTO users (name, email, role, username, password_hash, is_demo, password_version)
-         VALUES ($1, $2, $3, $4, 'PLACEHOLDER', TRUE, $5)
-         ON CONFLICT (email) DO UPDATE SET
-           username         = EXCLUDED.username,
-           is_demo          = TRUE,
-           password_version = EXCLUDED.password_version`,
-        [account.name, account.email, account.role, account.username, DEMO_SEED_VERSION],
-      );
+      if (needsRotation) {
+        // Re-hash only when version is stale — avoids slow bcrypt on every restart.
+        const password = deriveDemoPassword(demoSeedSecret, account.username);
+        const hash = await bcrypt.hash(password, 10);
+        await pool.query(
+          `INSERT INTO users (name, email, role, username, password_hash, is_demo, password_version)
+           VALUES ($1, $2, $3, $4, $5, TRUE, $6)
+           ON CONFLICT (email) DO UPDATE SET
+             username         = EXCLUDED.username,
+             password_hash    = EXCLUDED.password_hash,
+             role             = EXCLUDED.role,
+             is_demo          = TRUE,
+             password_version = EXCLUDED.password_version`,
+          [account.name, account.email, account.role, account.username, hash, DEMO_SEED_VERSION],
+        );
+      } else {
+        // Already at current version — ensure metadata columns are correct.
+        await pool.query(
+          `INSERT INTO users (name, email, role, username, password_hash, is_demo, password_version)
+           VALUES ($1, $2, $3, $4, 'PLACEHOLDER', TRUE, $5)
+           ON CONFLICT (email) DO UPDATE SET
+             username         = EXCLUDED.username,
+             is_demo          = TRUE,
+             password_version = EXCLUDED.password_version`,
+          [account.name, account.email, account.role, account.username, DEMO_SEED_VERSION],
+        );
+      }
     }
   }
 
   // ── Permanent accounts ────────────────────────────────────────────────────
   // Inserted once on first startup. Existing records are never overwritten
   // (password changes must go through the application's password-reset flow).
+  // No plaintext fallback exists — provisioning is skipped in every
+  // environment when the account's bootstrap env var is unset.
   for (const account of PERMANENT_ACCOUNTS) {
     const { rows: existing } = await pool.query<{ id: number }>(
       `SELECT id FROM users WHERE username = $1`,
       [account.username],
     );
     if (existing.length === 0) {
-      if (IS_PRODUCTION_SEED && !process.env[account.bootstrapEnvVar]) {
+      const bootstrapPassword = process.env[account.bootstrapEnvVar];
+      if (!bootstrapPassword) {
         logger.warn(
           { username: account.username },
-          `${account.bootstrapEnvVar} is not set — permanent account using fallback credential. Set this env var in production.`,
+          `${account.bootstrapEnvVar} is not set — skipping provisioning of this permanent account. Set the secret and restart to create it.`,
         );
+        continue;
       }
-      const hash = await bcrypt.hash(account.password, 10);
+      const hash = await bcrypt.hash(bootstrapPassword, 10);
       // DO NOTHING: an existing row (matched by email) is never updated — credentials
       // can only be changed through the application's password-reset flow.
       await pool.query(
@@ -184,7 +210,7 @@ async function migrateAuth() {
   }
 
   logger.info(
-    `Auth migration complete — ${DEMO_ACCOUNTS.length} demo accounts (seed v${DEMO_SEED_VERSION}) + ${PERMANENT_ACCOUNTS.length} permanent account(s)`,
+    `Auth migration complete — ${DEMO_ACCOUNTS.length} demo accounts (seed v${DEMO_SEED_VERSION}, secret ${demoSeedSecret ? "set" : "unset — skipped"}) + ${PERMANENT_ACCOUNTS.length} permanent account(s)`,
   );
 }
 

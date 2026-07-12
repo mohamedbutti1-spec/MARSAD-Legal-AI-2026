@@ -7,6 +7,7 @@ import { db, documentsTable, legalSourcesTable } from "@workspace/db";
 import { requireSupervisorOrOwner } from "../middlewares/roleAuth";
 import { logAudit } from "../middlewares/auditLog";
 import { aiRouter, TaskType, parseModelJson } from "../ai";
+import { aiAnalysisLimit } from "../middlewares/rateLimits.js";
 
 const router: IRouter = Router();
 
@@ -22,7 +23,7 @@ function chunkText(text: string): string[] {
   return chunks;
 }
 
-router.post("/research/search", requireSupervisorOrOwner, async (req, res): Promise<void> => {
+router.post("/research/search", requireSupervisorOrOwner, aiAnalysisLimit, async (req, res): Promise<void> => {
   const { query, sourceTypes = ["documents", "legal_sources"], jurisdiction, yearFrom, yearTo, limit = 5 } = req.body as {
     query: string;
     sourceTypes?: string[];

@@ -29,17 +29,11 @@ import {
 } from "../middlewares/roleAuth";
 import { logAudit } from "../middlewares/auditLog";
 import { e400, e403, e404, e500 } from "../lib/sendError";
+import { getUserInfo } from "../lib/route-helpers";
 
 const router = Router();
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function getUserInfo(req: import("express").Request) {
-  const role   = String(req.headers["x-user-role"] || "viewer");
-  const userId = String(req.headers["x-user-id"]   || "system");
-  const org    = String(req.headers["x-user-org"]   || "");
-  return { role, userId, org };
-}
 
 function getPermissions(role: string) {
   return PERMISSIONS[role as keyof typeof PERMISSIONS] ?? PERMISSIONS.citizen;

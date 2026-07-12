@@ -30,3 +30,22 @@ export function getValidatedRole(req: Request): string {
   if (!role || !ALL_ROLES.includes(role as never)) return "citizen";
   return role;
 }
+
+/**
+ * Shared { role, userId, org } shape used by several route modules
+ * (risk, cil, jdt, audit, admin-os) for scoping and audit-trail metadata.
+ *
+ * Reads exclusively from the verified JWT payload (req.user) — never from
+ * X-User-Role / X-User-Id / X-User-Org headers, which are attacker-spoofable
+ * and are stripped before this code runs (see middlewares/authenticate.ts).
+ *
+ * Returned as strings for backward compatibility with call sites that were
+ * previously built around header values.
+ */
+export function getUserInfo(req: Request): { role: string; userId: string; org: string } {
+  return {
+    role: getValidatedRole(req),
+    userId: String(req.user?.userId ?? "system"),
+    org: req.user?.org ?? "",
+  };
+}

@@ -13,6 +13,7 @@ import { requireSupervisorOrOwner } from "../middlewares/roleAuth";
 import { logAudit } from "../middlewares/auditLog";
 import { cache, TTL } from "../lib/cache";
 import { aiRouter, TaskType, parseModelJson } from "../ai";
+import { aiAnalysisLimit } from "../middlewares/rateLimits.js";
 
 const router: IRouter = Router();
 
@@ -65,7 +66,7 @@ function buildRagContext(
 
 // ─── POST /ai/search ──────────────────────────────────────────────────────────
 
-router.post("/ai/search", requireSupervisorOrOwner, async (req, res): Promise<void> => {
+router.post("/ai/search", requireSupervisorOrOwner, aiAnalysisLimit, async (req, res): Promise<void> => {
   const parsed = AiSearchBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
@@ -141,7 +142,7 @@ Return at most ${maxResults} results, ordered by relevance (highest first). If t
 
 // ─── POST /ai/literature-review ───────────────────────────────────────────────
 
-router.post("/ai/literature-review", requireSupervisorOrOwner, async (req, res): Promise<void> => {
+router.post("/ai/literature-review", requireSupervisorOrOwner, aiAnalysisLimit, async (req, res): Promise<void> => {
   const parsed = GenerateLiteratureReviewBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
@@ -251,7 +252,7 @@ Return ONLY valid JSON — no markdown fences.`;
 
 // ─── POST /ai/uae-france-compare ─────────────────────────────────────────────
 
-router.post("/ai/uae-france-compare", requireSupervisorOrOwner, async (req, res): Promise<void> => {
+router.post("/ai/uae-france-compare", requireSupervisorOrOwner, aiAnalysisLimit, async (req, res): Promise<void> => {
   const parsed = UaeFranceCompareBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 

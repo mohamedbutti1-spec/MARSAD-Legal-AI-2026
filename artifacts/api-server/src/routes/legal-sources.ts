@@ -14,6 +14,7 @@ import { requireAnyRole, requireOwner, requireSupervisorOrOwner } from "../middl
 import { logAudit } from "../middlewares/auditLog";
 import { cache, TTL } from "../lib/cache";
 import { aiRouter, TaskType } from "../ai";
+import { aiAnalysisLimit } from "../middlewares/rateLimits.js";
 
 const router: IRouter = Router();
 
@@ -103,7 +104,7 @@ router.delete("/legal-sources/:id", requireOwner, async (req, res): Promise<void
 });
 
 // ─── AI Summarise ──────────────────────────────────────────────────────────────
-router.post("/legal-sources/:id/summarise", requireSupervisorOrOwner, async (req, res): Promise<void> => {
+router.post("/legal-sources/:id/summarise", requireSupervisorOrOwner, aiAnalysisLimit, async (req, res): Promise<void> => {
   const id = parseInt(req.params.id as string);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
 
@@ -145,7 +146,7 @@ router.post("/legal-sources/:id/summarise", requireSupervisorOrOwner, async (req
 // ─── AI Analyse (key-findings | relevance-uae) ────────────────────────────────
 // Unlike /summarise, this endpoint does NOT persist results — it returns an
 // ad-hoc analysis and caches it in-memory only for the session.
-router.post("/legal-sources/:id/analyse", requireSupervisorOrOwner, async (req, res): Promise<void> => {
+router.post("/legal-sources/:id/analyse", requireSupervisorOrOwner, aiAnalysisLimit, async (req, res): Promise<void> => {
   const id = parseInt(req.params.id as string);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
 

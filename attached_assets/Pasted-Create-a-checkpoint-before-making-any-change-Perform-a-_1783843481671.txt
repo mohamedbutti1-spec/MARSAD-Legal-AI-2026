@@ -1,0 +1,99 @@
+Create a checkpoint before making any change.
+
+Perform a controlled production-hardening pass for MARSAD.
+
+Work strictly in the following order:
+
+PHASE 1 — CRITICAL SECURITY FIXES
+1. Remove all plaintext, hardcoded, demo, fallback, seed, and bootstrap credentials from source code.
+2. Move all required credentials to Replit Secrets / environment variables only.
+3. Ensure there is no production fallback password anywhere in the code.
+4. Identify any credentials that were previously committed and list them for rotation without displaying their values.
+5. Do not print, expose, log, or copy any secret value.
+
+PHASE 2 — EXPORT AUTHORIZATION FIX
+6. Fix GET /export/download/:filename.
+7. Bind every export file to its creating user and organization where applicable.
+8. Before download, verify ownership using the authenticated session user.
+9. Allow access only to:
+   - the file owner,
+   - an authorized supervisor,
+   - or an explicitly authorized administrator.
+10. Return 403 for unauthorized access and 404 where appropriate to avoid information leakage.
+11. Do not rely on filename secrecy.
+
+PHASE 3 — AUTHORIZATION STANDARDIZATION
+12. Replace authorization decisions based on x-user-* headers with req.user only.
+13. Ensure req.user is populated only by verified authentication middleware.
+14. Preserve current roles and permissions exactly.
+15. Do not rename any role, user category, legal category, or workflow.
+16. Do not weaken any existing access restriction.
+
+PHASE 4 — AI AND SEARCH PROTECTION
+17. Add rate limiting to all AI/search/LLM POST routes that currently lack it.
+18. Cover at minimum routes found in:
+   - assistant.ts
+   - ai.ts
+   - research.ts
+   - legal-sources.ts
+19. Reuse the existing aiAnalysisLimit or create one shared limiter if needed.
+20. Avoid duplicate limiter logic.
+21. Return a clear 429 response when limits are exceeded.
+
+PHASE 5 — PERFORMANCE SAFETY
+22. Add pagination to unbounded list endpoints found in:
+   - /export
+   - /users
+   - /decisions
+   - /settings
+23. Preserve backward compatibility where reasonably possible.
+24. Use safe default page size and maximum limit.
+25. Do not change database schema unless strictly necessary.
+
+PHASE 6 — MOBILE AND RTL CONSISTENCY
+26. Standardize physical CSS spacing and positioning to logical RTL-safe properties where appropriate.
+27. Prioritize shared UI primitives first.
+28. Do not redesign the interface.
+29. Do not change colors, typography, labels, layout identity, MARSAD, MLOS, or Al-Shamsi terminology.
+30. Preserve current Arabic RTL behavior and English LTR behavior.
+
+PHASE 7 — CODE CLEANUP
+31. Consolidate duplicated authorization and permission helpers into one shared utility only where safe.
+32. Do not remove legacy routes unless you first verify they are unused.
+33. Do not remove any legal module, prompt, jurisdiction, workflow, or business feature.
+34. Do not perform broad refactoring beyond what is necessary for the fixes above.
+
+STRICT CONSTRAINTS
+- Do not modify legal logic.
+- Do not modify Al-Shamsi Theory logic.
+- Do not modify database content.
+- Do not delete user data.
+- Do not change production secrets.
+- Do not deploy or republish.
+- Do not create a new UI.
+- Do not rename files unless strictly necessary.
+- Do not make speculative changes.
+- Do not continue if a change risks breaking production behavior.
+
+VALIDATION REQUIRED
+After each phase:
+- run relevant tests,
+- run type-check,
+- run lint if available,
+- run build,
+- report any failure before continuing.
+
+FINAL OUTPUT REQUIRED
+Provide:
+1. Files changed.
+2. Exact fixes completed.
+3. Tests run and results.
+4. Remaining risks.
+5. Credentials that require manual rotation, by variable name only.
+6. Any change that was skipped and why.
+7. A production-readiness assessment.
+
+Stop after the report.
+Do not deploy.
+Do not republish.
+Wait for my approval.

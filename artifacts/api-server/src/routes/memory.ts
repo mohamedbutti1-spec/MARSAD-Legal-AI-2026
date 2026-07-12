@@ -24,20 +24,18 @@ import {
   getMemoryHistory,
 } from "@workspace/db";
 import { getPermissions, ALL_ROLES } from "@workspace/db/permissions";
-import { getValidatedRole } from "../lib/route-helpers";
+import { getValidatedRole, getUserInfo } from "../lib/route-helpers";
 
 const router: IRouter = Router();
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function getUserId(req: Request): string {
-  const h = req.headers["x-user-id"];
-  return Array.isArray(h) ? h[0] : (h ?? "system");
+  return getUserInfo(req).userId;
 }
 
 function getOrg(req: Request): string {
-  const h = req.headers["x-user-org"];
-  return Array.isArray(h) ? h[0] : (h ?? "");
+  return getUserInfo(req).org;
 }
 
 // Full memory read: audit log readers, hash verifiers, or judges

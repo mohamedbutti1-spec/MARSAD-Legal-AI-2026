@@ -35,8 +35,11 @@ export default function UserManagement() {
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const r = await apiFetch('/api/users');
-      if (r.ok) { const d = await r.json(); setUsers(d); }
+      const r = await apiFetch('/api/users?limit=200');
+      if (r.ok) {
+        const d = await r.json();
+        setUsers(Array.isArray(d) ? d : (d.users ?? []));
+      }
     } finally { setLoading(false); }
   }, []);
 

@@ -53,7 +53,7 @@ import { logAudit } from "../middlewares/auditLog";
 import { e400, e403, e404, e500 } from "../lib/sendError";
 import { aiRouter, TaskType } from "../ai";
 import { parseModelJson } from "../ai/providers/interface";
-import { getUserId } from "../lib/route-helpers";
+import { getUserId, getValidatedRole } from "../lib/route-helpers";
 
 const router: IRouter = Router();
 
@@ -654,24 +654,27 @@ ${stageDataStr}
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
-// GET /decisions — list all decisions
+// GET /decisions — list decisions (paginated)
 router.get("/decisions", requireAnyRole, async (req, res): Promise<void> => {
   try {
     const userId = getUserId(req);
-    const role = Array.isArray(req.headers["x-user-role"])
-      ? req.headers["x-user-role"][0]
-      : (req.headers["x-user-role"] ?? "viewer");
+    const role = getValidatedRole(req);
 
-    const rows =
-      role === "owner"
-        ? await db.select().from(decisionsTable).orderBy(desc(decisionsTable.createdAt))
-        : await db
-            .select()
-            .from(decisionsTable)
-            .where(eq(decisionsTable.createdBy, userId))
-            .orderBy(desc(decisionsTable.createdAt));
+    const limit = Math.min(200, Math.max(1, parseInt(String(req.query.limit ?? "50"), 10) || 50));
+    const offset = Math.max(0, parseInt(String(req.query.offset ?? "0"), 10) || 0);
 
-    res.json({ decisions: rows });
+    const baseQuery = db.select().from(decisionsTable);
+    const scopedQuery = role === "owner" ? baseQuery : baseQuery.where(eq(decisionsTable.createdBy, userId));
+    const countQuery = role === "owner"
+      ? db.select({ cnt: sql<number>`count(*)::int` }).from(decisionsTable)
+      : db.select({ cnt: sql<number>`count(*)::int` }).from(decisionsTable).where(eq(decisionsTable.createdBy, userId));
+
+    const [rows, [countRow]] = await Promise.all([
+      scopedQuery.orderBy(desc(decisionsTable.createdAt)).limit(limit).offset(offset),
+      countQuery,
+    ]);
+
+    res.json({ decisions: rows, total: countRow?.cnt ?? 0, limit, offset });
   } catch (err) {
     console.error("[decisions.list]", err);
     res.status(500).json({ error: "Failed to load decisions" });

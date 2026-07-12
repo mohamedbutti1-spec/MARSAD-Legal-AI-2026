@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { desc, eq, and, gte, sql, type SQL } from "drizzle-orm";
 import { db, auditLogsTable } from "@workspace/db";
 import { requireOwner, requireSupervisorOrOwner } from "../middlewares/roleAuth";
+import { getUserInfo } from "../lib/route-helpers";
 
 const router: IRouter = Router();
 
@@ -19,13 +20,12 @@ router.get("/audit", requireSupervisorOrOwner, async (req, res): Promise<void> =
   const { limit, offset, action, entityType, since } = parseListParams(
     req.query as Record<string, unknown>,
   );
-  const userRole = String(req.headers["x-user-role"] || "viewer");
-  const userIdRaw = req.headers["x-user-id"];
-  const userId = userIdRaw ? parseInt(String(userIdRaw), 10) : null;
+  const { role: userRole, userId: userIdStr } = getUserInfo(req);
+  const userId = parseInt(userIdStr, 10);
 
   const conditions: SQL[] = [];
 
-  if (userRole === "supervisor" && userId && !Number.isNaN(userId)) {
+  if (userRole === "supervisor" && !Number.isNaN(userId)) {
     conditions.push(eq(auditLogsTable.userId, userId));
   }
   if (action) conditions.push(eq(auditLogsTable.action, action));

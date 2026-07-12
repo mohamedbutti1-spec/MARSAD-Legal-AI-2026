@@ -53,7 +53,7 @@ import {
 } from "../utils/admin-os-interview";
 import { getJurisdictionPlugin } from "../ai/jurisdictions";
 import type { InterviewModifiers } from "@workspace/db";
-import { getUserId } from "../lib/route-helpers";
+import { getUserId, getValidatedRole } from "../lib/route-helpers";
 
 const router: IRouter = Router();
 
@@ -866,7 +866,7 @@ router.get("/admin-os/sessions/:id/audit", requireSupervisorOrOwner, async (req,
  */
 router.get("/admin-os/stats", requireSupervisorOrOwner, async (req, res): Promise<void> => {
   const uid = getUserId(req);
-  const userRole = String(req.headers["x-user-role"] || "viewer");
+  const userRole = getValidatedRole(req);
   const isOwner = userRole === "owner";
 
   const sessions = isOwner
