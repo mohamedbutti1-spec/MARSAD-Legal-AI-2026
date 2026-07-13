@@ -205,10 +205,13 @@ export default function Login() {
             </Button>
           </form>
 
-          {/* Guest evaluation login — always available, including production.
-              Signs directly into the permanent read-only "reviewer" account
-              (role "viewer"): full read access to every module, dashboard and
-              the AI assistant, with no create/update/delete permissions. */}
+          {/* Guest/demo login — always available, including production. Signs
+              directly into the permanent "reviewer" account (role "viewer"):
+              full read access to every module and dashboard, plus a narrow
+              exception to ask the AI assistant legal questions (capped at
+              5/day) — see requireWriteRoleOrGuestDemo on the backend. No
+              create/update/delete permissions anywhere else, and no access
+              to admin settings, user management, or system configuration. */}
           <div className="mt-5">
             <Button
               type="button"
@@ -225,7 +228,7 @@ export default function Login() {
               ) : (
                 <span className="flex items-center gap-2">
                   <Eye className="w-4 h-4" />
-                  دخول كمقيّم — قراءة فقط / Guest Evaluation Login
+                  تجربة المنصة / Demo Access
                 </span>
               )}
             </Button>

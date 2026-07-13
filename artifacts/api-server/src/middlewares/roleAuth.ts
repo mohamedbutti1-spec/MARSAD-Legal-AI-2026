@@ -85,3 +85,30 @@ export const requireWriteRole = requireRole(
   "constitutional_reviewer", "internal_auditor", "external_auditor",
   "judge",
 );
+
+/**
+ * requireWriteRoleOrGuestDemo — requireWriteRole, plus a narrow exception
+ * letting "viewer" through.
+ *
+ * This exists ONLY to support the public "تجربة المنصة / Demo Access" guest
+ * flow: invited evaluators sign into the shared read-only reviewer account
+ * and should be able to ask the AI assistant a legal question and get an
+ * answer, without creating a real account. It must be used ONLY on the two
+ * assistant routes that implement that flow (create session, send message),
+ * and the message-send route MUST also carry `guestDailyQuestionLimit`
+ * (rateLimits.ts) so guest usage stays capped at 5 questions/day. Every other
+ * write route on the platform — including renaming/deleting assistant
+ * sessions — stays on requireWriteRole / requireSupervisorOrOwner with
+ * viewer excluded, per the read-only invariant enforced at guest-login time.
+ */
+export function requireWriteRoleOrGuestDemo(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
+  if (req.user?.role === "viewer") {
+    next();
+    return;
+  }
+  requireWriteRole(req, res, next);
+}

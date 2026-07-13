@@ -21,7 +21,7 @@ import {
   documentsTable,
   legalSourcesTable,
 } from "@workspace/db";
-import { requireAnyRole, requireSupervisorOrOwner } from "../middlewares/roleAuth";
+import { requireAnyRole, requireSupervisorOrOwner, requireWriteRoleOrGuestDemo } from "../middlewares/roleAuth";
 import { logAudit } from "../middlewares/auditLog";
 import { aiRouter, TaskType } from "../ai";
 import {
@@ -33,7 +33,7 @@ import {
 } from "../utils/rag";
 import { buildTheoryPromptSuffix, parseTheoryResponse } from "../utils/theory-lenses.js";
 import { getUserId } from "../lib/route-helpers";
-import { aiAnalysisLimit } from "../middlewares/rateLimits.js";
+import { aiAnalysisLimit, guestDailyQuestionLimit } from "../middlewares/rateLimits.js";
 import {
   isRetryableAnthropicError,
   classifyAnthropicError,
@@ -58,7 +58,11 @@ router.get("/assistant/sessions", requireAnyRole, async (req, res): Promise<void
 });
 
 // ─── POST /assistant/sessions ──────────────────────────────────────────────────
-router.post("/assistant/sessions", requireSupervisorOrOwner, async (req, res): Promise<void> => {
+// requireWriteRoleOrGuestDemo lets the "viewer" role through too — needed for
+// the public "تجربة المنصة / Demo Access" guest flow. Creating a session is
+// not itself capped (the cap lives on the message-send route below); guests
+// are still limited overall by the daily question cap on that route.
+router.post("/assistant/sessions", requireWriteRoleOrGuestDemo, async (req, res): Promise<void> => {
   const uid = getUserId(req);
   const title = (req.body.title as string | undefined) ?? "محادثة جديدة";
   const [session] = await db.insert(chatSessionsTable).values({ userId: uid, title }).returning();
@@ -121,7 +125,16 @@ router.get("/assistant/sessions/:id/messages", requireAnyRole, async (req, res):
 });
 
 // ─── POST /assistant/sessions/:id/messages ────────────────────────────────────
-router.post("/assistant/sessions/:id/messages", requireSupervisorOrOwner, aiAnalysisLimit, async (req, res): Promise<void> => {
+// guestDailyQuestionLimit (5/day, IP-keyed) applies only to the "viewer" role —
+// see requireWriteRoleOrGuestDemo. It runs before aiAnalysisLimit so a guest
+// who is over their daily cap gets the demo-specific message, not the generic
+// per-minute one.
+router.post(
+  "/assistant/sessions/:id/messages",
+  requireWriteRoleOrGuestDemo,
+  guestDailyQuestionLimit,
+  aiAnalysisLimit,
+  async (req, res): Promise<void> => {
   const sessionId = parseInt(req.params.id as string, 10);
   const uid = getUserId(req);
   if (isNaN(sessionId)) { res.status(400).json({ error: "Invalid id" }); return; }

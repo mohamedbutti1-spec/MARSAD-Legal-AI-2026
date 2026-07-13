@@ -3935,7 +3935,7 @@ const SUGGESTIONS = [
 // ─── Sessions drawer (mobile) ─────────────────────────────────────────────────
 
 function SessionsDrawer({
-  open, sessions, activeId, onSelect, onDelete, onCreate, onClose, canUseAi, t,
+  open, sessions, activeId, onSelect, onDelete, onCreate, onClose, canUseAi, canManageAiSessions, t,
 }: {
   open: boolean;
   sessions: Session[];
@@ -3945,6 +3945,8 @@ function SessionsDrawer({
   onCreate: () => void;
   onClose: () => void;
   canUseAi: boolean;
+  /** Guests (viewer) can create/ask but not rename/delete — hides the delete control for them. */
+  canManageAiSessions: boolean;
   t: (ar: string, en: string) => string;
 }) {
   return (
@@ -3996,14 +3998,16 @@ function SessionsDrawer({
                 <MessageSquare className="w-3.5 h-3.5 shrink-0" />
                 <span className="truncate font-medium">{s.title}</span>
               </button>
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); onDelete(s, e); }}
-                className="shrink-0 pe-2 opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive p-0.5"
-                aria-label={t('حذف المحادثة', 'Delete conversation')}
-              >
-                <Trash2 className="w-3 h-3" />
-              </button>
+              {canManageAiSessions && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); onDelete(s, e); }}
+                  className="shrink-0 pe-2 opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive p-0.5"
+                  aria-label={t('حذف المحادثة', 'Delete conversation')}
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              )}
             </div>
           ))}
         </div>
@@ -4133,12 +4137,19 @@ function CaseLifecycleTracker({
 export default function AiAssistant() {
   const t = useT();
   const { canUseAi, role } = useUserContext();
-  // The backend restricts session/message *writes* (create session, send message,
-  // rename/delete) to owner|supervisor via requireSupervisorOrOwner — narrower than
-  // canUseAi (any non-citizen role, used for read access like GET sessions/messages).
-  // Read-only roles (e.g. the guest/reviewer account) must not see write controls as
-  // enabled, or they hit a 403 and the UI gets stuck (e.g. an eternal auto-create spinner).
-  const canCreateAiSession = role === 'owner' || role === 'supervisor';
+  // The backend restricts session/message *writes* to owner|supervisor via
+  // requireSupervisorOrOwner — narrower than canUseAi (any non-citizen role,
+  // used for read access like GET sessions/messages) — with ONE deliberate
+  // exception: "viewer" (the shared guest/reviewer demo account) is also
+  // allowed to create a session and send messages (requireWriteRoleOrGuestDemo
+  // on the backend), capped at 5 questions/day, to support the public
+  // "تجربة المنصة / Demo Access" flow. Renaming/deleting a session stays
+  // owner|supervisor only — see canManageAiSessions below.
+  const canCreateAiSession = role === 'owner' || role === 'supervisor' || role === 'viewer';
+  // Narrower than canCreateAiSession: guests can ask questions but cannot
+  // rename/delete sessions (backend keeps those on requireSupervisorOrOwner).
+  const canManageAiSessions = role === 'owner' || role === 'supervisor';
+  const isGuestDemo = role === 'viewer';
   const { toast } = useToast();
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -4211,10 +4222,13 @@ export default function AiAssistant() {
   // create its own session; otherwise open a session automatically on load.
   useEffect(() => {
     if (sessionStorage.getItem('pendingAssistantQuery')) return;
-    // Read-only roles (e.g. the guest/reviewer account) can't create sessions —
-    // POST /api/assistant/sessions 403s for them. Skip the auto-create so the
-    // page doesn't get stuck on an infinite spinner waiting for an activeSession
-    // that will never arrive; the read-only empty state below handles this case.
+    // Roles with no assistant-write access at all (citizen) can't create
+    // sessions — POST /api/assistant/sessions would 403 for them. Skip the
+    // auto-create so the page doesn't get stuck on an infinite spinner
+    // waiting for an activeSession that will never arrive; the empty state
+    // below handles this case. The guest/reviewer ("viewer") account IS
+    // allowed to create a session (capped at 5 questions/day), so it goes
+    // through this auto-create like any other eligible role.
     if (!canCreateAiSession) return;
     createSession();
   }, [canCreateAiSession]);
@@ -4856,6 +4870,7 @@ export default function AiAssistant() {
           onCreate={async () => { await createSession(); setShowSessionsDrawer(false); }}
           onClose={() => setShowSessionsDrawer(false)}
           canUseAi={canCreateAiSession}
+          canManageAiSessions={canManageAiSessions}
           t={t}
         />
       )}
@@ -4897,14 +4912,16 @@ export default function AiAssistant() {
                   <MessageSquare className="w-3.5 h-3.5 shrink-0" />
                   <span className="truncate font-medium">{s.title}</span>
                 </button>
-                <button
-                  type="button"
-                  onClick={(e) => deleteSession(s, e)}
-                  className="shrink-0 pe-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive p-0.5"
-                  aria-label={t('حذف', 'Delete')}
-                >
-                  <Trash2 className="w-3 h-3" />
-                </button>
+                {canManageAiSessions && (
+                  <button
+                    type="button"
+                    onClick={(e) => deleteSession(s, e)}
+                    className="shrink-0 pe-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive p-0.5"
+                    aria-label={t('حذف', 'Delete')}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -4978,9 +4995,11 @@ export default function AiAssistant() {
           <div className="flex-1 overflow-y-auto px-3 sm:px-5 py-3 sm:py-4">
             {!activeSession ? (
               !canCreateAiSession ? (
-                // Read-only roles (guest/reviewer) can browse but never get an
-                // auto-created session — show a clear static state instead of
-                // spinning forever waiting for a 403'd request to succeed.
+                // Roles that can read the assistant but not write to it (e.g.
+                // most governance/professional roles other than owner,
+                // supervisor, and the guest/reviewer demo account) can browse
+                // but never get an auto-created session — show a clear static
+                // state instead of spinning forever waiting for a 403'd request.
                 <div className="flex flex-col items-center justify-center h-full gap-3 text-center px-4" dir="rtl">
                   <Bot className="w-8 h-8 text-muted-foreground/30" aria-hidden />
                   <p className="text-sm text-muted-foreground max-w-xs">
