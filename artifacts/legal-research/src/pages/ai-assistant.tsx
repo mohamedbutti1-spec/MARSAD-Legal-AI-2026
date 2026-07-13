@@ -3895,6 +3895,40 @@ export default function AiAssistant() {
       customTheoryText: theoryLens.lensId === 'custom' ? theoryLens.customText : undefined,
     });
 
+    // Snapshot of the message count *before* this turn — used to detect,
+    // via a plain re-fetch, whether the server-side pipeline actually
+    // finished and saved the assistant reply even though our connection to
+    // it was interrupted. The AI generation on the server is independent of
+    // the HTTP response stream (writes to a dropped connection are swallowed
+    // server-side), so on a client-visible disconnect the safest single
+    // retry is "ask the server what happened" rather than resubmitting the
+    // question, which would insert a duplicate user message.
+    const countBeforeSend = messages.length;
+
+    async function pollForRecoveredReply(): Promise<Message | null> {
+      if (!activeSession) return null;
+      try {
+        const r = await apiFetch(`/api/assistant/sessions/${activeSession.id}/messages`);
+        if (!r.ok) return null;
+        const data = await r.json();
+        const msgs = (data.messages ?? []) as Message[];
+        // +2 = the user message we just sent + the assistant reply we're waiting on
+        if (msgs.length >= countBeforeSend + 2) {
+          const last = msgs[msgs.length - 1];
+          if (last.role === 'assistant') return last;
+        }
+        return null;
+      } catch {
+        return null;
+      }
+    }
+
+    /** One retry, after a short delay, giving the in-flight server pipeline time to finish. */
+    async function retryOnceViaPoll(): Promise<Message | null> {
+      await new Promise((resolve) => setTimeout(resolve, 1800));
+      return pollForRecoveredReply();
+    }
+
     // ── Streaming path (NDJSON) ──────────────────────────────────────────────
     try {
       const streamR = await apiFetch(`/api/assistant/sessions/${activeSession.id}/messages`, {
@@ -3918,6 +3952,18 @@ export default function AiAssistant() {
         let lineBuffer = '';
         let fullContent = '';
         let receivedDone = false;
+        // True once we've shown the user a terminal, server-explained error —
+        // suppresses the generic "connection lost" toast so the user only
+        // ever sees one (accurate) message instead of two conflicting ones.
+        let errorAlreadyHandled = false;
+
+        const applyRecoveredReply = (finalMsg: Message, citations: Citation[]) => {
+          receivedDone = true;
+          const msgWithMeta: Message = { ...finalMsg, meta: { ...(finalMsg.meta ?? {}), citations } };
+          setMsgDisplayMetaMap((prev) => ({ ...prev, [finalMsg.id]: { mode, userQuery: text } }));
+          setMessages((prev) => prev.map((m) => (m.id === streamTempId ? msgWithMeta : m)));
+          fetchSessions();
+        };
 
         try {
           while (true) {
@@ -3931,31 +3977,31 @@ export default function AiAssistant() {
               if (!line) continue;
               try {
                 const parsed = JSON.parse(line) as Record<string, unknown>;
-                if (typeof parsed.delta === 'string') {
+                if (parsed.reset === true) {
+                  // Server discarded a failed partial attempt and is starting
+                  // over (retry or non-streaming fallback) — clear the bubble
+                  // so the retried content doesn't get appended to garbage.
+                  fullContent = '';
+                  setMessages((prev) =>
+                    prev.map((m) => m.id === streamTempId ? { ...m, content: '' } : m)
+                  );
+                } else if (typeof parsed.delta === 'string') {
                   fullContent += parsed.delta;
                   setMessages((prev) =>
                     prev.map((m) => m.id === streamTempId ? { ...m, content: fullContent } : m)
                   );
                 } else if (parsed.done && parsed.message) {
-                  receivedDone = true;
-                  const finalMsg = parsed.message as Message;
-                  const finalCitations = (parsed.citations ?? []) as Citation[];
-                  const msgWithMeta: Message = {
-                    ...finalMsg,
-                    meta: { ...(finalMsg.meta ?? {}), citations: finalCitations },
-                  };
-                  setMsgDisplayMetaMap((prev) => ({
-                    ...prev,
-                    [finalMsg.id]: { mode, userQuery: text },
-                  }));
-                  setMessages((prev) =>
-                    prev.map((m) => m.id === streamTempId ? msgWithMeta : m)
-                  );
-                  fetchSessions();
+                  applyRecoveredReply(parsed.message as Message, (parsed.citations ?? []) as Citation[]);
                 } else if (parsed.error) {
+                  errorAlreadyHandled = true;
+                  // technical detail stays in the console/server logs; the user
+                  // only ever sees the Arabic-friendly summary
+                  console.error('Assistant stream error:', parsed.error, parsed.code);
                   toast({
-                    title: t('خطأ في الإرسال', 'Send failed'),
-                    description: String(parsed.error),
+                    title: t('تعذّر توليد الرد', 'Response failed'),
+                    description: typeof parsed.arabicMessage === 'string'
+                      ? parsed.arabicMessage
+                      : t('حدث خطأ في خدمة الذكاء الاصطناعي. يرجى المحاولة مرة أخرى.', 'The AI service failed. Please try again.'),
                     variant: 'destructive',
                   });
                   // Remove the streaming placeholder on server-emitted error
@@ -3964,26 +4010,46 @@ export default function AiAssistant() {
               } catch { /* malformed NDJSON line — skip */ }
             }
           }
-          // EOF without a `done` line — treat as a post-processing error on the server
-          if (!receivedDone) {
-            toast({
-              title: t('انقطع الاتصال', 'Stream interrupted'),
-              description: t('انتهى البث قبل اكتمال الرد', 'Stream ended before response completed'),
-              variant: 'destructive',
-            });
-            // If we have partial content leave the bubble, otherwise remove it
-            if (!fullContent) {
-              setMessages((prev) => prev.filter((m) => m.id !== streamTempId));
+          // EOF without a `done` line and without an explicit server error —
+          // the connection itself dropped. Try one silent automatic recovery
+          // before bothering the user, since the server-side generation may
+          // have completed and saved successfully after we lost the socket.
+          if (!receivedDone && !errorAlreadyHandled) {
+            const recovered = await retryOnceViaPoll();
+            if (recovered) {
+              applyRecoveredReply(recovered, ((recovered.meta as { citations?: Citation[] } | undefined)?.citations ?? []));
+            } else {
+              console.error('Assistant stream disconnected before completion; automatic retry found no saved reply.');
+              toast({
+                title: t('انقطع الاتصال', 'Connection lost'),
+                description: t(
+                  'انتهى البث قبل اكتمال الرد، وفشلت إعادة المحاولة التلقائية. يرجى إعادة إرسال سؤالك.',
+                  'The stream ended before the response completed, and the automatic retry found no result. Please resend your question.',
+                ),
+                variant: 'destructive',
+              });
+              if (!fullContent) {
+                setMessages((prev) => prev.filter((m) => m.id !== streamTempId));
+              }
             }
           }
         } catch (readerErr) {
-          // Network / reader failure — remove placeholder, keep user message
-          toast({
-            title: t('خطأ في البث', 'Streaming error'),
-            description: t('انقطع البث بشكل غير متوقع', 'Stream was interrupted unexpectedly'),
-            variant: 'destructive',
-          });
-          setMessages((prev) => prev.filter((m) => m.id !== streamTempId));
+          // Network / reader failure — same single automatic recovery attempt.
+          console.error('Assistant stream reader failed:', readerErr);
+          const recovered = await retryOnceViaPoll();
+          if (recovered) {
+            applyRecoveredReply(recovered, ((recovered.meta as { citations?: Citation[] } | undefined)?.citations ?? []));
+          } else {
+            toast({
+              title: t('خطأ في البث', 'Streaming error'),
+              description: t(
+                'انقطع البث بشكل غير متوقع، وفشلت إعادة المحاولة التلقائية. يرجى إعادة إرسال سؤالك.',
+                'The stream was interrupted unexpectedly, and the automatic retry found no result. Please resend your question.',
+              ),
+              variant: 'destructive',
+            });
+            setMessages((prev) => prev.filter((m) => m.id !== streamTempId));
+          }
         } finally {
           // Always release reader lock and clear streaming state
           try { reader.releaseLock(); } catch { /* already released */ }
@@ -4002,21 +4068,37 @@ export default function AiAssistant() {
         setMessages((prev) => [...prev.filter((m) => m.id !== tempUserMsgId), userMsg, data.message]);
         fetchSessions();
       } else {
-        const errData = await streamR.json().catch(() => ({}));
+        const errData = await streamR.json().catch(() => ({})) as { error?: string; arabicMessage?: string; code?: string };
+        console.error('Assistant non-streaming request failed:', errData.error, errData.code);
         toast({
-          title: t('خطأ في الإرسال', 'Send failed'),
-          description: (errData as { error?: string }).error,
+          title: t('تعذّر توليد الرد', 'Response failed'),
+          description: errData.arabicMessage ?? t('حدث خطأ في خدمة الذكاء الاصطناعي. يرجى المحاولة مرة أخرى.', 'The AI service failed. Please try again.'),
           variant: 'destructive',
         });
         setMessages((prev) => prev.filter((m) => m.id !== tempUserMsgId));
       }
     } catch (fetchErr) {
-      toast({
-        title: t('خطأ في الاتصال', 'Connection error'),
-        description: t('تعذّر الاتصال بالخادم', 'Could not reach the server'),
-        variant: 'destructive',
-      });
-      setMessages((prev) => prev.filter((m) => m.id !== tempUserMsgId));
+      // The initial connection to the server itself failed (offline, DNS,
+      // CORS, etc — never reached the streaming/non-streaming branches
+      // above). Same single-retry recovery: the user's message may already
+      // be saved server-side even if we never saw a response.
+      console.error('Assistant request failed before a response was received:', fetchErr);
+      const recovered = await retryOnceViaPoll();
+      if (recovered) {
+        setMsgDisplayMetaMap((prev) => ({ ...prev, [recovered.id]: { mode, userQuery: text } }));
+        setMessages((prev) => [...prev.filter((m) => m.id !== tempUserMsgId), userMsg, recovered]);
+        fetchSessions();
+      } else {
+        toast({
+          title: t('خطأ في الاتصال', 'Connection error'),
+          description: t(
+            'تعذّر الاتصال بالخادم، وفشلت إعادة المحاولة التلقائية. يرجى إعادة إرسال سؤالك.',
+            'Could not reach the server, and the automatic retry found no result. Please resend your question.',
+          ),
+          variant: 'destructive',
+        });
+        setMessages((prev) => prev.filter((m) => m.id !== tempUserMsgId));
+      }
     } finally {
       setSending(false);
       inputRef.current?.focus();

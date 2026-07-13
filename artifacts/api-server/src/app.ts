@@ -71,7 +71,20 @@ app.use(
 );
 
 // ── Compression ──────────────────────────────────────────────────────────────
-app.use(compression());
+// Skip compression on NDJSON streaming responses (assistant chat, court
+// simulation). The compression middleware buffers output until it has enough
+// bytes to make compression worthwhile, which delays/batches chunks instead
+// of flushing them immediately — on iOS Safari over a mobile connection this
+// reads as a dead connection and the stream is dropped before it completes.
+app.use(
+  compression({
+    filter: (req, res) => {
+      const contentType = String(res.getHeader("Content-Type") ?? "");
+      if (contentType.includes("ndjson")) return false;
+      return compression.filter(req, res);
+    },
+  }),
+);
 
 // ── HTTP request logging ─────────────────────────────────────────────────────
 app.use(

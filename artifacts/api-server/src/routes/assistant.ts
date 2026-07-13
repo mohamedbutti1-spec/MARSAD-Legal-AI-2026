@@ -34,6 +34,11 @@ import {
 import { buildTheoryPromptSuffix, parseTheoryResponse } from "../utils/theory-lenses.js";
 import { getUserId } from "../lib/route-helpers";
 import { aiAnalysisLimit } from "../middlewares/rateLimits.js";
+import {
+  isRetryableAnthropicError,
+  classifyAnthropicError,
+  CLAUDE_ERROR_MESSAGES_AR,
+} from "../ai/providers/claude.provider";
 
 const router: IRouter = Router();
 
@@ -487,6 +492,10 @@ ${ragContext
 
   if (wantsStream && typeof provider.streamChunks === "function") {
     // ── Streaming path: emit each AI delta as an NDJSON line ─────────────────
+    // Content-Type deliberately excludes gzip/br compression (see app.ts —
+    // compression() is filtered off for this content type) so chunks reach
+    // the client immediately instead of being buffered by the compressor,
+    // which is what made iOS Safari appear to "hang" then time out.
     res.setHeader("Content-Type", "application/x-ndjson; charset=utf-8");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("X-Accel-Buffering", "no");
@@ -496,20 +505,79 @@ ${ragContext
       try { res.write(JSON.stringify(obj) + "\n"); } catch {}
     }
 
-    let fullText = "";
-    try {
-      for await (const chunk of provider.streamChunks!({
+    /** One streaming attempt. Returns the accumulated text, or throws. */
+    async function attemptStream(): Promise<string> {
+      let text = "";
+      for await (const chunk of provider!.streamChunks!({
         taskType: TaskType.RAG,
         prompt: fullPrompt,
         systemPrompt,
         maxTokens: 8000,
       })) {
-        fullText += chunk;
+        text += chunk;
         emitLine({ delta: chunk });
       }
+      return text;
+    }
+
+    let fullText: string | null = null;
+    let lastErr: unknown = null;
+
+    // ── Attempt 1 — streaming ────────────────────────────────────────────────
+    try {
+      fullText = await attemptStream();
     } catch (err) {
-      req.log.error({ err }, "Assistant streaming failed");
-      emitLine({ error: "AI streaming failed. Please try again." });
+      lastErr = err;
+      req.log.error({ err }, "Assistant streaming failed (attempt 1)");
+
+      // ── Attempt 2 — retry the stream once, only if the failure looks
+      // transient (network blip, 5xx, timeout). Billing/auth failures are
+      // deterministic — retrying wastes the user's time and hits the same
+      // broken account again. Tell the client to discard whatever partial
+      // text it already rendered before we start writing a fresh stream.
+      if (isRetryableAnthropicError(err)) {
+        emitLine({ reset: true });
+        try {
+          fullText = await attemptStream();
+          lastErr = null;
+        } catch (err2) {
+          lastErr = err2;
+          req.log.error({ err: err2 }, "Assistant streaming failed (attempt 2 / retry)");
+        }
+      }
+    }
+
+    // ── Attempt 3 — graceful degrade to a single non-streaming completion.
+    // Covers both remaining streaming failures and non-retryable errors that
+    // skipped attempt 2. A plain request/response is sometimes able to
+    // succeed where a long-lived stream connection could not (e.g. a proxy
+    // or mobile network dropping idle/long-held connections).
+    if (fullText === null) {
+      emitLine({ reset: true });
+      try {
+        const fallback = await provider.complete({
+          taskType: TaskType.RAG,
+          prompt: fullPrompt,
+          systemPrompt,
+          maxTokens: 8000,
+        });
+        fullText = fallback.text;
+        lastErr = null;
+        emitLine({ delta: fullText, fellBackToNonStreaming: true });
+        req.log.info("Assistant chat recovered via non-streaming fallback after streaming failures");
+      } catch (err3) {
+        lastErr = err3;
+        req.log.error({ err: err3 }, "Assistant non-streaming fallback also failed");
+      }
+    }
+
+    if (fullText === null) {
+      const code = classifyAnthropicError(lastErr);
+      emitLine({
+        error: "AI streaming failed after retry and non-streaming fallback. Please try again.",
+        code,
+        arabicMessage: CLAUDE_ERROR_MESSAGES_AR[code],
+      });
       res.end();
       return;
     }
@@ -550,7 +618,11 @@ ${ragContext
       emitLine({ done: true, message: assistantMsg, citations });
     } catch (postErr) {
       req.log.error({ postErr }, "Assistant stream post-processing failed");
-      emitLine({ error: "Stream post-processing failed. Message may not have been saved." });
+      emitLine({
+        error: "Stream post-processing failed. Message may not have been saved.",
+        code: "provider_error",
+        arabicMessage: "تم توليد الرد ولكن تعذّر حفظه. يرجى إعادة إرسال السؤال.",
+      });
     } finally {
       res.end();
     }
@@ -559,12 +631,26 @@ ${ragContext
 
   // ── Non-streaming path (fallback / clients without NDJSON support) ──────────
   try {
-    const aiResult = await provider.complete({
-      taskType: TaskType.RAG,
-      prompt: fullPrompt,
-      systemPrompt,
-      maxTokens: 8000,
-    });
+    let aiResult;
+    try {
+      aiResult = await provider.complete({
+        taskType: TaskType.RAG,
+        prompt: fullPrompt,
+        systemPrompt,
+        maxTokens: 8000,
+      });
+    } catch (err) {
+      req.log.error({ err }, "Assistant chat failed (attempt 1)");
+      // Retry once — same rationale as the streaming path: only retryable
+      // (network/timeout/5xx) failures are worth a second attempt.
+      if (!isRetryableAnthropicError(err)) throw err;
+      aiResult = await provider.complete({
+        taskType: TaskType.RAG,
+        prompt: fullPrompt,
+        systemPrompt,
+        maxTokens: 8000,
+      });
+    }
 
     // Parse theory overlay sections (when a theory lens is active the model
     // emits a ---THEORY LENS: {label}--- marker splitting binding from theory).
@@ -620,7 +706,12 @@ ${ragContext
     });
   } catch (err) {
     req.log.error({ err }, "Assistant chat failed");
-    res.status(500).json({ error: "AI response failed. Please try again." });
+    const code = classifyAnthropicError(err);
+    res.status(502).json({
+      error: "AI response failed. Please try again.",
+      code,
+      arabicMessage: CLAUDE_ERROR_MESSAGES_AR[code],
+    });
   }
 });
 
