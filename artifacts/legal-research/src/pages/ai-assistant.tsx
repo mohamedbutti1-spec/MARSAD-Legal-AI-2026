@@ -115,17 +115,15 @@ type UserGoal =
 type ConfigAnswerMode = 'quick' | 'standard' | 'academic' | 'judicial' | 'memorandum' | 'legislative' | 'executive_report' | 'comparative' | 'scientific';
 type Jurisdiction    = 'uae' | 'france' | 'saudi' | 'egypt' | 'eu' | 'gcc' | 'comparative' | 'other';
 
-// ─── MLOS Restructured Legal Analysis Flow ────────────────────────────────────
-// General legal domain (المجال القانوني) — exactly 3 top-level options.
-type LegalDomain = 'public' | 'private' | 'criminal';
-// Sub-branches — only public/private domains show a sub-list; criminal maps
-// directly to 'criminal_law' with no further selection.
-type LegalBranch =
-  | 'public_administrative' | 'public_constitutional' | 'public_financial' | 'public_international'
-  | 'private_civil' | 'private_commercial' | 'private_labor' | 'private_international'
-  | 'criminal_law';
-// مصدر القانون — exactly 4 options (Al-Shamsi Theory and "other" removed).
-type LawSource = 'uae_law' | 'french_law' | 'egyptian_law' | 'comparative_law';
+// ─── MLOS Hierarchical Legal Taxonomy ──────────────────────────────────────────
+// "التصنيف القانوني الرئيسي" — exactly 4 top-level options.
+type LegalDomain = 'public_law' | 'private_law' | 'criminal_law' | 'mixed_regulatory_law';
+// "فرع القانون …" and "التخصص الدقيق" are plain string ids resolved at runtime
+// against LEGAL_TAXONOMY (too many branch/specialization combinations for a
+// union type to stay maintainable) — never indexed without going through
+// getLegalBranchDef/getLegalSpecializationDef below.
+// مصدر القانون — exactly 5 options (Al-Shamsi Theory and "other" removed).
+type LawSource = 'uae_law' | 'french_law' | 'egyptian_law' | 'saudi_law' | 'comparative_law';
 // شكل الإجابة — exactly 2 options.
 type AnswerFormat = 'urgent_brief_answer' | 'specialized_legal_analysis';
 // سيناريوهات التدريب والمراجعة القضائية الافتراضية — exactly 6 output types.
@@ -152,11 +150,13 @@ interface SessionConfig {
   comparativeMode: boolean;
   /** V5.0 — Professional Maturity Engine */
   maturityLevel: MaturityLevel;
-  // ── MLOS Restructured Legal Analysis Flow ──────────────────────────────
-  /** المجال القانوني — '' until the user picks one. */
+  // ── MLOS Hierarchical Legal Taxonomy ────────────────────────────────────
+  /** التصنيف القانوني الرئيسي — '' until the user picks one. */
   legalDomain: LegalDomain | '';
-  /** الفرع القانوني — '' until applicable/chosen; cleared whenever legalDomain changes. */
-  legalBranch: LegalBranch | '';
+  /** فرع القانون [العام/الخاص/الجزائي/التنظيمي] — '' until applicable/chosen; cleared whenever legalDomain changes. */
+  legalBranch: string;
+  /** التخصص الدقيق — '' until applicable/chosen; cleared whenever legalBranch changes. */
+  legalSpecialization: string;
   /** مصدر القانون — '' until the user picks one. */
   lawSource: LawSource | '';
   /** شكل الإجابة — '' until the user picks one. */
@@ -181,37 +181,149 @@ const DEFAULT_SESSION_CONFIG: SessionConfig = {
   sources: ['all'], citStyle: 'uae', depth: 'detailed',
   applyAdvancedStandard: false, comparativeMode: false,
   maturityLevel: 'mid',
-  legalDomain: '', legalBranch: '', lawSource: '', answerFormat: '',
+  legalDomain: '', legalBranch: '', legalSpecialization: '', lawSource: '', answerFormat: '',
 };
 
-// ─── المجال القانوني / الفرع القانوني ──────────────────────────────────────
-const LEGAL_DOMAIN_CFG: Record<LegalDomain, { ar: string }> = {
-  public:   { ar: 'القانون العام' },
-  private:  { ar: 'القانون الخاص' },
-  criminal: { ar: 'القانون الجزائي / الجنائي' },
+// ─── MLOS Hierarchical Legal Taxonomy — التصنيف القانوني الرئيسي → الفرع → التخصص الدقيق ──
+interface LegalSpecializationDef { id: string; ar: string; }
+interface LegalBranchDef { id: string; ar: string; specializations: LegalSpecializationDef[]; }
+interface LegalDomainDef { ar: string; branches: LegalBranchDef[]; }
+
+const LEGAL_TAXONOMY: Record<LegalDomain, LegalDomainDef> = {
+  public_law: {
+    ar: 'القانون العام',
+    branches: [
+      { id: 'constitutional_law', ar: 'القانون الدستوري', specializations: [
+        { id: 'constitutional_review', ar: 'الرقابة الدستورية' },
+        { id: 'rights_freedoms', ar: 'الحقوق والحريات' },
+        { id: 'public_authorities', ar: 'السلطات العامة' },
+        { id: 'constitutional_system', ar: 'النظام الدستوري' },
+        { id: 'separation_of_powers', ar: 'الفصل بين السلطات' },
+      ] },
+      { id: 'administrative_law', ar: 'القانون الإداري', specializations: [
+        { id: 'administrative_decision', ar: 'القرار الإداري' },
+        { id: 'administrative_contracts', ar: 'العقود الإدارية' },
+        { id: 'public_function', ar: 'الوظيفة العامة' },
+        { id: 'administrative_control', ar: 'الضبط الإداري' },
+        { id: 'public_facilities', ar: 'المرافق العامة' },
+        { id: 'administrative_liability', ar: 'المسؤولية الإدارية' },
+        { id: 'administrative_judiciary', ar: 'القضاء الإداري' },
+      ] },
+      { id: 'financial_tax_law', ar: 'القانون المالي والضريبي', specializations: [
+        { id: 'public_budget', ar: 'الميزانية العامة' },
+        { id: 'taxes', ar: 'الضرائب' },
+        { id: 'fees', ar: 'الرسوم' },
+        { id: 'public_expenditure', ar: 'الإنفاق العام' },
+        { id: 'financial_control', ar: 'الرقابة المالية' },
+      ] },
+      { id: 'public_international_law', ar: 'القانون الدولي العام', specializations: [] },
+      { id: 'human_rights_law', ar: 'حقوق الإنسان والحريات العامة', specializations: [] },
+      { id: 'public_function_admin_org', ar: 'الوظيفة العامة والتنظيم الإداري', specializations: [] },
+      { id: 'environmental_law', ar: 'القانون البيئي', specializations: [] },
+    ],
+  },
+  private_law: {
+    ar: 'القانون الخاص',
+    branches: [
+      { id: 'civil_law', ar: 'القانون المدني', specializations: [
+        { id: 'contracts', ar: 'العقود' },
+        { id: 'civil_liability', ar: 'المسؤولية المدنية' },
+        { id: 'ownership', ar: 'الملكية' },
+        { id: 'possession', ar: 'الحيازة' },
+        { id: 'obligations', ar: 'الالتزامات' },
+        { id: 'evidence', ar: 'الإثبات' },
+      ] },
+      { id: 'commercial_law', ar: 'القانون التجاري', specializations: [
+        { id: 'commercial_papers', ar: 'الأوراق التجارية' },
+        { id: 'bankruptcy', ar: 'الإفلاس' },
+        { id: 'commercial_companies', ar: 'الشركات التجارية' },
+        { id: 'commercial_business', ar: 'الأعمال التجارية' },
+      ] },
+      { id: 'companies_law', ar: 'قانون الشركات', specializations: [] },
+      { id: 'labor_law', ar: 'قانون العمل', specializations: [
+        { id: 'employment_contracts', ar: 'عقود العمل' },
+        { id: 'termination_of_service', ar: 'إنهاء الخدمة' },
+        { id: 'wages', ar: 'الأجور' },
+        { id: 'work_injuries', ar: 'إصابات العمل' },
+        { id: 'labor_disputes', ar: 'المنازعات العمالية' },
+      ] },
+      { id: 'personal_status_law', ar: 'الأحوال الشخصية', specializations: [] },
+      { id: 'private_international_law', ar: 'القانون الدولي الخاص', specializations: [] },
+      { id: 'intellectual_property_law', ar: 'الملكية الفكرية', specializations: [] },
+      { id: 'insurance_law', ar: 'التأمين', specializations: [] },
+      { id: 'maritime_law', ar: 'القانون البحري', specializations: [] },
+      { id: 'aviation_law', ar: 'القانون الجوي', specializations: [] },
+      { id: 'banking_law', ar: 'القانون المصرفي', specializations: [] },
+    ],
+  },
+  criminal_law: {
+    ar: 'القانون الجزائي / الجنائي',
+    branches: [
+      { id: 'penal_code', ar: 'قانون العقوبات', specializations: [
+        { id: 'felonies', ar: 'الجنايات' },
+        { id: 'misdemeanors', ar: 'الجنح' },
+        { id: 'violations', ar: 'المخالفات' },
+        { id: 'attempt', ar: 'الشروع' },
+        { id: 'criminal_participation', ar: 'المساهمة الجنائية' },
+      ] },
+      { id: 'criminal_procedure', ar: 'الإجراءات الجزائية', specializations: [
+        { id: 'gathering_evidence', ar: 'جمع الاستدلالات' },
+        { id: 'preliminary_investigation', ar: 'التحقيق الابتدائي' },
+        { id: 'search', ar: 'التفتيش' },
+        { id: 'arrest', ar: 'القبض' },
+        { id: 'interrogation', ar: 'الاستجواب' },
+        { id: 'pretrial_detention', ar: 'الحبس الاحتياطي' },
+        { id: 'referral_to_court', ar: 'الإحالة للمحكمة' },
+      ] },
+      { id: 'cybercrime', ar: 'الجرائم الإلكترونية', specializations: [
+        { id: 'hacking', ar: 'الاختراق' },
+        { id: 'electronic_fraud', ar: 'الاحتيال الإلكتروني' },
+        { id: 'electronic_extortion', ar: 'الابتزاز الإلكتروني' },
+        { id: 'technology_misuse', ar: 'إساءة استخدام التقنية' },
+      ] },
+      { id: 'economic_crimes', ar: 'الجرائم الاقتصادية', specializations: [] },
+      { id: 'money_laundering', ar: 'غسل الأموال', specializations: [] },
+      { id: 'drug_crimes', ar: 'المخدرات', specializations: [] },
+      { id: 'international_crimes', ar: 'الجرائم الدولية', specializations: [] },
+    ],
+  },
+  mixed_regulatory_law: {
+    ar: 'القانون المختلط والتنظيمي',
+    branches: [
+      { id: 'ai_law', ar: 'قانون الذكاء الاصطناعي', specializations: [
+        { id: 'algorithmic_liability', ar: 'المسؤولية الخوارزمية' },
+        { id: 'algorithmic_transparency', ar: 'الشفافية الخوارزمية' },
+        { id: 'algorithmic_bias', ar: 'التحيز الخوارزمي' },
+        { id: 'digital_governance', ar: 'الحوكمة الرقمية' },
+        { id: 'smart_administrative_decisions', ar: 'القرارات الإدارية الذكية' },
+      ] },
+      { id: 'data_protection_law', ar: 'حماية البيانات الشخصية', specializations: [] },
+      { id: 'competition_law', ar: 'قانون المنافسة', specializations: [] },
+      { id: 'investment_law', ar: 'قانون الاستثمار', specializations: [] },
+      { id: 'financial_markets_law', ar: 'الأسواق المالية', specializations: [] },
+      { id: 'government_procurement_law', ar: 'المشتريات الحكومية', specializations: [] },
+      { id: 'energy_law', ar: 'الطاقة', specializations: [] },
+      { id: 'telecom_law', ar: 'الاتصالات', specializations: [] },
+    ],
+  },
 };
 
-const LEGAL_BRANCH_CFG: Record<LegalBranch, { ar: string }> = {
-  public_administrative:  { ar: 'القانون الإداري' },
-  public_constitutional:  { ar: 'القانون الدستوري' },
-  public_financial:       { ar: 'القانون المالي' },
-  public_international:   { ar: 'القانون الدولي العام' },
-  private_civil:          { ar: 'القانون المدني' },
-  private_commercial:     { ar: 'القانون التجاري' },
-  private_labor:          { ar: 'قانون العمل' },
-  private_international:  { ar: 'القانون الدولي الخاص' },
-  criminal_law:           { ar: 'القانون الجزائي / الجنائي' },
-};
-
-const PUBLIC_LAW_BRANCHES: LegalBranch[] = ['public_administrative', 'public_constitutional', 'public_financial', 'public_international'];
-const PRIVATE_LAW_BRANCHES: LegalBranch[] = ['private_civil', 'private_commercial', 'private_labor', 'private_international'];
+function getLegalBranchDef(domain: LegalDomain | '', branchId: string): LegalBranchDef | undefined {
+  if (!domain || !branchId) return undefined;
+  return LEGAL_TAXONOMY[domain].branches.find((b) => b.id === branchId);
+}
+function getLegalSpecializationDef(domain: LegalDomain | '', branchId: string, specId: string): LegalSpecializationDef | undefined {
+  if (!specId) return undefined;
+  return getLegalBranchDef(domain, branchId)?.specializations.find((s) => s.id === specId);
+}
 
 // ─── مصدر القانون ───────────────────────────────────────────────────────────
 const LAW_SOURCE_CFG: Record<LawSource, { ar: string; jurisdiction: Jurisdiction; comparativeMode: boolean }> = {
-  uae_law:         { ar: 'وفق القانون الإماراتي', jurisdiction: 'uae',         comparativeMode: false },
-  french_law:      { ar: 'القانون الفرنسي',        jurisdiction: 'france',      comparativeMode: false },
-  egyptian_law:    { ar: 'القانون المصري',         jurisdiction: 'egypt',       comparativeMode: false },
-  comparative_law: { ar: 'القانون المقارن',        jurisdiction: 'comparative', comparativeMode: true },
+  uae_law:         { ar: 'القانون الإماراتي', jurisdiction: 'uae',         comparativeMode: false },
+  french_law:      { ar: 'القانون الفرنسي',   jurisdiction: 'france',      comparativeMode: false },
+  egyptian_law:    { ar: 'القانون المصري',    jurisdiction: 'egypt',       comparativeMode: false },
+  saudi_law:       { ar: 'القانون السعودي',   jurisdiction: 'saudi',       comparativeMode: false },
+  comparative_law: { ar: 'القانون المقارن',   jurisdiction: 'comparative', comparativeMode: true },
 };
 
 // ─── شكل الإجابة ─────────────────────────────────────────────────────────────
@@ -259,12 +371,17 @@ const TRAINING_OUTPUT_CFG: Record<TrainingOutputType, { ar: string; fields: stri
   },
 };
 
-/** Builds the المجال القانوني + الفرع القانوني + مصدر القانون context line, sent with every request. */
+/** Builds the التصنيف القانوني الرئيسي → الفرع → التخصص الدقيق + مصدر القانون context line, sent with every request. */
 function buildDomainAndSourceLine(config: SessionConfig): string {
   let line = '';
   if (config.legalDomain) {
-    line += `المجال القانوني: ${LEGAL_DOMAIN_CFG[config.legalDomain].ar}`;
-    if (config.legalBranch) line += ` | الفرع القانوني: ${LEGAL_BRANCH_CFG[config.legalBranch].ar}`;
+    line += `التصنيف القانوني الرئيسي: ${LEGAL_TAXONOMY[config.legalDomain].ar}`;
+    const branch = getLegalBranchDef(config.legalDomain, config.legalBranch);
+    if (branch) {
+      line += ` | فرع القانون: ${branch.ar}`;
+      const spec = getLegalSpecializationDef(config.legalDomain, config.legalBranch, config.legalSpecialization);
+      if (spec) line += ` | التخصص الدقيق: ${spec.ar}`;
+    }
     line += '\n';
   }
   if (config.lawSource) {
@@ -2851,16 +2968,25 @@ function PreAnalysisPanel({
   // V5.0 § 6 — whether this role group gets a maturity selector
   const showMaturity = MATURITY_APPLICABLE_GROUPS.has(selectedIdentity?.groupAr ?? '');
 
-  // ── المجال القانوني — main domain drives which sub-branch list (if any) shows.
+  // ── التصنيف القانوني الرئيسي — changing the top-level domain always clears
+  // the branch AND the specialization beneath it (spec: "عند تغيير المستوى
+  // الأعلى يتم مسح جميع المستويات الأدنى تلقائياً").
   function applyLegalDomain(domain: LegalDomain | '') {
-    if (!domain) { onChange({ ...config, legalDomain: '', legalBranch: '' }); return; }
-    // Switching the primary domain always clears the previous sub-branch choice.
-    onChange({ ...config, legalDomain: domain, legalBranch: domain === 'criminal' ? 'criminal_law' : '' });
+    onChange({ ...config, legalDomain: domain, legalBranch: '', legalSpecialization: '' });
   }
-  const branchOptions: LegalBranch[] =
-    config.legalDomain === 'public' ? PUBLIC_LAW_BRANCHES :
-    config.legalDomain === 'private' ? PRIVATE_LAW_BRANCHES :
-    [];
+  // Changing the branch always clears the specialization beneath it.
+  function applyLegalBranch(branchId: string) {
+    onChange({ ...config, legalBranch: branchId, legalSpecialization: '' });
+  }
+  const branchOptions: LegalBranchDef[] = config.legalDomain ? LEGAL_TAXONOMY[config.legalDomain].branches : [];
+  const selectedBranch = getLegalBranchDef(config.legalDomain, config.legalBranch);
+  const specializationOptions: LegalSpecializationDef[] = selectedBranch?.specializations ?? [];
+  const BRANCH_LEVEL_LABEL: Record<LegalDomain, string> = {
+    public_law: 'فرع القانون العام',
+    private_law: 'فرع القانون الخاص',
+    criminal_law: 'فرع القانون الجزائي',
+    mixed_regulatory_law: 'فرع القانون التنظيمي',
+  };
 
   // ── مصدر القانون — maps directly onto the underlying jurisdiction / comparative flags.
   function applyLawSource(src: LawSource | '') {
@@ -2964,41 +3090,64 @@ function PreAnalysisPanel({
             </CfgSection>
           )}
 
-          {/* ── الإطار التحليلي العام: المجال القانوني + الفرع القانوني ─────── */}
+          {/* ── الإطار التحليلي العام: التصنيف القانوني الرئيسي → الفرع → التخصص الدقيق ─────── */}
           <CfgSection title="الإطار التحليلي العام" icon="🧭">
             <label htmlFor="legal-domain-select" className="text-[10px] font-semibold text-muted-foreground block mb-1">
-              اختر المجال القانوني
+              التصنيف القانوني الرئيسي
             </label>
             <select
               id="legal-domain-select"
-              aria-label="اختر المجال القانوني"
+              aria-label="التصنيف القانوني الرئيسي"
               value={config.legalDomain}
               onChange={(e) => applyLegalDomain(e.target.value as LegalDomain | '')}
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 appearance-none cursor-pointer"
               style={{ direction: 'rtl' }}
             >
-              <option value="" disabled>اختر المجال القانوني</option>
-              {(Object.entries(LEGAL_DOMAIN_CFG) as [LegalDomain, { ar: string }][]).map(([k, v]) => (
+              <option value="" disabled>اختر التصنيف القانوني الرئيسي</option>
+              {(Object.entries(LEGAL_TAXONOMY) as [LegalDomain, LegalDomainDef][]).map(([k, v]) => (
                 <option key={k} value={k}>• {v.ar}</option>
               ))}
             </select>
 
+            {/* لا تظهر القائمة التالية إلا بعد اختيار السابقة */}
             {branchOptions.length > 0 && (
               <div className="mt-2.5">
                 <label htmlFor="legal-branch-select" className="text-[10px] font-semibold text-muted-foreground block mb-1">
-                  اختر الفرع القانوني
+                  {BRANCH_LEVEL_LABEL[config.legalDomain as LegalDomain]}
                 </label>
                 <select
                   id="legal-branch-select"
-                  aria-label="اختر الفرع القانوني"
+                  aria-label={BRANCH_LEVEL_LABEL[config.legalDomain as LegalDomain]}
                   value={config.legalBranch}
-                  onChange={(e) => onChange({ ...config, legalBranch: e.target.value as LegalBranch })}
+                  onChange={(e) => applyLegalBranch(e.target.value)}
                   className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 appearance-none cursor-pointer"
                   style={{ direction: 'rtl' }}
                 >
-                  <option value="" disabled>اختر الفرع القانوني</option>
+                  <option value="" disabled>{`اختر ${BRANCH_LEVEL_LABEL[config.legalDomain as LegalDomain]}`}</option>
                   {branchOptions.map((b) => (
-                    <option key={b} value={b}>• {LEGAL_BRANCH_CFG[b].ar}</option>
+                    <option key={b.id} value={b.id}>• {b.ar}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* التخصص الدقيق — لا تظهر إلا بعد اختيار فرع له تخصصات معرّفة */}
+            {specializationOptions.length > 0 && (
+              <div className="mt-2.5">
+                <label htmlFor="legal-specialization-select" className="text-[10px] font-semibold text-muted-foreground block mb-1">
+                  التخصص الدقيق
+                </label>
+                <select
+                  id="legal-specialization-select"
+                  aria-label="التخصص الدقيق"
+                  value={config.legalSpecialization}
+                  onChange={(e) => onChange({ ...config, legalSpecialization: e.target.value })}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 appearance-none cursor-pointer"
+                  style={{ direction: 'rtl' }}
+                >
+                  <option value="" disabled>اختر التخصص الدقيق</option>
+                  {specializationOptions.map((s) => (
+                    <option key={s.id} value={s.id}>• {s.ar}</option>
                   ))}
                 </select>
               </div>
@@ -3200,7 +3349,13 @@ function SessionConfigBar({ config, expertMode, onEdit }: {
       </span>
       {config.legalDomain && (
         <span className="text-[10px] bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-medium">
-          🧭 {LEGAL_DOMAIN_CFG[config.legalDomain].ar}{config.legalBranch ? ` · ${LEGAL_BRANCH_CFG[config.legalBranch].ar}` : ''}
+          🧭 {LEGAL_TAXONOMY[config.legalDomain].ar}
+          {(() => {
+            const branch = getLegalBranchDef(config.legalDomain, config.legalBranch);
+            if (!branch) return null;
+            const spec = getLegalSpecializationDef(config.legalDomain, config.legalBranch, config.legalSpecialization);
+            return ` · ${branch.ar}${spec ? ` · ${spec.ar}` : ''}`;
+          })()}
         </span>
       )}
       {config.lawSource && (
