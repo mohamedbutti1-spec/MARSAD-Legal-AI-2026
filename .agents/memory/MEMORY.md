@@ -50,3 +50,4 @@
 - [Read-only reviewer account pattern](readonly-reviewer-account.md) — PERMANENT_ACCOUNTS not DEMO_ACCOUNTS; requireAnyRole isn't read-only; use requireWriteRole + trusted session role, never headers
 - [Judicial Command Center theme rebuild](judicial-command-center-theme.md) — scripted sweep of literal Tailwind color classes onto CSS-var tokens; owner-gating pattern; reuse PreAnalysisPanel/SessionConfigBar
 - [NDJSON streaming resilience pattern](streaming-resilience-pattern.md) — compression buffers NDJSON on mobile; retryable-vs-billing error classification; reset protocol line; poll-based recovery avoids duplicate messages
+- [MLOS Restructured Legal Analysis Flow](mlos-restructured-legal-flow.md) — domain/branch/law-source/answer-format/training selectors; lawSource maps onto existing Jurisdiction field; legacy mode chips gated off

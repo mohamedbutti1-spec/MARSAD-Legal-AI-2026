@@ -114,6 +114,24 @@ type UserGoal =
 
 type ConfigAnswerMode = 'quick' | 'standard' | 'academic' | 'judicial' | 'memorandum' | 'legislative' | 'executive_report' | 'comparative' | 'scientific';
 type Jurisdiction    = 'uae' | 'france' | 'saudi' | 'egypt' | 'eu' | 'gcc' | 'comparative' | 'other';
+
+// ─── MLOS Restructured Legal Analysis Flow ────────────────────────────────────
+// General legal domain (المجال القانوني) — exactly 3 top-level options.
+type LegalDomain = 'public' | 'private' | 'criminal';
+// Sub-branches — only public/private domains show a sub-list; criminal maps
+// directly to 'criminal_law' with no further selection.
+type LegalBranch =
+  | 'public_administrative' | 'public_constitutional' | 'public_financial' | 'public_international'
+  | 'private_civil' | 'private_commercial' | 'private_labor' | 'private_international'
+  | 'criminal_law';
+// مصدر القانون — exactly 4 options (Al-Shamsi Theory and "other" removed).
+type LawSource = 'uae_law' | 'french_law' | 'egyptian_law' | 'comparative_law';
+// شكل الإجابة — exactly 2 options.
+type AnswerFormat = 'urgent_brief_answer' | 'specialized_legal_analysis';
+// سيناريوهات التدريب والمراجعة القضائية الافتراضية — exactly 6 output types.
+type TrainingOutputType =
+  | 'legal_memorandum' | 'judicial_judgment' | 'legislative_draft'
+  | 'executive_report' | 'comparative_study' | 'mini_academic_research';
 // V5.0 — Professional Maturity levels (4 per profession group)
 type MaturityLevel   = 'trainee' | 'junior' | 'mid' | 'expert';
 type SourceType      = 'all' | 'legislation' | 'judicial' | 'doctrine' | 'regulations' | 'circulars' | 'international' | 'academic_research';
@@ -134,6 +152,15 @@ interface SessionConfig {
   comparativeMode: boolean;
   /** V5.0 — Professional Maturity Engine */
   maturityLevel: MaturityLevel;
+  // ── MLOS Restructured Legal Analysis Flow ──────────────────────────────
+  /** المجال القانوني — '' until the user picks one. */
+  legalDomain: LegalDomain | '';
+  /** الفرع القانوني — '' until applicable/chosen; cleared whenever legalDomain changes. */
+  legalBranch: LegalBranch | '';
+  /** مصدر القانون — '' until the user picks one. */
+  lawSource: LawSource | '';
+  /** شكل الإجابة — '' until the user picks one. */
+  answerFormat: AnswerFormat | '';
 }
 
 interface ExpertOptions {
@@ -154,7 +181,117 @@ const DEFAULT_SESSION_CONFIG: SessionConfig = {
   sources: ['all'], citStyle: 'uae', depth: 'detailed',
   applyAdvancedStandard: false, comparativeMode: false,
   maturityLevel: 'mid',
+  legalDomain: '', legalBranch: '', lawSource: '', answerFormat: '',
 };
+
+// ─── المجال القانوني / الفرع القانوني ──────────────────────────────────────
+const LEGAL_DOMAIN_CFG: Record<LegalDomain, { ar: string }> = {
+  public:   { ar: 'القانون العام' },
+  private:  { ar: 'القانون الخاص' },
+  criminal: { ar: 'القانون الجزائي / الجنائي' },
+};
+
+const LEGAL_BRANCH_CFG: Record<LegalBranch, { ar: string }> = {
+  public_administrative:  { ar: 'القانون الإداري' },
+  public_constitutional:  { ar: 'القانون الدستوري' },
+  public_financial:       { ar: 'القانون المالي' },
+  public_international:   { ar: 'القانون الدولي العام' },
+  private_civil:          { ar: 'القانون المدني' },
+  private_commercial:     { ar: 'القانون التجاري' },
+  private_labor:          { ar: 'قانون العمل' },
+  private_international:  { ar: 'القانون الدولي الخاص' },
+  criminal_law:           { ar: 'القانون الجزائي / الجنائي' },
+};
+
+const PUBLIC_LAW_BRANCHES: LegalBranch[] = ['public_administrative', 'public_constitutional', 'public_financial', 'public_international'];
+const PRIVATE_LAW_BRANCHES: LegalBranch[] = ['private_civil', 'private_commercial', 'private_labor', 'private_international'];
+
+// ─── مصدر القانون ───────────────────────────────────────────────────────────
+const LAW_SOURCE_CFG: Record<LawSource, { ar: string; jurisdiction: Jurisdiction; comparativeMode: boolean }> = {
+  uae_law:         { ar: 'وفق القانون الإماراتي', jurisdiction: 'uae',         comparativeMode: false },
+  french_law:      { ar: 'القانون الفرنسي',        jurisdiction: 'france',      comparativeMode: false },
+  egyptian_law:    { ar: 'القانون المصري',         jurisdiction: 'egypt',       comparativeMode: false },
+  comparative_law: { ar: 'القانون المقارن',        jurisdiction: 'comparative', comparativeMode: true },
+};
+
+// ─── شكل الإجابة ─────────────────────────────────────────────────────────────
+const ANSWER_FORMAT_CFG: Record<AnswerFormat, { ar: string; instructions: string }> = {
+  urgent_brief_answer: {
+    ar: 'سريعة عاجلة ملخصة',
+    instructions:
+      '[شكل الإجابة: سريعة عاجلة ملخصة]\n' +
+      'قدّم إجابة مباشرة في نقاط مختصرة، بنتيجة واضحة دون توسع طويل، مع بيان الأساس القانوني الأساسي فقط.\n',
+  },
+  specialized_legal_analysis: {
+    ar: 'تحليل قانوني متخصص',
+    instructions:
+      '[شكل الإجابة: تحليل قانوني متخصص]\n' +
+      'قدّم تحليلاً منظماً يشمل: تحديد الوقائع، تحديد المسائل القانونية، بيان القواعد القانونية، التطبيق القانوني، ثم النتيجة، ' +
+      'مع الإشارة إلى المخاطر أو أوجه الاختلاف عند الحاجة.\n',
+  },
+};
+
+// ─── سيناريوهات التدريب والمراجعة القضائية الافتراضية ───────────────────────
+const TRAINING_OUTPUT_CFG: Record<TrainingOutputType, { ar: string; fields: string[] }> = {
+  legal_memorandum: {
+    ar: 'مذكرة قانونية',
+    fields: ['العنوان', 'الوقائع', 'المسائل القانونية', 'القواعد الواجبة التطبيق', 'التحليل', 'الرأي القانوني', 'التوصيات'],
+  },
+  judicial_judgment: {
+    ar: 'حكم قضائي',
+    fields: ['المحكمة الافتراضية', 'الوقائع', 'الطلبات أو الاتهام', 'الأسباب', 'النصوص القانونية', 'المنطوق'],
+  },
+  legislative_draft: {
+    ar: 'مسودة تشريعية',
+    fields: ['عنوان التشريع', 'الديباجة', 'مواد مرقمة', 'أحكام تنفيذية', 'مذكرة إيضاحية مختصرة'],
+  },
+  executive_report: {
+    ar: 'تقرير تنفيذي',
+    fields: ['ملخص تنفيذي', 'المشكلة', 'التحليل', 'المخاطر', 'الخيارات', 'التوصية النهائية'],
+  },
+  comparative_study: {
+    ar: 'دراسة مقارنة',
+    fields: ['النظام الأول', 'النظام الثاني', 'أوجه الاتفاق', 'أوجه الاختلاف', 'التقييم', 'الخلاصة'],
+  },
+  mini_academic_research: {
+    ar: 'بحث علمي مصغر',
+    fields: ['عنوان', 'مقدمة', 'إشكالية', 'منهج مختصر', 'مباحث أو محاور', 'خاتمة', 'نتائج', 'مراجع مقترحة'],
+  },
+};
+
+/** Builds the المجال القانوني + الفرع القانوني + مصدر القانون context line, sent with every request. */
+function buildDomainAndSourceLine(config: SessionConfig): string {
+  let line = '';
+  if (config.legalDomain) {
+    line += `المجال القانوني: ${LEGAL_DOMAIN_CFG[config.legalDomain].ar}`;
+    if (config.legalBranch) line += ` | الفرع القانوني: ${LEGAL_BRANCH_CFG[config.legalBranch].ar}`;
+    line += '\n';
+  }
+  if (config.lawSource) {
+    line += `مصدر القانون المعتمد: ${LAW_SOURCE_CFG[config.lawSource].ar}\n`;
+  }
+  return line;
+}
+
+/** Builds the الإجابة المباشرة (general question) request body, per المسار الأول. */
+function buildGeneralRequestContent(config: SessionConfig, question: string): string {
+  const fmt = config.answerFormat ? ANSWER_FORMAT_CFG[config.answerFormat].instructions : '';
+  return buildDomainAndSourceLine(config) + fmt + '\n' + question;
+}
+
+/** Builds the سيناريوهات التدريب والمراجعة القضائية الافتراضية request body, per المسار الثاني. */
+function buildTrainingRequestContent(config: SessionConfig, outputType: TrainingOutputType, scenarioText: string): string {
+  const out = TRAINING_OUTPUT_CFG[outputType];
+  const fmt = config.answerFormat ? ANSWER_FORMAT_CFG[config.answerFormat].instructions : '';
+  const fieldsList = out.fields.map((f, i) => `${i + 1}) ${f}`).join('\n');
+  return (
+    buildDomainAndSourceLine(config) +
+    `[سيناريوهات التدريب والمراجعة القضائية الافتراضية — نوع المخرج: ${out.ar}]\n` +
+    `أَخرِج إجابتك حصراً وفق هذا الهيكل الإلزامي (${out.ar}):\n${fieldsList}\n` +
+    fmt +
+    `\nنص السيناريو التدريبي:\n${scenarioText}`
+  );
+}
 
 const DEFAULT_EXPERT_OPTIONS: ExpertOptions = {
   confidence: true, reasoning: false, minority: false, burden: false, evidence: false,
@@ -2688,6 +2825,7 @@ function ScenarioInputPanel({
 
 function PreAnalysisPanel({
   config, onChange, onStart, expertMode, onToggleExpert, currentInput, onInputChange,
+  trainingOutputType, onTrainingOutputTypeChange, trainingText, onTrainingTextChange, onSubmit,
 }: {
   config: SessionConfig;
   onChange: (c: SessionConfig) => void;
@@ -2696,6 +2834,11 @@ function PreAnalysisPanel({
   onToggleExpert: () => void;
   currentInput?: string;
   onInputChange?: (value: string) => void;
+  trainingOutputType: TrainingOutputType | '';
+  onTrainingOutputTypeChange: (v: TrainingOutputType | '') => void;
+  trainingText: string;
+  onTrainingTextChange: (v: string) => void;
+  onSubmit: () => void;
 }) {
   // Derive the selected identity — only set once the user actually picks one;
   // 'unspecified' (the default) shows the dropdown placeholder instead.
@@ -2708,45 +2851,22 @@ function PreAnalysisPanel({
   // V5.0 § 6 — whether this role group gets a maturity selector
   const showMaturity = MATURITY_APPLICABLE_GROUPS.has(selectedIdentity?.groupAr ?? '');
 
-  // ── Analytical framework — derives a single-choice value from the underlying
-  // jurisdiction / comparative / Al-Shamsi flags without altering their meaning.
-  const [frameworkTouched, setFrameworkTouched] = useState(
-    config.jurisdiction !== DEFAULT_SESSION_CONFIG.jurisdiction
-    || config.comparativeMode || config.applyAdvancedStandard,
-  );
-  type AnalyticalFramework = 'uae' | 'france' | 'comparative' | 'shamsi' | 'other';
-  const currentFramework: AnalyticalFramework =
-    config.applyAdvancedStandard ? 'shamsi' :
-    config.comparativeMode        ? 'comparative' :
-    config.jurisdiction === 'france' ? 'france' :
-    config.jurisdiction === 'uae'    ? 'uae' :
-    'other';
-  const FRAMEWORK_OPTIONS: { value: AnalyticalFramework; label: string }[] = [
-    { value: 'uae',         label: 'وفق القانون الإماراتي' },
-    { value: 'france',      label: 'القانون الفرنسي' },
-    { value: 'comparative', label: 'القانون المقارن' },
-    { value: 'shamsi',      label: 'نظرية الشامسي' },
-    { value: 'other',       label: 'أخرى...' },
-  ];
-  function applyFramework(fw: AnalyticalFramework) {
-    setFrameworkTouched(true);
-    switch (fw) {
-      case 'uae':
-        onChange({ ...config, jurisdiction: 'uae', comparativeMode: false, applyAdvancedStandard: false });
-        break;
-      case 'france':
-        onChange({ ...config, jurisdiction: 'france', comparativeMode: false, applyAdvancedStandard: false });
-        break;
-      case 'comparative':
-        onChange({ ...config, jurisdiction: 'comparative', comparativeMode: true, applyAdvancedStandard: false });
-        break;
-      case 'shamsi':
-        onChange({ ...config, applyAdvancedStandard: true, comparativeMode: false });
-        break;
-      case 'other':
-        onChange({ ...config, jurisdiction: 'other', comparativeMode: false, applyAdvancedStandard: false });
-        break;
-    }
+  // ── المجال القانوني — main domain drives which sub-branch list (if any) shows.
+  function applyLegalDomain(domain: LegalDomain | '') {
+    if (!domain) { onChange({ ...config, legalDomain: '', legalBranch: '' }); return; }
+    // Switching the primary domain always clears the previous sub-branch choice.
+    onChange({ ...config, legalDomain: domain, legalBranch: domain === 'criminal' ? 'criminal_law' : '' });
+  }
+  const branchOptions: LegalBranch[] =
+    config.legalDomain === 'public' ? PUBLIC_LAW_BRANCHES :
+    config.legalDomain === 'private' ? PRIVATE_LAW_BRANCHES :
+    [];
+
+  // ── مصدر القانون — maps directly onto the underlying jurisdiction / comparative flags.
+  function applyLawSource(src: LawSource | '') {
+    if (!src) { onChange({ ...config, lawSource: '' }); return; }
+    const cfg = LAW_SOURCE_CFG[src];
+    onChange({ ...config, lawSource: src, jurisdiction: cfg.jurisdiction, comparativeMode: cfg.comparativeMode, applyAdvancedStandard: false });
   }
 
   return (
@@ -2844,38 +2964,65 @@ function PreAnalysisPanel({
             </CfgSection>
           )}
 
-          {/* ── الإطار التحليلي ──────────────────────────────────────────── */}
-          <CfgSection title="الإطار التحليلي" icon="🧭">
+          {/* ── الإطار التحليلي العام: المجال القانوني + الفرع القانوني ─────── */}
+          <CfgSection title="الإطار التحليلي العام" icon="🧭">
+            <label htmlFor="legal-domain-select" className="text-[10px] font-semibold text-muted-foreground block mb-1">
+              اختر المجال القانوني
+            </label>
             <select
-              value={frameworkTouched ? currentFramework : ''}
-              onChange={(e) => applyFramework(e.target.value as AnalyticalFramework)}
+              id="legal-domain-select"
+              aria-label="اختر المجال القانوني"
+              value={config.legalDomain}
+              onChange={(e) => applyLegalDomain(e.target.value as LegalDomain | '')}
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 appearance-none cursor-pointer"
-              style={{
-                direction: 'rtl',
-                color: frameworkTouched && currentFramework === 'shamsi' ? '#A970FF' : undefined,
-              }}
+              style={{ direction: 'rtl' }}
             >
-              <option value="" disabled>اختر الإطار التحليلي</option>
-              {FRAMEWORK_OPTIONS.map((opt) => (
-                <option
-                  key={opt.value}
-                  value={opt.value}
-                  style={opt.value === 'shamsi' ? { color: '#A970FF' } : undefined}
-                >
-                  • {opt.label}
-                </option>
+              <option value="" disabled>اختر المجال القانوني</option>
+              {(Object.entries(LEGAL_DOMAIN_CFG) as [LegalDomain, { ar: string }][]).map(([k, v]) => (
+                <option key={k} value={k}>• {v.ar}</option>
               ))}
             </select>
+
+            {branchOptions.length > 0 && (
+              <div className="mt-2.5">
+                <label htmlFor="legal-branch-select" className="text-[10px] font-semibold text-muted-foreground block mb-1">
+                  اختر الفرع القانوني
+                </label>
+                <select
+                  id="legal-branch-select"
+                  aria-label="اختر الفرع القانوني"
+                  value={config.legalBranch}
+                  onChange={(e) => onChange({ ...config, legalBranch: e.target.value as LegalBranch })}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 appearance-none cursor-pointer"
+                  style={{ direction: 'rtl' }}
+                >
+                  <option value="" disabled>اختر الفرع القانوني</option>
+                  {branchOptions.map((b) => (
+                    <option key={b} value={b}>• {LEGAL_BRANCH_CFG[b].ar}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </CfgSection>
 
-          {/* ── Answer mode ──────────────────────────────────────────────── */}
-          <CfgSection title="أسلوب الإجابة" icon="✍">
-            <div className="flex flex-wrap gap-1.5">
-              {(Object.entries(CONFIG_ANSWER_MODE_CFG) as [ConfigAnswerMode, { ar: string; emoji: string }][]).map(([k, v]) => (
-                <ConfigChip key={k} value={k} selected={config.answerMode}
-                  label={`${v.emoji} ${v.ar}`} onSelect={(val) => onChange({ ...config, answerMode: val })} />
+          {/* ── مصدر القانون ─────────────────────────────────────────────── */}
+          <CfgSection title="مصدر القانون" icon="📚">
+            <label htmlFor="law-source-select" className="text-[10px] font-semibold text-muted-foreground block mb-1">
+              اختر مصدر القانون
+            </label>
+            <select
+              id="law-source-select"
+              aria-label="اختر مصدر القانون"
+              value={config.lawSource}
+              onChange={(e) => applyLawSource(e.target.value as LawSource | '')}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 appearance-none cursor-pointer"
+              style={{ direction: 'rtl' }}
+            >
+              <option value="" disabled>اختر مصدر القانون</option>
+              {(Object.entries(LAW_SOURCE_CFG) as [LawSource, { ar: string }][]).map(([k, v]) => (
+                <option key={k} value={k}>• {v.ar}</option>
               ))}
-            </div>
+            </select>
           </CfgSection>
 
           {/* ── Comparative Law toggle, Al-Shamsi toggle & Expert Mode toggle — hidden in the simplified assistant view */}
@@ -2948,13 +3095,90 @@ function PreAnalysisPanel({
             <button
               type="button"
               onClick={onStart}
-              aria-label="بدء التحليل"
-              title="بدء التحليل"
+              aria-label="إرسال السؤال القانوني"
+              title="إرسال السؤال القانوني"
               className="absolute bottom-3 start-3 h-9 w-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-colors shadow-sm"
             >
               <Send className="w-4 h-4" aria-hidden />
             </button>
           </div>
+
+          {/* ── شكل الإجابة ───────────────────────────────────────────────── */}
+          <CfgSection title="شكل الإجابة" icon="🗒">
+            <label htmlFor="answer-format-select" className="text-[10px] font-semibold text-muted-foreground block mb-1">
+              اختر شكل الإجابة
+            </label>
+            <select
+              id="answer-format-select"
+              aria-label="اختر شكل الإجابة"
+              value={config.answerFormat}
+              onChange={(e) => onChange({ ...config, answerFormat: e.target.value as AnswerFormat | '' })}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 appearance-none cursor-pointer"
+              style={{ direction: 'rtl' }}
+            >
+              <option value="" disabled>اختر شكل الإجابة</option>
+              {(Object.entries(ANSWER_FORMAT_CFG) as [AnswerFormat, { ar: string }][]).map(([k, v]) => (
+                <option key={k} value={k}>• {v.ar}</option>
+              ))}
+            </select>
+          </CfgSection>
+
+          {/* ── سيناريوهات التدريب والمراجعة القضائية الافتراضية ──────────── */}
+          <div className="bg-card border border-border/60 rounded-xl overflow-hidden px-3 pt-3 pb-3">
+            <p className="text-[11px] font-bold text-foreground mb-2 flex items-center gap-1.5">
+              <span>🎓</span>
+              سيناريوهات التدريب والمراجعة القضائية الافتراضية
+              <span className="text-[9px] font-normal text-muted-foreground">(اختياري)</span>
+            </p>
+
+            <div role="radiogroup" aria-label="نوع المخرج التدريبي" className="grid grid-cols-2 gap-1.5 mb-3">
+              {(Object.entries(TRAINING_OUTPUT_CFG) as [TrainingOutputType, { ar: string }][]).map(([k, v]) => {
+                const selected = trainingOutputType === k;
+                return (
+                  <button
+                    key={k}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    onClick={() => onTrainingOutputTypeChange(selected ? '' : k)}
+                    className={`flex items-center justify-between gap-1 rounded-lg border px-2.5 py-2 text-[11px] font-semibold text-start transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 min-h-[40px] ${
+                      selected
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border bg-background text-foreground hover:border-primary/40'
+                    }`}
+                  >
+                    <span>{v.ar}</span>
+                    {selected && <Check className="w-3.5 h-3.5 shrink-0" aria-hidden />}
+                  </button>
+                );
+              })}
+            </div>
+
+            <label htmlFor="training-scenario-textarea" className="text-[10px] font-semibold text-muted-foreground block mb-1">
+              ماذا تريد للتدريب؟ اكتب هنا...
+            </label>
+            <textarea
+              id="training-scenario-textarea"
+              aria-label="ماذا تريد للتدريب؟"
+              rows={3}
+              className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary/40 leading-relaxed"
+              placeholder="ماذا تريد للتدريب؟ اكتب هنا..."
+              dir="rtl"
+              value={trainingText}
+              onChange={(e) => onTrainingTextChange(e.target.value)}
+            />
+          </div>
+
+          {/* ── زر الإرسال أو التنفيذ ─────────────────────────────────────── */}
+          <Button
+            type="button"
+            onClick={onSubmit}
+            disabled={!currentInput?.trim() && !(trainingText.trim() && trainingOutputType)}
+            className="w-full h-11 rounded-xl text-sm font-bold"
+          >
+            <Send className="w-4 h-4 me-2" aria-hidden />
+            إرسال / تنفيذ
+          </Button>
         </div>
       </div>
     </div>
@@ -2974,12 +3198,21 @@ function SessionConfigBar({ config, expertMode, onEdit }: {
       <span className="text-[10px] bg-primary/8 text-primary border border-primary/20 px-2 py-0.5 rounded-full font-medium">
         {USER_TYPE_CONFIG[config.userType].emoji} {USER_TYPE_CONFIG[config.userType].ar}
       </span>
-      <span className="text-[10px] bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-medium">
-        {JURISDICTION_CFG[config.jurisdiction].flag} {JURISDICTION_CFG[config.jurisdiction].ar}
-      </span>
-      <span className="text-[10px] bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-medium">
-        {CONFIG_ANSWER_MODE_CFG[config.answerMode].emoji} {CONFIG_ANSWER_MODE_CFG[config.answerMode].ar}
-      </span>
+      {config.legalDomain && (
+        <span className="text-[10px] bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-medium">
+          🧭 {LEGAL_DOMAIN_CFG[config.legalDomain].ar}{config.legalBranch ? ` · ${LEGAL_BRANCH_CFG[config.legalBranch].ar}` : ''}
+        </span>
+      )}
+      {config.lawSource && (
+        <span className="text-[10px] bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-medium">
+          📚 {LAW_SOURCE_CFG[config.lawSource].ar}
+        </span>
+      )}
+      {config.answerFormat && (
+        <span className="text-[10px] bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-medium">
+          🗒 {ANSWER_FORMAT_CFG[config.answerFormat].ar}
+        </span>
+      )}
       {/* Extra state badges — hidden in the simplified assistant view; role/jurisdiction/answer-mode above are the only selectors shown */}
       {SHOW_LEGACY_CHAT_UI && POLICE_IDENTITY_TYPES.has(config.userType) && (
         <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full font-bold">
@@ -3750,6 +3983,9 @@ export default function AiAssistant() {
   const [expertOptions, setExpertOptions] = useState<ExpertOptions>(DEFAULT_EXPERT_OPTIONS);
   /** True once user dismisses the pre-analysis panel for the current session. */
   const [configCommitted, setConfigCommitted] = useState(false);
+  /** MLOS restructured flow — سيناريوهات التدريب والمراجعة القضائية الافتراضية (Path 2). Independent of the main question box. */
+  const [trainingOutputType, setTrainingOutputType] = useState<TrainingOutputType | ''>('');
+  const [trainingText, setTrainingText] = useState('');
 
   // ── Scenario Engine config ─────────────────────────────────────────────────
   const [scenarioConfig, setScenarioConfig] = useState<ScenarioConfig>(DEFAULT_SCENARIO_CONFIG);
@@ -3955,7 +4191,7 @@ export default function AiAssistant() {
     if (activeSession?.id === session.id) { setActiveSession(null); setMessages([]); }
   }
 
-  async function sendMessage(overrideText?: string, overrideMode?: ResponseMode) {
+  async function sendMessage(overrideText?: string, overrideMode?: ResponseMode, contentOverride?: string) {
     const text = (overrideText ?? input).trim();
     if (!text || !activeSession || sending) return;
     const mode = overrideMode ?? currentMode;
@@ -3970,11 +4206,15 @@ export default function AiAssistant() {
     };
     setMessages((prev) => [...prev, userMsg]);
 
-    // Build API content — config prefix + optional mode instruction
+    // Build API content — config prefix + optional mode instruction.
+    // contentOverride, when provided, is the MLOS restructured flow's fully-assembled
+    // request body (المجال القانوني / الفرع / مصدر القانون / شكل الإجابة / سيناريو التدريب),
+    // superseding the legacy mode-based prefix switch below.
     const configPfx = buildConfigPrefix(sessionConfig, expertMode, expertOptions);
     // V5.0 § 1 — prepend case lifecycle context when a stage is active
     const lifecyclePfx = lifecycleStage > 0 ? buildLifecyclePrefix(lifecycleStage) : '';
     const content = lifecyclePfx + configPfx + (
+      contentOverride !== undefined ? contentOverride :
       mode === 'expert'            ? EXPERT_MODE_PREFIX + text :
       mode === 'exemplary'         ? EXEMPLARY_MODE_PREFIX + text :
       mode === 'scenario_builder'  ? buildScenarioPrefix(scenarioConfig, sessionConfig.userType) + text :
@@ -4556,11 +4796,30 @@ export default function AiAssistant() {
                 <PreAnalysisPanel
                   config={sessionConfig}
                   onChange={setSessionConfig}
-                  onStart={() => setConfigCommitted(true)}
+                  onStart={() => {
+                    if (!input.trim()) return;
+                    setConfigCommitted(true);
+                    sendMessage(input, undefined, buildGeneralRequestContent(sessionConfig, input));
+                  }}
                   expertMode={expertMode}
                   onToggleExpert={() => setExpertMode((v) => !v)}
                   currentInput={input}
                   onInputChange={setInput}
+                  trainingOutputType={trainingOutputType}
+                  onTrainingOutputTypeChange={setTrainingOutputType}
+                  trainingText={trainingText}
+                  onTrainingTextChange={setTrainingText}
+                  onSubmit={() => {
+                    if (trainingText.trim() && trainingOutputType) {
+                      setConfigCommitted(true);
+                      sendMessage(trainingText, undefined, buildTrainingRequestContent(sessionConfig, trainingOutputType, trainingText));
+                      setTrainingText('');
+                      setTrainingOutputType('');
+                    } else if (input.trim()) {
+                      setConfigCommitted(true);
+                      sendMessage(input, undefined, buildGeneralRequestContent(sessionConfig, input));
+                    }
+                  }}
                 />
               ) : (
               <div className="h-full flex flex-col items-center justify-center gap-4 text-center" dir="rtl">
@@ -4686,8 +4945,10 @@ export default function AiAssistant() {
               />
             )}
 
-            {/* Response mode selector */}
-            {activeSession && (
+            {/* Response mode selector & Theory Lens selector — removed per the MLOS restructured
+                legal-analysis flow: response shape is now driven exclusively by شكل الإجابة /
+                سيناريوهات التدريب (selected once in the pre-analysis panel), not by chat-time chips. */}
+            {SHOW_LEGACY_CHAT_UI && activeSession && (
               <div className="mb-2 flex items-center justify-between gap-2 flex-wrap">
                 <ResponseModeSelector
                   value={currentMode}
@@ -4697,8 +4958,7 @@ export default function AiAssistant() {
               </div>
             )}
 
-            {/* Theory Lens Selector */}
-            {activeSession && !courtMode && (
+            {SHOW_LEGACY_CHAT_UI && activeSession && !courtMode && (
               <div className="mb-2">
                 <TheoryLensSelector
                   value={theoryLens}
