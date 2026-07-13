@@ -1,0 +1,345 @@
+MARSAD — JUDICIAL COMMAND CENTER VISUAL REBUILD
+
+This is not a feature update.
+
+This is a complete UX, visual identity and user journey redesign.
+
+The attached screenshots are the exact visual reference.
+
+The feeling must be:
+
+"Federal judicial command center"
+
+NOT startup.
+NOT SaaS dashboard.
+NOT colorful AI application.
+
+━━━━━━━━━━━━━━━━━━
+DESIGN PHILOSOPHY
+━━━━━━━━━━━━━━━━━━
+
+Minimal.
+Elegant.
+Authoritative.
+Government-grade.
+Judicial.
+Calm.
+Premium.
+
+Every screen must feel like:
+
+- UAE federal institution.
+- Supreme court chamber.
+- Executive decision center.
+- National AI control room.
+
+The user must never feel lost.
+
+One screen.
+One purpose.
+One action.
+
+━━━━━━━━━━━━━━━━━━
+COLOR SYSTEM
+━━━━━━━━━━━━━━━━━━
+
+Primary Background:
+#0B0F16
+
+Secondary Surface:
+#111827
+
+Card Surface:
+#151D2A
+
+Borders:
+rgba(184,154,91,0.22)
+
+Primary Accent Gold:
+#B89A5B
+
+Muted Gold:
+#8D7640
+
+Primary Heading Blue:
+#9ABAF2
+
+Text White:
+#EAEAEA
+
+Secondary Text:
+#9A9A9A
+
+Danger Red:
+#8C2F2F
+
+Absolutely forbidden:
+
+- bright yellow
+- orange
+- green
+- gradients
+- colorful cards
+- shadows with colors
+- glassmorphism
+- startup design language
+
+━━━━━━━━━━━━━━━━━━
+VISUAL STYLE
+━━━━━━━━━━━━━━━━━━
+
+Large cards.
+
+Generous spacing.
+
+Very little visual noise.
+
+Rounded corners:
+20px
+
+Borders:
+1px soft gold.
+
+Hover:
+subtle gold glow.
+
+Animations:
+extremely subtle.
+
+No bouncing.
+No playful movement.
+
+━━━━━━━━━━━━━━━━━━
+LOGIN FLOW
+━━━━━━━━━━━━━━━━━━
+
+Visitor opens platform.
+
+↓
+
+Login or register.
+
+↓
+
+Dashboard opens automatically.
+
+━━━━━━━━━━━━━━━━━━
+DASHBOARD
+━━━━━━━━━━━━━━━━━━
+
+Dashboard contains only:
+
+1)
+Large center card.
+
+Contains:
+
+- greeting
+- role
+- statistics
+- latest activity
+- useful summary
+
+2)
+
+Below it:
+
+ONE button only.
+
+Large width.
+
+Centered.
+
+Text:
+
+"ابدأ الرحلة معنا من هنا"
+
+No other cards.
+
+No shortcuts.
+
+No quick actions.
+
+No duplicated services.
+
+No additional buttons.
+
+━━━━━━━━━━━━━━━━━━
+BUTTON BEHAVIOR
+━━━━━━━━━━━━━━━━━━
+
+Clicking:
+
+"ابدأ الرحلة معنا من هنا"
+
+must open:
+
+المساعد الذكي
+
+The smart assistant becomes
+the real operational homepage.
+
+━━━━━━━━━━━━━━━━━━
+SMART ASSISTANT PAGE
+━━━━━━━━━━━━━━━━━━
+
+Remove clutter.
+
+Keep only:
+
+- conversation area
+- input area
+- legal context selector
+- role selector
+- answer mode selector
+
+Everything else hidden.
+
+The assistant page must feel like:
+
+ChatGPT Enterprise for Government.
+
+━━━━━━━━━━━━━━━━━━
+SIDEBAR DESIGN
+━━━━━━━━━━━━━━━━━━
+
+Sidebar width:
+280px desktop.
+
+Collapsed on mobile.
+
+Matte black background.
+
+Gold active indicators.
+
+Blue headings.
+
+Gold separators.
+
+━━━━━━━━━━━━━━━━━━
+SIDEBAR STRUCTURE
+━━━━━━━━━━━━━━━━━━
+
+الرئيسية
+- لوحة القيادة
+- المساعد الذكي
+
+المرجعية القانونية
+- نظرية الشامسي
+- المبادئ الدستورية
+- الاجتهاد القضائي
+- القانون الفرنسي والأوروبي
+- مواد الاستشهادات
+
+البحث والمعرفة
+- الدماغ القانوني
+- البحث القانوني الذكي
+- سجل القانون الذكي
+- مساحة البحث
+- مكتبتي الشخصية
+
+التأهيل والتطوير
+- التأهيل والتدريب
+- الإرشاد المهني الذكي
+- مركز التفكير القضائي
+- غرفة المداومة القضائية
+
+الخدمات
+- بوابة المواطن
+
+خاص
+- المراجعة الدستورية
+- منصة الذكاء الوطني
+- مركز المؤشرات الوطنية
+
+━━━━━━━━━━━━━━━━━━
+REMOVE FROM UI
+━━━━━━━━━━━━━━━━━━
+
+Hide completely:
+
+- القرارات الإدارية
+- مركز الحكومة التنفيذية
+- تقييم المخاطر
+- لوحة الوزير
+- لوحة الوكيل
+- لوحة المدير العام
+- لوحة القاضي
+- مسؤول المخاطر
+- التشريعات الإماراتية
+- الإطار الاحترافي
+- الامتثال
+- مراجعة الأدبيات
+
+Keep code internally.
+
+Hide only from interface.
+
+━━━━━━━━━━━━━━━━━━
+OWNER ONLY
+━━━━━━━━━━━━━━━━━━
+
+Visible only to owner:
+
+- المراجعة الدستورية
+- منصة الذكاء الوطني
+- مركز المؤشرات الوطنية
+
+Display badge:
+
+"خاص"
+
+Unauthorized access returns:
+
+"ليس لديك صلاحية الوصول."
+
+━━━━━━━━━━━━━━━━━━
+MOBILE EXPERIENCE
+━━━━━━━━━━━━━━━━━━
+
+Primary device:
+
+iPhone.
+
+The entire experience must be designed mobile-first.
+
+No horizontal scrolling.
+
+Large touch targets.
+
+Fast loading.
+
+Perfect dark mode support.
+
+━━━━━━━━━━━━━━━━━━
+REFERENCE STYLE
+━━━━━━━━━━━━━━━━━━
+
+The exact feeling should match:
+
+- attached screenshots
+- judicial dark mode
+- executive intelligence dashboard
+- national AI platform
+- federal legal command center
+
+━━━━━━━━━━━━━━━━━━
+FINAL TESTS
+━━━━━━━━━━━━━━━━━━
+
+Verify:
+
+✔ Login works.
+✔ Dashboard opens directly.
+✔ Only one journey button exists.
+✔ Assistant opens correctly.
+✔ Sidebar cleaned.
+✔ Mobile works.
+✔ Dark theme applied.
+✔ GitHub synchronized.
+✔ Commit created.
+✔ Stable release pushed.
+
+Create commit:
+
+judicial-command-center-redesign-v1
