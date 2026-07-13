@@ -137,8 +137,7 @@ export default function NaipHome() {
       <AppLayout>
         <div className="flex flex-col items-center justify-center h-96 gap-4 text-muted-foreground">
           <Shield className="w-14 h-14 opacity-20" />
-          <p className="text-sm font-medium">{t('غير مصرح بالوصول', 'Access not authorised')}</p>
-          <p className="text-xs opacity-60">{t('ليس لديك صلاحية لعرض منصة الذكاء الإداري الوطني', 'You do not have access to the NAIP platform')}</p>
+          <p className="text-sm font-medium">{t('ليس لديك صلاحية الوصول.', 'You do not have access.')}</p>
         </div>
       </AppLayout>
     );

@@ -16,6 +16,14 @@ import { CourtSessionPanel } from '@/components/research/court-session-panel';
 import type { CourtSessionData } from '@/lib/court-types';
 import type { GuidedAssistantConfig } from '@/lib/guided-assistant-config';
 
+// ─── Judicial Command Center rebuild ───────────────────────────────────────────
+// The assistant page is visually reduced to: conversation, input, legal-context
+// selector, role selector and answer-mode selector only. All other panels below
+// (sessions list/drawer, expert mode, pin panel, court toggles, lifecycle
+// tracker, scenario inputs, extra config toggles) are kept fully functional in
+// code — only their UI is hidden — so no module/route/logic is deleted.
+const SHOW_LEGACY_CHAT_UI = false;
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Session { id: number; title: string; updatedAt: string; }
@@ -2772,8 +2780,8 @@ function PreAnalysisPanel({
             </div>
           </div>
 
-          {/* ── V5.0 § 6 — Professional Maturity (shown for applicable role groups) */}
-          {showMaturity && (
+          {/* ── V5.0 § 6 — Professional Maturity (shown for applicable role groups) — hidden in the simplified assistant view */}
+          {SHOW_LEGACY_CHAT_UI && showMaturity && (
             <CfgSection title="مستوى النضج المهني" icon="📊">
               <div className="flex flex-wrap gap-1.5">
                 {(Object.entries(MATURITY_CFG) as [MaturityLevel, { ar: string; depth: string }][]).map(([k, v]) => (
@@ -2812,7 +2820,9 @@ function PreAnalysisPanel({
             </div>
           </CfgSection>
 
-          {/* ── Comparative Law toggle ────────────────────────────────────── */}
+          {/* ── Comparative Law toggle, Al-Shamsi toggle & Expert Mode toggle — hidden in the simplified assistant view */}
+          {SHOW_LEGACY_CHAT_UI && (
+          <>
           <label htmlFor="comparativeMode" className="flex items-start gap-3 rounded-xl px-3 py-2.5 cursor-pointer bg-indigo-50 border border-indigo-200">
             <input
               type="checkbox"
@@ -2829,7 +2839,6 @@ function PreAnalysisPanel({
             </div>
           </label>
 
-          {/* ── Al-Shamsi Theory toggle ───────────────────────────────────── */}
           <label htmlFor="applyAdvancedStandard" className="flex items-start gap-3 rounded-xl px-3 py-2.5 cursor-pointer"
             style={{ background: '#EAF2FF', border: '1px solid #a8c4f0' }}
           >
@@ -2848,7 +2857,6 @@ function PreAnalysisPanel({
             </div>
           </label>
 
-          {/* ── Expert Mode toggle ────────────────────────────────────────── */}
           <div className="flex items-center justify-between bg-gold/10 border border-gold/25 rounded-xl px-3 py-2.5">
             <div>
               <p className="text-xs font-bold text-gold/75">وضع الخبير</p>
@@ -2860,6 +2868,8 @@ function PreAnalysisPanel({
               <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${expertMode ? 'translate-x-4' : 'translate-x-0.5'}`} />
             </button>
           </div>
+          </>
+          )}
 
           {/* ── Start button ─────────────────────────────────────────────── */}
           <button type="button" onClick={onStart}
@@ -2893,24 +2903,25 @@ function SessionConfigBar({ config, expertMode, onEdit }: {
       <span className="text-[10px] bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-medium">
         {CONFIG_ANSWER_MODE_CFG[config.answerMode].emoji} {CONFIG_ANSWER_MODE_CFG[config.answerMode].ar}
       </span>
-      {POLICE_IDENTITY_TYPES.has(config.userType) && (
+      {/* Extra state badges — hidden in the simplified assistant view; role/jurisdiction/answer-mode above are the only selectors shown */}
+      {SHOW_LEGACY_CHAT_UI && POLICE_IDENTITY_TYPES.has(config.userType) && (
         <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full font-bold">
           🔍 وحدة الشرطة
         </span>
       )}
-      {config.comparativeMode && (
+      {SHOW_LEGACY_CHAT_UI && config.comparativeMode && (
         <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
           🇦🇪↔🇫🇷 مقارنة إماراتي–فرنسي
         </span>
       )}
-      {config.applyAdvancedStandard && (
+      {SHOW_LEGACY_CHAT_UI && config.applyAdvancedStandard && (
         <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
           style={{ background: '#EAF2FF', color: '#1a3a6e', border: '1px solid #a8c4f0' }}
         >
           🧠 المعيار المتقدم
         </span>
       )}
-      {expertMode && (
+      {SHOW_LEGACY_CHAT_UI && expertMode && (
         <span className="text-[10px] bg-gold/10 text-gold border border-gold/25 px-2 py-0.5 rounded-full font-bold">
           ⭐ وضع الخبير
         </span>
@@ -4306,23 +4317,26 @@ export default function AiAssistant() {
 
   return (
     <AppLayout variant="chat">
-      {/* Mobile sessions drawer */}
-      <SessionsDrawer
-        open={showSessionsDrawer}
-        sessions={sessions}
-        activeId={activeSession?.id}
-        onSelect={(s) => { switchSession(s); setShowSessionsDrawer(false); }}
-        onDelete={deleteSession}
-        onCreate={async () => { await createSession(); setShowSessionsDrawer(false); }}
-        onClose={() => setShowSessionsDrawer(false)}
-        canUseAi={canUseAi}
-        t={t}
-      />
+      {/* Mobile sessions drawer — hidden in the simplified Judicial Command Center assistant view */}
+      {SHOW_LEGACY_CHAT_UI && (
+        <SessionsDrawer
+          open={showSessionsDrawer}
+          sessions={sessions}
+          activeId={activeSession?.id}
+          onSelect={(s) => { switchSession(s); setShowSessionsDrawer(false); }}
+          onDelete={deleteSession}
+          onCreate={async () => { await createSession(); setShowSessionsDrawer(false); }}
+          onClose={() => setShowSessionsDrawer(false)}
+          canUseAi={canUseAi}
+          t={t}
+        />
+      )}
 
       {/* ─── Main flex layout ────────────────────────────────────────────── */}
       <div className="flex flex-1 min-h-0 overflow-hidden" dir="rtl">
 
-        {/* ─── Desktop sessions sidebar ───────────────────────────────── */}
+        {/* ─── Desktop sessions sidebar — hidden in the simplified assistant view ───── */}
+        {SHOW_LEGACY_CHAT_UI && (
         <div className="hidden md:flex md:w-52 lg:w-60 shrink-0 flex-col gap-2 p-3 lg:p-4 border-e border-border bg-muted/20 overflow-hidden">
           <div className="flex items-center justify-between mb-1">
             <h2 className="text-sm font-bold text-foreground">{t('المحادثات', 'Conversations')}</h2>
@@ -4373,23 +4387,26 @@ export default function AiAssistant() {
             </div>
           )}
         </div>
+        )}
 
         {/* ─── Chat column ────────────────────────────────────────────── */}
         <div className="flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden">
 
           {/* Chat header */}
           <div className="px-3 sm:px-5 py-2.5 sm:py-3 border-b border-border/50 flex items-center gap-2.5 shrink-0 bg-card">
-            <button
-              type="button"
-              onClick={() => setShowSessionsDrawer(true)}
-              className="md:hidden flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground border border-border rounded-lg px-2.5 py-1.5 hover:bg-muted/30 transition-colors shrink-0"
-              aria-label={t('قائمة المحادثات', 'Sessions menu')}
-            >
-              <Menu className="w-3.5 h-3.5" />
-              <span className="max-w-[100px] truncate">
-                {activeSession ? activeSession.title : t('المحادثات', 'Sessions')}
-              </span>
-            </button>
+            {SHOW_LEGACY_CHAT_UI && (
+              <button
+                type="button"
+                onClick={() => setShowSessionsDrawer(true)}
+                className="md:hidden flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground border border-border rounded-lg px-2.5 py-1.5 hover:bg-muted/30 transition-colors shrink-0"
+                aria-label={t('قائمة المحادثات', 'Sessions menu')}
+              >
+                <Menu className="w-3.5 h-3.5" />
+                <span className="max-w-[100px] truncate">
+                  {activeSession ? activeSession.title : t('المحادثات', 'Sessions')}
+                </span>
+              </button>
+            )}
 
             <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 hidden md:flex">
               <Bot className="w-4 h-4 text-primary" aria-hidden />
@@ -4402,20 +4419,22 @@ export default function AiAssistant() {
                 {t('القانون الإماراتي · الفرنسي · الأوروبي', 'UAE · French · EU law')}
               </p>
             </div>
-            {/* Expert Mode toggle */}
-            <button
-              type="button"
-              onClick={() => setExpertMode((v) => !v)}
-              className={`hidden sm:inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-colors shrink-0 ${
-                expertMode
-                  ? 'bg-gold text-white border-gold'
-                  : 'border-border text-muted-foreground hover:bg-muted/30'
-              }`}
-              title={t('وضع الخبير', 'Expert Mode')}
-            >
-              ⭐ {expertMode ? t('مفعّل', 'Active') : t('وضع الخبير', 'Expert Mode')}
-            </button>
-            {activeSession && (
+            {/* Expert Mode toggle — hidden in the simplified assistant view */}
+            {SHOW_LEGACY_CHAT_UI && (
+              <button
+                type="button"
+                onClick={() => setExpertMode((v) => !v)}
+                className={`hidden sm:inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-colors shrink-0 ${
+                  expertMode
+                    ? 'bg-gold text-white border-gold'
+                    : 'border-border text-muted-foreground hover:bg-muted/30'
+                }`}
+                title={t('وضع الخبير', 'Expert Mode')}
+              >
+                ⭐ {expertMode ? t('مفعّل', 'Active') : t('وضع الخبير', 'Expert Mode')}
+              </button>
+            )}
+            {SHOW_LEGACY_CHAT_UI && activeSession && (
               <button
                 type="button"
                 onClick={createSession}
@@ -4592,8 +4611,8 @@ export default function AiAssistant() {
 
           {/* ─── Composer / input bar ──────────────────────────────── */}
           <div className="shrink-0 px-3 sm:px-4 py-2.5 sm:py-3 border-t border-border/50 bg-card relative" dir="rtl">
-            {/* Pin panel popup */}
-            {showPinPanel && (
+            {/* Pin panel popup — hidden in the simplified assistant view */}
+            {SHOW_LEGACY_CHAT_UI && showPinPanel && (
               <PinPanel
                 docs={(documents ?? []) as Array<{ id: number; originalName?: string; filename?: string }>}
                 sources={legalSources}
@@ -4615,13 +4634,13 @@ export default function AiAssistant() {
               />
             )}
 
-            {/* Expert options panel */}
-            {activeSession && expertMode && configCommitted && (
+            {/* Expert options panel — hidden in the simplified assistant view */}
+            {SHOW_LEGACY_CHAT_UI && activeSession && expertMode && configCommitted && (
               <ExpertOptionsPanel options={expertOptions} onChange={setExpertOptions} />
             )}
 
-            {/* V5.0 § 1 — Case Lifecycle Tracker */}
-            {activeSession && showLifecycle && lifecycleStage > 0 && (
+            {/* V5.0 § 1 — Case Lifecycle Tracker — hidden in the simplified assistant view */}
+            {SHOW_LEGACY_CHAT_UI && activeSession && showLifecycle && lifecycleStage > 0 && (
               <CaseLifecycleTracker
                 stage={lifecycleStage}
                 onStageChange={setLifecycleStage}
@@ -4629,8 +4648,8 @@ export default function AiAssistant() {
               />
             )}
 
-            {/* Scenario Engine inputs — shown only when scenario_builder mode is active */}
-            {activeSession && currentMode === 'scenario_builder' && (
+            {/* Scenario Engine inputs — hidden in the simplified assistant view; scenario_builder mode still works with its defaults */}
+            {SHOW_LEGACY_CHAT_UI && activeSession && currentMode === 'scenario_builder' && (
               <ScenarioInputPanel
                 config={scenarioConfig}
                 onChange={setScenarioConfig}
@@ -4670,8 +4689,8 @@ export default function AiAssistant() {
               </div>
             )}
 
-            {/* Stage 5 — Court mode toggles */}
-            {activeSession && canUseAi && (
+            {/* Stage 5 — Court mode toggles — hidden in the simplified assistant view; court_full mode remains selectable from the answer-mode selector */}
+            {SHOW_LEGACY_CHAT_UI && activeSession && canUseAi && (
               <div className="mb-2 flex flex-wrap gap-2" dir="rtl">
                 <button
                   type="button"
@@ -4725,8 +4744,8 @@ export default function AiAssistant() {
               </div>
             )}
 
-            {/* Pinned badges */}
-            {totalPinned > 0 && (
+            {/* Pinned badges — hidden in the simplified assistant view */}
+            {SHOW_LEGACY_CHAT_UI && totalPinned > 0 && (
               <div className="flex flex-wrap gap-1.5 mb-2">
                 {pinnedDocs.map((id) => {
                   const d = documents?.find((x) => x.id === id);
@@ -4752,20 +4771,22 @@ export default function AiAssistant() {
             )}
 
             <div className="flex items-end gap-1.5 sm:gap-2">
-              {/* Pin button */}
-              <button
-                type="button"
-                onClick={() => setShowPinPanel((s) => !s)}
-                disabled={!activeSession}
-                className={`shrink-0 h-9 w-9 sm:h-10 sm:w-10 rounded-xl border flex items-center justify-center transition-colors disabled:opacity-40 ${
-                  totalPinned > 0
-                    ? 'border-gold/40 bg-gold/10 text-gold'
-                    : 'border-border bg-background text-muted-foreground hover:text-foreground hover:border-border/80'
-                }`}
-                title={t('تثبيت مصادر', 'Pin sources')}
-              >
-                {totalPinned > 0 ? <Pin className="w-4 h-4" /> : <PinOff className="w-4 h-4" />}
-              </button>
+              {/* Pin button — hidden in the simplified assistant view */}
+              {SHOW_LEGACY_CHAT_UI && (
+                <button
+                  type="button"
+                  onClick={() => setShowPinPanel((s) => !s)}
+                  disabled={!activeSession}
+                  className={`shrink-0 h-9 w-9 sm:h-10 sm:w-10 rounded-xl border flex items-center justify-center transition-colors disabled:opacity-40 ${
+                    totalPinned > 0
+                      ? 'border-gold/40 bg-gold/10 text-gold'
+                      : 'border-border bg-background text-muted-foreground hover:text-foreground hover:border-border/80'
+                  }`}
+                  title={t('تثبيت مصادر', 'Pin sources')}
+                >
+                  {totalPinned > 0 ? <Pin className="w-4 h-4" /> : <PinOff className="w-4 h-4" />}
+                </button>
+              )}
 
               <label className="sr-only" htmlFor="assistant-input">{t('رسالتك', 'Your message')}</label>
               <textarea

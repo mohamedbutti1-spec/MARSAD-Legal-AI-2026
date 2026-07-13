@@ -721,7 +721,7 @@ export default function ConstitutionalIntelligence() {
       <AppLayout>
         <div className="flex flex-col items-center justify-center h-96 text-muted-foreground gap-3">
           <Shield className="w-12 h-12 opacity-20" />
-          <p className="text-sm">{t('ليس لديك صلاحية لعرض لوحة المراجعة الدستورية', 'You do not have access to the Constitutional Review Dashboard')}</p>
+          <p className="text-sm font-medium">{t('ليس لديك صلاحية الوصول.', 'You do not have access.')}</p>
         </div>
       </AppLayout>
     );
