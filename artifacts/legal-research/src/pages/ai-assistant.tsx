@@ -206,7 +206,7 @@ const USER_TYPE_CONFIG: Record<UserType, { ar: string; emoji: string }> = {
   academic_researcher:    { ar: 'باحث أكاديمي',                   emoji: '🔬' },
   legal_intern:           { ar: 'متدرب قانوني',                   emoji: '📋' },
   // Public Users
-  citizen:                { ar: 'مواطن',                          emoji: '👤' },
+  citizen:                { ar: 'مستخدم',                         emoji: '👤' },
   institution:            { ar: 'شركة / مؤسسة',                  emoji: '🏢' },
   // General Public
   general_user:           { ar: 'مستخدم عام',                     emoji: '👥' },
@@ -249,7 +249,7 @@ const USER_TYPE_CONFIG: Record<UserType, { ar: string; emoji: string }> = {
 // ─── V4.0 Professional Identities — 35 entries, 8 groups (1+4+9+4+8+3+2+4) ───
 const PRIMARY_IDENTITIES: { value: UserType; labelAr: string; groupAr: string; emoji: string }[] = [
   // ■ العموم
-  { value: 'citizen',                       labelAr: 'مواطن / مستخدم عام',          groupAr: 'العموم',                            emoji: '👤' },
+  { value: 'citizen',                       labelAr: 'مستخدم',                       groupAr: 'العموم',                            emoji: '👤' },
   // ■ التعليم والتدريب
   { value: 'law_student',                   labelAr: 'طالب قانون',                  groupAr: 'التعليم والتدريب',                  emoji: '📖' },
   { value: 'academic_researcher',           labelAr: 'باحث أكاديمي',                groupAr: 'التعليم والتدريب',                  emoji: '🔬' },
@@ -319,11 +319,11 @@ const USER_GOAL_CFG: Record<UserGoal, { ar: string; emoji: string }> = {
 };
 
 const CONFIG_ANSWER_MODE_CFG: Record<ConfigAnswerMode, { ar: string; emoji: string }> = {
-  quick:            { ar: 'إجابة سريعة',          emoji: '⚡' },
-  standard:         { ar: 'تحليل قانوني معياري',  emoji: '📘' },
-  academic:         { ar: 'إجابة أكاديمية',        emoji: '🎓' },
-  judicial:         { ar: 'حكم قضائي',             emoji: '🏛' },
+  quick:            { ar: 'سريع',                  emoji: '⚡' },
+  standard:         { ar: 'إجابة مفصلة',           emoji: '📘' },
+  academic:         { ar: 'تحليل قانوني متخصص',    emoji: '🎓' },
   memorandum:       { ar: 'مذكرة قانونية',         emoji: '⚖' },
+  judicial:         { ar: 'حكم قضائي',             emoji: '🏛' },
   legislative:      { ar: 'مسودة تشريعية',        emoji: '📜' },
   executive_report: { ar: 'تقرير تنفيذي',         emoji: '📊' },
   comparative:      { ar: 'دراسة مقارنة',          emoji: '🌐' },
@@ -2686,7 +2686,7 @@ function ScenarioInputPanel({
 // ─── Pre-analysis panel ───────────────────────────────────────────────────────
 
 function PreAnalysisPanel({
-  config, onChange, onStart, expertMode, onToggleExpert, currentInput,
+  config, onChange, onStart, expertMode, onToggleExpert, currentInput, onInputChange,
 }: {
   config: SessionConfig;
   onChange: (c: SessionConfig) => void;
@@ -2694,6 +2694,7 @@ function PreAnalysisPanel({
   expertMode: boolean;
   onToggleExpert: () => void;
   currentInput?: string;
+  onInputChange?: (value: string) => void;
 }) {
   // Derive the selected identity — prefer a PRIMARY_IDENTITIES match, else fall back to canonical
   const selectedIdentity = PRIMARY_IDENTITIES.find((id) => id.value === config.userType)
@@ -2774,9 +2775,6 @@ function PreAnalysisPanel({
                   🔍 تُفعَّل الوحدة الخاصة بالشرطة — 15 محوراً إجرائياً إضافياً في كل إجابة
                 </p>
               )}
-              <p className="text-muted-foreground leading-relaxed mt-0.5">
-                يتكيّف النظام تلقائياً: اللغة · العمق · المصطلحات · الإرشاد الإجرائي · هيكل الإجابة
-              </p>
             </div>
           </div>
 
@@ -2801,7 +2799,7 @@ function PreAnalysisPanel({
           )}
 
           {/* ── Jurisdiction / legal context ────────────────────────────── */}
-          <CfgSection title="الاختصاص القضائي" icon="🌐">
+          <CfgSection title="الاختصاص القضائي المطلوب" icon="🌐">
             <div className="flex flex-wrap gap-1.5">
               {(Object.entries(JURISDICTION_CFG) as [Jurisdiction, { ar: string; flag: string }][]).map(([k, v]) => (
                 <ConfigChip key={k} value={k} selected={config.jurisdiction}
@@ -2871,13 +2869,32 @@ function PreAnalysisPanel({
           </>
           )}
 
-          {/* ── Start button ─────────────────────────────────────────────── */}
-          <button type="button" onClick={onStart}
-            className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
-          >
-            <Send className="w-4 h-4" />
-            ابدأ التحليل القانوني
-          </button>
+          {/* ── Main legal question box ──────────────────────────────────── */}
+          <div className="relative bg-card border-2 border-primary/25 rounded-2xl shadow-sm focus-within:border-primary/50 transition-colors mt-2">
+            <textarea
+              rows={4}
+              className="w-full resize-none rounded-2xl bg-transparent px-4 py-4 pe-14 text-sm sm:text-base text-foreground placeholder:text-muted-foreground/70 focus:outline-none leading-relaxed"
+              placeholder="اكتب سؤالك القانوني"
+              dir="rtl"
+              value={currentInput ?? ''}
+              onChange={(e) => onInputChange?.(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  onStart();
+                }
+              }}
+            />
+            <button
+              type="button"
+              onClick={onStart}
+              aria-label="بدء التحليل"
+              title="بدء التحليل"
+              className="absolute bottom-3 start-3 h-9 w-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-colors shadow-sm"
+            >
+              <Send className="w-4 h-4" aria-hidden />
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -4532,6 +4549,7 @@ export default function AiAssistant() {
                   expertMode={expertMode}
                   onToggleExpert={() => setExpertMode((v) => !v)}
                   currentInput={input}
+                  onInputChange={setInput}
                 />
               ) : (
               <div className="h-full flex flex-col items-center justify-center gap-4 text-center" dir="rtl">
