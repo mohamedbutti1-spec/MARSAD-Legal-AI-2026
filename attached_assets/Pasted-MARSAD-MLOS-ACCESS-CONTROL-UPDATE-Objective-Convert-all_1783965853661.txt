@@ -1,0 +1,78 @@
+MARSAD / MLOS — ACCESS CONTROL UPDATE
+
+Objective:
+Convert all features, references, menus, analytical frameworks, datasets, prompts, and outputs related to “نظرية الشامسي” into a private owner-only capability.
+
+Implementation Rules:
+
+1. Remove all visible references to:
+
+* نظرية الشامسي
+* إطار الشامسي
+* M-Shamsi Framework
+* معيار متقدم
+* أيقونات أو شارات مرتبطة بالنظرية
+* أي أوصاف تسويقية أو تعليمية مرتبطة بالنظرية
+
+2. Hide completely from all user roles:
+
+* المستخدم العام
+* الطالب
+* المحامي
+* ضابط المركز
+* وكيل النيابة
+* القاضي
+* المستشار
+* المدير العام
+* الوزير
+* أي مستخدم مسجل عادي
+
+3. Restrict access exclusively to:
+    OWNER ROLE ONLY
+4. Owner permissions:
+
+* View Shamsi Framework tools.
+* Activate or deactivate Shamsi analysis.
+* Access proprietary legal reasoning modules.
+* Generate outputs using Shamsi methodology.
+* Access internal datasets and weighting systems.
+* Use advanced constitutional analysis models.
+* Export owner-only reports.
+
+5. UI Behaviour:
+
+* No placeholder or disabled buttons.
+* No mention that a hidden feature exists.
+* The interface should appear naturally as if the framework does not exist for regular users.
+
+6. Backend Behaviour:
+
+* Protect all routes, APIs, prompts and models related to Shamsi Framework.
+* Prevent direct URL access.
+* Prevent API invocation without owner authentication.
+* Return “Unauthorized” for unauthorized access attempts.
+* Log all access attempts for auditing.
+
+7. Sidebar Cleanup:
+    Remove every visible menu item related to:
+
+* نظرية الشامسي
+* التحليل وفق إطار الشامسي
+* الوزن القانوني
+* السبب الخوارزمي
+* التحيز المشروع
+* الامتثال المتدرج
+* سجل الأسباب الخوارزمي
+* الطعن المسبق
+
+8. Future Expansion:
+    Create a hidden configuration flag:
+    SHAMSI_FRAMEWORK_ENABLED = TRUE/FALSE
+
+Only the owner can toggle this setting.
+
+9. Security Priority:
+    Treat the entire Shamsi Framework as proprietary intellectual property belonging exclusively to the platform owner and not part of the public product offering.
+
+Result:
+The public version of MARSAD/MLOS operates normally for all users, while the Shamsi Framework remains an invisible private expert layer accessible only by the owner account.
