@@ -11,12 +11,14 @@ interface AppLayoutProps {
    *          use this for full-height chat / canvas pages that manage their own scrolling.
    */
   variant?: 'default' | 'chat';
+  /** Suppress the dev-only demo-mode banner for pages with a simplified, production-facing UI. */
+  hideDemoBanner?: boolean;
 }
 
 /** True only in the Replit/dev environment — signals that role-switching is demo scaffolding. */
 const IS_DEMO_MODE = import.meta.env.DEV || import.meta.env.MODE === 'development';
 
-export function AppLayout({ children, variant = 'default' }: AppLayoutProps) {
+export function AppLayout({ children, variant = 'default', hideDemoBanner = false }: AppLayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { dir } = useUserContext();
@@ -61,7 +63,7 @@ export function AppLayout({ children, variant = 'default' }: AppLayoutProps) {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* P0-1: Demo mode banner — role selector is scaffolding only, not production auth */}
-        {IS_DEMO_MODE && (
+        {IS_DEMO_MODE && !hideDemoBanner && (
           <div
             className="shrink-0 bg-gold text-white text-[11px] font-semibold text-center py-1 px-4 flex items-center justify-center gap-2"
             role="banner"

@@ -113,7 +113,7 @@ type UserGoal =
   | 'risk_assessment' | 'compliance_review' | 'ai_decision_analysis';
 
 type ConfigAnswerMode = 'quick' | 'standard' | 'academic' | 'judicial' | 'memorandum' | 'legislative' | 'executive_report' | 'comparative' | 'scientific';
-type Jurisdiction    = 'uae' | 'france' | 'saudi' | 'egypt' | 'eu' | 'gcc' | 'comparative';
+type Jurisdiction    = 'uae' | 'france' | 'saudi' | 'egypt' | 'eu' | 'gcc' | 'comparative' | 'other';
 // V5.0 — Professional Maturity levels (4 per profession group)
 type MaturityLevel   = 'trainee' | 'junior' | 'mid' | 'expert';
 type SourceType      = 'all' | 'legislation' | 'judicial' | 'doctrine' | 'regulations' | 'circulars' | 'international' | 'academic_research';
@@ -338,6 +338,7 @@ const JURISDICTION_CFG: Record<Jurisdiction, { ar: string; flag: string }> = {
   eu:          { ar: 'الاتحاد الأوروبي',         flag: '🇪🇺' },
   gcc:         { ar: 'دول مجلس التعاون',        flag: '🌙' },
   comparative: { ar: 'قانون مقارن',              flag: '🌐' },
+  other:       { ar: 'أخرى',                     flag: '🌐' },
 };
 
 const SOURCE_CFG: Record<SourceType, string> = {
@@ -2696,15 +2697,57 @@ function PreAnalysisPanel({
   currentInput?: string;
   onInputChange?: (value: string) => void;
 }) {
-  // Derive the selected identity — prefer a PRIMARY_IDENTITIES match, else fall back to canonical
-  const selectedIdentity = PRIMARY_IDENTITIES.find((id) => id.value === config.userType)
-    ?? PRIMARY_IDENTITIES[0];
+  // Derive the selected identity — only set once the user actually picks one;
+  // 'unspecified' (the default) shows the dropdown placeholder instead.
+  const identityChosen = config.userType !== 'unspecified';
+  const selectedIdentity = PRIMARY_IDENTITIES.find((id) => id.value === config.userType);
 
   // Whether the selected identity triggers the Special Police Module
   const isPolice = POLICE_IDENTITY_TYPES.has(config.userType);
 
   // V5.0 § 6 — whether this role group gets a maturity selector
-  const showMaturity = MATURITY_APPLICABLE_GROUPS.has(selectedIdentity.groupAr);
+  const showMaturity = MATURITY_APPLICABLE_GROUPS.has(selectedIdentity?.groupAr ?? '');
+
+  // ── Analytical framework — derives a single-choice value from the underlying
+  // jurisdiction / comparative / Al-Shamsi flags without altering their meaning.
+  const [frameworkTouched, setFrameworkTouched] = useState(
+    config.jurisdiction !== DEFAULT_SESSION_CONFIG.jurisdiction
+    || config.comparativeMode || config.applyAdvancedStandard,
+  );
+  type AnalyticalFramework = 'uae' | 'france' | 'comparative' | 'shamsi' | 'other';
+  const currentFramework: AnalyticalFramework =
+    config.applyAdvancedStandard ? 'shamsi' :
+    config.comparativeMode        ? 'comparative' :
+    config.jurisdiction === 'france' ? 'france' :
+    config.jurisdiction === 'uae'    ? 'uae' :
+    'other';
+  const FRAMEWORK_OPTIONS: { value: AnalyticalFramework; label: string }[] = [
+    { value: 'uae',         label: 'وفق القانون الإماراتي' },
+    { value: 'france',      label: 'القانون الفرنسي' },
+    { value: 'comparative', label: 'القانون المقارن' },
+    { value: 'shamsi',      label: 'نظرية الشامسي' },
+    { value: 'other',       label: 'أخرى...' },
+  ];
+  function applyFramework(fw: AnalyticalFramework) {
+    setFrameworkTouched(true);
+    switch (fw) {
+      case 'uae':
+        onChange({ ...config, jurisdiction: 'uae', comparativeMode: false, applyAdvancedStandard: false });
+        break;
+      case 'france':
+        onChange({ ...config, jurisdiction: 'france', comparativeMode: false, applyAdvancedStandard: false });
+        break;
+      case 'comparative':
+        onChange({ ...config, jurisdiction: 'comparative', comparativeMode: true, applyAdvancedStandard: false });
+        break;
+      case 'shamsi':
+        onChange({ ...config, applyAdvancedStandard: true, comparativeMode: false });
+        break;
+      case 'other':
+        onChange({ ...config, jurisdiction: 'other', comparativeMode: false, applyAdvancedStandard: false });
+        break;
+    }
+  }
 
   return (
     <div className="flex-1 overflow-y-auto px-3 sm:px-5 py-4" dir="rtl">
@@ -2748,6 +2791,7 @@ function PreAnalysisPanel({
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 appearance-none cursor-pointer"
                 style={{ direction: 'rtl' }}
               >
+                <option value="unspecified" disabled>اختر هويتك المهنية</option>
                 {/* Group identities by their groupAr for optgroup */}
                 {Array.from(new Set(PRIMARY_IDENTITIES.map((id) => id.groupAr))).map((group) => (
                   <optgroup key={group} label={group}>
@@ -2761,21 +2805,23 @@ function PreAnalysisPanel({
               </select>
             </div>
 
-            {/* Selected identity badge + description */}
-            <div className={`mx-3 mb-3 mt-2 rounded-lg px-3 py-2 text-[11px] ${
-              isPolice
-                ? 'bg-blue-50 border border-blue-200'
-                : 'bg-primary/5 border border-primary/15'
-            }`}>
-              <p className={`font-bold mb-0.5 ${isPolice ? 'text-blue-800' : 'text-primary'}`}>
-                {selectedIdentity.emoji} {selectedIdentity.labelAr}
-              </p>
-              {isPolice && (
-                <p className="text-[10px] text-blue-700 font-medium">
-                  🔍 تُفعَّل الوحدة الخاصة بالشرطة — 15 محوراً إجرائياً إضافياً في كل إجابة
+            {/* Selected identity badge + description — only once an identity is actually chosen */}
+            {identityChosen && selectedIdentity && (
+              <div className={`mx-3 mb-3 mt-2 rounded-lg px-3 py-2 text-[11px] ${
+                isPolice
+                  ? 'bg-blue-50 border border-blue-200'
+                  : 'bg-primary/5 border border-primary/15'
+              }`}>
+                <p className={`font-bold mb-0.5 ${isPolice ? 'text-blue-800' : 'text-primary'}`}>
+                  {selectedIdentity.emoji} {selectedIdentity.labelAr}
                 </p>
-              )}
-            </div>
+                {isPolice && (
+                  <p className="text-[10px] text-blue-700 font-medium">
+                    🔍 تُفعَّل الوحدة الخاصة بالشرطة — 15 محوراً إجرائياً إضافياً في كل إجابة
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* ── V5.0 § 6 — Professional Maturity (shown for applicable role groups) — hidden in the simplified assistant view */}
@@ -2798,14 +2844,28 @@ function PreAnalysisPanel({
             </CfgSection>
           )}
 
-          {/* ── Jurisdiction / legal context ────────────────────────────── */}
-          <CfgSection title="الاختصاص القضائي المطلوب" icon="🌐">
-            <div className="flex flex-wrap gap-1.5">
-              {(Object.entries(JURISDICTION_CFG) as [Jurisdiction, { ar: string; flag: string }][]).map(([k, v]) => (
-                <ConfigChip key={k} value={k} selected={config.jurisdiction}
-                  label={`${v.flag} ${v.ar}`} onSelect={(val) => onChange({ ...config, jurisdiction: val })} />
+          {/* ── الإطار التحليلي ──────────────────────────────────────────── */}
+          <CfgSection title="الإطار التحليلي" icon="🧭">
+            <select
+              value={frameworkTouched ? currentFramework : ''}
+              onChange={(e) => applyFramework(e.target.value as AnalyticalFramework)}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 appearance-none cursor-pointer"
+              style={{
+                direction: 'rtl',
+                color: frameworkTouched && currentFramework === 'shamsi' ? '#A970FF' : undefined,
+              }}
+            >
+              <option value="" disabled>اختر الإطار التحليلي</option>
+              {FRAMEWORK_OPTIONS.map((opt) => (
+                <option
+                  key={opt.value}
+                  value={opt.value}
+                  style={opt.value === 'shamsi' ? { color: '#A970FF' } : undefined}
+                >
+                  • {opt.label}
+                </option>
               ))}
-            </div>
+            </select>
           </CfgSection>
 
           {/* ── Answer mode ──────────────────────────────────────────────── */}
@@ -3259,7 +3319,7 @@ function ResponseModeSelector({
 }) {
   return (
     <div className="flex items-center gap-1 flex-wrap" dir="rtl">
-      {(Object.keys(MODE_CONFIG) as ResponseMode[]).map((m) => {
+      {(Object.keys(MODE_CONFIG) as ResponseMode[]).filter((m) => m !== 'risk_analysis').map((m) => {
         const cfg = MODE_CONFIG[m];
         const isActive = value === m;
         return (
@@ -3712,6 +3772,14 @@ export default function AiAssistant() {
   }, []);
 
   useEffect(() => { fetchSessions(); }, [fetchSessions]);
+
+  // ── Go straight to the question interface — no "create a conversation first"
+  // gate. If a guided/home-composer query is about to auto-start, let that flow
+  // create its own session; otherwise open a session automatically on load.
+  useEffect(() => {
+    if (sessionStorage.getItem('pendingAssistantQuery')) return;
+    createSession();
+  }, []); // mount-only
 
   // ── Auto-start from home composer ──────────────────────────────────────────
   useEffect(() => {
@@ -4333,7 +4401,7 @@ export default function AiAssistant() {
   const totalPinned = pinnedDocs.length + pinnedSrcs.length;
 
   return (
-    <AppLayout variant="chat">
+    <AppLayout variant="chat" hideDemoBanner>
       {/* Mobile sessions drawer — hidden in the simplified Judicial Command Center assistant view */}
       {SHOW_LEGACY_CHAT_UI && (
         <SessionsDrawer
@@ -4466,66 +4534,9 @@ export default function AiAssistant() {
           {/* Messages area */}
           <div className="flex-1 overflow-y-auto px-3 sm:px-5 py-3 sm:py-4">
             {!activeSession ? (
-              <div className="h-full flex flex-col items-center justify-center gap-4 sm:gap-5 text-center px-4" dir="rtl">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-                  <Scale className="w-7 h-7 sm:w-8 sm:h-8 text-primary/70" aria-hidden />
-                </div>
-                <div>
-                  <h3 className="font-bold text-foreground mb-2 text-base sm:text-lg leading-snug">
-                    {t('مرحباً بك في مرصد.', 'Welcome to Marsad.')}
-                  </h3>
-                  <p className="text-sm text-muted-foreground max-w-sm">
-                    {t(
-                      'ابدأ بكتابة سؤالك القانوني أو وقائع القضية، ثم اختر طريقة التحليل المناسبة.',
-                      'Start by entering your legal question or case facts, then choose your analysis method.',
-                    )}
-                  </p>
-                </div>
-                {/* Example placeholder */}
-                <div className="w-full max-w-sm bg-muted/40 border border-border/50 rounded-xl p-3 text-start" dir="rtl">
-                  <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-wide mb-1.5">{t('مثال', 'Example')}</p>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    {t(
-                      'أصدرت جهة إدارية قراراً بفصل موظف عام بسبب مخالفة إدارية...',
-                      'An administrative authority issued a decision to dismiss a public employee due to an administrative violation...',
-                    )}
-                  </p>
-                </div>
-                {canUseAi && (
-                  <>
-                    <Button className="gap-1.5 text-sm" onClick={createSession}>
-                      <Plus className="w-4 h-4" />
-                      {t('ابدأ محادثة جديدة', 'Start a new conversation')}
-                    </Button>
-                    <div className="w-full max-w-md px-2">
-                      <p className="text-[10px] text-muted-foreground/60 mb-2">{t('أو جرّب أحد الأسئلة التالية', 'Or try one of these')}</p>
-                      <div className="flex gap-2 overflow-x-auto pb-2 sm:hidden" style={{ scrollbarWidth: 'none' }}>
-                        {SUGGESTIONS.map((s, i) => (
-                          <button
-                            key={i}
-                            type="button"
-                            onClick={async () => { setInput(t(s.ar, s.en)); await createSession(); }}
-                            className="flex-none text-start text-xs px-3 py-2.5 rounded-xl border border-border/60 hover:border-primary/30 hover:bg-primary/5 transition-all text-muted-foreground hover:text-foreground whitespace-nowrap"
-                          >
-                            {t(s.ar, s.en)}
-                          </button>
-                        ))}
-                      </div>
-                      <div className="hidden sm:grid grid-cols-2 gap-2">
-                        {SUGGESTIONS.map((s, i) => (
-                          <button
-                            key={i}
-                            type="button"
-                            onClick={async () => { setInput(t(s.ar, s.en)); await createSession(); }}
-                            className="text-start text-xs p-3 rounded-xl border border-border/60 hover:border-primary/30 hover:bg-primary/5 transition-all text-muted-foreground hover:text-foreground"
-                          >
-                            {t(s.ar, s.en)}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </>
-                )}
+              // Session opens automatically on load — this only shows for the brief moment while that request is in flight.
+              <div className="flex items-center justify-center h-full">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
               </div>
             ) : loadingMessages ? (
               <div className="flex items-center justify-center h-full">
@@ -4683,15 +4694,6 @@ export default function AiAssistant() {
                   onChange={(m) => { setCurrentMode(m); setModeLocked(true); }}
                   disabled={sending || !canUseAi}
                 />
-                {modeLocked && (
-                  <button
-                    type="button"
-                    onClick={() => { setModeLocked(false); if (input.trim()) setCurrentMode(detectMode(input)); else setCurrentMode('standard'); }}
-                    className="text-[9px] text-muted-foreground hover:text-foreground transition-colors shrink-0"
-                  >
-                    {t('كشف تلقائي', 'Auto-detect')}
-                  </button>
-                )}
               </div>
             )}
 
@@ -4813,9 +4815,7 @@ export default function AiAssistant() {
                 rows={1}
                 className="flex-1 resize-none border border-border rounded-xl px-3 py-2 sm:py-2.5 text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted-foreground min-w-0"
                 placeholder={
-                  !activeSession
-                    ? t('أنشئ محادثة أولاً', 'Create a conversation first')
-                    : totalPinned > 0
+                  totalPinned > 0
                     ? t('اكتب سؤالك...', 'Type your question...')
                     : t('اكتب سؤالك القانوني…', 'Type your legal question…')
                 }
