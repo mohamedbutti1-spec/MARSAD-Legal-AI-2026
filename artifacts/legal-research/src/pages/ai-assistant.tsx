@@ -3964,6 +3964,7 @@ function SessionsDrawer({
         <div className="flex items-center justify-between px-4 pb-3 border-b border-border/50">
           <h3 className="font-semibold text-sm text-foreground">{t('المحادثات', 'Conversations')}</h3>
           <div className="flex items-center gap-2">
+            {/* prop is named canUseAi but the caller passes canCreateAiSession — this button creates a session (a write action) */}
             <Button size="sm" variant="outline" className="gap-1 h-7 text-xs" onClick={onCreate} disabled={!canUseAi}>
               <Plus className="w-3.5 h-3.5" />
               {t('جديد', 'New')}
@@ -4131,7 +4132,13 @@ function CaseLifecycleTracker({
 
 export default function AiAssistant() {
   const t = useT();
-  const { canUseAi } = useUserContext();
+  const { canUseAi, role } = useUserContext();
+  // The backend restricts session/message *writes* (create session, send message,
+  // rename/delete) to owner|supervisor via requireSupervisorOrOwner — narrower than
+  // canUseAi (any non-citizen role, used for read access like GET sessions/messages).
+  // Read-only roles (e.g. the guest/reviewer account) must not see write controls as
+  // enabled, or they hit a 403 and the UI gets stuck (e.g. an eternal auto-create spinner).
+  const canCreateAiSession = role === 'owner' || role === 'supervisor';
   const { toast } = useToast();
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -4204,8 +4211,13 @@ export default function AiAssistant() {
   // create its own session; otherwise open a session automatically on load.
   useEffect(() => {
     if (sessionStorage.getItem('pendingAssistantQuery')) return;
+    // Read-only roles (e.g. the guest/reviewer account) can't create sessions —
+    // POST /api/assistant/sessions 403s for them. Skip the auto-create so the
+    // page doesn't get stuck on an infinite spinner waiting for an activeSession
+    // that will never arrive; the read-only empty state below handles this case.
+    if (!canCreateAiSession) return;
     createSession();
-  }, []); // mount-only
+  }, [canCreateAiSession]);
 
   // ── Auto-start from home composer ──────────────────────────────────────────
   useEffect(() => {
@@ -4358,6 +4370,7 @@ export default function AiAssistant() {
   }, [currentMode]);
 
   async function createSession() {
+    if (!canCreateAiSession) return; // read-only roles cannot create sessions (403) — defensive guard
     const r = await apiFetch('/api/assistant/sessions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -4842,7 +4855,7 @@ export default function AiAssistant() {
           onDelete={deleteSession}
           onCreate={async () => { await createSession(); setShowSessionsDrawer(false); }}
           onClose={() => setShowSessionsDrawer(false)}
-          canUseAi={canUseAi}
+          canUseAi={canCreateAiSession}
           t={t}
         />
       )}
@@ -4855,7 +4868,7 @@ export default function AiAssistant() {
         <div className="hidden md:flex md:w-52 lg:w-60 shrink-0 flex-col gap-2 p-3 lg:p-4 border-e border-border bg-muted/20 overflow-hidden">
           <div className="flex items-center justify-between mb-1">
             <h2 className="text-sm font-bold text-foreground">{t('المحادثات', 'Conversations')}</h2>
-            <Button size="sm" variant="outline" className="gap-1 h-7 text-xs" onClick={createSession} disabled={!canUseAi}>
+            <Button size="sm" variant="outline" className="gap-1 h-7 text-xs" onClick={createSession} disabled={!canCreateAiSession}>
               <Plus className="w-3.5 h-3.5" />
               {t('جديد', 'New')}
             </Button>
@@ -4964,10 +4977,22 @@ export default function AiAssistant() {
           {/* Messages area */}
           <div className="flex-1 overflow-y-auto px-3 sm:px-5 py-3 sm:py-4">
             {!activeSession ? (
-              // Session opens automatically on load — this only shows for the brief moment while that request is in flight.
-              <div className="flex items-center justify-center h-full">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-              </div>
+              !canCreateAiSession ? (
+                // Read-only roles (guest/reviewer) can browse but never get an
+                // auto-created session — show a clear static state instead of
+                // spinning forever waiting for a 403'd request to succeed.
+                <div className="flex flex-col items-center justify-center h-full gap-3 text-center px-4" dir="rtl">
+                  <Bot className="w-8 h-8 text-muted-foreground/30" aria-hidden />
+                  <p className="text-sm text-muted-foreground max-w-xs">
+                    {t('حسابك للقراءة فقط ولا يمكنه بدء محادثات جديدة مع المساعد الذكي.', 'Your account is read-only and cannot start new AI assistant conversations.')}
+                  </p>
+                </div>
+              ) : (
+                // Session opens automatically on load — this only shows for the brief moment while that request is in flight.
+                <div className="flex items-center justify-center h-full">
+                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                </div>
+              )
             ) : loadingMessages ? (
               <div className="flex items-center justify-center h-full">
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -5132,7 +5157,7 @@ export default function AiAssistant() {
               <ScenarioInputPanel
                 config={scenarioConfig}
                 onChange={setScenarioConfig}
-                disabled={sending || !canUseAi}
+                disabled={sending || !canCreateAiSession}
               />
             )}
 
@@ -5144,7 +5169,7 @@ export default function AiAssistant() {
                 <ResponseModeSelector
                   value={currentMode}
                   onChange={(m) => { setCurrentMode(m); setModeLocked(true); }}
-                  disabled={sending || !canUseAi}
+                  disabled={sending || !canCreateAiSession}
                 />
               </div>
             )}
@@ -5155,13 +5180,13 @@ export default function AiAssistant() {
                   value={theoryLens}
                   onChange={setTheoryLens}
                   arabic={true}
-                  disabled={sending || !canUseAi}
+                  disabled={sending || !canCreateAiSession}
                 />
               </div>
             )}
 
             {/* Stage 5 — Court mode toggles — hidden in the simplified assistant view; court_full mode remains selectable from the answer-mode selector */}
-            {SHOW_LEGACY_CHAT_UI && activeSession && canUseAi && (
+            {SHOW_LEGACY_CHAT_UI && activeSession && canCreateAiSession && (
               <div className="mb-2 flex flex-wrap gap-2" dir="rtl">
                 <button
                   type="button"
@@ -5273,7 +5298,7 @@ export default function AiAssistant() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKey}
-                disabled={!activeSession || !canUseAi}
+                disabled={!activeSession || !canCreateAiSession}
                 style={{ minHeight: '2.25rem', maxHeight: '7rem' }}
                 onInput={(e) => {
                   const el = e.currentTarget;
@@ -5285,7 +5310,7 @@ export default function AiAssistant() {
                 size="sm"
                 className={`shrink-0 h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-xl ${courtMode ? 'bg-gold hover:bg-gold border-gold' : ''}`}
                 onClick={() => courtMode ? runCourtSession() : sendMessage()}
-                disabled={!input.trim() || !activeSession || sending || courtLoading || !canUseAi}
+                disabled={!input.trim() || !activeSession || sending || courtLoading || !canCreateAiSession}
                 aria-label={courtMode ? t('محاكمة', 'Simulate') : t('إرسال', 'Send')}
                 title={courtMode ? t('تشغيل جلسة المحاكمة', 'Run court session') : undefined}
               >

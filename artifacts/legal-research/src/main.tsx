@@ -12,3 +12,13 @@ import './index.css';
  */
 
 createRoot(document.getElementById('root')!).render(<App />);
+
+// Register the PWA service worker in production only — in dev it would
+// intercept Vite's HMR/module requests and cause stale-module confusion.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {
+      // Non-fatal: the app works fully online without the service worker.
+    });
+  });
+}
