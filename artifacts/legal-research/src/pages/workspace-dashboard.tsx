@@ -142,7 +142,7 @@ export default function WorkspaceDashboard() {
                 </CardTitle>
                 <Badge
                   variant={project.status === 'active' ? 'default' : 'secondary'}
-                  className={`shrink-0 text-xs ${project.status === 'active' ? 'bg-green-100 text-green-800 hover:bg-green-100' : ''}`}
+                  className={`shrink-0 text-xs ${project.status === 'active' ? 'bg-heading/15 text-heading/75 hover:bg-heading/15' : ''}`}
                 >
                   {project.status === 'active' ? t('نشط', 'Active') : t('أرشيف', 'Archived')}
                 </Badge>

@@ -74,8 +74,8 @@ function fmt(val: number | null | undefined, suffix = ''): string {
 function riskLevelConfig(level: GroupedRow['riskLevel']) {
   switch (level) {
     case 'critical': return { label: 'حرج', labelEn: 'Critical', bg: 'bg-red-100 dark:bg-red-950/40', text: 'text-red-700 dark:text-red-400', border: 'border-red-200 dark:border-red-800/40' };
-    case 'high':     return { label: 'عالٍ',  labelEn: 'High',     bg: 'bg-orange-100 dark:bg-orange-950/40', text: 'text-orange-700 dark:text-orange-400', border: 'border-orange-200 dark:border-orange-800/40' };
-    case 'moderate': return { label: 'متوسط', labelEn: 'Moderate', bg: 'bg-amber-100 dark:bg-amber-950/40', text: 'text-amber-700 dark:text-amber-400', border: 'border-amber-200 dark:border-amber-800/40' };
+    case 'high':     return { label: 'عالٍ',  labelEn: 'High',     bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80', border: 'border-gold/25 dark:border-gold/40' };
+    case 'moderate': return { label: 'متوسط', labelEn: 'Moderate', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80', border: 'border-gold/25 dark:border-gold/40' };
     default:         return { label: 'منخفض', labelEn: 'Low',      bg: 'bg-emerald-100 dark:bg-emerald-950/40', text: 'text-emerald-700 dark:text-emerald-400', border: 'border-emerald-200 dark:border-emerald-800/40' };
   }
 }
@@ -89,12 +89,12 @@ function KpiGauge({ labelAr, labelEn, value, isInverse = false }: {
   const pct = value ?? 0;
 
   const trackColor = isInverse
-    ? pct >= 70 ? 'stroke-red-500' : pct >= 40 ? 'stroke-amber-500' : 'stroke-emerald-500'
-    : pct >= 70 ? 'stroke-emerald-500' : pct >= 40 ? 'stroke-amber-500' : 'stroke-red-500';
+    ? pct >= 70 ? 'stroke-red-500' : pct >= 40 ? 'stroke-gold' : 'stroke-emerald-500'
+    : pct >= 70 ? 'stroke-emerald-500' : pct >= 40 ? 'stroke-gold' : 'stroke-red-500';
 
   const textColor = isInverse
-    ? pct >= 70 ? 'text-red-500' : pct >= 40 ? 'text-amber-500' : 'text-emerald-500'
-    : pct >= 70 ? 'text-emerald-500' : pct >= 40 ? 'text-amber-500' : 'text-red-500';
+    ? pct >= 70 ? 'text-red-500' : pct >= 40 ? 'text-gold' : 'text-emerald-500'
+    : pct >= 70 ? 'text-emerald-500' : pct >= 40 ? 'text-gold' : 'text-red-500';
 
   const r = 30;
   const circ = 2 * Math.PI * r;
@@ -162,7 +162,7 @@ function UaeWideTab({ headers }: { headers: Record<string, string> }) {
   );
 
   const riskColors: Record<string, string> = {
-    critical: 'bg-red-500', high: 'bg-orange-500', moderate: 'bg-amber-500', low: 'bg-emerald-500',
+    critical: 'bg-red-500', high: 'bg-gold', moderate: 'bg-gold', low: 'bg-emerald-500',
   };
   const riskLabels: Record<string, string> = {
     critical: 'حرج', high: 'عالٍ', moderate: 'متوسط', low: 'منخفض',
@@ -172,7 +172,7 @@ function UaeWideTab({ headers }: { headers: Record<string, string> }) {
 
   const statusColors: Record<string, string> = {
     draft: 'bg-slate-400', in_progress: 'bg-blue-500', completed: 'bg-emerald-500',
-    approved: 'bg-green-600', rejected: 'bg-red-500', pending_review: 'bg-amber-500',
+    approved: 'bg-heading', rejected: 'bg-red-500', pending_review: 'bg-gold',
   };
   const statusLabels: Record<string, string> = {
     draft: 'مسودة', in_progress: 'قيد المعالجة', completed: 'مكتمل',
@@ -253,7 +253,7 @@ function UaeWideTab({ headers }: { headers: Record<string, string> }) {
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">{t('إجمالي التحذيرات', 'Total Warnings')}</span>
-              <span className="font-bold tabular-nums text-amber-600">{safeConstitutional.totalWarnings ?? 0}</span>
+              <span className="font-bold tabular-nums text-gold">{safeConstitutional.totalWarnings ?? 0}</span>
             </div>
           </div>
           <Link href="/constitutional-intelligence">
@@ -376,12 +376,12 @@ function GroupedTableTab({
                       <td className="px-4 py-3 text-sm font-medium text-foreground max-w-xs truncate">{row.name}</td>
                       <td className="px-4 py-3 text-sm tabular-nums text-foreground font-bold">{row.decisions}</td>
                       <td className="px-4 py-3 text-sm tabular-nums">
-                        <span className={row.avgNri !== null && row.avgNri >= 70 ? 'text-red-600' : row.avgNri !== null && row.avgNri >= 40 ? 'text-amber-600' : 'text-emerald-600'}>
+                        <span className={row.avgNri !== null && row.avgNri >= 70 ? 'text-red-600' : row.avgNri !== null && row.avgNri >= 40 ? 'text-gold' : 'text-emerald-600'}>
                           {fmt(row.avgNri, '%')}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm tabular-nums">
-                        <span className={row.avgCcs !== null && row.avgCcs >= 70 ? 'text-emerald-600' : row.avgCcs !== null && row.avgCcs >= 40 ? 'text-amber-600' : 'text-red-600'}>
+                        <span className={row.avgCcs !== null && row.avgCcs >= 70 ? 'text-emerald-600' : row.avgCcs !== null && row.avgCcs >= 40 ? 'text-gold' : 'text-red-600'}>
                           {fmt(row.avgCcs, '%')}
                         </span>
                       </td>
@@ -431,7 +431,8 @@ export default function NaipKpi() {
     'x-user-org': userOrg,
   };
 
-  const hasAccess = canViewNaipDashboard ?? canViewGovernanceDashboard;
+  // Judicial Command Center rebuild: NAIP KPI center is owner-only regardless of the broader permission set.
+  const hasAccess = role === 'owner' && (canViewNaipDashboard ?? canViewGovernanceDashboard);
 
   const [activeTab, setActiveTab] = useState<Tab>('uae');
 

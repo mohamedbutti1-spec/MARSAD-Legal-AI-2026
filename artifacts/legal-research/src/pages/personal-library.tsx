@@ -202,10 +202,10 @@ export default function PersonalLibrary() {
                 <Card key={item.id} className="border-border hover:shadow-sm transition-shadow">
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
-                      <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${isDoc ? 'bg-primary/8 border border-primary/15' : 'bg-amber-50 border border-amber-200'}`}>
+                      <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${isDoc ? 'bg-primary/8 border border-primary/15' : 'bg-gold/10 border border-gold/25'}`}>
                         {isDoc
                           ? <FileText className="w-4 h-4 text-primary" aria-hidden />
-                          : <BookOpen className="w-4 h-4 text-amber-600" aria-hidden />}
+                          : <BookOpen className="w-4 h-4 text-gold" aria-hidden />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-foreground truncate">{title}</p>

@@ -49,11 +49,11 @@ interface Props {
 
 const DOC_TYPE_COLORS: Record<string, string> = {
   law:        'bg-blue-50 text-blue-700 border-blue-200',
-  decree:     'bg-amber-50 text-amber-700 border-amber-200',
+  decree:     'bg-gold/10 text-gold border-gold/25',
   regulation: 'bg-purple-50 text-purple-700 border-purple-200',
   code:       'bg-emerald-50 text-emerald-700 border-emerald-200',
   directive:  'bg-rose-50 text-rose-700 border-rose-200',
-  judgment:   'bg-orange-50 text-orange-700 border-orange-200',
+  judgment:   'bg-gold/10 text-gold border-gold/25',
   decision:   'bg-sky-50 text-sky-700 border-sky-200',
   ruling:     'bg-teal-50 text-teal-700 border-teal-200',
   circular:   'bg-gray-50 text-gray-700 border-gray-200',
@@ -414,7 +414,7 @@ export function LegalSourcesBrowser({
                     onClick={() => handleCopyCitation(selected)}
                   >
                     {citationCopied
-                      ? <><Check className="w-3.5 h-3.5 text-green-600" />{t('تم النسخ', 'Copied')}</>
+                      ? <><Check className="w-3.5 h-3.5 text-heading" />{t('تم النسخ', 'Copied')}</>
                       : <><Copy className="w-3.5 h-3.5" />{t('نسخ الاستشهاد', 'Copy citation')}</>}
                   </Button>
 
@@ -441,7 +441,7 @@ export function LegalSourcesBrowser({
                       <Button
                         size="sm"
                         variant="outline"
-                        className="gap-1.5 border-amber-300 text-amber-700 hover:bg-amber-50"
+                        className="gap-1.5 border-gold/40 text-gold hover:bg-gold/10"
                         onClick={() => handleAnalyse(selected, 'key-findings')}
                         disabled={analysing}
                       >
@@ -501,21 +501,21 @@ export function LegalSourcesBrowser({
 
                 {/* Key findings / Relevance to UAE AI analysis panel */}
                 {analysing && !analysis && (
-                  <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin text-amber-600" />
-                    <span className="text-xs text-amber-700">
+                  <div className="p-3 rounded-lg bg-gold/10 border border-gold/25 flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin text-gold" />
+                    <span className="text-xs text-gold">
                       {showKeyFindings ? t('استخراج المبادئ القانونية...', 'Extracting key legal principles...') : t('تحليل الصلة بالقانون الإماراتي...', 'Analysing UAE relevance...')}
                     </span>
                   </div>
                 )}
 
                 {analysis && (
-                  <div className={`p-3 rounded-lg border ${showKeyFindings ? 'bg-amber-50 border-amber-200' : 'bg-emerald-50 border-emerald-200'}`}>
+                  <div className={`p-3 rounded-lg border ${showKeyFindings ? 'bg-gold/10 border-gold/25' : 'bg-emerald-50 border-emerald-200'}`}>
                     <div className="flex items-center gap-1.5 mb-2">
                       {showKeyFindings
-                        ? <FileSearch className="w-3.5 h-3.5 text-amber-600" aria-hidden />
+                        ? <FileSearch className="w-3.5 h-3.5 text-gold" aria-hidden />
                         : <Globe2 className="w-3.5 h-3.5 text-emerald-600" aria-hidden />}
-                      <span className={`text-xs font-semibold ${showKeyFindings ? 'text-amber-700' : 'text-emerald-700'}`}>
+                      <span className={`text-xs font-semibold ${showKeyFindings ? 'text-gold' : 'text-emerald-700'}`}>
                         {showKeyFindings ? t('المبادئ والاجتهادات القانونية', 'Key Legal Principles') : t('الصلة بالقانون الإماراتي', 'Relevance to UAE Law')}
                       </span>
                       {analysisMeta && (

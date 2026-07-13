@@ -200,10 +200,10 @@ function MentorPanel({ stage }: { stage: PgfWorkflowStage }) {
 
       {/* ⚠️ Warning signs */}
       {stage.warningSigns && stage.warningSigns.length > 0 && (
-        <MentorAccordion icon="⚠️" title="علامات التحذير" colorClass="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/10">
+        <MentorAccordion icon="⚠️" title="علامات التحذير" colorClass="border-gold/25 bg-gold/10 dark:border-gold/75 dark:bg-gold/10">
           <ul className="space-y-1">
             {stage.warningSigns.map((w, i) => (
-              <li key={i} className="flex items-start gap-2 text-amber-800 dark:text-amber-300">
+              <li key={i} className="flex items-start gap-2 text-gold/75 dark:text-gold/40">
                 <span className="shrink-0 mt-0.5">•</span>{w}
               </li>
             ))}
@@ -241,10 +241,10 @@ function MentorPanel({ stage }: { stage: PgfWorkflowStage }) {
 
       {/* 📌 Escalation triggers */}
       {stage.escalationTriggers && stage.escalationTriggers.length > 0 && (
-        <MentorAccordion icon="📌" title="متى تُصعّد؟" colorClass="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-900/10">
+        <MentorAccordion icon="📌" title="متى تُصعّد؟" colorClass="border-gold/25 bg-gold/10 dark:border-gold/75 dark:bg-gold/10">
           <ul className="space-y-1">
             {stage.escalationTriggers.map((t, i) => (
-              <li key={i} className="flex items-start gap-2 text-orange-700 dark:text-orange-300">
+              <li key={i} className="flex items-start gap-2 text-gold dark:text-gold/40">
                 <span className="shrink-0 mt-0.5">↑</span>{t}
               </li>
             ))}
@@ -269,9 +269,9 @@ const CATEGORY_COLOR: Record<InstitutionalMemoryCategory, string> = {
   frequent_mistake:     'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/10',
   lesson_learned:       'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/10',
   recommended_sequence: 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/10',
-  practical_tip:        'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/10',
-  success_indicator:    'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/10',
-  failure_indicator:    'border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-900/10',
+  practical_tip:        'border-gold/25 bg-gold/10 dark:border-gold/75 dark:bg-gold/10',
+  success_indicator:    'border-heading/25 bg-heading/10 dark:border-heading/75 dark:bg-heading/10',
+  failure_indicator:    'border-gold/25 bg-gold/10 dark:border-gold/75 dark:bg-gold/10',
 };
 
 const CATEGORY_TEXT: Record<InstitutionalMemoryCategory, string> = {
@@ -279,9 +279,9 @@ const CATEGORY_TEXT: Record<InstitutionalMemoryCategory, string> = {
   frequent_mistake:     'text-red-700 dark:text-red-300',
   lesson_learned:       'text-blue-700 dark:text-blue-300',
   recommended_sequence: 'text-emerald-700 dark:text-emerald-300',
-  practical_tip:        'text-amber-700 dark:text-amber-300',
-  success_indicator:    'text-green-700 dark:text-green-300',
-  failure_indicator:    'text-orange-700 dark:text-orange-300',
+  practical_tip:        'text-gold dark:text-gold/40',
+  success_indicator:    'text-heading dark:text-heading/40',
+  failure_indicator:    'text-gold dark:text-gold/40',
 };
 
 function InstitutionalMemoryCard({ entry }: { entry: InstitutionalMemoryEntry }) {
@@ -412,7 +412,7 @@ function WorkflowStep({ step }: { step: ProfessionalWorkflowStep }) {
       </WorkflowBlock>
 
       {/* Next action */}
-      <WorkflowBlock icon="⚡" label="الإجراء التالي الفوري" accent="bg-amber-50 dark:bg-amber-900/10">
+      <WorkflowBlock icon="⚡" label="الإجراء التالي الفوري" accent="bg-gold/10 dark:bg-gold/10">
         <p className="text-sm text-foreground/80 leading-relaxed">{step.nextAction}</p>
       </WorkflowBlock>
 
@@ -490,7 +490,7 @@ function WorkflowStep({ step }: { step: ProfessionalWorkflowStep }) {
       )}
 
       {/* Expected output */}
-      <WorkflowBlock icon="📤" label="المخرج المتوقع" accent="bg-green-50 dark:bg-green-900/10">
+      <WorkflowBlock icon="📤" label="المخرج المتوقع" accent="bg-heading/10 dark:bg-heading/10">
         <p className="text-sm text-foreground/80 leading-relaxed">{step.expectedOutput}</p>
       </WorkflowBlock>
     </div>
@@ -572,7 +572,7 @@ interface StepHistoryItem {
 
 function ScoreBadge({ score, critical }: { score: number; critical: boolean }) {
   const color = score >= 80 ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
-    : score >= 60 ? 'bg-amber-100 text-amber-800 border-amber-200'
+    : score >= 60 ? 'bg-gold/15 text-gold/75 border-gold/25'
     : 'bg-red-100 text-red-800 border-red-200';
   return (
     <span className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full border ${color}`} dir="ltr">
@@ -585,7 +585,7 @@ function ScoreBadge({ score, critical }: { score: number; critical: boolean }) {
 function GradeBadge({ grade, score }: { grade: string; score: number }) {
   const colors: Record<string, string> = {
     A: 'bg-emerald-500 text-white', B: 'bg-blue-500 text-white',
-    C: 'bg-amber-500 text-white',   D: 'bg-orange-500 text-white',
+    C: 'bg-gold text-white',   D: 'bg-gold text-white',
     F: 'bg-red-600 text-white',
   };
   return (
@@ -649,12 +649,12 @@ function SimFinalReportView({ report, scenarioTitle }: { report: PcsFinalReport;
       {(report.missedDocuments.length > 0 || report.missedApprovals.length > 0) && (
         <div className="grid grid-cols-1 gap-3">
           {report.missedDocuments.length > 0 && (
-            <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800">
-              <p className="text-xs font-semibold text-amber-800 dark:text-amber-300 mb-1.5">📄 مستندات لم تُذكر</p>
+            <div className="p-3 rounded-xl bg-gold/10 dark:bg-gold/10 border border-gold/25 dark:border-gold/75">
+              <p className="text-xs font-semibold text-gold/75 dark:text-gold/40 mb-1.5">📄 مستندات لم تُذكر</p>
               <ul className="space-y-0.5">
                 {report.missedDocuments.map((d, i) => (
                   <li key={i} className="text-xs text-foreground/70 flex items-start gap-1.5">
-                    <span className="text-amber-500 shrink-0">•</span>{d}
+                    <span className="text-gold shrink-0">•</span>{d}
                   </li>
                 ))}
               </ul>
@@ -719,7 +719,7 @@ function StepEvalView({ evaluation, stepIdx, totalSteps }: { evaluation: PcsStep
           ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800 text-foreground'
           : evaluation.score >= 80
             ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800 text-foreground'
-            : 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800 text-foreground'
+            : 'bg-gold/10 dark:bg-gold/10 border-gold/25 dark:border-gold/75 text-foreground'
       }`}>
         {evaluation.criticalError && (
           <p className="font-bold text-red-700 dark:text-red-400 mb-1">⚠️ خطأ في خطوة حرجة</p>
@@ -731,7 +731,7 @@ function StepEvalView({ evaluation, stepIdx, totalSteps }: { evaluation: PcsStep
       {(evaluation.missedDocuments.length > 0 || evaluation.missedApprovals.length > 0) && (
         <div className="space-y-1.5">
           {evaluation.missedDocuments.length > 0 && (
-            <div className="text-xs text-amber-700 dark:text-amber-400">
+            <div className="text-xs text-gold dark:text-gold/80">
               <span className="font-semibold">📄 مستندات لم تُذكر: </span>
               {evaluation.missedDocuments.join("، ")}
             </div>
@@ -1093,13 +1093,13 @@ function ExpertActionsPanel({
       {/* Panel — slides in from the right (RTL: right side = start) */}
       <div className="w-full max-w-sm bg-background border-l shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b bg-amber-50 dark:bg-amber-900/20">
+        <div className="flex items-center justify-between p-4 border-b bg-gold/10 dark:bg-gold/20">
           <div className="flex items-center gap-2">
-            <Zap className="w-4 h-4 text-amber-600" />
-            <span className="font-bold text-amber-900 dark:text-amber-200 text-sm">ماذا سيفعل الخبير؟</span>
+            <Zap className="w-4 h-4 text-gold" />
+            <span className="font-bold text-gold/85 dark:text-gold/25 text-sm">ماذا سيفعل الخبير؟</span>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-800/40">
-            <X className="w-4 h-4 text-amber-600" />
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-gold/15 dark:hover:bg-gold/40">
+            <X className="w-4 h-4 text-gold" />
           </button>
         </div>
 
@@ -1121,9 +1121,9 @@ function ExpertActionsPanel({
             <>
               {/* Why this matters */}
               {data.whyThisMatters && (
-                <div className="p-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-xl">
-                  <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-1">لماذا هذا يهمّ؟</p>
-                  <p className="text-sm text-amber-800 dark:text-amber-300 leading-relaxed">{data.whyThisMatters}</p>
+                <div className="p-3 bg-gold/10 dark:bg-gold/10 border border-gold/25 dark:border-gold/75 rounded-xl">
+                  <p className="text-xs font-semibold text-gold dark:text-gold/80 mb-1">لماذا هذا يهمّ؟</p>
+                  <p className="text-sm text-gold/75 dark:text-gold/40 leading-relaxed">{data.whyThisMatters}</p>
                 </div>
               )}
 
@@ -1228,7 +1228,7 @@ function StageForm({
             {(stage.expertFirstActions?.length || stage.mentorPrompt) && (
               <button
                 onClick={() => setShowExpert(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-xs font-medium hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors shrink-0"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold/10 dark:bg-gold/20 border border-gold/25 dark:border-gold/75 text-gold dark:text-gold/40 text-xs font-medium hover:bg-gold/15 dark:hover:bg-gold/40 transition-colors shrink-0"
               >
                 <Zap className="w-3.5 h-3.5" />
                 ماذا سيفعل الخبير؟
@@ -1303,8 +1303,8 @@ function StageForm({
 // ─── Confidence gauge ─────────────────────────────────────────────────────────
 
 function ConfidenceGauge({ score }: { score: number }) {
-  const color = score >= 80 ? 'text-emerald-600' : score >= 60 ? 'text-amber-600' : 'text-red-600';
-  const bg    = score >= 80 ? 'bg-emerald-500' : score >= 60 ? 'bg-amber-500' : 'bg-red-500';
+  const color = score >= 80 ? 'text-emerald-600' : score >= 60 ? 'text-gold' : 'text-red-600';
+  const bg    = score >= 80 ? 'bg-emerald-500' : score >= 60 ? 'bg-gold' : 'bg-red-500';
   return (
     <div className="flex items-center gap-3 p-4 bg-card border rounded-xl">
       <div className="relative w-14 h-14 shrink-0">
@@ -1358,7 +1358,7 @@ function LegalRefCard({ r }: { r: PgfLegalReference }) {
 function RiskCard({ risk }: { risk: PgfRisk }) {
   const conf = {
     high:   { label: 'عالية',  className: 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/10', badge: 'bg-red-100 text-red-700' },
-    medium: { label: 'متوسطة', className: 'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/10', badge: 'bg-amber-100 text-amber-700' },
+    medium: { label: 'متوسطة', className: 'border-gold/25 bg-gold/10 dark:border-gold/75 dark:bg-gold/10', badge: 'bg-gold/15 text-gold' },
     low:    { label: 'منخفضة', className: 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900/10', badge: 'bg-gray-100 text-gray-600' },
   }[risk.severity] ?? { label: risk.severity, className: 'border-border bg-card', badge: 'bg-muted text-muted-foreground' };
 
@@ -1410,9 +1410,9 @@ function AssessmentView({
   return (
     <div className="space-y-6" dir="rtl">
       {/* Disclaimer */}
-      <div className="flex items-start gap-2 p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-xl">
-        <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
-        <p className="text-sm text-amber-800 dark:text-amber-300">{output.disclaimer}</p>
+      <div className="flex items-start gap-2 p-4 bg-gold/10 dark:bg-gold/10 border border-gold/25 dark:border-gold/75 rounded-xl">
+        <Info className="w-4 h-4 text-gold dark:text-gold/80 mt-0.5 shrink-0" />
+        <p className="text-sm text-gold/75 dark:text-gold/40">{output.disclaimer}</p>
       </div>
 
       {/* Role */}
@@ -1443,7 +1443,7 @@ function AssessmentView({
           output.verificationStatus === 'verified'
             ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300'
             : output.verificationStatus === 'needs_review'
-            ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300'
+            ? 'bg-gold/10 dark:bg-gold/10 border-gold/25 dark:border-gold/75 text-gold dark:text-gold/40'
             : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300'
         }`}>
           {output.verificationStatus === 'verified'   && <><CheckCircle2 className="w-4 h-4 shrink-0" /> مُتحقَّق منه</>}
@@ -1497,7 +1497,7 @@ function AssessmentView({
       {/* Risks */}
       {output.risks?.length > 0 && (
         <section>
-          <SectionTitle icon={<AlertTriangle className="w-4.5 h-4.5 text-orange-500" />}>
+          <SectionTitle icon={<AlertTriangle className="w-4.5 h-4.5 text-gold" />}>
             المخاطر المُحددة
           </SectionTitle>
           <div className="space-y-2">
@@ -1561,11 +1561,11 @@ function AssessmentView({
 
       {/* Escalation */}
       {output.escalationRecommendation && (
-        <section className="p-4 border-2 border-dashed border-amber-300 dark:border-amber-700 rounded-xl bg-amber-50/50 dark:bg-amber-900/5">
-          <SectionTitle icon={<ArrowRight className="w-4.5 h-4.5 text-amber-600" />}>
+        <section className="p-4 border-2 border-dashed border-gold/40 dark:border-gold rounded-xl bg-gold/50 dark:bg-gold/5">
+          <SectionTitle icon={<ArrowRight className="w-4.5 h-4.5 text-gold" />}>
             توصية التصعيد
           </SectionTitle>
-          <p className="text-sm leading-relaxed text-amber-900 dark:text-amber-300">
+          <p className="text-sm leading-relaxed text-gold/85 dark:text-gold/40">
             {output.escalationRecommendation}
           </p>
         </section>

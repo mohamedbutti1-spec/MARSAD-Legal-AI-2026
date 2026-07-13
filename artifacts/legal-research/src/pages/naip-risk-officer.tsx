@@ -180,8 +180,8 @@ export default function NaipRiskOfficer() {
   // NRI color: high NRI = red (risk is bad)
   const nriColor = kpi?.avgNationalRiskIndex == null ? 'text-muted-foreground' :
     kpi.avgNationalRiskIndex >= 75 ? 'text-red-500' :
-    kpi.avgNationalRiskIndex >= 50 ? 'text-orange-500' :
-    kpi.avgNationalRiskIndex >= 35 ? 'text-amber-500' : 'text-emerald-500';
+    kpi.avgNationalRiskIndex >= 50 ? 'text-gold' :
+    kpi.avgNationalRiskIndex >= 35 ? 'text-gold' : 'text-emerald-500';
 
   return (
     <AppLayout>
@@ -229,7 +229,7 @@ export default function NaipRiskOfficer() {
             description={t('أعلى = شرعية أفضل', 'Higher = better legitimacy')}
             colorClass={
               (kpi?.avgAdministrativeLegitimacyIndex ?? 0) >= 70 ? 'text-emerald-500' :
-              (kpi?.avgAdministrativeLegitimacyIndex ?? 0) >= 50 ? 'text-amber-500' : 'text-red-500'
+              (kpi?.avgAdministrativeLegitimacyIndex ?? 0) >= 50 ? 'text-gold' : 'text-red-500'
             }
           />
           <GaugeCard
@@ -239,7 +239,7 @@ export default function NaipRiskOfficer() {
             description={t('أعلى = ثقة أفضل', 'Higher = better confidence')}
             colorClass={
               (kpi?.avgDecisionConfidenceScore ?? 0) >= 70 ? 'text-blue-500' :
-              (kpi?.avgDecisionConfidenceScore ?? 0) >= 50 ? 'text-amber-500' : 'text-orange-500'
+              (kpi?.avgDecisionConfidenceScore ?? 0) >= 50 ? 'text-gold' : 'text-gold'
             }
           />
         </div>
@@ -257,9 +257,9 @@ export default function NaipRiskOfficer() {
             <QuadrantCard label="حرج" count={kpi?.criticalCount ?? 0} total={total}
               colorClass="text-red-600 dark:text-red-400" bgClass="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/40" />
             <QuadrantCard label="عالٍ" count={kpi?.highCount ?? 0} total={total}
-              colorClass="text-orange-600 dark:text-orange-400" bgClass="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/40" />
+              colorClass="text-gold dark:text-gold/80" bgClass="bg-gold/10 dark:bg-gold/20 border border-gold/25 dark:border-gold/40" />
             <QuadrantCard label="متوسط" count={kpi?.moderateCount ?? 0} total={total}
-              colorClass="text-amber-600 dark:text-amber-400" bgClass="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40" />
+              colorClass="text-gold dark:text-gold/80" bgClass="bg-gold/10 dark:bg-gold/20 border border-gold/25 dark:border-gold/40" />
             <QuadrantCard label="منخفض" count={kpi?.lowCount ?? 0} total={total}
               colorClass="text-emerald-600 dark:text-emerald-400" bgClass="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40" />
           </div>

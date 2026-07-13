@@ -30,7 +30,7 @@ export function ModuleComingSoon({
     <AppLayout>
       <div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">
         {/* Status badge */}
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold mb-8">
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gold/10 border border-gold/25 text-gold text-xs font-semibold mb-8">
           <Construction className="w-3.5 h-3.5" />
           {isAr ? 'قيد الإنشاء' : 'Under Development'}
         </div>

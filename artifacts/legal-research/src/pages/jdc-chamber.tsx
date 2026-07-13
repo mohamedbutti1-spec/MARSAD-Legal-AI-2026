@@ -60,29 +60,29 @@ function InlineJudgeTheory({ stageTheory, lensName, chamberLensId }: {
   const lens = lensName ?? 'التحليل النظري';
 
   return (
-    <div className="mt-4 pt-3 border-t border-dashed border-amber-200 dark:border-amber-800/60 space-y-2">
-      <p className="text-xs font-medium text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+    <div className="mt-4 pt-3 border-t border-dashed border-gold/25 dark:border-gold/60 space-y-2">
+      <p className="text-xs font-medium text-gold dark:text-gold/80 flex items-center gap-1.5">
         <Sparkles className="w-3.5 h-3.5 shrink-0" />
         {lens} — التحليل النظري [غير مُلزِم]
       </p>
       {stageTheory.map((s) => (
-        <div key={s.stageId} className="border border-amber-100 dark:border-amber-900/40 rounded-lg overflow-hidden">
+        <div key={s.stageId} className="border border-gold/15 dark:border-gold/40 rounded-lg overflow-hidden">
           <button
             onClick={() => setOpenStage(openStage === s.stageId ? null : s.stageId)}
-            className="w-full flex items-center justify-between px-3 py-2 text-xs text-right hover:bg-amber-50/50 dark:hover:bg-amber-900/10 transition-colors"
+            className="w-full flex items-center justify-between px-3 py-2 text-xs text-right hover:bg-gold/50 dark:hover:bg-gold/10 transition-colors"
           >
             <span className="font-medium">{s.stageNameAr}</span>
             {openStage === s.stageId ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
           </button>
           {openStage === s.stageId && (
-            <div className="px-3 pb-3 space-y-2 text-xs border-t border-amber-100 dark:border-amber-900/40">
+            <div className="px-3 pb-3 space-y-2 text-xs border-t border-gold/15 dark:border-gold/40">
               <div className="border-r-2 border-emerald-500 pr-2 pt-2">
                 <p className="font-semibold text-emerald-700 dark:text-emerald-400 mb-0.5">القانون الإماراتي الملزم</p>
                 <p className="leading-relaxed">{s.uaeBindingAnalysis}</p>
               </div>
               {s.theoryLensAnalysis && (
-                <div className="border-r-2 border-amber-400 pr-2">
-                  <p className="font-semibold text-amber-600 dark:text-amber-400 mb-0.5">{lens} [غير مُلزِم]</p>
+                <div className="border-r-2 border-gold/80 pr-2">
+                  <p className="font-semibold text-gold dark:text-gold/80 mb-0.5">{lens} [غير مُلزِم]</p>
                   <p className="leading-relaxed">{s.theoryLensAnalysis}</p>
                 </div>
               )}
@@ -96,8 +96,8 @@ function InlineJudgeTheory({ stageTheory, lensName, chamberLensId }: {
                 <div className="bg-emerald-50 dark:bg-emerald-900/10 rounded p-1.5">
                   <span className="font-semibold text-emerald-700 dark:text-emerald-400">توافق: </span>{s.agreement}
                 </div>
-                <div className="bg-orange-50 dark:bg-orange-900/10 rounded p-1.5">
-                  <span className="font-semibold text-orange-700 dark:text-orange-400">اختلاف: </span>{s.difference}
+                <div className="bg-gold/10 dark:bg-gold/10 rounded p-1.5">
+                  <span className="font-semibold text-gold dark:text-gold/80">اختلاف: </span>{s.difference}
                 </div>
                 <div className="bg-indigo-50 dark:bg-indigo-900/10 rounded p-1.5">
                   <span className="font-semibold text-indigo-700 dark:text-indigo-400">قيمة: </span>{s.addedValue}
@@ -149,7 +149,7 @@ function JudgeCard({ judge, isMajority, chamberLensId, chamberLensName }: { judg
                 <div className="text-center">
                   <div className={`text-lg font-bold ${
                     judge.legalityAssessment.score >= 70 ? 'text-emerald-600' :
-                    judge.legalityAssessment.score >= 40 ? 'text-amber-600' : 'text-red-600'
+                    judge.legalityAssessment.score >= 40 ? 'text-gold' : 'text-red-600'
                   }`}>{judge.legalityAssessment.score}</div>
                   <div className="text-xs text-muted-foreground">مشروعية</div>
                 </div>
@@ -282,7 +282,7 @@ function JudgeCard({ judge, isMajority, chamberLensId, chamberLensName }: { judg
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               {judge.verificationStatus.allAuthoritiesVerified
                 ? <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                : <AlertCircle className="w-3 h-3 text-amber-500" />}
+                : <AlertCircle className="w-3 h-3 text-gold" />}
               {judge.verificationStatus.message}
             </div>
           </div>
@@ -599,15 +599,15 @@ export default function JdcChamberPage() {
             </div>
 
             {/* Operative order */}
-            <div className="border-2 border-amber-200 dark:border-amber-800 rounded-xl p-5 bg-amber-50/50 dark:bg-amber-900/10">
+            <div className="border-2 border-gold/25 dark:border-gold/75 rounded-xl p-5 bg-gold/50 dark:bg-gold/10">
               <div className="flex items-center gap-2 mb-3">
-                <Scale className="w-5 h-5 text-amber-600" />
-                <h2 className="font-semibold text-lg text-amber-800 dark:text-amber-300">منطوق الحكم</h2>
+                <Scale className="w-5 h-5 text-gold" />
+                <h2 className="font-semibold text-lg text-gold/75 dark:text-gold/40">منطوق الحكم</h2>
               </div>
               <p className="text-foreground text-base leading-loose whitespace-pre-line font-medium">{del.operativeOrderAr}</p>
               {del.operativeOrderEn && (
-                <div className="mt-4 pt-3 border-t border-amber-200 dark:border-amber-700">
-                  <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-1">Operative Order (English)</p>
+                <div className="mt-4 pt-3 border-t border-gold/25 dark:border-gold">
+                  <p className="text-xs font-semibold text-gold dark:text-gold/80 mb-1">Operative Order (English)</p>
                   <p className="text-sm text-foreground italic leading-relaxed" dir="ltr">{del.operativeOrderEn}</p>
                 </div>
               )}
@@ -659,7 +659,7 @@ export default function JdcChamberPage() {
               <div className="flex items-center gap-2 mb-3">
                 {del.verificationReport.allAuthoritiesVerified
                   ? <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                  : <AlertCircle className="w-5 h-5 text-amber-500" />}
+                  : <AlertCircle className="w-5 h-5 text-gold" />}
                 <p className="text-sm text-foreground">{del.verificationReport.overallMessage}</p>
               </div>
               <div className="grid grid-cols-2 gap-2 mb-3 text-sm">

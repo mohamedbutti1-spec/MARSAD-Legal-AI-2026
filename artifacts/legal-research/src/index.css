@@ -8,17 +8,17 @@
 @theme inline {
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
-  --color-border: hsl(var(--border));
-  --color-input: hsl(var(--input));
+  --color-border: var(--border);
+  --color-input: var(--input);
   --color-ring: hsl(var(--ring));
 
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
-  --color-card-border: hsl(var(--card-border));
+  --color-card-border: var(--card-border);
 
   --color-popover: hsl(var(--popover));
   --color-popover-foreground: hsl(var(--popover-foreground));
-  --color-popover-border: hsl(var(--popover-border));
+  --color-popover-border: var(--popover-border);
 
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
@@ -39,13 +39,15 @@
   --color-gold: hsl(var(--gold));
   --color-gold-foreground: hsl(var(--gold-foreground));
 
+  --color-heading: hsl(var(--heading-blue));
+
   --color-destructive: hsl(var(--destructive));
   --color-destructive-foreground: hsl(var(--destructive-foreground));
   --color-destructive-border: var(--destructive-border);
 
   --color-sidebar: hsl(var(--sidebar));
   --color-sidebar-foreground: hsl(var(--sidebar-foreground));
-  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-primary: hsl(var(--sidebar-primary));
   --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
   --color-sidebar-primary-border: var(--sidebar-primary-border);
@@ -65,149 +67,158 @@
 }
 
 :root {
-  --button-outline: rgba(0, 0, 0, 0.1);
-  --badge-outline: rgba(0, 0, 0, 0.05);
-  --opaque-button-border-intensity: -8;
-  --elevate-1: rgba(0, 0, 0, 0.03);
-  --elevate-2: rgba(0, 0, 0, 0.08);
+  --button-outline: rgba(184, 154, 91, 0.18);
+  --badge-outline: rgba(184, 154, 91, 0.12);
+  --opaque-button-border-intensity: 6;
+  --elevate-1: rgba(184, 154, 91, 0.05);
+  --elevate-2: rgba(184, 154, 91, 0.1);
 
-  /* ─── MARSAD — Enterprise Government Palette ───────────────────── */
-  /* Navy    #0E1F42 → hsl(221 63% 16%)                              */
-  /* Accent  #2C6ED4 → hsl(214 66% 50%)  (replaces gold)            */
-  /* Bg      #F3F7FC → hsl(213 36% 97%)                              */
+  /* ─── MARSAD — Judicial Command Center Palette ──────────────────── */
+  /* Background #0B0F16 · Surface #111827 · Card #151D2A             */
+  /* Gold #B89A5B · Muted gold #8D7640 · Heading blue #9ABAF2         */
+  /* Text #EAEAEA · Secondary text #9A9A9A · Danger #8C2F2F           */
+  /* Border rgba(184,154,91,0.22) — soft gold hairline everywhere     */
 
-  --background: 213 36% 97%;
-  --foreground: 221 63% 12%;
-  --border: 214 25% 88%;
-  --input: 214 25% 88%;
-  --ring: 221 63% 16%;
+  --gold-border-rgb: 184, 154, 91;
+  --gold-border: rgba(var(--gold-border-rgb), 0.22);
+  --gold-border-strong: rgba(var(--gold-border-rgb), 0.4);
+  --gold-glow: rgba(var(--gold-border-rgb), 0.28);
 
-  --card: 0 0% 100%;
-  --card-foreground: 221 63% 12%;
-  --card-border: 214 25% 90%;
+  --background: 218 33% 6%;
+  --foreground: 0 0% 92%;
+  --border: var(--gold-border);
+  --input: var(--gold-border);
+  --ring: 41 40% 54%;
 
-  --popover: 0 0% 100%;
-  --popover-foreground: 221 63% 12%;
-  --popover-border: 214 25% 88%;
+  --card: 217 33% 12%;
+  --card-foreground: 0 0% 92%;
+  --card-border: var(--gold-border);
 
-  /* Primary = Enterprise Navy */
-  --primary: 221 63% 16%;
-  --primary-foreground: 0 0% 100%;
+  --popover: 217 33% 12%;
+  --popover-foreground: 0 0% 92%;
+  --popover-border: var(--gold-border);
 
-  /* Secondary = soft navy wash */
-  --secondary: 214 30% 93%;
-  --secondary-foreground: 221 63% 16%;
+  /* Primary = Judicial Gold */
+  --primary: 41 40% 54%;
+  --primary-foreground: 218 33% 8%;
 
-  --muted: 214 25% 94%;
-  --muted-foreground: 221 20% 48%;
+  /* Secondary = surface wash */
+  --secondary: 221 39% 11%;
+  --secondary-foreground: 0 0% 92%;
 
-  /* Accent = Enterprise Blue (replaces gold throughout) */
-  --accent: 214 66% 50%;
-  --accent-foreground: 0 0% 100%;
+  --muted: 221 30% 13%;
+  --muted-foreground: 0 0% 60%;
 
-  /* Gold tokens remapped → accent blue for backward compatibility */
-  --gold: 214 66% 50%;
-  --gold-foreground: 0 0% 100%;
+  /* Accent = Judicial Gold (active indicators) */
+  --accent: 41 40% 54%;
+  --accent-foreground: 218 33% 8%;
 
-  --destructive: 0 73% 43%;
-  --destructive-foreground: 0 0% 100%;
+  --gold: 41 40% 54%;
+  --gold-foreground: 218 33% 8%;
 
-  /* ─── Sidebar — deep navy ────────────────────────────────────────── */
-  --sidebar: 221 65% 9%;            /* #0A1530 — enterprise deep navy */
-  --sidebar-foreground: 214 30% 88%;
-  --sidebar-border: 221 55% 15%;
-  --sidebar-primary: 221 63% 16%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 214 66% 50%;    /* blue active state */
-  --sidebar-accent-foreground: 0 0% 100%;
-  --sidebar-ring: 214 66% 50%;
+  --heading-blue: 218 77% 78%;
 
-  /* Semantic tokens */
-  --success: 156 64% 29%;
-  --success-foreground: 0 0% 100%;
-  --warning: 38 100% 38%;
-  --warning-foreground: 0 0% 100%;
-  --critical: 0 73% 43%;
-  --critical-foreground: 0 0% 100%;
+  --destructive: 0 50% 37%;
+  --destructive-foreground: 0 0% 96%;
 
-  --chart-1: 221 63% 30%;
-  --chart-2: 214 66% 50%;
-  --chart-3: 197 55% 35%;
-  --chart-4: 156 64% 29%;
-  --chart-5: 0 73% 43%;
+  /* ─── Sidebar — matte black ──────────────────────────────────────── */
+  --sidebar: 220 22% 5%;
+  --sidebar-foreground: 0 0% 85%;
+  --sidebar-border: var(--gold-border);
+  --sidebar-primary: 217 33% 12%;
+  --sidebar-primary-foreground: 0 0% 92%;
+  --sidebar-accent: 41 40% 54%;     /* gold active indicator */
+  --sidebar-accent-foreground: 218 33% 8%;
+  --sidebar-ring: 41 40% 54%;
+
+  /* Semantic tokens — no green/orange per brand rule; blue = positive, muted gold = caution */
+  --success: 218 77% 78%;
+  --success-foreground: 218 33% 8%;
+  --warning: 42 38% 40%;
+  --warning-foreground: 0 0% 96%;
+  --critical: 0 50% 37%;
+  --critical-foreground: 0 0% 96%;
+
+  --chart-1: 41 40% 54%;
+  --chart-2: 218 77% 78%;
+  --chart-3: 42 38% 40%;
+  --chart-4: 0 0% 60%;
+  --chart-5: 0 50% 37%;
 
   --app-font-sans: 'IBM Plex Sans Arabic', system-ui, sans-serif;
   --app-font-serif: 'Amiri', Georgia, serif;
   --app-font-mono: Menlo, Consolas, monospace;
-  --radius: 0.375rem;
+  --radius: 1rem;
 
-  --shadow-2xs: 0px 1px 2px 0px rgba(0,0,0,0.04);
-  --shadow-xs:  0px 2px 4px 0px rgba(0,0,0,0.05);
-  --shadow-sm:  0px 4px 6px -1px rgba(0,0,0,0.06), 0px 2px 4px -1px rgba(0,0,0,0.03);
-  --shadow:     0px 4px 6px -1px rgba(0,0,0,0.07), 0px 2px 4px -1px rgba(0,0,0,0.04);
-  --shadow-md:  0px 10px 15px -3px rgba(0,0,0,0.06), 0px 4px 6px -2px rgba(0,0,0,0.04);
-  --shadow-lg:  0px 20px 25px -5px rgba(0,0,0,0.07), 0px 10px 10px -5px rgba(0,0,0,0.02);
-  --shadow-xl:  0px 25px 50px -12px rgba(0,0,0,0.15);
-  --shadow-2xl: 0px 25px 50px -12px rgba(0,0,0,0.18);
+  --shadow-2xs: 0px 1px 2px 0px rgba(0,0,0,0.16);
+  --shadow-xs:  0px 2px 4px 0px rgba(0,0,0,0.18);
+  --shadow-sm:  0px 4px 6px -1px rgba(0,0,0,0.22), 0px 2px 4px -1px rgba(0,0,0,0.14);
+  --shadow:     0px 4px 6px -1px rgba(0,0,0,0.24), 0px 2px 4px -1px rgba(0,0,0,0.16);
+  --shadow-md:  0px 10px 15px -3px rgba(0,0,0,0.28), 0px 4px 6px -2px rgba(0,0,0,0.18);
+  --shadow-lg:  0px 20px 25px -5px rgba(0,0,0,0.32), 0px 10px 10px -5px rgba(0,0,0,0.1);
+  --shadow-xl:  0px 25px 50px -12px rgba(0,0,0,0.45);
+  --shadow-2xl: 0px 25px 50px -12px rgba(0,0,0,0.55);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
 
-  --sidebar-primary-border: hsl(from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
-  --sidebar-accent-border:  hsl(from hsl(var(--sidebar-accent))  h s calc(l + var(--opaque-button-border-intensity)) / alpha);
-  --primary-border:         hsl(from hsl(var(--primary))     h s calc(l + var(--opaque-button-border-intensity)) / alpha);
-  --secondary-border:       hsl(from hsl(var(--secondary))   h s calc(l + var(--opaque-button-border-intensity)) / alpha);
-  --muted-border:           hsl(from hsl(var(--muted))       h s calc(l + var(--opaque-button-border-intensity)) / alpha);
-  --accent-border:          hsl(from hsl(var(--accent))      h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --sidebar-primary-border: var(--gold-border);
+  --sidebar-accent-border:  var(--gold-border-strong);
+  --primary-border:         var(--gold-border-strong);
+  --secondary-border:       var(--gold-border);
+  --muted-border:           var(--gold-border);
+  --accent-border:          var(--gold-border-strong);
   --destructive-border:     hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
 }
 
+/* MARSAD ships one fixed judicial-dark theme — .dark mirrors :root so any
+   legacy `dark:` utility or stray `.dark` class never desyncs the palette. */
 .dark {
-  --background: 220 52% 8%;
-  --foreground: 220 30% 95%;
-  --border: 220 47% 18%;
-  --input: 220 47% 18%;
-  --ring: 43 49% 54%;
+  --background: 218 33% 6%;
+  --foreground: 0 0% 92%;
+  --border: var(--gold-border);
+  --input: var(--gold-border);
+  --ring: 41 40% 54%;
 
-  --card: 220 52% 11%;
-  --card-foreground: 220 30% 95%;
-  --card-border: 220 47% 20%;
+  --card: 217 33% 12%;
+  --card-foreground: 0 0% 92%;
+  --card-border: var(--gold-border);
 
-  --popover: 220 52% 11%;
-  --popover-foreground: 220 30% 95%;
-  --popover-border: 220 47% 20%;
+  --popover: 217 33% 12%;
+  --popover-foreground: 0 0% 92%;
+  --popover-border: var(--gold-border);
 
-  --primary: 43 49% 54%;
-  --primary-foreground: 220 47% 10%;
+  --primary: 41 40% 54%;
+  --primary-foreground: 218 33% 8%;
 
-  --secondary: 220 47% 18%;
-  --secondary-foreground: 220 30% 95%;
+  --secondary: 221 39% 11%;
+  --secondary-foreground: 0 0% 92%;
 
-  --muted: 220 47% 18%;
-  --muted-foreground: 220 20% 60%;
+  --muted: 221 30% 13%;
+  --muted-foreground: 0 0% 60%;
 
-  --accent: 43 49% 54%;
-  --accent-foreground: 220 47% 10%;
+  --accent: 41 40% 54%;
+  --accent-foreground: 218 33% 8%;
 
-  --gold: 43 49% 54%;
-  --gold-foreground: 220 47% 10%;
+  --gold: 41 40% 54%;
+  --gold-foreground: 218 33% 8%;
 
-  --destructive: 0 62.8% 40%;
-  --destructive-foreground: 0 0% 100%;
+  --destructive: 0 50% 37%;
+  --destructive-foreground: 0 0% 96%;
 
-  --sidebar: 221 65% 6%;
-  --sidebar-foreground: 214 25% 85%;
-  --sidebar-border: 221 55% 12%;
-  --sidebar-primary: 221 63% 13%;
-  --sidebar-primary-foreground: 214 25% 95%;
-  --sidebar-accent: 214 66% 50%;
-  --sidebar-accent-foreground: 0 0% 100%;
-  --sidebar-ring: 214 66% 50%;
+  --sidebar: 220 22% 5%;
+  --sidebar-foreground: 0 0% 85%;
+  --sidebar-border: var(--gold-border);
+  --sidebar-primary: 217 33% 12%;
+  --sidebar-primary-foreground: 0 0% 92%;
+  --sidebar-accent: 41 40% 54%;
+  --sidebar-accent-foreground: 218 33% 8%;
+  --sidebar-ring: 41 40% 54%;
 
-  --chart-1: 214 40% 70%;
-  --chart-2: 214 66% 60%;
-  --chart-3: 197 55% 50%;
-  --chart-4: 156 64% 45%;
-  --chart-5: 0 73% 55%;
+  --chart-1: 41 40% 54%;
+  --chart-2: 218 77% 78%;
+  --chart-3: 42 38% 40%;
+  --chart-4: 0 0% 60%;
+  --chart-5: 0 50% 37%;
 }
 
 @layer base {
@@ -224,51 +235,62 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-sans font-bold tracking-tight text-foreground;
+    @apply font-sans font-bold tracking-tight;
+    color: hsl(var(--heading-blue));
   }
 
   /* ─── RTL Scrollbar ──────────────────────────────────────────────── */
   ::-webkit-scrollbar        { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track  { background: transparent; }
-  ::-webkit-scrollbar-thumb  { background: hsl(var(--border)); border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground)); }
+  ::-webkit-scrollbar-thumb  { background: var(--gold-border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--gold-border-strong); }
 
-  /* ─── Accent divider utility ────────────────────────────────────── */
+  /* ─── Accent divider utility (solid gold — no gradients) ─────────── */
   .gold-bar {
-    background: linear-gradient(90deg, hsl(var(--accent)), hsl(214 66% 65%));
+    background: hsl(var(--accent));
+  }
+
+  /* ─── Subtle gold hover glow — the one deliberate colored effect ──── */
+  .gold-hover-glow {
+    transition: box-shadow 200ms ease-out, border-color 200ms ease-out;
+  }
+  .gold-hover-glow:hover {
+    border-color: var(--gold-border-strong);
+    box-shadow: 0 0 0 1px var(--gold-border), 0 8px 28px -10px var(--gold-glow);
   }
 }
 
 /* ─── Marsad custom utilities ────────────────────────────────────────── */
 @layer utilities {
   .nav-item-active {
-    background: hsl(214 66% 50% / 0.15);
-    color: hsl(0 0% 100%);
-    border-inline-end: 3px solid hsl(214 66% 50%);
+    background: hsl(var(--sidebar-accent) / 0.14);
+    color: hsl(var(--sidebar-foreground));
+    border-inline-end: 3px solid hsl(var(--sidebar-accent));
   }
 
   .nav-item-hover {
-    background: hsl(220 47% 20% / 0.5);
-    color: hsl(220 30% 95%);
+    background: hsl(var(--sidebar-primary) / 0.6);
+    color: hsl(var(--sidebar-foreground));
   }
 
   .moj-card {
     background: hsl(var(--card));
-    border: 1px solid hsl(var(--card-border));
-    border-radius: var(--radius-lg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-xl);
     box-shadow: var(--shadow-sm);
   }
 
   .moj-badge-gold {
-    background: hsl(214 66% 50% / 0.12);
-    color: hsl(214 66% 35%);
-    border: 1px solid hsl(214 66% 50% / 0.25);
+    background: hsl(var(--gold) / 0.14);
+    color: hsl(var(--gold));
+    border: 1px solid var(--gold-border);
   }
 
+  /* Semantic badges — brand palette only (no green/orange/bright yellow) */
   .badge-success {
-    background: hsl(156 64% 29% / 0.12);
-    color: hsl(156 64% 22%);
-    border: 1px solid hsl(156 64% 29% / 0.25);
+    background: hsl(var(--success) / 0.14);
+    color: hsl(var(--success));
+    border: 1px solid hsl(var(--success) / 0.3);
     border-radius: 0.25rem;
     padding: 0.125rem 0.5rem;
     font-size: 0.75rem;
@@ -276,9 +298,9 @@
   }
 
   .badge-warning {
-    background: hsl(38 100% 38% / 0.12);
-    color: hsl(38 100% 25%);
-    border: 1px solid hsl(38 100% 38% / 0.25);
+    background: hsl(var(--warning) / 0.16);
+    color: hsl(var(--warning));
+    border: 1px solid hsl(var(--warning) / 0.35);
     border-radius: 0.25rem;
     padding: 0.125rem 0.5rem;
     font-size: 0.75rem;
@@ -286,9 +308,9 @@
   }
 
   .badge-critical {
-    background: hsl(0 73% 43% / 0.12);
-    color: hsl(0 73% 30%);
-    border: 1px solid hsl(0 73% 43% / 0.25);
+    background: hsl(var(--critical) / 0.14);
+    color: hsl(0 65% 62%);
+    border: 1px solid hsl(var(--critical) / 0.4);
     border-radius: 0.25rem;
     padding: 0.125rem 0.5rem;
     font-size: 0.75rem;
@@ -296,9 +318,9 @@
   }
 
   .badge-navy {
-    background: hsl(221 63% 16% / 0.10);
-    color: hsl(221 63% 16%);
-    border: 1px solid hsl(221 63% 16% / 0.20);
+    background: hsl(var(--secondary) / 0.7);
+    color: hsl(var(--foreground));
+    border: 1px solid var(--gold-border);
     border-radius: 0.25rem;
     padding: 0.125rem 0.5rem;
     font-size: 0.75rem;
@@ -308,9 +330,9 @@
   .skeleton {
     background: linear-gradient(
       90deg,
-      hsl(214 25% 92%) 0%,
-      hsl(214 25% 88%) 50%,
-      hsl(214 25% 92%) 100%
+      hsl(var(--muted)) 0%,
+      hsl(var(--secondary)) 50%,
+      hsl(var(--muted)) 100%
     );
     background-size: 200% 100%;
     animation: skeleton-shimmer 1.5s ease-in-out infinite;
@@ -324,7 +346,7 @@
 
   .section-divider {
     height: 1px;
-    background: hsl(var(--sidebar-border));
+    background: var(--sidebar-border);
     margin: 0.5rem 1rem;
   }
 }

@@ -61,7 +61,7 @@ const STATUS_CONFIG: Record<string, { label: string; icon: React.ReactNode; clas
   in_progress: {
     label: 'قيد الإنجاز',
     icon: <Clock className="w-3.5 h-3.5" />,
-    className: 'text-amber-600 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-950/30 dark:border-amber-800/40',
+    className: 'text-gold bg-gold/10 border-gold/25 dark:text-gold/80 dark:bg-gold/30 dark:border-gold/40',
   },
   validation_failed: {
     label: 'فشل التحقق',
@@ -286,7 +286,7 @@ export default function DecisionsPage() {
                                     ? 'bg-red-500'
                                     : decision.status === 'complete' || decision.status === 'signed'
                                       ? 'bg-emerald-500'
-                                      : 'bg-amber-500'
+                                      : 'bg-gold'
                                 }`}
                                 style={{ width: `${pct}%` }}
                               />

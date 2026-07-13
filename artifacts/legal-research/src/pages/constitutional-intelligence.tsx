@@ -133,15 +133,15 @@ function riskLevelConfig(level: CilRiskLevel | null | undefined) {
     };
     case 'high': return {
       labelAr: 'عالٍ', labelEn: 'High',
-      bg: 'bg-orange-100 dark:bg-orange-950/40', text: 'text-orange-700 dark:text-orange-400',
-      border: 'border-orange-200 dark:border-orange-800/40', dot: 'bg-orange-500',
-      ring: 'ring-orange-400/30',
+      bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80',
+      border: 'border-gold/25 dark:border-gold/40', dot: 'bg-gold',
+      ring: 'ring-gold/30',
     };
     case 'moderate': return {
       labelAr: 'متوسط', labelEn: 'Moderate',
-      bg: 'bg-amber-100 dark:bg-amber-950/40', text: 'text-amber-700 dark:text-amber-400',
-      border: 'border-amber-200 dark:border-amber-800/40', dot: 'bg-amber-500',
-      ring: 'ring-amber-400/30',
+      bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80',
+      border: 'border-gold/25 dark:border-gold/40', dot: 'bg-gold',
+      ring: 'ring-gold/30',
     };
     default: return {
       labelAr: 'منخفض', labelEn: 'Low',
@@ -155,16 +155,16 @@ function riskLevelConfig(level: CilRiskLevel | null | undefined) {
 function severityConfig(severity: CilWarning['severity']) {
   switch (severity) {
     case 'critical': return { bg: 'bg-red-50 dark:bg-red-950/30', border: 'border-red-300 dark:border-red-800', text: 'text-red-700 dark:text-red-400', badge: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400', icon: <XCircle className="w-4 h-4" /> };
-    case 'warning':  return { bg: 'bg-orange-50 dark:bg-orange-950/30', border: 'border-orange-300 dark:border-orange-800', text: 'text-orange-700 dark:text-orange-400', badge: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400', icon: <AlertTriangle className="w-4 h-4" /> };
-    default:         return { bg: 'bg-amber-50 dark:bg-amber-950/30', border: 'border-amber-300 dark:border-amber-800', text: 'text-amber-700 dark:text-amber-400', badge: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400', icon: <AlertTriangle className="w-4 h-4" /> };
+    case 'warning':  return { bg: 'bg-gold/10 dark:bg-gold/30', border: 'border-gold/40 dark:border-gold/75', text: 'text-gold dark:text-gold/80', badge: 'bg-gold/15 text-gold dark:bg-gold/40 dark:text-gold/80', icon: <AlertTriangle className="w-4 h-4" /> };
+    default:         return { bg: 'bg-gold/10 dark:bg-gold/30', border: 'border-gold/40 dark:border-gold/75', text: 'text-gold dark:text-gold/80', badge: 'bg-gold/15 text-gold dark:bg-gold/40 dark:text-gold/80', icon: <AlertTriangle className="w-4 h-4" /> };
   }
 }
 
 function statusConfig(status: PrincipleResult['status']) {
   switch (status) {
     case 'compliant':            return { bg: 'bg-emerald-500', text: 'text-emerald-700', label: 'ممتثل' };
-    case 'minor_concern':        return { bg: 'bg-amber-400',   text: 'text-amber-700',   label: 'قلق طفيف' };
-    case 'significant_concern':  return { bg: 'bg-orange-500',  text: 'text-orange-700',  label: 'قلق جوهري' };
+    case 'minor_concern':        return { bg: 'bg-gold/80',   text: 'text-gold',   label: 'قلق طفيف' };
+    case 'significant_concern':  return { bg: 'bg-gold',  text: 'text-gold',  label: 'قلق جوهري' };
     case 'deficient':            return { bg: 'bg-red-500',     text: 'text-red-700',     label: 'ناقص' };
     default:                     return { bg: 'bg-slate-400',   text: 'text-slate-600',   label: 'لم يُقيَّم' };
   }
@@ -182,12 +182,12 @@ function ScoreGauge({
   const pct = value ?? 0;
   // For inverse metrics (riskIndex), red is high; for others, green is high
   const colorClass = isInverse
-    ? pct >= 70 ? 'text-red-500'    : pct >= 40 ? 'text-amber-500' : 'text-emerald-500'
-    : pct >= 70 ? 'text-emerald-500' : pct >= 40 ? 'text-amber-500' : 'text-red-500';
+    ? pct >= 70 ? 'text-red-500'    : pct >= 40 ? 'text-gold' : 'text-emerald-500'
+    : pct >= 70 ? 'text-emerald-500' : pct >= 40 ? 'text-gold' : 'text-red-500';
 
   const trackColor = isInverse
-    ? pct >= 70 ? 'stroke-red-500'    : pct >= 40 ? 'stroke-amber-500' : 'stroke-emerald-500'
-    : pct >= 70 ? 'stroke-emerald-500' : pct >= 40 ? 'stroke-amber-500' : 'stroke-red-500';
+    ? pct >= 70 ? 'stroke-red-500'    : pct >= 40 ? 'stroke-gold' : 'stroke-emerald-500'
+    : pct >= 70 ? 'stroke-emerald-500' : pct >= 40 ? 'stroke-gold' : 'stroke-red-500';
 
   const r = 30;
   const circ = 2 * Math.PI * r;
@@ -244,7 +244,7 @@ function PrincipleCard({
             <circle cx="24" cy="24" r="18" fill="none" className="stroke-border" strokeWidth="4" />
             <circle
               cx="24" cy="24" r="18" fill="none"
-              className={score >= 70 ? 'stroke-emerald-500' : score >= 40 ? 'stroke-amber-500' : 'stroke-red-500'}
+              className={score >= 70 ? 'stroke-emerald-500' : score >= 40 ? 'stroke-gold' : 'stroke-red-500'}
               strokeWidth="4"
               strokeDasharray={`${(score / 100) * (2 * Math.PI * 18)} ${2 * Math.PI * 18}`}
               strokeLinecap="round"
@@ -439,7 +439,7 @@ function DecisionAssessmentView({
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           {status === 'running' && (
-            <span className="flex items-center gap-1.5 text-amber-600 text-sm font-medium">
+            <span className="flex items-center gap-1.5 text-gold text-sm font-medium">
               <Loader2 className="w-4 h-4 animate-spin" />
               {t('جارٍ التقييم الدستوري…', 'Running constitutional assessment…')}
             </span>
@@ -543,9 +543,9 @@ function DecisionAssessmentView({
           {warnings.length > 0 && (
             <div>
               <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-500" />
+                <AlertTriangle className="w-4 h-4 text-gold" />
                 {t('التحذيرات الدستورية', 'Constitutional Warnings')}
-                <span className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-1.5 py-0.5 rounded font-bold">
+                <span className="text-xs bg-gold/15 text-gold dark:bg-gold/30 dark:text-gold/80 px-1.5 py-0.5 rounded font-bold">
                   {warnings.filter((w) => !w.isResolved).length}
                 </span>
               </h3>
@@ -686,10 +686,13 @@ function DecisionAssessmentView({
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 
 export default function ConstitutionalIntelligence() {
-  const { role, userId, userOrg, lang, canViewCilDashboard, canRunCilAssessment, canAcknowledgeCilWarnings } = useUserContext();
+  const { role, userId, userOrg, lang, canViewCilDashboard: canViewCilDashboardPermission, canRunCilAssessment, canAcknowledgeCilWarnings } = useUserContext();
   const t = useT();
   const [selectedDecisionId, setSelectedDecisionId] = useState<number | null>(null);
   const headers = getHeaders(role, userId, userOrg);
+  // Judicial Command Center rebuild: this dashboard is owner-only regardless
+  // of the broader CIL permission set.
+  const canViewCilDashboard = role === 'owner' && canViewCilDashboardPermission;
 
   const { data: dashStats, isLoading: statsLoading } = useQuery({
     queryKey: ['cil-dashboard'],
@@ -870,7 +873,7 @@ export default function ConstitutionalIntelligence() {
                               )}
                             </>
                           ) : d.assessmentStatus === 'running' ? (
-                            <Loader2 className="w-4 h-4 animate-spin text-amber-500" />
+                            <Loader2 className="w-4 h-4 animate-spin text-gold" />
                           ) : d.assessmentStatus === 'failed' ? (
                             <XCircle className="w-4 h-4 text-red-500" />
                           ) : (
@@ -881,7 +884,7 @@ export default function ConstitutionalIntelligence() {
 
                       {/* Warnings preview */}
                       {d.activeWarningCount > 0 && d.assessmentStatus === 'completed' && (
-                        <div className="mt-2 flex items-center gap-1 text-xs text-amber-600">
+                        <div className="mt-2 flex items-center gap-1 text-xs text-gold">
                           <AlertTriangle className="w-3 h-3" />
                           {d.activeWarningCount} {t('تحذير', d.activeWarningCount === 1 ? 'warning' : 'warnings')}
                         </div>

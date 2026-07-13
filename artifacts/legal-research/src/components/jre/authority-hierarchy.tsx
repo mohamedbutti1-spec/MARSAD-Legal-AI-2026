@@ -9,7 +9,7 @@ interface AuthorityHierarchyProps {
 
 const CLASS_LABELS: Record<string, { ar: string; className: string }> = {
   binding:     { ar: 'مُلزِم',   className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 border-emerald-200 dark:border-emerald-700' },
-  persuasive:  { ar: 'مرجعي',   className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border-amber-200 dark:border-amber-700' },
+  persuasive:  { ar: 'مرجعي',   className: 'bg-gold/15 text-gold/75 dark:bg-gold/30 dark:text-gold/40 border-gold/25 dark:border-gold' },
   non_binding: { ar: 'غير مُلزِم', className: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700' },
 };
 

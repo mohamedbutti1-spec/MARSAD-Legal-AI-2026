@@ -65,11 +65,11 @@ function typeConfig(type: SearchResult['type']) {
         icon: <ShieldAlert className="w-4 h-4" />,
         badge: 'مخاطر',
         badgeEn: 'Risk',
-        bg: 'bg-amber-100 dark:bg-amber-950/40',
-        text: 'text-amber-700 dark:text-amber-400',
-        border: 'border-amber-200 dark:border-amber-800/40',
-        iconBg: 'bg-amber-100 dark:bg-amber-950/40',
-        iconColor: 'text-amber-600 dark:text-amber-400',
+        bg: 'bg-gold/15 dark:bg-gold/40',
+        text: 'text-gold dark:text-gold/80',
+        border: 'border-gold/25 dark:border-gold/40',
+        iconBg: 'bg-gold/15 dark:bg-gold/40',
+        iconColor: 'text-gold dark:text-gold/80',
       };
     case 'constitutional':
       return {

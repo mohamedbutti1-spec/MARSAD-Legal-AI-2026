@@ -32,7 +32,7 @@ function ScoreBar({ label, value, color }: { label: string; value: number; color
       <div className="h-1.5 rounded-full bg-muted overflow-hidden">
         <div
           className={`h-full rounded-full transition-all duration-700 ${
-            value >= 70 ? 'bg-emerald-500' : value >= 40 ? 'bg-amber-500' : 'bg-red-500'
+            value >= 70 ? 'bg-emerald-500' : value >= 40 ? 'bg-gold' : 'bg-red-500'
           }`}
           style={{ width: `${value}%` }}
         />
@@ -44,7 +44,7 @@ function ScoreBar({ label, value, color }: { label: string; value: number; color
 function StrengthBadge({ strength }: { strength: string }) {
   const cfg =
     strength === 'قوي'   ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-    strength === 'متوسط' ? 'bg-amber-50  text-amber-700  border-amber-200'   :
+    strength === 'متوسط' ? 'bg-gold/10  text-gold  border-gold/25'   :
                            'bg-red-50    text-red-700    border-red-200';
   return (
     <span className={`text-[10px] border rounded-full px-2 py-0.5 font-medium ${cfg}`}>
@@ -147,7 +147,7 @@ function resolveShamsiStatus(p: CourtShamsiPrinciple): 'مُستوفى' | 'جز�
 
 function ShamsiStatusIcon({ status }: { status: 'مُستوفى' | 'جزئي' | 'مخفق' }) {
   if (status === 'مُستوفى') return <span className="text-emerald-600 font-bold text-base">✓</span>;
-  if (status === 'جزئي')   return <span className="text-amber-500  font-bold text-base">△</span>;
+  if (status === 'جزئي')   return <span className="text-gold  font-bold text-base">△</span>;
   return                          <span className="text-red-600    font-bold text-base">✗</span>;
 }
 
@@ -162,12 +162,12 @@ function ShamsiMatrix({ items }: { items: CourtShamsiPrinciple[] }) {
         const score  = Math.min(100, Math.max(0, Number(p.score ?? 0)));
         const statusBg =
           status === 'مُستوفى' ? 'border-emerald-200 bg-emerald-50/40' :
-          status === 'جزئي'   ? 'border-amber-200  bg-amber-50/40'   :
+          status === 'جزئي'   ? 'border-gold/25  bg-gold/40'   :
                                  'border-red-200    bg-red-50/40';
         const scoreColor =
-          score >= 70 ? 'text-emerald-600' : score >= 40 ? 'text-amber-600' : 'text-red-600';
+          score >= 70 ? 'text-emerald-600' : score >= 40 ? 'text-gold' : 'text-red-600';
         const barColor =
-          score >= 70 ? 'bg-emerald-500' : score >= 40 ? 'bg-amber-500' : 'bg-red-500';
+          score >= 70 ? 'bg-emerald-500' : score >= 40 ? 'bg-gold' : 'bg-red-500';
         const key = p.id || String(idx);
 
         return (
@@ -245,7 +245,7 @@ function ShamsiMatrix({ items }: { items: CourtShamsiPrinciple[] }) {
           <div className="mt-3 flex items-center justify-center gap-4 border border-border/50 rounded-lg py-2 bg-muted/20 text-[11px]" dir="rtl">
             <span className="flex items-center gap-1 text-emerald-700 font-semibold">✓ مُستوفى: {satisfied}</span>
             <span className="text-muted-foreground/40">|</span>
-            <span className="flex items-center gap-1 text-amber-600 font-semibold">△ جزئي: {partial}</span>
+            <span className="flex items-center gap-1 text-gold font-semibold">△ جزئي: {partial}</span>
             <span className="text-muted-foreground/40">|</span>
             <span className="flex items-center gap-1 text-red-600 font-semibold">✗ مخفق: {failed}</span>
           </div>
@@ -393,7 +393,7 @@ function DigitalWillEngine({ session, loading }: { session: CourtSessionData; lo
               const statusColor = stage.done
                 ? 'text-emerald-600 border-emerald-400 bg-emerald-50'
                 : isActive
-                ? 'text-amber-600 border-amber-400 bg-amber-50 animate-pulse'
+                ? 'text-gold border-gold/80 bg-gold/10 animate-pulse'
                 : 'text-muted-foreground border-border bg-muted/30';
               return (
                 <React.Fragment key={idx}>
@@ -403,7 +403,7 @@ function DigitalWillEngine({ session, loading }: { session: CourtSessionData; lo
                       stage.done
                         ? 'bg-emerald-500 text-white border-emerald-500'
                         : isActive
-                        ? 'bg-amber-400 text-white border-amber-400'
+                        ? 'bg-gold/80 text-white border-gold/80'
                         : 'bg-muted text-muted-foreground border-border/60'
                     }`}>
                       {stage.done ? '✓' : isActive ? <Loader2 className="w-3 h-3 animate-spin" /> : idx + 1}
@@ -445,7 +445,7 @@ function ASEPPanel({ report }: { report: ASEPReport }) {
   const [expanded, setExpanded] = useState<number | null>(null);
 
   const confColor = (c: number) =>
-    c >= 70 ? 'text-emerald-600' : c >= 40 ? 'text-amber-600' : 'text-red-600';
+    c >= 70 ? 'text-emerald-600' : c >= 40 ? 'text-gold' : 'text-red-600';
 
   // Defensive: ensure answers is always an array and each entry has required fields
   const safeAnswers = Array.isArray(report.answers)
@@ -476,7 +476,7 @@ function ASEPPanel({ report }: { report: ASEPReport }) {
             <div
               className={`h-full rounded-full transition-all duration-700 ${
                 safeExplainability >= 70 ? 'bg-emerald-500'
-                : safeExplainability >= 40 ? 'bg-amber-500' : 'bg-red-500'
+                : safeExplainability >= 40 ? 'bg-gold' : 'bg-red-500'
               }`}
               style={{ width: `${safeExplainability}%` }}
             />
@@ -492,7 +492,7 @@ function ASEPPanel({ report }: { report: ASEPReport }) {
         <div
           key={i}
           className={`border rounded-lg overflow-hidden ${
-            qa.flagged ? 'border-amber-300 bg-amber-50/30' : 'border-border/60 bg-card'
+            qa.flagged ? 'border-gold/40 bg-gold/30' : 'border-border/60 bg-card'
           }`}
         >
           <button
@@ -503,7 +503,7 @@ function ASEPPanel({ report }: { report: ASEPReport }) {
           >
             <span className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold mt-0.5 border ${
               qa.flagged
-                ? 'bg-amber-100 text-amber-700 border-amber-300'
+                ? 'bg-gold/15 text-gold border-gold/40'
                 : 'bg-primary/10 text-primary border-primary/20'
             }`}>
               {i + 1}
@@ -511,7 +511,7 @@ function ASEPPanel({ report }: { report: ASEPReport }) {
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold leading-snug">{qa.question}</p>
               {qa.flagged && (
-                <span className="text-[10px] text-amber-600 font-medium">⚠ يستوجب الانتباه</span>
+                <span className="text-[10px] text-gold font-medium">⚠ يستوجب الانتباه</span>
               )}
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -532,7 +532,7 @@ function ASEPPanel({ report }: { report: ASEPReport }) {
                 <div className="flex-1 h-1 rounded-full bg-muted overflow-hidden">
                   <div
                     className={`h-full rounded-full ${
-                      qa.confidence >= 70 ? 'bg-emerald-500' : qa.confidence >= 40 ? 'bg-amber-500' : 'bg-red-500'
+                      qa.confidence >= 70 ? 'bg-emerald-500' : qa.confidence >= 40 ? 'bg-gold' : 'bg-red-500'
                     }`}
                     style={{ width: `${qa.confidence}%` }}
                   />
@@ -594,8 +594,8 @@ function ScoresDashboard({ scores }: { scores: CourtScores }) {
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       {items.map((item) => {
         const color = item.inverse
-          ? item.value >= 70 ? 'text-red-600' : item.value >= 40 ? 'text-amber-600' : 'text-emerald-600'
-          : item.value >= 70 ? 'text-emerald-600' : item.value >= 40 ? 'text-amber-600' : 'text-red-600';
+          ? item.value >= 70 ? 'text-red-600' : item.value >= 40 ? 'text-gold' : 'text-emerald-600'
+          : item.value >= 70 ? 'text-emerald-600' : item.value >= 40 ? 'text-gold' : 'text-red-600';
         return <ScoreBar key={item.label} label={item.label} value={item.value} color={color} />;
       })}
     </div>
@@ -651,9 +651,9 @@ export function CourtSessionPanel({ session, onSupremeReview, onReset, loading }
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Scale className="w-5 h-5 text-amber-600" />
+          <Scale className="w-5 h-5 text-gold" />
           <h2 className="text-base font-bold text-foreground">جلسة محاكمة كاملة</h2>
-          <span className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-2 py-0.5">
+          <span className="text-[10px] bg-gold/10 text-gold border border-gold/25 rounded-full px-2 py-0.5">
             Stage 5
           </span>
         </div>
@@ -678,7 +678,7 @@ export function CourtSessionPanel({ session, onSupremeReview, onReset, loading }
       {loading && (
         <div className="h-1 rounded-full bg-muted overflow-hidden">
           <div
-            className="h-full rounded-full bg-amber-500 transition-all duration-500"
+            className="h-full rounded-full bg-gold transition-all duration-500"
             style={{ width: `${Math.round((completedCount / allSections.length) * 100)}%` }}
           />
         </div>
@@ -795,7 +795,7 @@ export function CourtSessionPanel({ session, onSupremeReview, onReset, loading }
                     <span className="text-[11px] font-bold text-muted-foreground">التوصية:</span>
                     <span className={`text-sm font-bold ${
                       c.recommendation === 'قبول' ? 'text-emerald-600' :
-                      c.recommendation === 'رفض'  ? 'text-red-600'     : 'text-amber-600'
+                      c.recommendation === 'رفض'  ? 'text-red-600'     : 'text-gold'
                     }`}>{c.recommendation}</span>
                   </div>
                 </div>
@@ -821,7 +821,7 @@ export function CourtSessionPanel({ session, onSupremeReview, onReset, loading }
                     }`}>{o.decision}</span>
                     <span className={`text-sm font-bold px-3 py-1 rounded-full border ${
                       o.cancellation.includes('إلغاء') ? 'bg-red-50 text-red-700 border-red-200' :
-                      o.cancellation.includes('تعديل') ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                      o.cancellation.includes('تعديل') ? 'bg-gold/10 text-gold border-gold/25' :
                       'bg-emerald-50 text-emerald-700 border-emerald-200'
                     }`}>{o.cancellation}</span>
                   </div>
@@ -832,7 +832,7 @@ export function CourtSessionPanel({ session, onSupremeReview, onReset, loading }
                   {o.adminObligation && (
                     <div>
                       <p className="text-[11px] font-bold text-muted-foreground mb-0.5">إلزام الجهة الإدارية</p>
-                      <p className="text-sm text-amber-700">{o.adminObligation}</p>
+                      <p className="text-sm text-gold">{o.adminObligation}</p>
                     </div>
                   )}
                   {o.reformRecommendations.length > 0 && (
@@ -955,8 +955,8 @@ export function CourtSessionPanel({ session, onSupremeReview, onReset, loading }
 
       {/* Final summary card — only when session is architecturally complete */}
       {isComplete && session.scores && session.operative && (
-        <div className="border-2 border-amber-300 rounded-xl p-4 bg-amber-50/50" dir="rtl">
-          <h3 className="font-bold text-sm text-amber-800 mb-3 flex items-center gap-2">
+        <div className="border-2 border-gold/40 rounded-xl p-4 bg-gold/50" dir="rtl">
+          <h3 className="font-bold text-sm text-gold/75 mb-3 flex items-center gap-2">
             <Gavel className="w-4 h-4" /> الحكم النهائي
           </h3>
           <div className="grid grid-cols-2 gap-2 text-sm">
@@ -968,14 +968,14 @@ export function CourtSessionPanel({ session, onSupremeReview, onReset, loading }
               { label: 'درجة المخاطر',  value: `${session.scores.judicialRisk}%` },
               { label: 'مؤشر الشامسي',  value: `${session.scores.shamsiIndex}%` },
             ].map(({ label, value }) => (
-              <div key={label} className="flex justify-between border-b border-amber-200/60 pb-1">
-                <span className="text-amber-800 font-medium">{label}:</span>
-                <span className="font-bold text-amber-900">{value}</span>
+              <div key={label} className="flex justify-between border-b border-gold/60 pb-1">
+                <span className="text-gold/75 font-medium">{label}:</span>
+                <span className="font-bold text-gold/85">{value}</span>
               </div>
             ))}
             <div className="col-span-2 pt-1">
-              <span className="text-amber-800 font-medium">التوصية النهائية: </span>
-              <span className="font-bold text-amber-900">{session.operative.decision} — {session.operative.cancellation}</span>
+              <span className="text-gold/75 font-medium">التوصية النهائية: </span>
+              <span className="font-bold text-gold/85">{session.operative.decision} — {session.operative.cancellation}</span>
             </div>
           </div>
 

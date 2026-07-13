@@ -7,7 +7,7 @@ interface HeaderProps {
 }
 
 const TIER_STYLES: Record<string, string> = {
-  legacy:    'bg-amber-50 text-amber-800 border-amber-200',
+  legacy:    'bg-gold/10 text-gold/75 border-gold/25',
   executive: 'bg-sky-50 text-sky-800 border-sky-200',
   oversight: 'bg-violet-50 text-violet-800 border-violet-200',
   judicial:  'bg-emerald-50 text-emerald-800 border-emerald-200',

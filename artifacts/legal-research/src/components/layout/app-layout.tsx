@@ -63,7 +63,7 @@ export function AppLayout({ children, variant = 'default' }: AppLayoutProps) {
         {/* P0-1: Demo mode banner — role selector is scaffolding only, not production auth */}
         {IS_DEMO_MODE && (
           <div
-            className="shrink-0 bg-amber-500 text-white text-[11px] font-semibold text-center py-1 px-4 flex items-center justify-center gap-2"
+            className="shrink-0 bg-gold text-white text-[11px] font-semibold text-center py-1 px-4 flex items-center justify-center gap-2"
             role="banner"
             aria-label="Demo mode notice"
             dir="ltr"

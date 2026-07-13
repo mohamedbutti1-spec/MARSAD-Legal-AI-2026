@@ -117,7 +117,8 @@ export default function NaipHome() {
   const headers = getHeaders(role, userId, userOrg);
 
   // Determine canViewNaipDashboard — fallback to canViewGovernanceDashboard for roles without explicit permission
-  const hasAccess = canViewNaipDashboard ?? canViewGovernanceDashboard;
+  // Judicial Command Center rebuild: NAIP is owner-only regardless of the broader permission set.
+  const hasAccess = role === 'owner' && (canViewNaipDashboard ?? canViewGovernanceDashboard);
 
   const { data: overview, isLoading } = useQuery<NaipOverview>({
     queryKey: ['naip-overview'],
@@ -224,13 +225,13 @@ export default function NaipHome() {
               value={fmt(overview?.activeWarnings)}
               label="تحذيرات نشطة"
               labelEn="Active Warnings"
-              colorClass={overview?.activeWarnings ? 'text-amber-600' : 'text-foreground'}
+              colorClass={overview?.activeWarnings ? 'text-gold' : 'text-foreground'}
             />
             <StatCard
               value={fmt(overview?.avgRiskIndex, '%')}
               label="متوسط مؤشر المخاطر"
               labelEn="Avg Risk Index"
-              colorClass="text-orange-600"
+              colorClass="text-gold"
             />
             <StatCard
               value={fmt(overview?.avgComplianceScore, '%')}
@@ -269,7 +270,7 @@ export default function NaipHome() {
               nameEn="Risk Assessment"
               href="/risk-engine"
               subtitle={overview?.avgRiskIndex !== null && overview?.avgRiskIndex !== undefined ? `NRI: ${overview.avgRiskIndex}%` : undefined}
-              statusColor="bg-amber-500"
+              statusColor="bg-gold"
             />
             <ModuleTile
               icon={<Scale className="w-5 h-5" />}
@@ -316,8 +317,8 @@ export default function NaipHome() {
             {/* Human Oversight Queue */}
             <div className="bg-card border border-border rounded-xl p-5 flex flex-col gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-950/40 flex items-center justify-center">
-                  <Users className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                <div className="w-9 h-9 rounded-xl bg-gold/15 dark:bg-gold/40 flex items-center justify-center">
+                  <Users className="w-4 h-4 text-gold dark:text-gold/80" />
                 </div>
                 <div>
                   <div className="text-sm font-bold text-foreground">{t('طابور المراجعة البشرية', 'Human Oversight Queue')}</div>
@@ -325,7 +326,7 @@ export default function NaipHome() {
                 </div>
               </div>
               <div className="flex items-end justify-between">
-                <div className={`text-4xl font-bold tabular-nums ${(overview?.humanOversightQueue ?? 0) > 0 ? 'text-amber-600' : 'text-foreground'}`}>
+                <div className={`text-4xl font-bold tabular-nums ${(overview?.humanOversightQueue ?? 0) > 0 ? 'text-gold' : 'text-foreground'}`}>
                   {isLoading ? <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /> : fmt(overview?.humanOversightQueue)}
                 </div>
                 <Link href="/decisions">

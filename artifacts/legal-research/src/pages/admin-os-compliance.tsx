@@ -81,7 +81,7 @@ function StatCard({ icon, label, value, sub, color = 'primary' }: {
   const colors: Record<string, string> = {
     primary: 'bg-primary/10 text-primary',
     green:   'bg-emerald-50 text-emerald-700',
-    amber:   'bg-amber-50 text-amber-700',
+    amber:   'bg-gold/10 text-gold',
     blue:    'bg-blue-50 text-blue-700',
   };
   return (
@@ -259,7 +259,7 @@ export default function AdminOsCompliance() {
                 <div className="bg-card border border-border rounded-xl overflow-hidden">
                   <div className="px-4 py-3 border-b border-border bg-muted/30">
                     <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
-                      <AlertTriangle className="w-4 h-4 text-amber-500" />
+                      <AlertTriangle className="w-4 h-4 text-gold" />
                       أنواع القرارات ذات الخطر المرتفع
                     </h2>
                   </div>
@@ -277,7 +277,7 @@ export default function AdminOsCompliance() {
                           <tr key={i} className="border-t border-border/40 hover:bg-muted/10">
                             <td className="px-4 py-2.5 text-foreground">{dt.decisionTypeAr}</td>
                             <td className="px-4 py-2.5">
-                              <span className={`font-bold ${dt.avgRiskScore >= 70 ? 'text-red-600' : dt.avgRiskScore >= 50 ? 'text-amber-600' : 'text-emerald-600'}`}>
+                              <span className={`font-bold ${dt.avgRiskScore >= 70 ? 'text-red-600' : dt.avgRiskScore >= 50 ? 'text-gold' : 'text-emerald-600'}`}>
                                 {dt.avgRiskScore}/100
                               </span>
                             </td>

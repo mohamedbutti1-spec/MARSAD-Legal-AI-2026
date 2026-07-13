@@ -84,7 +84,7 @@ const ROLE_ICONS: Record<string, React.ReactNode> = {
 
 const CATEGORY_CONFIG: Record<AnswerCategory, { label: string; color: string; dot: string }> = {
   mandatory:     { label: 'إلزامي',       color: 'bg-red-50 text-red-700 border-red-200',         dot: '🔴' },
-  opinion:       { label: 'رأي قانوني',   color: 'bg-amber-50 text-amber-700 border-amber-200',   dot: '🟡' },
+  opinion:       { label: 'رأي قانوني',   color: 'bg-gold/10 text-gold border-gold/25',   dot: '🟡' },
   best_practice: { label: 'ممارسة مثلى', color: 'bg-emerald-50 text-emerald-700 border-emerald-200', dot: '🟢' },
   optional:      { label: 'اختياري',      color: 'bg-slate-50 text-slate-600 border-slate-200',    dot: '⚪' },
 };
@@ -103,8 +103,8 @@ function CategoryPill({ category }: { category: AnswerCategory }) {
 
 const RISK_CONFIG: Record<RiskLevel, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
   low:      { label: 'منخفض',    color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200', icon: <CheckCircle2 className="w-5 h-5 text-emerald-600" /> },
-  medium:   { label: 'متوسط',    color: 'text-amber-700',   bg: 'bg-amber-50 border-amber-200',     icon: <AlertTriangle className="w-5 h-5 text-amber-600" /> },
-  high:     { label: 'مرتفع',    color: 'text-orange-700',  bg: 'bg-orange-50 border-orange-200',   icon: <AlertTriangle className="w-5 h-5 text-orange-600" /> },
+  medium:   { label: 'متوسط',    color: 'text-gold',   bg: 'bg-gold/10 border-gold/25',     icon: <AlertTriangle className="w-5 h-5 text-gold" /> },
+  high:     { label: 'مرتفع',    color: 'text-gold',  bg: 'bg-gold/10 border-gold/25',   icon: <AlertTriangle className="w-5 h-5 text-gold" /> },
   critical: { label: 'حرج جداً', color: 'text-red-700',     bg: 'bg-red-50 border-red-200',         icon: <XCircle className="w-5 h-5 text-red-600" /> },
 };
 
@@ -126,7 +126,7 @@ function CanIssueBanner({ decision, explanation, conditions }: {
   const configs = {
     yes:         { icon: <CheckCircle2 className="w-7 h-7 text-emerald-600 shrink-0" />, label: 'يمكن اتخاذ القرار اليوم', bg: 'bg-emerald-50 border-emerald-300', text: 'text-emerald-800' },
     no:          { icon: <XCircle className="w-7 h-7 text-red-600 shrink-0" />,          label: 'لا يمكن اتخاذ القرار اليوم', bg: 'bg-red-50 border-red-300',         text: 'text-red-800' },
-    conditional: { icon: <AlertTriangle className="w-7 h-7 text-amber-600 shrink-0" />, label: 'يمكن اتخاذ القرار بشروط',   bg: 'bg-amber-50 border-amber-300',       text: 'text-amber-800' },
+    conditional: { icon: <AlertTriangle className="w-7 h-7 text-gold shrink-0" />, label: 'يمكن اتخاذ القرار بشروط',   bg: 'bg-gold/10 border-gold/40',       text: 'text-gold/75' },
   };
   const c = configs[decision] ?? configs.conditional;
   return (
@@ -199,7 +199,7 @@ function MiniCitationChip({ token, citation }: { token: string; citation?: Citat
   return (
     <span className="relative inline-block align-baseline">
       <button type="button" onClick={() => setOpen((o) => !o)}
-        className={`inline-flex items-center gap-1 text-[11px] font-semibold px-1.5 py-0.5 rounded border ${isDoc ? 'bg-primary/10 text-primary border-primary/25' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+        className={`inline-flex items-center gap-1 text-[11px] font-semibold px-1.5 py-0.5 rounded border ${isDoc ? 'bg-primary/10 text-primary border-primary/25' : 'bg-gold/10 text-gold border-gold/25'}`}>
         {isDoc ? <FileText className="w-2.5 h-2.5" /> : <BookOpen className="w-2.5 h-2.5" />}
         <span className="max-w-[100px] truncate">{label}</span>
       </button>
@@ -547,7 +547,7 @@ function DecisionBriefView({ brief, scenario, role, sessionId, citations, isStre
               {brief.applicableLegislation.map((item, i) => (
                 <div key={i} className="border-b border-border/50 pb-3 last:border-0 last:pb-0">
                   <div className="flex items-start gap-2 mb-1">
-                    <BookOpen className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                    <BookOpen className="w-3.5 h-3.5 text-gold shrink-0 mt-0.5" />
                     <p className="text-sm font-semibold text-foreground flex-1">
                       {item.token && citations.find((c) => c.token === item.token)
                         ? <MiniCitationChip token={item.token} citation={citations.find((c) => c.token === item.token)} />
@@ -965,7 +965,7 @@ function HistoryDrawer({ open, sessions, onSelect, onDelete, onClose, t }: {
   t: (ar: string, en: string) => string;
 }) {
   const RISK_COLORS: Record<string, string> = {
-    low: 'text-emerald-600', medium: 'text-amber-600', high: 'text-orange-600', critical: 'text-red-600',
+    low: 'text-emerald-600', medium: 'text-gold', high: 'text-gold', critical: 'text-red-600',
   };
   return (
     <>
@@ -1014,7 +1014,7 @@ function HistorySidebar({ sessions, onSelect, onDelete, currentId, t }: {
   t: (ar: string, en: string) => string;
 }) {
   const RISK_COLORS: Record<string, string> = {
-    low: 'text-emerald-500', medium: 'text-amber-500', high: 'text-orange-500', critical: 'text-red-500',
+    low: 'text-emerald-500', medium: 'text-gold', high: 'text-gold', critical: 'text-red-500',
   };
   return (
     <div className="hidden md:flex flex-col w-60 border-s border-border shrink-0 bg-muted/10" dir="rtl">

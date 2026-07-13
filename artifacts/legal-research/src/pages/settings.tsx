@@ -174,7 +174,7 @@ export default function Settings() {
                           <div className="flex items-center gap-2">
                             <h4 className="font-semibold text-foreground">{prov.label}</h4>
                             {!prov.implemented && (
-                              <span className="text-[10px] font-medium bg-amber-100 text-amber-700 border border-amber-200 rounded px-1.5 py-0.5 shrink-0">
+                              <span className="text-[10px] font-medium bg-gold/15 text-gold border border-gold/25 rounded px-1.5 py-0.5 shrink-0">
                                 Pending approval
                               </span>
                             )}

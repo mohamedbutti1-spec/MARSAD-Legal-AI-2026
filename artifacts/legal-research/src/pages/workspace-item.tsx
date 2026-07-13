@@ -49,10 +49,10 @@ interface Version {
 const ITEM_TYPE_COLORS: Record<string, string> = {
   question:       'bg-purple-100 text-purple-800',
   answer:         'bg-blue-100 text-blue-800',
-  authority:      'bg-green-100 text-green-800',
-  document:       'bg-amber-100 text-amber-800',
+  authority:      'bg-heading/15 text-heading/75',
+  document:       'bg-gold/15 text-gold/75',
   note:           'bg-gray-100 text-gray-800',
-  highlight:      'bg-yellow-100 text-yellow-800',
+  highlight:      'bg-gold/15 text-gold/75',
   bookmark:       'bg-red-100 text-red-800',
   timeline_entry: 'bg-indigo-100 text-indigo-800',
 };

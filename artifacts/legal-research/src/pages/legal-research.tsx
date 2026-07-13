@@ -214,14 +214,14 @@ export default function LegalResearch() {
                           <div className="flex items-center gap-2 mb-1">
                             {r.meta?.type === 'document'
                               ? <FileText className="w-3.5 h-3.5 text-primary" aria-hidden />
-                              : <BookOpen className="w-3.5 h-3.5 text-amber-600" aria-hidden />}
+                              : <BookOpen className="w-3.5 h-3.5 text-gold" aria-hidden />}
                             <span className="text-sm font-semibold truncate">
                               {r.meta?.title ?? r.ref}
                             </span>
                             <span className={`text-[10px] px-1.5 py-0.5 rounded border font-semibold ${
                               r.meta?.type === 'document'
                                 ? 'bg-primary/5 text-primary border-primary/20'
-                                : 'bg-amber-50 text-amber-700 border-amber-200'
+                                : 'bg-gold/10 text-gold border-gold/25'
                             }`}>
                               {t(
                                 r.meta?.type === 'document' ? 'وثيقة' : 'مصدر قانوني',

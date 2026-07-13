@@ -104,7 +104,7 @@ function ChamberCard({ chamber, onDelete }: { chamber: JdcChamber; onDelete: (id
               )}
               <span>القضاة: <span className="font-medium text-foreground">{deliberation.judges?.length ?? chamber.panelSize}</span></span>
               {deliberation.dissentingJudgeIds?.length > 0 && (
-                <span className="text-orange-600">
+                <span className="text-gold">
                   معارض: {deliberation.dissentingJudgeIds.length}
                 </span>
               )}

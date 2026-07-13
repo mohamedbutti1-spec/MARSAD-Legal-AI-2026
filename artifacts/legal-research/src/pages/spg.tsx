@@ -211,7 +211,7 @@ export default function SpgPage() {
         </div>
 
         {/* Disclaimer banner */}
-        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-xl p-4 text-sm text-amber-800 dark:text-amber-300">
+        <div className="bg-gold/10 dark:bg-gold/10 border border-gold/25 dark:border-gold/75 rounded-xl p-4 text-sm text-gold/75 dark:text-gold/40">
           <strong>تنبيه: </strong>
           هذه الأداة تُقدّم إرشاداً مهنياً استرشادياً فقط. لا تُصدر قرارات قانونية ملزمة ولا تحلّ محل الجهة المختصة أو المستشار القانوني المعتمد.
         </div>

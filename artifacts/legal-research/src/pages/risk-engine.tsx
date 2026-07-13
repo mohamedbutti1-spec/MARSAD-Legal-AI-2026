@@ -69,8 +69,8 @@ function getHeaders(role: string, userId: number, org: string) {
 function riskLevelConfig(level: RiskLevel | null | undefined) {
   switch (level) {
     case 'critical': return { label: 'حرج', labelEn: 'Critical', bg: 'bg-red-100 dark:bg-red-950/40', text: 'text-red-700 dark:text-red-400', border: 'border-red-200 dark:border-red-800/40', dot: 'bg-red-500' };
-    case 'high':     return { label: 'عالٍ', labelEn: 'High', bg: 'bg-orange-100 dark:bg-orange-950/40', text: 'text-orange-700 dark:text-orange-400', border: 'border-orange-200 dark:border-orange-800/40', dot: 'bg-orange-500' };
-    case 'moderate': return { label: 'متوسط', labelEn: 'Moderate', bg: 'bg-amber-100 dark:bg-amber-950/40', text: 'text-amber-700 dark:text-amber-400', border: 'border-amber-200 dark:border-amber-800/40', dot: 'bg-amber-500' };
+    case 'high':     return { label: 'عالٍ', labelEn: 'High', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80', border: 'border-gold/25 dark:border-gold/40', dot: 'bg-gold' };
+    case 'moderate': return { label: 'متوسط', labelEn: 'Moderate', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80', border: 'border-gold/25 dark:border-gold/40', dot: 'bg-gold' };
     default:         return { label: 'منخفض', labelEn: 'Low', bg: 'bg-emerald-100 dark:bg-emerald-950/40', text: 'text-emerald-700 dark:text-emerald-400', border: 'border-emerald-200 dark:border-emerald-800/40', dot: 'bg-emerald-500' };
   }
 }
@@ -137,8 +137,8 @@ function DistributionBar({ distribution, total }: { distribution: RiskDistributi
   if (total === 0) return null;
   const levels: { key: keyof RiskDistribution; label: string; labelEn: string; color: string }[] = [
     { key: 'critical', label: 'حرج', labelEn: 'Critical', color: 'bg-red-500' },
-    { key: 'high',     label: 'عالٍ', labelEn: 'High',    color: 'bg-orange-500' },
-    { key: 'moderate', label: 'متوسط', labelEn: 'Moderate', color: 'bg-amber-500' },
+    { key: 'high',     label: 'عالٍ', labelEn: 'High',    color: 'bg-gold' },
+    { key: 'moderate', label: 'متوسط', labelEn: 'Moderate', color: 'bg-gold' },
     { key: 'low',      label: 'منخفض', labelEn: 'Low',    color: 'bg-emerald-500' },
   ];
   return (
@@ -216,7 +216,7 @@ export default function RiskEngine() {
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <ShieldAlert className="w-6 h-6 text-orange-500" />
+              <ShieldAlert className="w-6 h-6 text-gold" />
               <h1 className="text-xl font-bold text-foreground">
                 {t('تقييم المخاطر', 'Risk Assessment')}
               </h1>
@@ -262,8 +262,8 @@ export default function RiskEngine() {
                 description={t('متوسط عبر كل القرارات (أعلى = أخطر)', 'Average across all decisions (higher = riskier)')}
                 colorClass={
                   nriRiskLevel === 'critical' ? 'text-red-500' :
-                  nriRiskLevel === 'high' ? 'text-orange-500' :
-                  nriRiskLevel === 'moderate' ? 'text-amber-500' : 'text-emerald-500'
+                  nriRiskLevel === 'high' ? 'text-gold' :
+                  nriRiskLevel === 'moderate' ? 'text-gold' : 'text-emerald-500'
                 }
               />
               <GaugeCard
@@ -273,7 +273,7 @@ export default function RiskEngine() {
                 description={t('درجة الامتثال الدستوري والشرعية (أعلى = أفضل)', 'Constitutional compliance score (higher = better)')}
                 colorClass={
                   (summary?.avgAdministrativeLegitimacyIndex ?? 0) >= 70 ? 'text-emerald-500' :
-                  (summary?.avgAdministrativeLegitimacyIndex ?? 0) >= 50 ? 'text-amber-500' : 'text-red-500'
+                  (summary?.avgAdministrativeLegitimacyIndex ?? 0) >= 50 ? 'text-gold' : 'text-red-500'
                 }
               />
               <GaugeCard
@@ -283,7 +283,7 @@ export default function RiskEngine() {
                 description={t('مستوى الثقة في جودة القرار (أعلى = أفضل)', 'Decision quality confidence (higher = better)')}
                 colorClass={
                   (summary?.avgDecisionConfidenceScore ?? 0) >= 70 ? 'text-emerald-500' :
-                  (summary?.avgDecisionConfidenceScore ?? 0) >= 50 ? 'text-blue-500' : 'text-orange-500'
+                  (summary?.avgDecisionConfidenceScore ?? 0) >= 50 ? 'text-blue-500' : 'text-gold'
                 }
               />
             </div>
@@ -293,7 +293,7 @@ export default function RiskEngine() {
               {[
                 { label: 'إجمالي القرارات', labelEn: 'Total Decisions', value: summary?.totalDecisions ?? 0, icon: <FileText className="w-4 h-4" />, color: 'text-blue-500' },
                 { label: 'تقييمات جاهزة', labelEn: 'Ready Assessments', value: summary?.readyAssessments ?? 0, icon: <CheckCircle2 className="w-4 h-4" />, color: 'text-emerald-500' },
-                { label: 'معالجات معلقة', labelEn: 'Pending Treatments', value: summary?.pendingTreatments ?? 0, icon: <Target className="w-4 h-4" />, color: 'text-amber-500' },
+                { label: 'معالجات معلقة', labelEn: 'Pending Treatments', value: summary?.pendingTreatments ?? 0, icon: <Target className="w-4 h-4" />, color: 'text-gold' },
                 { label: 'مراجعات متأخرة', labelEn: 'Overdue Reviews', value: summary?.overdueReviews ?? 0, icon: <AlertTriangle className="w-4 h-4" />, color: 'text-red-500' },
               ].map((s) => (
                 <div key={s.label} className="bg-card border border-border/60 rounded-xl p-4 space-y-2">
@@ -327,7 +327,7 @@ export default function RiskEngine() {
               <div className="bg-card border border-border/60 rounded-xl overflow-hidden">
                 <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-border/60">
                   <div className="flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4 text-orange-500" />
+                    <AlertTriangle className="w-4 h-4 text-gold" />
                     <h2 className="text-sm font-bold text-foreground">
                       {t('القرارات الأعلى خطورة', 'Highest Risk Decisions')}
                     </h2>
@@ -382,14 +382,14 @@ export default function RiskEngine() {
             )}
 
             {/* ── Al-Shamsi Framework Note ──────────────────────────────── */}
-            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 rounded-xl p-4 space-y-2">
+            <div className="bg-gold/10 dark:bg-gold/20 border border-gold/25 dark:border-gold/40 rounded-xl p-4 space-y-2">
               <div className="flex items-center gap-2">
-                <Scale className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                <p className="text-xs font-bold text-amber-700 dark:text-amber-400">
+                <Scale className="w-4 h-4 text-gold dark:text-gold/80" />
+                <p className="text-xs font-bold text-gold dark:text-gold/80">
                   {t('إطار الشامسي الدستوري', 'Al-Shamsi Constitutional Framework')}
                 </p>
               </div>
-              <p className="text-xs text-amber-700/80 dark:text-amber-400/80 leading-relaxed">
+              <p className="text-xs text-gold/80 dark:text-gold/80 leading-relaxed">
                 {t(
                   'يستند المحرك الوطني للمخاطر إلى 16 بعداً دستورياً وفق نظرية الشامسي، وتُحسب المؤشرات الـ15 استناداً إلى مدى امتثال القرار للمعايير الدستورية الإماراتية ومبادئ الشريعة الإدارية — المادة 25 وما يليها من الدستور الاتحادي، وقانون اتحادي رقم 11 لسنة 2008 في شأن القرارات الإدارية.',
                   'Risk assessment computes 15 risk indices based on 16 Al-Shamsi constitutional dimensions, grounded in UAE Constitution Articles 25+ and Federal Law No. 11 of 2008 on Administrative Decisions.',

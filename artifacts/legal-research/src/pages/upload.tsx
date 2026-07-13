@@ -164,11 +164,11 @@ export default function UploadPage() {
         )}
 
         {status === 'success' && (
-          <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-md p-6 text-center">
-            <CheckCircle2 className="w-12 h-12 text-green-600 dark:text-green-500 mx-auto mb-3" />
-            <h3 className="text-lg font-bold text-green-800 dark:text-green-400 mb-1">Upload Successful</h3>
-            <p className="text-green-700/80 dark:text-green-500/80 mb-4">Your document has been added to the library and is ready for AI processing.</p>
-            <Button variant="outline" onClick={() => setStatus('idle')} className="border-green-300 text-green-700 hover:bg-green-100">Upload Another</Button>
+          <div className="bg-heading/10 dark:bg-heading/30 border border-heading/25 dark:border-heading/85 rounded-md p-6 text-center">
+            <CheckCircle2 className="w-12 h-12 text-heading dark:text-heading mx-auto mb-3" />
+            <h3 className="text-lg font-bold text-heading/75 dark:text-heading/80 mb-1">Upload Successful</h3>
+            <p className="text-heading/80 dark:text-heading/80 mb-4">Your document has been added to the library and is ready for AI processing.</p>
+            <Button variant="outline" onClick={() => setStatus('idle')} className="border-heading/40 text-heading hover:bg-heading/15">Upload Another</Button>
           </div>
         )}
 

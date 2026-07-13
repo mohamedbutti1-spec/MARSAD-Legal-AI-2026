@@ -76,7 +76,7 @@ function statusConfig(status: DecisionStatus) {
   switch (status) {
     case 'sealed':   return { label: 'مختوم', bg: 'bg-blue-100 dark:bg-blue-950/40', text: 'text-blue-700 dark:text-blue-400' };
     case 'active':   return { label: 'نشط', bg: 'bg-emerald-100 dark:bg-emerald-950/40', text: 'text-emerald-700 dark:text-emerald-400' };
-    case 'draft':    return { label: 'مسودة', bg: 'bg-amber-100 dark:bg-amber-950/40', text: 'text-amber-700 dark:text-amber-400' };
+    case 'draft':    return { label: 'مسودة', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80' };
     case 'archived': return { label: 'مؤرشف', bg: 'bg-muted', text: 'text-muted-foreground' };
     default:         return { label: status, bg: 'bg-muted', text: 'text-muted-foreground' };
   }
@@ -85,8 +85,8 @@ function statusConfig(status: DecisionStatus) {
 function riskConfig(level: RiskLevel | null | undefined) {
   switch (level) {
     case 'critical': return { label: 'حرج', bg: 'bg-red-100 dark:bg-red-950/40', text: 'text-red-700 dark:text-red-400' };
-    case 'high':     return { label: 'عالٍ', bg: 'bg-orange-100 dark:bg-orange-950/40', text: 'text-orange-700 dark:text-orange-400' };
-    case 'moderate': return { label: 'متوسط', bg: 'bg-amber-100 dark:bg-amber-950/40', text: 'text-amber-700 dark:text-amber-400' };
+    case 'high':     return { label: 'عالٍ', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80' };
+    case 'moderate': return { label: 'متوسط', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80' };
     case 'low':      return { label: 'منخفض', bg: 'bg-emerald-100 dark:bg-emerald-950/40', text: 'text-emerald-700 dark:text-emerald-400' };
     default:         return { label: '—', bg: 'bg-muted', text: 'text-muted-foreground' };
   }
@@ -224,7 +224,7 @@ export default function NaipMinister() {
             labelAr="تحذيرات دستورية نشطة"
             labelEn="Active Constitutional Warnings"
             value={kpi?.activeConstitutionalWarnings}
-            colorClass="text-amber-600 dark:text-amber-400"
+            colorClass="text-gold dark:text-gold/80"
             icon={<ShieldAlert className="w-4 h-4" />}
           />
           <StatTile
@@ -234,7 +234,7 @@ export default function NaipMinister() {
             colorClass={
               kpi?.avgNationalRiskIndex == null ? 'text-foreground' :
               kpi.avgNationalRiskIndex >= 75 ? 'text-red-600 dark:text-red-400' :
-              kpi.avgNationalRiskIndex >= 50 ? 'text-amber-600 dark:text-amber-400' :
+              kpi.avgNationalRiskIndex >= 50 ? 'text-gold dark:text-gold/80' :
               'text-emerald-600 dark:text-emerald-400'
             }
             icon={<Activity className="w-4 h-4" />}
@@ -331,7 +331,7 @@ export default function NaipMinister() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
             { href: '/governance', icon: <Scale className="w-5 h-5" />, label: 'مركز الحوكمة', labelEn: 'Governance Hub', color: 'text-blue-500' },
-            { href: '/risk-engine', icon: <BarChart3 className="w-5 h-5" />, label: 'محرك المخاطر', labelEn: 'Risk Engine', color: 'text-orange-500' },
+            { href: '/risk-engine', icon: <BarChart3 className="w-5 h-5" />, label: 'محرك المخاطر', labelEn: 'Risk Engine', color: 'text-gold' },
             { href: '/constitutional-intelligence', icon: <ShieldAlert className="w-5 h-5" />, label: 'المراجعة الدستورية', labelEn: 'Constitutional Review', color: 'text-purple-500' },
             { href: '/decisions', icon: <FileText className="w-5 h-5" />, label: 'القرارات', labelEn: 'All Decisions', color: 'text-emerald-500' },
           ].map((a) => (

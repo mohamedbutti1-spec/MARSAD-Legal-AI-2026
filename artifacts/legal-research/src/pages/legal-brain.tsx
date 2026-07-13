@@ -104,36 +104,36 @@ function t(ar: string, en: string) {
 
 const RISK_COLOR: Record<string, string> = {
   'حرج':    'text-red-700 bg-red-50 border-red-200',
-  'مرتفع':  'text-orange-700 bg-orange-50 border-orange-200',
-  'متوسط':  'text-amber-700 bg-amber-50 border-amber-200',
+  'مرتفع':  'text-gold bg-gold/10 border-gold/25',
+  'متوسط':  'text-gold bg-gold/10 border-gold/25',
   'منخفض':  'text-emerald-700 bg-emerald-50 border-emerald-200',
 };
 const RISK_BAR_COLOR: Record<string, string> = {
   'حرج':    'bg-red-500',
-  'مرتفع':  'bg-orange-500',
-  'متوسط':  'bg-amber-500',
+  'مرتفع':  'bg-gold',
+  'متوسط':  'bg-gold',
   'منخفض':  'bg-emerald-500',
 };
 const STATUS_ICON: Record<string, React.ReactNode> = {
   'سليم':        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />,
   'ممتثل':       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />,
-  'معيب':        <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />,
-  'ممتثل جزئياً': <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />,
+  'معيب':        <AlertTriangle className="w-3.5 h-3.5 text-gold shrink-0" />,
+  'ممتثل جزئياً': <AlertTriangle className="w-3.5 h-3.5 text-gold shrink-0" />,
   'باطل':        <XCircle className="w-3.5 h-3.5 text-red-500 shrink-0" />,
   'غير ممتثل':   <XCircle className="w-3.5 h-3.5 text-red-500 shrink-0" />,
 };
 const SIMILARITY_COLOR: Record<string, string> = {
   'تطابق':          'text-emerald-700 bg-emerald-50',
   'تقارب':          'text-blue-700 bg-blue-50',
-  'اختلاف جوهري':  'text-amber-700 bg-amber-50',
+  'اختلاف جوهري':  'text-gold bg-gold/10',
   'تعارض':          'text-red-700 bg-red-50',
 };
 
 // ─── Shared sub-components ────────────────────────────────────────────────────
 
 function ConfidenceBar({ value, label = 'الثقة' }: { value: number; label?: string }) {
-  const color = value >= 85 ? 'text-emerald-700' : value >= 70 ? 'text-amber-700' : 'text-red-700';
-  const barColor = value >= 85 ? '[&>div]:bg-emerald-500' : value >= 70 ? '[&>div]:bg-amber-500' : '[&>div]:bg-red-500';
+  const color = value >= 85 ? 'text-emerald-700' : value >= 70 ? 'text-gold' : 'text-red-700';
+  const barColor = value >= 85 ? '[&>div]:bg-emerald-500' : value >= 70 ? '[&>div]:bg-gold' : '[&>div]:bg-red-500';
   return (
     <div className="flex items-center gap-3" dir="rtl">
       <span className="text-[11px] text-muted-foreground shrink-0">{label}</span>
@@ -174,7 +174,7 @@ function ExplainabilityCard({ data }: { data: Explainability }) {
             <>
               <Separator />
               <div>
-                <span className="font-semibold text-amber-700 text-[11px]">🔁 الحجج المضادة:</span>
+                <span className="font-semibold text-gold text-[11px]">🔁 الحجج المضادة:</span>
                 <ul className="mt-1 space-y-0.5">{data.counterArguments.map((a, i) => <li key={i} className="text-[12px] text-muted-foreground">• {a}</li>)}</ul>
               </div>
             </>
@@ -278,7 +278,7 @@ function JudicialReasoningTab() {
   const RULING_COLOR: Record<string, string> = {
     'قبول': 'border-emerald-500 bg-emerald-50 text-emerald-800',
     'رفض':  'border-red-500 bg-red-50 text-red-800',
-    'قبول جزئي': 'border-amber-500 bg-amber-50 text-amber-800',
+    'قبول جزئي': 'border-gold bg-gold/10 text-gold/75',
   };
   const rulingClass = result ? (RULING_COLOR[result.rulingType] ?? 'border-primary bg-primary/5 text-primary') : '';
 
@@ -402,12 +402,12 @@ function AdminLegalityTab() {
 
   const VALIDITY_STYLE: Record<string, string> = {
     'صحيح':           'border-emerald-500 bg-emerald-50 text-emerald-800',
-    'قابل للإبطال':   'border-amber-500 bg-amber-50 text-amber-800',
+    'قابل للإبطال':   'border-gold bg-gold/10 text-gold/75',
     'باطل':           'border-red-500 bg-red-50 text-red-800',
   };
   const STATUS_BG: Record<string, string> = {
     'سليم': 'bg-emerald-50 border-emerald-200',
-    'معيب': 'bg-amber-50 border-amber-200',
+    'معيب': 'bg-gold/10 border-gold/25',
     'باطل': 'bg-red-50 border-red-200',
   };
 
@@ -524,13 +524,13 @@ function ShamsiTheoryTab() {
 
   const COMPLIANCE_COLOR: Record<string, string> = {
     'عالٍ':  'border-emerald-500 bg-emerald-50 text-emerald-800',
-    'متوسط': 'border-amber-500 bg-amber-50 text-amber-800',
-    'منخفض': 'border-orange-500 bg-orange-50 text-orange-800',
+    'متوسط': 'border-gold bg-gold/10 text-gold/75',
+    'منخفض': 'border-gold bg-gold/10 text-gold/75',
     'حرج':   'border-red-500 bg-red-50 text-red-800',
   };
   const STATUS_BG_SHAMSI: Record<string, string> = {
     'ممتثل':         'bg-emerald-50 border-emerald-200',
-    'ممتثل جزئياً': 'bg-amber-50 border-amber-200',
+    'ممتثل جزئياً': 'bg-gold/10 border-gold/25',
     'غير ممتثل':    'bg-red-50 border-red-200',
   };
 
@@ -718,8 +718,8 @@ function ComparativeAnalysisTab() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {result.keyDifferences?.length > 0 && (
               <SectionCard>
-                <p className="text-[11px] font-bold text-amber-700 mb-2">الفوارق الجوهرية</p>
-                <ul className="space-y-1">{result.keyDifferences.map((d, i) => <li key={i} className="text-[12px] text-foreground flex gap-2"><span className="text-amber-500">▲</span>{d}</li>)}</ul>
+                <p className="text-[11px] font-bold text-gold mb-2">الفوارق الجوهرية</p>
+                <ul className="space-y-1">{result.keyDifferences.map((d, i) => <li key={i} className="text-[12px] text-foreground flex gap-2"><span className="text-gold">▲</span>{d}</li>)}</ul>
               </SectionCard>
             )}
             {result.convergenceAreas?.length > 0 && (
@@ -879,8 +879,8 @@ function MemorandumTab() {
             )}
             {result.risks?.length > 0 && (
               <SectionCard>
-                <p className="text-[11px] font-bold text-amber-700 mb-2">المخاطر القانونية المحتملة</p>
-                <ul className="space-y-1">{result.risks.map((r, i) => <li key={i} className="text-[12px] text-foreground flex gap-2"><AlertTriangle className="w-3 h-3 text-amber-500 shrink-0 mt-0.5" />{r}</li>)}</ul>
+                <p className="text-[11px] font-bold text-gold mb-2">المخاطر القانونية المحتملة</p>
+                <ul className="space-y-1">{result.risks.map((r, i) => <li key={i} className="text-[12px] text-foreground flex gap-2"><AlertTriangle className="w-3 h-3 text-gold shrink-0 mt-0.5" />{r}</li>)}</ul>
               </SectionCard>
             )}
           </div>
@@ -928,7 +928,7 @@ function RiskAssessmentTab() {
   return (
     <div className="space-y-4" dir="rtl">
       <SectionCard>
-        <h3 className="font-bold text-sm mb-3 flex items-center gap-2"><ShieldAlert className="w-4 h-4 text-orange-600" />محرك تقييم المخاطر القانونية — الأبعاد الأربعة</h3>
+        <h3 className="font-bold text-sm mb-3 flex items-center gap-2"><ShieldAlert className="w-4 h-4 text-gold" />محرك تقييم المخاطر القانونية — الأبعاد الأربعة</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
           <div>
             <Label className="text-[11px]">نوع النظام / الإجراء</Label>
@@ -941,7 +941,7 @@ function RiskAssessmentTab() {
         </div>
         <Label className="text-[11px]">وصف السيناريو</Label>
         <Textarea value={scenarioText} onChange={(e) => setScenarioText(e.target.value)} rows={6} placeholder="صِف الوضع أو الإجراء أو القرار المراد تقييم مخاطره..." className="mt-1 text-sm" dir="rtl" />
-        <Button onClick={run} disabled={loading} className="mt-3 gap-2 bg-orange-600 hover:bg-orange-700">
+        <Button onClick={run} disabled={loading} className="mt-3 gap-2 bg-gold hover:bg-gold">
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldAlert className="w-4 h-4" />}
           {loading ? 'جارٍ تقييم المخاطر...' : 'تشغيل محرك المخاطر'}
         </Button>
@@ -989,7 +989,7 @@ function RiskAssessmentTab() {
                 {dim.factors?.length > 0 && (
                   <div className="mb-2">
                     <p className="text-[10px] font-bold text-muted-foreground mb-1">عوامل الخطر:</p>
-                    <ul className="space-y-0.5">{dim.factors.map((f, i) => <li key={i} className="text-[11px] text-foreground flex gap-1.5"><AlertTriangle className="w-2.5 h-2.5 text-amber-500 shrink-0 mt-0.5" />{f}</li>)}</ul>
+                    <ul className="space-y-0.5">{dim.factors.map((f, i) => <li key={i} className="text-[11px] text-foreground flex gap-1.5"><AlertTriangle className="w-2.5 h-2.5 text-gold shrink-0 mt-0.5" />{f}</li>)}</ul>
                   </div>
                 )}
                 {dim.mitigations?.length > 0 && (
@@ -1052,7 +1052,7 @@ export default function LegalBrain() {
               </p>
             </div>
             <div className="mr-auto flex items-center gap-1.5 shrink-0">
-              <Badge variant="outline" className="text-[9px] border-amber-300 text-amber-700 bg-amber-50">Stage 4</Badge>
+              <Badge variant="outline" className="text-[9px] border-gold/40 text-gold bg-gold/10">Stage 4</Badge>
               <Badge variant="outline" className="text-[9px]"><Sparkles className="w-2.5 h-2.5 me-0.5" />AI Powered</Badge>
             </div>
           </div>

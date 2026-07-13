@@ -48,3 +48,4 @@
 - [MLOS Stage 5 — Smart Administrative Court](mlos-stage5.md) — 4-phase NDJSON streaming court sim; 9 sections; court panel MUST precede messages.length===0 in render tree; double-cast pattern for typed sections
 - [Court Architectural Lock](court-architectural-lock.md) — shamsiOk needs 11 IDs + field validation; asepOk needs 10 answers; all Phase 1-4 exits must emit done; JWT test auth via signToken() not headers
 - [Read-only reviewer account pattern](readonly-reviewer-account.md) — PERMANENT_ACCOUNTS not DEMO_ACCOUNTS; requireAnyRole isn't read-only; use requireWriteRole + trusted session role, never headers
+- [Judicial Command Center theme rebuild](judicial-command-center-theme.md) — scripted sweep of literal Tailwind color classes onto CSS-var tokens; owner-gating pattern; reuse PreAnalysisPanel/SessionConfigBar

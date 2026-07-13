@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { TheoryLensSelector, TheoryLensBadge, type TheoryLensState } from '@/components/research/theory-lens-selector';
 import { CourtSessionPanel } from '@/components/research/court-session-panel';
 import type { CourtSessionData } from '@/lib/court-types';
-import type { GuidedAssistantConfig } from '@/pages/dashboard';
+import type { GuidedAssistantConfig } from '@/lib/guided-assistant-config';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1734,8 +1734,8 @@ const MODE_CONFIG: Record<ResponseMode, {
     ar: 'التحليل القانوني المتخصص',
     en: 'Specialized Legal Analysis',
     descAr: 'تحليل قانوني متخصص · حصري',
-    activeClass: 'bg-amber-500 text-white border-amber-500',
-    badgeClass: 'bg-amber-50 text-amber-700 border-amber-200',
+    activeClass: 'bg-gold text-white border-gold',
+    badgeClass: 'bg-gold/10 text-gold border-gold/25',
     maxSections: undefined,
   },
   exemplary: {
@@ -1752,8 +1752,8 @@ const MODE_CONFIG: Record<ResponseMode, {
     ar: 'جلسة محكمة كاملة',
     en: 'Full Court Session',
     descAr: 'جلسة محاكمة كاملة — ASEP + نظرية الشامسي + الإرادة الرقمية',
-    activeClass: 'bg-amber-600 text-white border-amber-600',
-    badgeClass: 'bg-amber-50 text-amber-700 border-amber-200',
+    activeClass: 'bg-gold text-white border-gold',
+    badgeClass: 'bg-gold/10 text-gold border-gold/25',
     maxSections: undefined,
   },
   shamsi_theory: {
@@ -1790,8 +1790,8 @@ const MODE_CONFIG: Record<ResponseMode, {
     ar: 'محرك تحليل المخاطر',
     en: 'Legal Risk Engine',
     descAr: '8 أصناف مخاطر × 4 مستويات خطورة — إجرائي، موضوعي، إثباتي، تشريعي، دستوري…',
-    activeClass: 'bg-orange-600 text-white border-orange-600',
-    badgeClass: 'bg-orange-50 text-orange-700 border-orange-200',
+    activeClass: 'bg-gold text-white border-gold',
+    badgeClass: 'bg-gold/10 text-gold border-gold/25',
     maxSections: undefined,
   },
 };
@@ -2100,7 +2100,7 @@ function CitationChip({ token, citation }: { token: string; citation?: Citation 
         className={`inline-flex items-center gap-1 text-[11px] font-semibold px-1.5 py-0.5 rounded border transition-colors ${
           isDoc
             ? 'bg-primary/10 text-primary border-primary/25 hover:bg-primary/15'
-            : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+            : 'bg-gold/10 text-gold border-gold/25 hover:bg-gold/15'
         }`}
         title={label}
       >
@@ -2422,7 +2422,7 @@ function starRating(filled: number, max = 5): React.ReactNode {
   return (
     <span className="inline-flex items-center gap-0.5" dir="ltr">
       {Array.from({ length: max }).map((_, i) => (
-        <span key={i} className={i < filled ? 'text-amber-500' : 'text-muted-foreground/30'}>★</span>
+        <span key={i} className={i < filled ? 'text-gold' : 'text-muted-foreground/30'}>★</span>
       ))}
     </span>
   );
@@ -2463,13 +2463,13 @@ function AnswerStrengthIndicator({ text, citations }: { text: string; citations:
   const s = deriveStrengths(text, citations);
   const confColor =
     s.confidence >= 90 ? 'text-emerald-600' :
-    s.confidence >= 75 ? 'text-amber-600'   : 'text-rose-600';
+    s.confidence >= 75 ? 'text-gold'   : 'text-rose-600';
   const confDot =
     s.confidence >= 90 ? '🟢' :
     s.confidence >= 75 ? '🟡' : '🔴';
   const riskColor =
     s.disagreementRisk === 'منخفض'  ? 'text-emerald-700' :
-    s.disagreementRisk === 'متوسط'  ? 'text-amber-700'   : 'text-rose-700';
+    s.disagreementRisk === 'متوسط'  ? 'text-gold'   : 'text-rose-700';
 
   return (
     <div
@@ -2527,9 +2527,9 @@ function AssistantContent({
     <div className="space-y-3">
       {/* Expert opinion header banner */}
       {mode === 'expert' && (
-        <div className="flex items-center gap-2 px-2.5 py-1.5 bg-amber-50 border border-amber-200 rounded-lg mb-2">
-          <Star className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-          <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wide">تحليل قانوني متخصص — غير ملزم</span>
+        <div className="flex items-center gap-2 px-2.5 py-1.5 bg-gold/10 border border-gold/25 rounded-lg mb-2">
+          <Star className="w-3.5 h-3.5 text-gold shrink-0" />
+          <span className="text-[11px] font-bold text-gold uppercase tracking-wide">تحليل قانوني متخصص — غير ملزم</span>
         </div>
       )}
 
@@ -2792,12 +2792,22 @@ function PreAnalysisPanel({
             </CfgSection>
           )}
 
-          {/* ── Jurisdiction ─────────────────────────────────────────────── */}
+          {/* ── Jurisdiction / legal context ────────────────────────────── */}
           <CfgSection title="الاختصاص القضائي" icon="🌐">
             <div className="flex flex-wrap gap-1.5">
               {(Object.entries(JURISDICTION_CFG) as [Jurisdiction, { ar: string; flag: string }][]).map(([k, v]) => (
                 <ConfigChip key={k} value={k} selected={config.jurisdiction}
                   label={`${v.flag} ${v.ar}`} onSelect={(val) => onChange({ ...config, jurisdiction: val })} />
+              ))}
+            </div>
+          </CfgSection>
+
+          {/* ── Answer mode ──────────────────────────────────────────────── */}
+          <CfgSection title="أسلوب الإجابة" icon="✍">
+            <div className="flex flex-wrap gap-1.5">
+              {(Object.entries(CONFIG_ANSWER_MODE_CFG) as [ConfigAnswerMode, { ar: string; emoji: string }][]).map(([k, v]) => (
+                <ConfigChip key={k} value={k} selected={config.answerMode}
+                  label={`${v.emoji} ${v.ar}`} onSelect={(val) => onChange({ ...config, answerMode: val })} />
               ))}
             </div>
           </CfgSection>
@@ -2839,13 +2849,13 @@ function PreAnalysisPanel({
           </label>
 
           {/* ── Expert Mode toggle ────────────────────────────────────────── */}
-          <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
+          <div className="flex items-center justify-between bg-gold/10 border border-gold/25 rounded-xl px-3 py-2.5">
             <div>
-              <p className="text-xs font-bold text-amber-800">وضع الخبير</p>
-              <p className="text-[10px] text-amber-700">خيارات التحليل المتقدمة للتحليل الاحترافي العميق</p>
+              <p className="text-xs font-bold text-gold/75">وضع الخبير</p>
+              <p className="text-[10px] text-gold">خيارات التحليل المتقدمة للتحليل الاحترافي العميق</p>
             </div>
             <button type="button" onClick={onToggleExpert}
-              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors shrink-0 ${expertMode ? 'bg-amber-500' : 'bg-muted border border-border'}`}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors shrink-0 ${expertMode ? 'bg-gold' : 'bg-muted border border-border'}`}
             >
               <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${expertMode ? 'translate-x-4' : 'translate-x-0.5'}`} />
             </button>
@@ -2880,6 +2890,9 @@ function SessionConfigBar({ config, expertMode, onEdit }: {
       <span className="text-[10px] bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-medium">
         {JURISDICTION_CFG[config.jurisdiction].flag} {JURISDICTION_CFG[config.jurisdiction].ar}
       </span>
+      <span className="text-[10px] bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-medium">
+        {CONFIG_ANSWER_MODE_CFG[config.answerMode].emoji} {CONFIG_ANSWER_MODE_CFG[config.answerMode].ar}
+      </span>
       {POLICE_IDENTITY_TYPES.has(config.userType) && (
         <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full font-bold">
           🔍 وحدة الشرطة
@@ -2898,7 +2911,7 @@ function SessionConfigBar({ config, expertMode, onEdit }: {
         </span>
       )}
       {expertMode && (
-        <span className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-bold">
+        <span className="text-[10px] bg-gold/10 text-gold border border-gold/25 px-2 py-0.5 rounded-full font-bold">
           ⭐ وضع الخبير
         </span>
       )}
@@ -2925,16 +2938,16 @@ function ExpertOptionsPanel({ options, onChange }: {
   options: ExpertOptions; onChange: (o: ExpertOptions) => void;
 }) {
   return (
-    <div className="mb-2 bg-amber-50/60 border border-amber-200/70 rounded-xl px-3 py-2" dir="rtl">
-      <p className="text-[10px] font-bold text-amber-800 mb-1.5 uppercase tracking-wide">خيارات الخبير</p>
+    <div className="mb-2 bg-gold/60 border border-gold/70 rounded-xl px-3 py-2" dir="rtl">
+      <p className="text-[10px] font-bold text-gold/75 mb-1.5 uppercase tracking-wide">خيارات الخبير</p>
       <div className="flex flex-wrap gap-x-4 gap-y-1">
         {EXPERT_OPT_LABELS.map(({ key, ar }) => (
           <label key={key} className="flex items-center gap-1.5 cursor-pointer">
             <input type="checkbox" checked={options[key]}
               onChange={(e) => onChange({ ...options, [key]: e.target.checked })}
-              className="w-3 h-3 rounded accent-amber-600"
+              className="w-3 h-3 rounded accent-gold"
             />
-            <span className="text-[10px] text-amber-800 font-medium">{ar}</span>
+            <span className="text-[10px] text-gold/75 font-medium">{ar}</span>
           </label>
         ))}
       </div>
@@ -3054,7 +3067,7 @@ function ReliabilityRow({ label, value, warn = false }: { label: string; value: 
   return (
     <div className="flex items-center justify-between gap-2">
       <span className="text-muted-foreground">{label}:</span>
-      <span className={`font-semibold ${warn ? 'text-amber-600' : 'text-foreground'}`}>{value}</span>
+      <span className={`font-semibold ${warn ? 'text-gold' : 'text-foreground'}`}>{value}</span>
     </div>
   );
 }
@@ -3123,11 +3136,11 @@ const QUICK_ACTIONS: QuickAction[] = [
   { key: 'cases',        emoji: '⚖',  ar: 'السوابق القضائية',           color: 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100' },
   { key: 'fiqh',         emoji: '📚', ar: 'الفقه',                      color: 'bg-emerald-50 border-emerald-200 text-emerald-800 hover:bg-emerald-100' },
   { key: 'french',       emoji: '🇫🇷', ar: 'مقارنة بالقانون الفرنسي',   color: 'bg-indigo-50 border-indigo-200 text-indigo-800 hover:bg-indigo-100' },
-  { key: 'uae_compare',  emoji: '🇦🇪', ar: 'مقارنة بالقانون الإماراتي', color: 'bg-green-50 border-green-200 text-green-800 hover:bg-green-100' },
+  { key: 'uae_compare',  emoji: '🇦🇪', ar: 'مقارنة بالقانون الإماراتي', color: 'bg-heading/10 border-heading/25 text-heading/75 hover:bg-heading/15' },
   { key: 'ai_analysis',  emoji: '🧠', ar: 'تحليل الذكاء الاصطناعي',    color: 'bg-purple-50 border-purple-200 text-purple-800 hover:bg-purple-100' },
-  { key: 'shamsi',       emoji: '⚙',  ar: 'تطبيق نظرية الشامسي',       color: 'bg-amber-50 border-amber-200 text-amber-800 hover:bg-amber-100' },
+  { key: 'shamsi',       emoji: '⚙',  ar: 'تطبيق نظرية الشامسي',       color: 'bg-gold/10 border-gold/25 text-gold/75 hover:bg-gold/15' },
   { key: 'memorandum',   emoji: '📝', ar: 'مذكرة قانونية',              color: 'bg-rose-50 border-rose-200 text-rose-800 hover:bg-rose-100' },
-  { key: 'appeal',       emoji: '📝', ar: 'صياغة صحيفة طعن',           color: 'bg-orange-50 border-orange-200 text-orange-800 hover:bg-orange-100' },
+  { key: 'appeal',       emoji: '📝', ar: 'صياغة صحيفة طعن',           color: 'bg-gold/10 border-gold/25 text-gold/75 hover:bg-gold/15' },
   { key: 'export_word',  emoji: '📄', ar: 'Word',                       color: 'bg-muted border-border text-muted-foreground hover:bg-muted/60' },
   { key: 'export_pdf',   emoji: '📑', ar: 'PDF',                        color: 'bg-muted border-border text-muted-foreground hover:bg-muted/60' },
 ];
@@ -3372,7 +3385,7 @@ function MessageBubble({
                   <div key={c.token} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                     {c.type === 'document'
                       ? <FileText className="w-3 h-3 shrink-0" />
-                      : <BookOpen className="w-3 h-3 shrink-0 text-amber-600" />}
+                      : <BookOpen className="w-3 h-3 shrink-0 text-gold" />}
                     <span className="truncate">{c.title}</span>
                   </div>
                 ))}
@@ -3538,7 +3551,7 @@ function PinPanel({
             {sources.map((s) => (
               <label key={s.id} className="flex items-center gap-2 p-1.5 rounded hover:bg-muted/30 cursor-pointer text-xs">
                 <input type="checkbox" className="rounded shrink-0" checked={pinnedSrcs.includes(s.id)} onChange={() => onToggleSrc(s.id)} />
-                <BookOpen className="w-3 h-3 text-amber-600 shrink-0" />
+                <BookOpen className="w-3 h-3 text-gold shrink-0" />
                 <span className="truncate">{s.titleAr ?? s.title}</span>
               </label>
             ))}
@@ -4272,7 +4285,7 @@ export default function AiAssistant() {
             ))}
           </div>
           {totalPinned > 0 && (
-            <div className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5 shrink-0">
+            <div className="text-[10px] text-gold bg-gold/10 border border-gold/25 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5 shrink-0">
               <Pin className="w-3 h-3 shrink-0" />
               {t(`${totalPinned} مثبّت`, `${totalPinned} pinned`)}
             </div>
@@ -4313,7 +4326,7 @@ export default function AiAssistant() {
               onClick={() => setExpertMode((v) => !v)}
               className={`hidden sm:inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-colors shrink-0 ${
                 expertMode
-                  ? 'bg-amber-500 text-white border-amber-500'
+                  ? 'bg-gold text-white border-gold'
                   : 'border-border text-muted-foreground hover:bg-muted/30'
               }`}
               title={t('وضع الخبير', 'Expert Mode')}
@@ -4588,8 +4601,8 @@ export default function AiAssistant() {
                   disabled={sending || courtLoading}
                   className={`flex items-center gap-1.5 text-[11px] font-medium px-3 py-1.5 rounded-full border transition-colors disabled:opacity-40 ${
                     courtMode
-                      ? 'bg-amber-500 text-white border-amber-500 shadow-sm'
-                      : 'bg-background text-muted-foreground border-border hover:border-amber-400 hover:text-amber-700'
+                      ? 'bg-gold text-white border-gold shadow-sm'
+                      : 'bg-background text-muted-foreground border-border hover:border-gold/80 hover:text-gold'
                   }`}
                 >
                   <Scale className="w-3.5 h-3.5" />
@@ -4646,7 +4659,7 @@ export default function AiAssistant() {
                 {pinnedSrcs.map((id) => {
                   const s = legalSources.find((x) => x.id === id);
                   return s ? (
-                    <span key={id} className="flex items-center gap-1 bg-amber-50 border border-amber-200 text-amber-700 text-[10px] px-2 py-0.5 rounded-full">
+                    <span key={id} className="flex items-center gap-1 bg-gold/10 border border-gold/25 text-gold text-[10px] px-2 py-0.5 rounded-full">
                       <BookOpen className="w-2.5 h-2.5 shrink-0" />
                       <span className="max-w-[80px] sm:max-w-[120px] truncate">{s.titleAr ?? s.title}</span>
                       <button type="button" onClick={() => toggleSrc(id)} className="shrink-0"><X className="w-2.5 h-2.5" /></button>
@@ -4664,7 +4677,7 @@ export default function AiAssistant() {
                 disabled={!activeSession}
                 className={`shrink-0 h-9 w-9 sm:h-10 sm:w-10 rounded-xl border flex items-center justify-center transition-colors disabled:opacity-40 ${
                   totalPinned > 0
-                    ? 'border-amber-300 bg-amber-50 text-amber-600'
+                    ? 'border-gold/40 bg-gold/10 text-gold'
                     : 'border-border bg-background text-muted-foreground hover:text-foreground hover:border-border/80'
                 }`}
                 title={t('تثبيت مصادر', 'Pin sources')}
@@ -4698,7 +4711,7 @@ export default function AiAssistant() {
               />
               <Button
                 size="sm"
-                className={`shrink-0 h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-xl ${courtMode ? 'bg-amber-500 hover:bg-amber-600 border-amber-500' : ''}`}
+                className={`shrink-0 h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-xl ${courtMode ? 'bg-gold hover:bg-gold border-gold' : ''}`}
                 onClick={() => courtMode ? runCourtSession() : sendMessage()}
                 disabled={!input.trim() || !activeSession || sending || courtLoading || !canUseAi}
                 aria-label={courtMode ? t('محاكمة', 'Simulate') : t('إرسال', 'Send')}

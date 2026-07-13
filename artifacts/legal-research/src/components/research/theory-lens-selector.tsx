@@ -60,8 +60,8 @@ const LENS_OPTIONS: LensOption[] = [
     labelAr: 'نظرية مخصصة',
     labelEn: 'Custom Theory',
     icon: Pencil,
-    badgeClass: 'bg-amber-100 text-amber-700',
-    ringClass: 'border-amber-400',
+    badgeClass: 'bg-gold/15 text-gold',
+    ringClass: 'border-gold/80',
   },
 ];
 
@@ -150,7 +150,7 @@ export function TheoryLensSelector({
             onBlur={commitCustomText}
             onKeyDown={(e) => { if (e.key === 'Enter') { e.currentTarget.blur(); } }}
             placeholder={arabic ? 'أدخل وصف النظرية المخصصة…' : 'Describe your custom theory…'}
-            className="flex-1 text-xs px-2.5 py-1.5 border border-amber-300 rounded-lg bg-amber-50 focus:outline-none focus:ring-1 focus:ring-amber-400 placeholder:text-muted-foreground"
+            className="flex-1 text-xs px-2.5 py-1.5 border border-gold/40 rounded-lg bg-gold/10 focus:outline-none focus:ring-1 focus:ring-gold/80 placeholder:text-muted-foreground"
             disabled={disabled}
             maxLength={300}
             dir="auto"

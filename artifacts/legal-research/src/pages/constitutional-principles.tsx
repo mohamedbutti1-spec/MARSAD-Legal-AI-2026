@@ -166,12 +166,12 @@ export default function ConstitutionalPrinciples() {
           </div>
 
           {/* Immutability notice */}
-          <div className="mt-6 flex items-start gap-3 px-4 py-3 rounded-lg bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/40">
-            <Shield className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
-            <p className="text-sm text-amber-800 dark:text-amber-300 leading-relaxed">
+          <div className="mt-6 flex items-start gap-3 px-4 py-3 rounded-lg bg-gold/60 dark:bg-gold/20 border border-gold/60 dark:border-gold/40">
+            <Shield className="w-4 h-4 text-gold dark:text-gold/80 mt-0.5 shrink-0" />
+            <p className="text-sm text-gold/75 dark:text-gold/40 leading-relaxed">
               هذه الصفحة ثابتة وغير قابلة للتعديل إلا من خلال ترقية رسمية للإصدار.
-              <span className="mx-2 text-amber-400/60">·</span>
-              <span dir="ltr" className="text-amber-700 dark:text-amber-400">
+              <span className="mx-2 text-gold/60">·</span>
+              <span dir="ltr" className="text-gold dark:text-gold/80">
                 This page is immutable except through a formal version upgrade.
               </span>
             </p>

@@ -68,7 +68,7 @@ const WIZARD_STEPS: Array<{
 
 const PRIORITY_CONF = {
   high:   { label: 'عالية',  className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
-  medium: { label: 'متوسطة', className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
+  medium: { label: 'متوسطة', className: 'bg-gold/15 text-gold dark:bg-gold/30 dark:text-gold/80' },
   low:    { label: 'منخفضة', className: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400' },
 };
 
@@ -146,9 +146,9 @@ function GuidanceView({ output, roleNameAr, sectorNameAr }: {
   return (
     <div className="space-y-6" dir="rtl">
       {/* Disclaimer */}
-      <div className="flex items-start gap-2 p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-xl">
-        <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
-        <p className="text-sm text-amber-800 dark:text-amber-300">{output.disclaimer}</p>
+      <div className="flex items-start gap-2 p-4 bg-gold/10 dark:bg-gold/10 border border-gold/25 dark:border-gold/75 rounded-xl">
+        <Info className="w-4 h-4 text-gold dark:text-gold/80 mt-0.5 shrink-0" />
+        <p className="text-sm text-gold/75 dark:text-gold/40">{output.disclaimer}</p>
       </div>
 
       {/* Role badge */}
@@ -220,13 +220,13 @@ function GuidanceView({ output, roleNameAr, sectorNameAr }: {
       {/* Practical warnings */}
       {output.practicalWarnings?.length > 0 && (
         <section>
-          <SectionTitle icon={<AlertTriangle className="w-4.5 h-4.5 text-orange-500" />}>
+          <SectionTitle icon={<AlertTriangle className="w-4.5 h-4.5 text-gold" />}>
             التحذيرات العملية
           </SectionTitle>
           <ul className="space-y-2">
             {output.practicalWarnings.map((w, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm p-3 bg-orange-50/60 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-900/40 rounded-lg">
-                <AlertTriangle className="w-3.5 h-3.5 text-orange-500 shrink-0 mt-0.5" />
+              <li key={i} className="flex items-start gap-2 text-sm p-3 bg-gold/60 dark:bg-gold/10 border border-gold/15 dark:border-gold/40 rounded-lg">
+                <AlertTriangle className="w-3.5 h-3.5 text-gold shrink-0 mt-0.5" />
                 {w}
               </li>
             ))}
@@ -268,11 +268,11 @@ function GuidanceView({ output, roleNameAr, sectorNameAr }: {
 
       {/* Escalation recommendation */}
       {output.escalationRecommendation && (
-        <section className="p-4 border-2 border-dashed border-amber-300 dark:border-amber-700 rounded-xl bg-amber-50/50 dark:bg-amber-900/5">
-          <SectionTitle icon={<ArrowRight className="w-4.5 h-4.5 text-amber-600" />}>
+        <section className="p-4 border-2 border-dashed border-gold/40 dark:border-gold rounded-xl bg-gold/50 dark:bg-gold/5">
+          <SectionTitle icon={<ArrowRight className="w-4.5 h-4.5 text-gold" />}>
             توصية التصعيد
           </SectionTitle>
-          <p className="text-sm leading-relaxed text-amber-900 dark:text-amber-300">
+          <p className="text-sm leading-relaxed text-gold/85 dark:text-gold/40">
             {output.escalationRecommendation}
           </p>
         </section>

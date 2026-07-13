@@ -81,18 +81,18 @@ interface ContextChainResponse {
 
 const REL_LABELS: Record<string, { label: string; color: string }> = {
   implements:     { label: 'Implements →',    color: 'text-blue-600 bg-blue-50' },
-  amends:         { label: 'Amends →',        color: 'text-orange-600 bg-orange-50' },
+  amends:         { label: 'Amends →',        color: 'text-gold bg-gold/10' },
   repeals:        { label: 'Repeals',          color: 'text-red-600 bg-red-50' },
   cites:          { label: 'Cited in',         color: 'text-purple-600 bg-purple-50' },
   interpreted_by: { label: 'Interpreted by',  color: 'text-teal-600 bg-teal-50' },
-  supplements:    { label: 'Supplements',      color: 'text-green-600 bg-green-50' },
+  supplements:    { label: 'Supplements',      color: 'text-heading bg-heading/10' },
   related:        { label: 'Related',          color: 'text-gray-600 bg-gray-100' },
-  appealed_from:  { label: 'Appealed from',   color: 'text-yellow-600 bg-yellow-50' },
+  appealed_from:  { label: 'Appealed from',   color: 'text-gold bg-gold/10' },
 };
 
 const BINDING_BADGE: Record<string, string> = {
-  constitutional: 'bg-amber-100 text-amber-800 border border-amber-300',
-  binding:        'bg-green-100 text-green-800 border border-green-300',
+  constitutional: 'bg-gold/15 text-gold/75 border border-gold/40',
+  binding:        'bg-heading/15 text-heading/75 border border-heading/40',
   persuasive:     'bg-blue-100 text-blue-800 border border-blue-300',
   advisory:       'bg-slate-100 text-slate-700 border border-slate-300',
   informational:  'bg-slate-100 text-slate-700 border border-slate-300',
@@ -156,14 +156,14 @@ function LegalContextPanel({ documentId }: { documentId: number }) {
     <div className="p-3 space-y-3">
       {/* Amendment chain */}
       {contextChain.amendments.length > 0 && (
-        <div className="rounded border border-orange-200 bg-orange-50 p-2">
-          <p className="text-xs font-semibold text-orange-700 mb-1.5">⚠ Amendment History</p>
+        <div className="rounded border border-gold/25 bg-gold/10 p-2">
+          <p className="text-xs font-semibold text-gold mb-1.5">⚠ Amendment History</p>
           <ul className="space-y-1">
             {contextChain.amendments.map((a) => (
-              <li key={a.amendingDocId} className="text-xs text-orange-800">
+              <li key={a.amendingDocId} className="text-xs text-gold/75">
                 <span className="font-medium">{a.titleAr}</span>
-                {a.documentNumber && <span className="text-orange-600"> (رقم {a.documentNumber})</span>}
-                {a.year && <span className="text-orange-500">، {a.year}</span>}
+                {a.documentNumber && <span className="text-gold"> (رقم {a.documentNumber})</span>}
+                {a.year && <span className="text-gold">، {a.year}</span>}
               </li>
             ))}
           </ul>
@@ -249,7 +249,7 @@ function ResultCard({ hit }: { hit: KbHit }) {
                 </span>
               )}
               {hit.isAmended && (
-                <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-orange-100 text-orange-700 border border-orange-200">
+                <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gold/15 text-gold border border-gold/25">
                   Amended
                 </span>
               )}
@@ -283,7 +283,7 @@ function ResultCard({ hit }: { hit: KbHit }) {
 
         {/* Amendment inline note */}
         {hit.amendments.length > 0 && (
-          <div className="mt-2 text-xs text-orange-700 bg-orange-50 rounded px-2 py-1 border border-orange-200">
+          <div className="mt-2 text-xs text-gold bg-gold/10 rounded px-2 py-1 border border-gold/25">
             <span className="font-medium">النص الحالي المعدَّل بواسطة: </span>
             {hit.amendments.map((a, i) => (
               <span key={a.amendingDocId}>

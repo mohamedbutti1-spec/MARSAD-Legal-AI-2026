@@ -22,7 +22,7 @@ export function JudgmentView({ judgment }: JudgmentViewProps) {
             الاستشهادات موثَّقة ({verificationStatus.verifiedCount})
           </div>
         ) : (
-          <div className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400 text-sm font-medium bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-3 py-1.5 rounded-full">
+          <div className="flex items-center gap-1.5 text-gold dark:text-gold/80 text-sm font-medium bg-gold/10 dark:bg-gold/20 border border-gold/25 dark:border-gold/75 px-3 py-1.5 rounded-full">
             <AlertTriangle className="w-4 h-4" />
             {verificationStatus.fabricatedCitationsFiltered} استشهاد(ات) غير موثَّق — تمَّ حذفه
           </div>
@@ -32,7 +32,7 @@ export function JudgmentView({ judgment }: JudgmentViewProps) {
         {legalityScore !== undefined && (
           <div className={`flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full border ${
             legalityScore >= 70 ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800'
-            : legalityScore >= 40 ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800'
+            : legalityScore >= 40 ? 'bg-gold/10 text-gold border-gold/25 dark:bg-gold/20 dark:text-gold/80 dark:border-gold/75'
             : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800'
           }`}>
             <ShieldAlert className="w-4 h-4" />
@@ -44,7 +44,7 @@ export function JudgmentView({ judgment }: JudgmentViewProps) {
         {riskScore !== undefined && (
           <div className={`flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full border ${
             riskScore <= 30 ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800'
-            : riskScore <= 60 ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800'
+            : riskScore <= 60 ? 'bg-gold/10 text-gold border-gold/25 dark:bg-gold/20 dark:text-gold/80 dark:border-gold/75'
             : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800'
           }`}>
             <AlertTriangle className="w-4 h-4" />

@@ -120,7 +120,7 @@ export default function Comparisons() {
                           )}
                           <div className="grid grid-cols-2 gap-3">
                             <div>
-                              <p className="text-[10px] font-bold text-amber-700 uppercase mb-1">UAE</p>
+                              <p className="text-[10px] font-bold text-gold uppercase mb-1">UAE</p>
                               <p className="text-sm text-foreground whitespace-pre-wrap">{row.uae || '—'}</p>
                             </div>
                             <div>

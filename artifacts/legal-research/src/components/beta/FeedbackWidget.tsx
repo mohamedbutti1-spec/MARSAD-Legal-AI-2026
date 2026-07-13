@@ -25,8 +25,8 @@ const CATEGORY_LABELS: Record<Category, string> = {
 
 const SEVERITY_LABELS: Record<Severity, { label: string; colour: string }> = {
   low:      { label: 'Low',      colour: 'text-slate-400' },
-  medium:   { label: 'Medium',   colour: 'text-amber-400' },
-  high:     { label: 'High',     colour: 'text-orange-400' },
+  medium:   { label: 'Medium',   colour: 'text-gold/80' },
+  high:     { label: 'High',     colour: 'text-gold/80' },
   critical: { label: 'Critical', colour: 'text-red-500' },
 };
 
@@ -85,7 +85,7 @@ export function BetaFeedbackWidget() {
       {/* ── Floating trigger ─────────────────────────────────────────────── */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
         {/* Beta badge */}
-        <div className="bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[10px] font-semibold
+        <div className="bg-gold/10 border border-gold/30 text-gold/80 text-[10px] font-semibold
                         tracking-widest px-2 py-0.5 rounded-full uppercase select-none">
           BETA
         </div>
@@ -93,8 +93,8 @@ export function BetaFeedbackWidget() {
         <button
           onClick={() => { setOpen(true); setDone(false); setError(''); }}
           title="Submit reviewer feedback"
-          className="w-12 h-12 rounded-full bg-amber-500 hover:bg-amber-400
-                     text-white shadow-lg shadow-amber-500/30
+          className="w-12 h-12 rounded-full bg-gold hover:bg-gold/80
+                     text-white shadow-lg shadow-gold/30
                      flex items-center justify-center transition-all hover:scale-105 active:scale-95"
         >
           {/* Bug / comment icon */}
@@ -124,7 +124,7 @@ export function BetaFeedbackWidget() {
               <div>
                 <h2 className="text-base font-semibold text-foreground">Reviewer Feedback</h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {location} · Role: <span className="font-medium text-amber-400">{role}</span>
+                  {location} · Role: <span className="font-medium text-gold/80">{role}</span>
                 </p>
               </div>
               <button
@@ -158,7 +158,7 @@ export function BetaFeedbackWidget() {
                         onClick={() => setCategory(k)}
                         className={`text-left px-3 py-2 rounded-lg text-xs border transition-colors
                           ${category === k
-                            ? 'bg-amber-500/15 border-amber-500/50 text-amber-400 font-medium'
+                            ? 'bg-gold/15 border-gold/50 text-gold/80 font-medium'
                             : 'border-border text-muted-foreground hover:border-border/80 hover:text-foreground'
                           }`}
                       >{v}</button>
@@ -196,7 +196,7 @@ export function BetaFeedbackWidget() {
                     rows={4}
                     className="w-full bg-muted border border-border rounded-lg px-3 py-2
                                text-sm text-foreground placeholder:text-muted-foreground/50
-                               resize-none focus:outline-none focus:ring-1 focus:ring-amber-500/50"
+                               resize-none focus:outline-none focus:ring-1 focus:ring-gold/50"
                   />
                 </div>
 
@@ -218,7 +218,7 @@ export function BetaFeedbackWidget() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="flex-1 py-2 text-sm rounded-lg bg-amber-500 hover:bg-amber-400
+                    className="flex-1 py-2 text-sm rounded-lg bg-gold hover:bg-gold/80
                                text-white font-medium transition-colors disabled:opacity-50"
                   >{submitting ? 'Sending…' : 'Submit Feedback'}</button>
                 </div>
@@ -238,7 +238,7 @@ export function BetaFeedbackWidget() {
                           d.bySeverity.map((x: { severity: string; count: number }) => `${x.severity}: ${x.count}`).join('\n')
                         );
                       }}
-                      className="text-amber-400 hover:underline"
+                      className="text-gold/80 hover:underline"
                     >View feedback stats</a>
                   </p>
                 )}

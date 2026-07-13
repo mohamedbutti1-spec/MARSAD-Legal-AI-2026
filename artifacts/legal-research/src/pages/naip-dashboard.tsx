@@ -82,12 +82,12 @@ function NaipGauge({
   const pct = value ?? 0;
 
   const colorClass = isInverse
-    ? pct >= 70 ? 'text-red-500' : pct >= 40 ? 'text-amber-500' : 'text-emerald-500'
-    : pct >= 70 ? 'text-emerald-500' : pct >= 40 ? 'text-amber-500' : 'text-red-500';
+    ? pct >= 70 ? 'text-red-500' : pct >= 40 ? 'text-gold' : 'text-emerald-500'
+    : pct >= 70 ? 'text-emerald-500' : pct >= 40 ? 'text-gold' : 'text-red-500';
 
   const trackColor = isInverse
-    ? pct >= 70 ? 'stroke-red-500' : pct >= 40 ? 'stroke-amber-500' : 'stroke-emerald-500'
-    : pct >= 70 ? 'stroke-emerald-500' : pct >= 40 ? 'stroke-amber-500' : 'stroke-red-500';
+    ? pct >= 70 ? 'stroke-red-500' : pct >= 40 ? 'stroke-gold' : 'stroke-emerald-500'
+    : pct >= 70 ? 'stroke-emerald-500' : pct >= 40 ? 'stroke-gold' : 'stroke-red-500';
 
   const r = 30;
   const circ = 2 * Math.PI * r;
@@ -158,8 +158,8 @@ function ModuleStatus({ icon, label, active }: { icon: React.ReactNode; label: s
 function RiskBlock({ level, count, total }: { level: string; count: number; total: number }) {
   const configs: Record<string, { bg: string; text: string; border: string; label: string }> = {
     critical: { bg: 'bg-red-100 dark:bg-red-950/40', text: 'text-red-700 dark:text-red-400', border: 'border-red-200 dark:border-red-800', label: 'حرج' },
-    high:     { bg: 'bg-orange-100 dark:bg-orange-950/40', text: 'text-orange-700 dark:text-orange-400', border: 'border-orange-200 dark:border-orange-800', label: 'عالٍ' },
-    moderate: { bg: 'bg-amber-100 dark:bg-amber-950/40', text: 'text-amber-700 dark:text-amber-400', border: 'border-amber-200 dark:border-amber-800', label: 'متوسط' },
+    high:     { bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80', border: 'border-gold/25 dark:border-gold/75', label: 'عالٍ' },
+    moderate: { bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80', border: 'border-gold/25 dark:border-gold/75', label: 'متوسط' },
     low:      { bg: 'bg-emerald-100 dark:bg-emerald-950/40', text: 'text-emerald-700 dark:text-emerald-400', border: 'border-emerald-200 dark:border-emerald-800', label: 'منخفض' },
   };
   const c = configs[level] ?? configs.low;
@@ -219,9 +219,9 @@ export default function NaipDashboard() {
     draft: 'bg-slate-400',
     in_progress: 'bg-blue-500',
     completed: 'bg-emerald-500',
-    approved: 'bg-green-600',
+    approved: 'bg-heading',
     rejected: 'bg-red-500',
-    pending_review: 'bg-amber-500',
+    pending_review: 'bg-gold',
   };
 
   const statusLabels: Record<string, string> = {

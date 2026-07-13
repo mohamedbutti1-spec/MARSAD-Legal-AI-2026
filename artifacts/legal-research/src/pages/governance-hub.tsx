@@ -92,7 +92,7 @@ function StatusChip({ status }: { status: string }) {
     in_progress:       { label: 'جارٍ', cls: 'bg-sky-50 text-sky-700 border-sky-200' },
     draft:             { label: 'مسودة', cls: 'bg-slate-50 text-slate-600 border-slate-200' },
     validation_failed: { label: 'فشل التحقق', cls: 'bg-red-50 text-red-700 border-red-200' },
-    pending_review:    { label: 'قيد المراجعة', cls: 'bg-amber-50 text-amber-700 border-amber-200' },
+    pending_review:    { label: 'قيد المراجعة', cls: 'bg-gold/10 text-gold border-gold/25' },
   };
   const s = map[status] ?? { label: status, cls: 'bg-slate-50 text-slate-600 border-slate-200' };
   return <span className={`inline-flex items-center px-2 py-0.5 text-[11px] font-semibold rounded-full border ${s.cls}`}>{s.label}</span>;
@@ -102,7 +102,7 @@ function ComplianceChip({ value }: { value?: string }) {
   if (!value) return <span className="text-muted-foreground text-xs">—</span>;
   const map: Record<string, { label: string; cls: string }> = {
     full:    { label: 'امتثال كامل', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    partial: { label: 'امتثال جزئي', cls: 'bg-amber-50 text-amber-700 border-amber-200' },
+    partial: { label: 'امتثال جزئي', cls: 'bg-gold/10 text-gold border-gold/25' },
     none:    { label: 'عدم امتثال', cls: 'bg-red-50 text-red-700 border-red-200' },
     pending: { label: 'قيد التقييم', cls: 'bg-slate-50 text-slate-600 border-slate-200' },
   };
@@ -214,7 +214,7 @@ function DecisionRow({
           <StatusChip status={d.status} />
           {d.dci?.isSealed !== undefined && <SealChip isSealed={d.dci.isSealed} />}
           {d.delegatedForReview && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-semibold rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-semibold rounded-full bg-gold/10 text-gold border border-gold/25">
               <Flag className="w-3 h-3" />مُحالة للمراجعة
             </span>
           )}
@@ -233,7 +233,7 @@ function DecisionRow({
             disabled={delegating}
             className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg border transition-colors ${
               d.delegatedForReview
-                ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
+                ? 'border-gold/25 bg-gold/10 text-gold hover:bg-gold/15'
                 : 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100'
             }`}
           >
@@ -339,7 +339,7 @@ function MinisterDashboard() {
           ) : (
             <div className="space-y-2">
               {stats.attentionDecisions.map((d) => (
-                <div key={d.id} className="flex items-center justify-between p-2.5 rounded-lg bg-amber-50/50 border border-amber-100">
+                <div key={d.id} className="flex items-center justify-between p-2.5 rounded-lg bg-gold/50 border border-gold/15">
                   <div>
                     <p className="text-xs font-medium text-foreground line-clamp-1">{d.titleAr}</p>
                     <p className="text-[11px] text-muted-foreground">{d.caseNumber}</p>
@@ -1203,7 +1203,7 @@ interface CustodyRecord {
 const ACTION_CATEGORY_COLORS: Record<string, string> = {
   decision:   'bg-blue-100 text-blue-800 ring-blue-200',
   stage:      'bg-purple-100 text-purple-800 ring-purple-200',
-  dci:        'bg-amber-100 text-amber-800 ring-amber-200',
+  dci:        'bg-gold/15 text-gold/75 ring-gold/25',
   qva:        'bg-indigo-100 text-indigo-800 ring-indigo-200',
   car:        'bg-emerald-100 text-emerald-800 ring-emerald-200',
   jdp:        'bg-teal-100 text-teal-800 ring-teal-200',
@@ -1337,7 +1337,7 @@ function ConstitutionalMemoryTab({ decisionId }: { decisionId: number }) {
   const statusColor = (s: string | null) => {
     if (!s) return 'bg-slate-100 text-slate-500';
     if (['compliant', 'valid', 'issued', 'none'].includes(s)) return 'bg-emerald-100 text-emerald-700';
-    if (['pending', 'draft', 'challenged'].includes(s)) return 'bg-amber-100 text-amber-700';
+    if (['pending', 'draft', 'challenged'].includes(s)) return 'bg-gold/15 text-gold';
     return 'bg-red-100 text-red-700';
   };
 
@@ -1571,7 +1571,7 @@ function CustodyTimeline({ decisionId }: { decisionId: number }) {
               جارٍ التحقق من سلامة السلسلة…
             </div>
           ) : (
-            <div className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full ${isValid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+            <div className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full ${isValid ? 'bg-heading/15 text-heading/75' : 'bg-red-100 text-red-800'}`}>
               {isValid ? <CheckCircle2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
               {isValid ? 'سلسلة سليمة' : `عُبث كُشف — موضع #${String((verifyData as {firstTamperedSequence?: number}).firstTamperedSequence ?? '?')}`}
             </div>
@@ -1614,12 +1614,12 @@ function CustodyTimeline({ decisionId }: { decisionId: number }) {
               </div>
 
               {/* Card */}
-              <div className={`flex-1 rounded-lg border p-3 mb-3 text-sm ${idx === 0 ? 'bg-amber-50/60 border-amber-200' : 'bg-white border-border'}`}>
+              <div className={`flex-1 rounded-lg border p-3 mb-3 text-sm ${idx === 0 ? 'bg-gold/60 border-gold/25' : 'bg-white border-border'}`}>
                 <div className="flex items-start justify-between gap-2 flex-wrap mb-1.5">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="font-semibold text-foreground text-[13px]">{actionLabel}</span>
                     <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${catColor}`}>{cat}</span>
-                    {idx === 0 && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800">سجل التأسيس</span>}
+                    {idx === 0 && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gold/15 text-gold/75">سجل التأسيس</span>}
                   </div>
                   <span className="text-[11px] text-muted-foreground font-mono whitespace-nowrap">
                     {ts.toISOString().replace('T', ' ').slice(0, 19)} UTC
@@ -1660,10 +1660,10 @@ function CustodyTimeline({ decisionId }: { decisionId: number }) {
 
       {/* Verification summary */}
       {verifyData && (
-        <div className={`rounded-lg border p-3 text-xs ${isValid ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+        <div className={`rounded-lg border p-3 text-xs ${isValid ? 'border-heading/25 bg-heading/10' : 'border-red-200 bg-red-50'}`}>
           <div className="flex items-center gap-2 mb-2">
-            {isValid ? <Shield className="w-4 h-4 text-green-700" /> : <AlertTriangle className="w-4 h-4 text-red-700" />}
-            <span className={`font-bold ${isValid ? 'text-green-800' : 'text-red-800'}`}>
+            {isValid ? <Shield className="w-4 h-4 text-heading" /> : <AlertTriangle className="w-4 h-4 text-red-700" />}
+            <span className={`font-bold ${isValid ? 'text-heading/75' : 'text-red-800'}`}>
               {isValid ? 'التحقق الكامل: سلسلة الحيازة سليمة — لم يُعبث بها' : `تحذير: كُشف تلاعب في السجل رقم ${String(verifyData.firstTamperedSequence ?? '?')}`}
             </span>
           </div>
@@ -1714,7 +1714,7 @@ interface EvidenceVerification {
 const EVENT_CATEGORY_COLORS: Record<string, string> = {
   creation:       'bg-sky-100 text-sky-700 border-sky-200',
   stage:          'bg-violet-100 text-violet-700 border-violet-200',
-  identity:       'bg-amber-100 text-amber-700 border-amber-200',
+  identity:       'bg-gold/15 text-gold border-gold/25',
   governance:     'bg-teal-100 text-teal-700 border-teal-200',
   validation:     'bg-indigo-100 text-indigo-700 border-indigo-200',
   accountability: 'bg-rose-100 text-rose-700 border-rose-200',
@@ -1727,7 +1727,7 @@ function IntegrityScoreBadge({ score, valid }: { score: number; valid: boolean }
   const color = valid
     ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
     : score >= 60
-      ? 'bg-amber-50 text-amber-700 border-amber-200'
+      ? 'bg-gold/10 text-gold border-gold/25'
       : 'bg-red-50 text-red-700 border-red-200';
 
   return (
@@ -1982,7 +1982,7 @@ function EvidenceLedgerTab({ decisionId }: { decisionId: number }) {
                 <div className={`w-3 h-3 rounded-full border-2 border-white ring-1 ${
                   (EVENT_CATEGORY_COLORS[ev.eventCategory] ?? '').includes('sky')       ? 'bg-sky-400 ring-sky-300' :
                   (EVENT_CATEGORY_COLORS[ev.eventCategory] ?? '').includes('violet')    ? 'bg-violet-400 ring-violet-300' :
-                  (EVENT_CATEGORY_COLORS[ev.eventCategory] ?? '').includes('amber')     ? 'bg-amber-400 ring-amber-300' :
+                  (EVENT_CATEGORY_COLORS[ev.eventCategory] ?? '').includes('amber')     ? 'bg-gold/80 ring-gold/40' :
                   (EVENT_CATEGORY_COLORS[ev.eventCategory] ?? '').includes('teal')      ? 'bg-teal-400 ring-teal-300' :
                   (EVENT_CATEGORY_COLORS[ev.eventCategory] ?? '').includes('indigo')    ? 'bg-indigo-400 ring-indigo-300' :
                   (EVENT_CATEGORY_COLORS[ev.eventCategory] ?? '').includes('rose')      ? 'bg-rose-400 ring-rose-300' :
@@ -2123,8 +2123,8 @@ const DIMENSION_LABELS_AR: Record<string, string> = {
 
 const DIMENSION_STATUS_COLORS: Record<JudicialDimensionStatus, string> = {
   compliant:             'bg-emerald-100 text-emerald-700 border-emerald-200',
-  minor_concern:         'bg-yellow-100 text-yellow-700 border-yellow-200',
-  significant_concern:   'bg-orange-100 text-orange-700 border-orange-200',
+  minor_concern:         'bg-gold/15 text-gold border-gold/25',
+  significant_concern:   'bg-gold/15 text-gold border-gold/25',
   deficient:             'bg-red-100 text-red-700 border-red-200',
   not_assessed:          'bg-slate-100 text-slate-500 border-slate-200',
 };
@@ -2139,14 +2139,14 @@ const DIMENSION_STATUS_LABELS: Record<JudicialDimensionStatus, string> = {
 
 const DEFECT_SEVERITY_COLORS: Record<string, string> = {
   critical: 'bg-red-50 border-red-300 text-red-800',
-  major:    'bg-orange-50 border-orange-300 text-orange-800',
-  minor:    'bg-yellow-50 border-yellow-300 text-yellow-800',
+  major:    'bg-gold/10 border-gold/40 text-gold/75',
+  minor:    'bg-gold/10 border-gold/40 text-gold/75',
   advisory: 'bg-sky-50 border-sky-300 text-sky-800',
 };
 
 const OUTCOME_CONFIG: Record<string, { ar: string; color: string; icon: React.ReactNode }> = {
   likely_lawful:             { ar: 'على الأرجح مشروع',          color: 'bg-emerald-50 border-emerald-300 text-emerald-800', icon: <CheckCircle2 className="w-5 h-5 text-emerald-600" /> },
-  likely_partially_unlawful: { ar: 'على الأرجح مشروع جزئياً',  color: 'bg-orange-50 border-orange-300 text-orange-800',   icon: <AlertTriangle className="w-5 h-5 text-orange-600" /> },
+  likely_partially_unlawful: { ar: 'على الأرجح مشروع جزئياً',  color: 'bg-gold/10 border-gold/40 text-gold/75',   icon: <AlertTriangle className="w-5 h-5 text-gold" /> },
   likely_void:               { ar: 'على الأرجح باطل',           color: 'bg-red-50 border-red-300 text-red-800',            icon: <XCircle className="w-5 h-5 text-red-600" /> },
   requires_further_review:   { ar: 'يستلزم مراجعة إضافية',     color: 'bg-violet-50 border-violet-300 text-violet-800',   icon: <Eye className="w-5 h-5 text-violet-600" /> },
 };
@@ -2154,8 +2154,8 @@ const OUTCOME_CONFIG: Record<string, { ar: string; color: string; icon: React.Re
 const REMEDY_CONFIG: Record<string, { ar: string; color: string }> = {
   uphold:                    { ar: 'تأييد القرار',                    color: 'bg-emerald-50 border-emerald-300 text-emerald-800' },
   annul:                     { ar: 'إلغاء القرار',                    color: 'bg-red-50 border-red-300 text-red-800' },
-  partial_annulment:         { ar: 'إلغاء جزئي',                     color: 'bg-orange-50 border-orange-300 text-orange-800' },
-  remit_for_reconsideration: { ar: 'إعادة للنظر',                   color: 'bg-yellow-50 border-yellow-300 text-yellow-800' },
+  partial_annulment:         { ar: 'إلغاء جزئي',                     color: 'bg-gold/10 border-gold/40 text-gold/75' },
+  remit_for_reconsideration: { ar: 'إعادة للنظر',                   color: 'bg-gold/10 border-gold/40 text-gold/75' },
   request_further_evidence:  { ar: 'طلب مزيد من الأدلة',           color: 'bg-sky-50 border-sky-300 text-sky-800' },
 };
 
@@ -2168,8 +2168,8 @@ function DimensionCard({ dim, expanded, onToggle }: {
   const statusLabel = DIMENSION_STATUS_LABELS[dim.status] ?? dim.status;
   const riskBarColor =
     dim.riskScore >= 75 ? 'bg-red-500' :
-    dim.riskScore >= 50 ? 'bg-orange-400' :
-    dim.riskScore >= 25 ? 'bg-yellow-400' : 'bg-emerald-400';
+    dim.riskScore >= 50 ? 'bg-gold/80' :
+    dim.riskScore >= 25 ? 'bg-gold/80' : 'bg-emerald-400';
 
   return (
     <div className={`border rounded-lg overflow-hidden transition-all ${expanded ? 'border-primary/30 shadow-sm' : 'border-border'}`}>
@@ -2595,8 +2595,8 @@ function JudicialIntelligenceTab({ decisionId }: { decisionId: number }) {
                 <span className="font-bold text-sm">{REMEDY_CONFIG[remedy.remedy]?.ar ?? remedy.remedy}</span>
                 <span className={`ms-auto text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                   remedy.urgency === 'immediate' ? 'bg-red-200 text-red-800' :
-                  remedy.urgency === 'standard'  ? 'bg-yellow-200 text-yellow-800' :
-                  'bg-green-200 text-green-800'
+                  remedy.urgency === 'standard'  ? 'bg-gold/25 text-gold/75' :
+                  'bg-heading/25 text-heading/75'
                 }`}>
                   {remedy.urgency === 'immediate' ? 'فوري' : remedy.urgency === 'standard' ? 'عادي' : 'استشاري'}
                 </span>
@@ -2913,7 +2913,7 @@ function RoleBanner({ role }: { role: string }) {
   const meta = ROLE_META[role as keyof typeof ROLE_META];
   if (!meta) return null;
   const tierColors: Record<string, string> = {
-    legacy:    'bg-amber-50 border-amber-200 text-amber-800',
+    legacy:    'bg-gold/10 border-gold/25 text-gold/75',
     executive: 'bg-sky-50 border-sky-200 text-sky-800',
     oversight: 'bg-violet-50 border-violet-200 text-violet-800',
     judicial:  'bg-emerald-50 border-emerald-200 text-emerald-800',

@@ -187,10 +187,10 @@ export default function LiteratureReview() {
                 <CardHeader className="pb-2 pt-4 px-4">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                      <BookOpen className="w-4 h-4 text-amber-600" />
+                      <BookOpen className="w-4 h-4 text-gold" />
                       {t('المصادر القانونية', 'Legal Sources')}
                       {selectedSources.length > 0 && (
-                        <span className="ms-auto text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">
+                        <span className="ms-auto text-xs bg-gold/15 text-gold px-2 py-0.5 rounded-full font-semibold">
                           {selectedSources.length}
                         </span>
                       )}
@@ -220,7 +220,7 @@ export default function LiteratureReview() {
                       {t('لا توجد مصادر قانونية', 'No legal sources')}
                     </p>
                   ) : legalSources.map(src => (
-                    <label key={src.id} className={`flex items-center gap-2.5 p-2 rounded-lg cursor-pointer transition-colors text-sm ${selectedSources.includes(src.id) ? 'bg-amber-50 border border-amber-200' : 'hover:bg-muted/40 border border-transparent'}`}>
+                    <label key={src.id} className={`flex items-center gap-2.5 p-2 rounded-lg cursor-pointer transition-colors text-sm ${selectedSources.includes(src.id) ? 'bg-gold/10 border border-gold/25' : 'hover:bg-muted/40 border border-transparent'}`}>
                       <input type="checkbox" className="rounded shrink-0" checked={selectedSources.includes(src.id)} onChange={() => toggleSource(src.id)} />
                       <span className="truncate">{src.titleAr ?? src.title}</span>
                     </label>
@@ -253,7 +253,7 @@ export default function LiteratureReview() {
                   </select>
 
                   {totalSelected === 0 && (
-                    <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                    <div className="flex items-center gap-2 text-xs text-gold bg-gold/10 border border-gold/25 rounded-lg px-3 py-2">
                       <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                       {t('اختر مصدراً واحداً على الأقل', 'Select at least one source')}
                     </div>

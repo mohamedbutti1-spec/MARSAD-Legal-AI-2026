@@ -70,11 +70,14 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
     });
   };
 
+  const isOwner = role === 'owner';
+
   const sections: NavSection[] = [
+    // ── الرئيسية — command center home ──────────────────────────────────────
     {
       id: 'main',
-      titleAr: 'الخدمة الإرشادية',
-      titleEn: 'Advisory Service',
+      titleAr: 'الرئيسية',
+      titleEn: 'Home',
       items: [
         {
           href: '/',
@@ -83,6 +86,21 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           icon: <LayoutDashboard className="w-4.5 h-4.5" />,
           show: true,
         },
+        {
+          href: '/assistant',
+          labelAr: 'المساعد الذكي',
+          labelEn: 'AI Assistant',
+          icon: <Bot className="w-4.5 h-4.5" />,
+          show: canUseAi,
+        },
+      ],
+    },
+    // ── المرجعية القانونية — legal reference material ───────────────────────
+    {
+      id: 'legal-reference',
+      titleAr: 'المرجعية القانونية',
+      titleEn: 'Legal Reference',
+      items: [
         {
           href: '/shamsi-theory',
           labelAr: 'نظرية الشامسي',
@@ -98,226 +116,6 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           icon: <Shield className="w-4.5 h-4.5" />,
           show: true,
           badge: 'دستوري',
-        },
-        {
-          href: '/decisions',
-          labelAr: 'القرارات الإدارية',
-          labelEn: 'Administrative Decisions',
-          icon: <Scale className="w-4.5 h-4.5" />,
-          show: true,
-        },
-      ],
-    },
-    // ── Executive Mode — governance, risk, constitutional review, NAIP ─────────
-    {
-      id: 'naip',
-      titleAr: 'الوضع التنفيذي',
-      titleEn: 'Executive Mode',
-      items: [
-        {
-          href: '/governance',
-          labelAr: 'مركز الحوكمة التنفيذية',
-          labelEn: 'Executive Governance Hub',
-          icon: <Shield className="w-4.5 h-4.5" />,
-          show: canViewGovernanceDashboard,
-        },
-        {
-          href: '/risk-engine',
-          labelAr: 'تقييم المخاطر',
-          labelEn: 'Risk Assessment',
-          icon: <ShieldAlert className="w-4.5 h-4.5" />,
-          show: canViewRiskDashboard,
-        },
-        {
-          href: '/constitutional-intelligence',
-          labelAr: 'المراجعة الدستورية',
-          labelEn: 'Constitutional Review',
-          icon: <Scale className="w-4.5 h-4.5" />,
-          show: canViewCilDashboard,
-        },
-        {
-          href: '/naip',
-          labelAr: 'منصة الذكاء الوطني',
-          labelEn: 'National Intelligence Platform',
-          icon: <Cpu className="w-4.5 h-4.5" />,
-          show: canViewNaipDashboard,
-        },
-        {
-          href: '/naip/dashboard',
-          labelAr: 'لوحة الذكاء الوطني',
-          labelEn: 'National Intelligence Dashboard',
-          icon: <BarChart3 className="w-4.5 h-4.5" />,
-          show: canViewNaipDashboard,
-        },
-        {
-          href: '/naip/kpi',
-          labelAr: 'مركز المؤشرات الوطنية',
-          labelEn: 'National KPI Center',
-          icon: <Target className="w-4.5 h-4.5" />,
-          show: canViewNaipDashboard,
-        },
-        {
-          href: '/naip/minister',
-          labelAr: 'لوحة الوزير',
-          labelEn: 'Minister Dashboard',
-          icon: <Users className="w-4.5 h-4.5" />,
-          show: role === 'minister' || role === 'owner' || role === 'supervisor',
-        },
-        {
-          href: '/naip/undersecretary',
-          labelAr: 'لوحة وكيل الوزارة',
-          labelEn: 'Undersecretary Dashboard',
-          icon: <Users className="w-4.5 h-4.5" />,
-          show: role === 'undersecretary' || role === 'owner' || role === 'supervisor',
-        },
-        {
-          href: '/naip/director-general',
-          labelAr: 'لوحة مدير عام',
-          labelEn: 'Director General Dashboard',
-          icon: <Users className="w-4.5 h-4.5" />,
-          show: role === 'director_general' || role === 'owner' || role === 'supervisor',
-        },
-        {
-          href: '/naip/risk-officer',
-          labelAr: 'لوحة مسؤول المخاطر',
-          labelEn: 'Risk Officer Dashboard',
-          icon: <ShieldAlert className="w-4.5 h-4.5" />,
-          show: canViewRiskDashboard,
-        },
-        {
-          href: '/naip/judge',
-          labelAr: 'لوحة القاضي',
-          labelEn: 'Judge Dashboard',
-          icon: <Gavel className="w-4.5 h-4.5" />,
-          show: role === 'judge' || role === 'owner' || role === 'supervisor',
-        },
-      ],
-    },
-    // ── التأهيل والتدريب — professional guidance & judicial reasoning training ─
-    {
-      id: 'training',
-      titleAr: 'التأهيل والتدريب',
-      titleEn: 'Training & Qualification',
-      items: [
-        {
-          href: '/spg',
-          labelAr: 'الإرشاد المهني الذكي',
-          labelEn: 'Smart Professional Guidance',
-          icon: <Compass className="w-4.5 h-4.5" />,
-          show: canUseAi,
-          badge: 'جديد',
-        },
-        {
-          href: '/pgf',
-          labelAr: 'الإطار الاحترافي الموجَّه',
-          labelEn: 'Professional Guidance Framework',
-          icon: <BookOpenText className="w-4.5 h-4.5" />,
-          show: canUseAi,
-          badge: 'جديد',
-        },
-        {
-          href: '/jre',
-          labelAr: 'محرك التفكير القضائي',
-          labelEn: 'Judicial Reasoning Engine',
-          icon: <Gavel className="w-4.5 h-4.5" />,
-          show: canUseAi,
-          badge: 'جديد',
-        },
-        {
-          href: '/jdc',
-          labelAr: 'غرفة المداولة القضائية',
-          labelEn: 'Judicial Deliberation Chamber',
-          icon: <Users className="w-4.5 h-4.5" />,
-          show: canUseAi,
-          badge: 'v2',
-        },
-      ],
-    },
-    // ── مكتبي — desk: research, sources, productivity, admin ───────────────────
-    {
-      id: 'desk',
-      titleAr: 'مكتبي',
-      titleEn: 'My Desk',
-      items: [
-        {
-          href: '/legal-brain',
-          labelAr: 'الدماغ القانوني',
-          labelEn: 'Legal Intelligence Brain',
-          icon: <Brain className="w-4.5 h-4.5" />,
-          show: canUseAi,
-          badge: 'Stage 4',
-        },
-        {
-          href: '/adkg',
-          labelAr: 'سجل القرارات الإدارية',
-          labelEn: 'Decision Knowledge Graph',
-          icon: <Network className="w-4.5 h-4.5" />,
-          show: canUseAi,
-          badge: 'جديد',
-        },
-        {
-          href: '/search',
-          labelAr: 'البحث القانوني الذكي',
-          labelEn: 'Smart Legal Search',
-          icon: <Search className="w-4.5 h-4.5" />,
-          show: canUseAi,
-        },
-        {
-          href: '/workspace',
-          labelAr: 'مساحة البحث',
-          labelEn: 'Research Workspace',
-          icon: <FolderOpen className="w-4.5 h-4.5" />,
-          show: canUseAi,
-        },
-        {
-          href: '/research',
-          labelAr: 'البحث القانوني',
-          labelEn: 'Legal Research',
-          icon: <Search className="w-4.5 h-4.5" />,
-          show: canUseAi,
-        },
-        {
-          href: '/assistant',
-          labelAr: 'المساعد الذكي',
-          labelEn: 'AI Assistant',
-          icon: <Bot className="w-4.5 h-4.5" />,
-          show: canUseAi,
-        },
-        {
-          href: '/admin-os',
-          labelAr: 'نظام القرارات الإدارية',
-          labelEn: 'Admin Decision OS',
-          icon: <Scale className="w-4.5 h-4.5" />,
-          show: canUseAi,
-          badge: 'جديد',
-        },
-        {
-          href: '/admin-os/compliance',
-          labelAr: 'لوحة الامتثال القانوني',
-          labelEn: 'Compliance Dashboard',
-          icon: <BarChart3 className="w-4.5 h-4.5" />,
-          show: canUseAi,
-        },
-        {
-          href: '/literature-review',
-          labelAr: 'مراجعة الأدبيات',
-          labelEn: 'Literature Review',
-          icon: <BookOpenText className="w-4.5 h-4.5" />,
-          show: canUseAi,
-        },
-        {
-          href: '/citizen',
-          labelAr: 'بوابة المواطن',
-          labelEn: 'Citizen Portal',
-          icon: <UserCircle className="w-4.5 h-4.5" />,
-          show: true,
-        },
-        {
-          href: '/legislation/uae',
-          labelAr: 'التشريعات الإماراتية',
-          labelEn: 'UAE Legislation',
-          icon: <ScrollText className="w-4.5 h-4.5" />,
-          show: true,
         },
         {
           href: '/caselaw/uae',
@@ -347,12 +145,50 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           icon: <Quote className="w-4.5 h-4.5" />,
           show: true,
         },
+      ],
+    },
+    // ── البحث والمعرفة — research & knowledge tools ──────────────────────────
+    {
+      id: 'research-knowledge',
+      titleAr: 'البحث والمعرفة',
+      titleEn: 'Research & Knowledge',
+      items: [
         {
-          href: '/comparison',
-          labelAr: 'مقارنة الوثائق',
-          labelEn: 'Document Comparison',
-          icon: <GitCompareArrows className="w-4.5 h-4.5" />,
-          show: false, // P1-6: screen is placeholder — hidden until comparison creation is implemented
+          href: '/legal-brain',
+          labelAr: 'الدماغ القانوني',
+          labelEn: 'Legal Intelligence Brain',
+          icon: <Brain className="w-4.5 h-4.5" />,
+          show: canUseAi,
+          badge: 'Stage 4',
+        },
+        {
+          href: '/adkg',
+          labelAr: 'سجل القرارات الإدارية',
+          labelEn: 'Decision Knowledge Graph',
+          icon: <Network className="w-4.5 h-4.5" />,
+          show: canUseAi,
+          badge: 'جديد',
+        },
+        {
+          href: '/search',
+          labelAr: 'البحث القانوني الذكي',
+          labelEn: 'Smart Legal Search',
+          icon: <Search className="w-4.5 h-4.5" />,
+          show: canUseAi,
+        },
+        {
+          href: '/research',
+          labelAr: 'البحث القانوني',
+          labelEn: 'Legal Research',
+          icon: <Search className="w-4.5 h-4.5" />,
+          show: canUseAi,
+        },
+        {
+          href: '/workspace',
+          labelAr: 'مساحة البحث',
+          labelEn: 'Research Workspace',
+          icon: <FolderOpen className="w-4.5 h-4.5" />,
+          show: canUseAi,
         },
         {
           href: '/library',
@@ -361,19 +197,59 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           icon: <Library className="w-4.5 h-4.5" />,
           show: true,
         },
-        {
-          href: '/admin/users',
-          labelAr: 'إدارة المستخدمين',
-          labelEn: 'User Management',
-          icon: <Users className="w-4.5 h-4.5" />,
-          show: canManageUsers,
-        },
+      ],
+    },
+    // ── التأهيل والتطوير — training & judicial reasoning tools ───────────────
+    {
+      id: 'training',
+      titleAr: 'التأهيل والتطوير',
+      titleEn: 'Training & Development',
+      items: [
         {
           href: '/admin/legal-os',
           labelAr: 'فهرس السيناريوهات',
           labelEn: 'Scenario Catalog',
-          icon: <Scale className="w-4.5 h-4.5" />,
+          icon: <Compass className="w-4.5 h-4.5" />,
           show: canManageUsers,
+        },
+        {
+          href: '/spg',
+          labelAr: 'الإرشاد المهني الذكي',
+          labelEn: 'Smart Professional Guidance',
+          icon: <Compass className="w-4.5 h-4.5" />,
+          show: canUseAi,
+          badge: 'جديد',
+        },
+        {
+          href: '/jre',
+          labelAr: 'محرك التفكير القضائي',
+          labelEn: 'Judicial Reasoning Engine',
+          icon: <Gavel className="w-4.5 h-4.5" />,
+          show: canUseAi,
+          badge: 'جديد',
+        },
+        {
+          href: '/jdc',
+          labelAr: 'غرفة المداولة القضائية',
+          labelEn: 'Judicial Deliberation Chamber',
+          icon: <Users className="w-4.5 h-4.5" />,
+          show: canUseAi,
+          badge: 'v2',
+        },
+      ],
+    },
+    // ── الخدمات — public-facing services ─────────────────────────────────────
+    {
+      id: 'services',
+      titleAr: 'الخدمات',
+      titleEn: 'Services',
+      items: [
+        {
+          href: '/citizen',
+          labelAr: 'بوابة المواطن',
+          labelEn: 'Citizen Portal',
+          icon: <UserCircle className="w-4.5 h-4.5" />,
+          show: true,
         },
         {
           href: '/settings',
@@ -384,6 +260,55 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
         },
       ],
     },
+    // ── خاص — owner-only command surfaces ────────────────────────────────────
+    {
+      id: 'private',
+      titleAr: 'خاص',
+      titleEn: 'Private',
+      items: [
+        {
+          href: '/constitutional-intelligence',
+          labelAr: 'المراجعة الدستورية',
+          labelEn: 'Constitutional Review',
+          icon: <Scale className="w-4.5 h-4.5" />,
+          show: isOwner,
+          badge: 'خاص',
+        },
+        {
+          href: '/naip',
+          labelAr: 'منصة الذكاء الوطني',
+          labelEn: 'National Intelligence Platform',
+          icon: <Cpu className="w-4.5 h-4.5" />,
+          show: isOwner,
+          badge: 'خاص',
+        },
+        {
+          href: '/naip/kpi',
+          labelAr: 'مركز المؤشرات الوطنية',
+          labelEn: 'National KPI Center',
+          icon: <Target className="w-4.5 h-4.5" />,
+          show: isOwner,
+          badge: 'خاص',
+        },
+        {
+          href: '/admin/users',
+          labelAr: 'إدارة المستخدمين',
+          labelEn: 'User Management',
+          icon: <Users className="w-4.5 h-4.5" />,
+          show: canManageUsers,
+          badge: 'خاص',
+        },
+      ],
+    },
+    // ── Hidden — code and routes preserved, removed from navigation only ────
+    // القرارات الإدارية ('/decisions'), مركز الحوكمة التنفيذية ('/governance'),
+    // تقييم المخاطر ('/risk-engine'), لوحة الوزير/الوكيل/المدير العام/مسؤول
+    // المخاطر/القاضي (NAIP role dashboards), الإطار الاحترافي الموجَّه ('/pgf'),
+    // نظام القرارات الإدارية ('/admin-os'), لوحة الامتثال القانوني
+    // ('/admin-os/compliance'), مراجعة الأدبيات ('/literature-review'),
+    // التشريعات الإماراتية ('/legislation/uae'), لوحة الذكاء الوطني
+    // ('/naip/dashboard'), مقارنة الوثائق ('/comparison') — all unreachable
+    // from the sidebar per the visual rebuild, routes remain intact.
   ];
 
   const isActive = (href: string) =>
@@ -394,7 +319,7 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
   };
 
   const ROLE_CONFIG: Record<string, { labelAr: string; labelEn: string; color: string }> = {
-    owner: { labelAr: 'مالك', labelEn: 'Owner', color: 'bg-amber-400/20 text-amber-300 border-amber-400/30' },
+    owner: { labelAr: 'مالك', labelEn: 'Owner', color: 'bg-gold/20 text-gold/40 border-gold/30' },
     supervisor: { labelAr: 'مشرف', labelEn: 'Supervisor', color: 'bg-sky-400/20 text-sky-300 border-sky-400/30' },
     viewer: { labelAr: 'مشاهد', labelEn: 'Viewer', color: 'bg-slate-400/20 text-slate-300 border-slate-400/30' },
   };
@@ -479,7 +404,7 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
               {!collapsed && (
                 <button
                   onClick={() => toggleSection(section.id)}
-                  className="w-full flex items-center justify-between px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-sidebar-foreground/35 hover:text-sidebar-foreground/55 transition-colors"
+                  className="w-full flex items-center justify-between px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-heading/50 hover:text-heading/80 transition-colors"
                 >
                   <span>{lang === 'ar' ? section.titleAr : section.titleEn}</span>
                   <ChevronDown
@@ -511,10 +436,15 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
                           {item.icon}
                         </div>
                         {!collapsed && (
-                          <div className="flex-1 min-w-0 flex items-center justify-between">
+                          <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
                             <span className={`text-sm font-medium truncate ${active ? 'text-white' : ''}`}>
                               {lang === 'ar' ? item.labelAr : item.labelEn}
                             </span>
+                            {item.badge && (
+                              <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded border border-gold/30 bg-gold/10 text-gold">
+                                {item.badge}
+                              </span>
+                            )}
                           </div>
                         )}
                         {/* Tooltip for collapsed state */}

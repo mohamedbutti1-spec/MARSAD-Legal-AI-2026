@@ -222,14 +222,14 @@ const DOMAIN_META: Record<string, { ar: string; en: string }> = {
 
 const RISK_CONFIG: Record<string, { ar: string; color: string; bg: string }> = {
   low:      { ar: 'خطر منخفض', color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200' },
-  medium:   { ar: 'خطر متوسط', color: 'text-amber-700',   bg: 'bg-amber-50 border-amber-200' },
-  high:     { ar: 'خطر مرتفع', color: 'text-orange-700',  bg: 'bg-orange-50 border-orange-200' },
+  medium:   { ar: 'خطر متوسط', color: 'text-gold',   bg: 'bg-gold/10 border-gold/25' },
+  high:     { ar: 'خطر مرتفع', color: 'text-gold',  bg: 'bg-gold/10 border-gold/25' },
   critical: { ar: 'خطر حرج',   color: 'text-red-700',     bg: 'bg-red-50 border-red-200' },
 };
 
 const STATUS_CONFIG: Record<string, { ar: string; color: string }> = {
   'compliant':     { ar: 'ممتثل',        color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  'partial':       { ar: 'ممتثل جزئياً', color: 'bg-amber-50 text-amber-700 border-amber-200' },
+  'partial':       { ar: 'ممتثل جزئياً', color: 'bg-gold/10 text-gold border-gold/25' },
   'non-compliant': { ar: 'غير ممتثل',    color: 'bg-red-50 text-red-700 border-red-200' },
   'unknown':       { ar: 'غير محدد',     color: 'bg-gray-50 text-gray-600 border-gray-200' },
 };
@@ -237,7 +237,7 @@ const STATUS_CONFIG: Record<string, { ar: string; color: string }> = {
 const RELATIONSHIP_CONFIG: Record<string, { ar: string; color: string }> = {
   can_issue:     { ar: 'يمكنك الإصدار',  color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
   can_review:    { ar: 'صلاحية المراجعة', color: 'bg-blue-50 text-blue-700 border-blue-200' },
-  can_challenge: { ar: 'يمكن الطعن',     color: 'bg-amber-50 text-amber-700 border-amber-200' },
+  can_challenge: { ar: 'يمكن الطعن',     color: 'bg-gold/10 text-gold border-gold/25' },
   none:          { ar: 'خارج النطاق',    color: 'bg-gray-50 text-gray-500 border-gray-200' },
 };
 
@@ -272,7 +272,7 @@ function ScoreRing({ score, label, size = 88 }: { score: number; label: string; 
   const circ = 2 * Math.PI * r;
   const offset = circ - (Math.min(Math.max(score, 0), 100) / 100) * circ;
   const color = score >= 80 ? '#16a34a' : score >= 60 ? '#d97706' : '#dc2626';
-  const textColor = score >= 80 ? 'text-emerald-700' : score >= 60 ? 'text-amber-700' : 'text-red-700';
+  const textColor = score >= 80 ? 'text-emerald-700' : score >= 60 ? 'text-gold' : 'text-red-700';
   return (
     <div className="flex flex-col items-center gap-1.5">
       <div className="relative" style={{ width: size, height: size }}>
@@ -308,7 +308,7 @@ function MiniCitationChip({ token, citation }: { token: string; citation?: Citat
     <span className="relative inline-block align-baseline">
       <button type="button" onClick={() => setOpen(o => !o)}
         className={`inline-flex items-center gap-1 text-[11px] font-semibold px-1.5 py-0.5 rounded border
-          ${isDoc ? 'bg-primary/10 text-primary border-primary/25' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+          ${isDoc ? 'bg-primary/10 text-primary border-primary/25' : 'bg-gold/10 text-gold border-gold/25'}`}>
         {isDoc ? <FileText className="w-2.5 h-2.5" /> : <BookOpen className="w-2.5 h-2.5" />}
         <span className="max-w-[100px] truncate">{label}</span>
       </button>
@@ -413,7 +413,7 @@ function RoleSelectionScreen({ roles, loading, onSelect }: {
                 const capLabel = cap.canIssue ? 'إصدار' : cap.canReview ? 'مراجعة' : 'طعن';
                 const capColor = cap.canIssue ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                   : cap.canReview ? 'bg-blue-50 text-blue-700 border-blue-200'
-                  : 'bg-amber-50 text-amber-700 border-amber-200';
+                  : 'bg-gold/10 text-gold border-gold/25';
                 return (
                   <button key={role.roleKey} type="button" onClick={() => onSelect(role)}
                     className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border border-border bg-card hover:border-primary hover:bg-primary/5 hover:shadow-md transition-all text-center group">
@@ -895,9 +895,9 @@ function DimensionCard({ dimKey, result, dimIndex }: {
   const [expanded, setExpanded] = useState(false);
   const meta = DIMENSION_META[dimKey as DimensionKey];
   const st = STATUS_CONFIG[result.status] ?? STATUS_CONFIG['unknown'];
-  const scoreColor = result.score >= 80 ? 'text-emerald-700' : result.score >= 60 ? 'text-amber-700' : 'text-red-700';
+  const scoreColor = result.score >= 80 ? 'text-emerald-700' : result.score >= 60 ? 'text-gold' : 'text-red-700';
   const cardBg = result.status === 'compliant' ? 'border-emerald-200 bg-emerald-50/20 hover:bg-emerald-50/40'
-    : result.status === 'partial' ? 'border-amber-200 bg-amber-50/20 hover:bg-amber-50/40'
+    : result.status === 'partial' ? 'border-gold/25 bg-gold/20 hover:bg-gold/40'
     : result.status === 'non-compliant' ? 'border-red-200 bg-red-50/20 hover:bg-red-50/40'
     : 'border-border bg-muted/10 hover:bg-muted/20';
 
@@ -907,7 +907,7 @@ function DimensionCard({ dimKey, result, dimIndex }: {
         className="w-full text-start px-3 py-3 flex items-center gap-2.5">
         <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-black shrink-0 ${
           result.status === 'compliant' ? 'bg-emerald-100 text-emerald-700' :
-          result.status === 'partial' ? 'bg-amber-100 text-amber-700' :
+          result.status === 'partial' ? 'bg-gold/15 text-gold' :
           result.status === 'non-compliant' ? 'bg-red-100 text-red-700' :
           'bg-muted text-muted-foreground'
         }`}>{dimIndex + 1}</div>
@@ -987,7 +987,7 @@ function VerdictBanner({ canIssue, rationale }: { canIssue: CanIssue; rationale:
     conditional: {
       icon: <AlertTriangle className="w-8 h-8 shrink-0" />,
       label: 'يمكن الإصدار بشروط',
-      bg: 'bg-gradient-to-r from-amber-600 to-amber-500 border-amber-700',
+      bg: 'bg-gradient-to-r from-gold to-gold border-gold',
       text: 'text-white',
     },
   };
@@ -1154,7 +1154,7 @@ function BriefScreen({ brief, role, decisionType, sessionId, citations, onReset,
               <span>80–100 ممتاز</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-amber-500 shrink-0" />
+              <div className="w-3 h-3 rounded-full bg-gold shrink-0" />
               <span>60–79 مقبول بتحفظ</span>
             </div>
             <div className="flex items-center gap-2">
@@ -1195,7 +1195,7 @@ function BriefScreen({ brief, role, decisionType, sessionId, citations, onReset,
               {brief.applicableLegislation.map((item, i) => (
                 <div key={i} className="border-b border-border/40 pb-2.5 last:border-0 last:pb-0">
                   <div className="flex items-start gap-2">
-                    <BookOpen className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                    <BookOpen className="w-3.5 h-3.5 text-gold shrink-0 mt-0.5" />
                     <p className="text-sm font-semibold text-foreground flex-1">
                       {item.token && <MiniCitationChip token={item.token} citation={citations.find(c => c.token === item.token)} />}
                       {' '}{item.articleAr}
@@ -1309,7 +1309,7 @@ function BriefScreen({ brief, role, decisionType, sessionId, citations, onReset,
           <BriefSection title="مسارات الطعن والاستئناف" icon={<GitBranch className="w-4 h-4" />} count={brief.appealStrategy.routes.length} defaultOpen={role.roleKey === 'citizen'}>
             <div className="space-y-3">
               {brief.appealStrategy.recommendationAr && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-800 font-medium leading-relaxed">
+                <div className="bg-gold/10 border border-gold/25 rounded-xl p-3 text-sm text-gold/75 font-medium leading-relaxed">
                   {brief.appealStrategy.recommendationAr}
                 </div>
               )}
@@ -1349,9 +1349,9 @@ function BriefScreen({ brief, role, decisionType, sessionId, citations, onReset,
           <BriefSection title="نقاط التدخل البشري الإلزامية" icon={<Eye className="w-4 h-4" />} count={brief.humanInterventionPoints.length} defaultOpen={false}>
             <div className="space-y-2">
               {brief.humanInterventionPoints.map((pt, i) => (
-                <div key={i} className="flex items-start gap-2.5 p-2.5 rounded-lg bg-amber-50/60 border border-amber-200/60">
-                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                  <p className="text-sm text-amber-900 leading-relaxed">{pt}</p>
+                <div key={i} className="flex items-start gap-2.5 p-2.5 rounded-lg bg-gold/60 border border-gold/60">
+                  <AlertCircle className="w-4 h-4 text-gold shrink-0 mt-0.5" />
+                  <p className="text-sm text-gold/85 leading-relaxed">{pt}</p>
                 </div>
               ))}
             </div>
@@ -1405,7 +1405,7 @@ function BriefScreen({ brief, role, decisionType, sessionId, citations, onReset,
 const VERDICT_ICONS: Record<string, React.ReactNode> = {
   yes:         <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />,
   no:          <XCircle className="w-3 h-3 text-red-500 shrink-0" />,
-  conditional: <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />,
+  conditional: <AlertTriangle className="w-3 h-3 text-gold shrink-0" />,
 };
 
 function HistorySidebar({ sessions, onSelect, onDelete, currentId, t }: {
@@ -1493,7 +1493,7 @@ function HistoryDrawer({ open, sessions, onSelect, onDelete, onClose, t }: {
 
 const STATUS_CHIP: Record<string, { bg: string; icon: React.ReactNode }> = {
   compliant:     { bg: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: <CheckCircle2 className="w-3 h-3" /> },
-  partial:       { bg: 'bg-amber-50 text-amber-700 border-amber-200',      icon: <AlertTriangle className="w-3 h-3" /> },
+  partial:       { bg: 'bg-gold/10 text-gold border-gold/25',      icon: <AlertTriangle className="w-3 h-3" /> },
   'non-compliant': { bg: 'bg-red-50 text-red-700 border-red-200',          icon: <XCircle className="w-3 h-3" /> },
   unknown:       { bg: 'bg-muted text-muted-foreground border-border',      icon: <HelpCircle className="w-3 h-3" /> },
 };
@@ -1538,7 +1538,7 @@ function ComparisonPanel({ result }: { result: CompareResult }) {
       <div className="px-4 py-3 flex items-center gap-4">
         <div className="flex-1 text-center">
           <p className="text-[10px] text-muted-foreground mb-0.5">{result.originalJurisdictionNameAr}</p>
-          <p className={`text-xl font-black ${result.originalLegalityScore >= 80 ? 'text-emerald-600' : result.originalLegalityScore >= 60 ? 'text-amber-600' : 'text-red-600'}`}>
+          <p className={`text-xl font-black ${result.originalLegalityScore >= 80 ? 'text-emerald-600' : result.originalLegalityScore >= 60 ? 'text-gold' : 'text-red-600'}`}>
             {result.originalLegalityScore}
           </p>
           <p className="text-[9px] text-muted-foreground">/100 مشروعية</p>
@@ -1551,7 +1551,7 @@ function ComparisonPanel({ result }: { result: CompareResult }) {
         </div>
         <div className="flex-1 text-center">
           <p className="text-[10px] text-muted-foreground mb-0.5">{result.targetJurisdictionNameAr}</p>
-          <p className={`text-xl font-black ${result.targetLegalityScore >= 80 ? 'text-emerald-600' : result.targetLegalityScore >= 60 ? 'text-amber-600' : 'text-red-600'}`}>
+          <p className={`text-xl font-black ${result.targetLegalityScore >= 80 ? 'text-emerald-600' : result.targetLegalityScore >= 60 ? 'text-gold' : 'text-red-600'}`}>
             {result.targetLegalityScore}
           </p>
           <p className="text-[9px] text-muted-foreground">/100 مشروعية</p>
@@ -1598,13 +1598,13 @@ function ComparisonPanel({ result }: { result: CompareResult }) {
           {result.keyDifferencesAr.length > 0 && (
             <div className="px-4 py-3 border-t border-primary/20">
               <p className="text-xs font-bold text-foreground mb-2 flex items-center gap-1.5">
-                <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                <AlertTriangle className="w-3.5 h-3.5 text-gold" />
                 أبرز الفجوات القانونية
               </p>
               <ul className="space-y-1">
                 {result.keyDifferencesAr.map((d, i) => (
                   <li key={i} className="text-xs text-muted-foreground flex gap-2">
-                    <span className="text-amber-500 shrink-0">•</span>
+                    <span className="text-gold shrink-0">•</span>
                     <span>{d}</span>
                   </li>
                 ))}

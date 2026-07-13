@@ -79,7 +79,7 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; labelAr: string;
 };
 
 const AUTH_COLORS: Record<string, string> = {
-  binding:'bg-green-100 text-green-800',
+  binding:'bg-heading/15 text-heading/75',
   persuasive:'bg-blue-100 text-blue-800',
   non_binding:'bg-gray-100 text-gray-700',
 };
@@ -122,8 +122,8 @@ function AuthorityLabel({ text }: { text: string }) {
 function PillarCard({ pillar, result, t }: { pillar: PillarMeta; result: PillarResult; t: (ar: string, en: string) => string }) {
   const [expanded, setExpanded] = useState(false);
   const style = PILLAR_STATUS_COLORS[result.status] ?? PILLAR_STATUS_COLORS.unknown;
-  const barColor = result.status === 'compliant' ? 'bg-green-500'
-    : result.status === 'partial' ? 'bg-amber-400'
+  const barColor = result.status === 'compliant' ? 'bg-heading'
+    : result.status === 'partial' ? 'bg-gold/80'
     : result.status === 'non-compliant' ? 'bg-red-500'
     : 'bg-gray-300';
 
@@ -335,9 +335,9 @@ export default function AdkgDetail() {
                     title={t('انتقل إلى تحليل الأعمدة', 'Go to Pillar Analysis')}
                   >
                     <ShieldCheck className="w-3 h-3" />
-                    <span className="text-green-300">{t('المشروعية', 'Legality')} {cachedAnalysis.legalityScore}</span>
+                    <span className="text-heading/40">{t('المشروعية', 'Legality')} {cachedAnalysis.legalityScore}</span>
                     <span className="text-white/40">|</span>
-                    <span className="text-amber-300">{t('الخطر', 'Risk')} {cachedAnalysis.riskScore}</span>
+                    <span className="text-gold/40">{t('الخطر', 'Risk')} {cachedAnalysis.riskScore}</span>
                   </button>
                 )}
               </div>
@@ -372,7 +372,7 @@ export default function AdkgDetail() {
               {tab.id === 'relationships' && links.length > 0 && <span className="text-xs bg-blue-100 text-blue-700 rounded-full px-1.5 py-0.5">{links.length}</span>}
               {tab.id === 'timeline' && timeline.length > 0 && <span className="text-xs bg-blue-100 text-blue-700 rounded-full px-1.5 py-0.5">{timeline.length}</span>}
               {tab.id === 'analysis' && cachedAnalysis && (
-                <span className="text-xs bg-green-100 text-green-700 rounded-full px-1.5 py-0.5">✓</span>
+                <span className="text-xs bg-heading/15 text-heading rounded-full px-1.5 py-0.5">✓</span>
               )}
             </button>
           ))}
@@ -661,14 +661,14 @@ function PillarAnalysisTab({
           <div className="grid grid-cols-3 gap-3">
             <div className="rounded-lg border p-4 text-center">
               <p className="text-xs text-muted-foreground mb-1">{t('درجة المشروعية', 'Legality Score')}</p>
-              <p className={`text-3xl font-bold ${analysis.legalityScore >= 70 ? 'text-green-600' : analysis.legalityScore >= 50 ? 'text-amber-500' : 'text-red-600'}`}>
+              <p className={`text-3xl font-bold ${analysis.legalityScore >= 70 ? 'text-heading' : analysis.legalityScore >= 50 ? 'text-gold' : 'text-red-600'}`}>
                 {analysis.legalityScore}
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">/100</p>
             </div>
             <div className="rounded-lg border p-4 text-center">
               <p className="text-xs text-muted-foreground mb-1">{t('درجة الخطر', 'Risk Score')}</p>
-              <p className={`text-3xl font-bold ${analysis.riskScore <= 30 ? 'text-green-600' : analysis.riskScore <= 60 ? 'text-amber-500' : 'text-red-600'}`}>
+              <p className={`text-3xl font-bold ${analysis.riskScore <= 30 ? 'text-heading' : analysis.riskScore <= 60 ? 'text-gold' : 'text-red-600'}`}>
                 {analysis.riskScore}
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">/100</p>

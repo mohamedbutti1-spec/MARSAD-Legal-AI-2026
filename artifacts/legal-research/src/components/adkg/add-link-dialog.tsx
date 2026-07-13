@@ -47,7 +47,7 @@ const ENTITY_TYPES = [
 ];
 
 const AUTHORITY_CLASSES = [
-  { value: 'binding',     labelAr: 'ملزم',     labelEn: 'Binding', color: 'bg-green-100 text-green-800' },
+  { value: 'binding',     labelAr: 'ملزم',     labelEn: 'Binding', color: 'bg-heading/15 text-heading/75' },
   { value: 'persuasive',  labelAr: 'إرشادي',  labelEn: 'Persuasive', color: 'bg-blue-100 text-blue-800' },
   { value: 'non_binding', labelAr: 'غير ملزم', labelEn: 'Non-binding', color: 'bg-gray-100 text-gray-700' },
 ];

@@ -85,7 +85,7 @@ function statusConfig(status: DecisionStatus) {
   switch (status) {
     case 'sealed':   return { label: 'مختوم', bg: 'bg-blue-100 dark:bg-blue-950/40', text: 'text-blue-700 dark:text-blue-400' };
     case 'active':   return { label: 'نشط', bg: 'bg-emerald-100 dark:bg-emerald-950/40', text: 'text-emerald-700 dark:text-emerald-400' };
-    case 'draft':    return { label: 'مسودة', bg: 'bg-amber-100 dark:bg-amber-950/40', text: 'text-amber-700 dark:text-amber-400' };
+    case 'draft':    return { label: 'مسودة', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80' };
     case 'archived': return { label: 'مؤرشف', bg: 'bg-muted', text: 'text-muted-foreground' };
     default:         return { label: status, bg: 'bg-muted', text: 'text-muted-foreground' };
   }
@@ -94,8 +94,8 @@ function statusConfig(status: DecisionStatus) {
 function riskConfig(level: RiskLevel | null | undefined) {
   switch (level) {
     case 'critical': return { label: 'حرج', dot: 'bg-red-500', bg: 'bg-red-100 dark:bg-red-950/40', text: 'text-red-700 dark:text-red-400' };
-    case 'high':     return { label: 'عالٍ', dot: 'bg-orange-500', bg: 'bg-orange-100 dark:bg-orange-950/40', text: 'text-orange-700 dark:text-orange-400' };
-    case 'moderate': return { label: 'متوسط', dot: 'bg-amber-500', bg: 'bg-amber-100 dark:bg-amber-950/40', text: 'text-amber-700 dark:text-amber-400' };
+    case 'high':     return { label: 'عالٍ', dot: 'bg-gold', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80' };
+    case 'moderate': return { label: 'متوسط', dot: 'bg-gold', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80' };
     case 'low':      return { label: 'منخفض', dot: 'bg-emerald-500', bg: 'bg-emerald-100 dark:bg-emerald-950/40', text: 'text-emerald-700 dark:text-emerald-400' };
     default:         return { label: '—', dot: 'bg-muted-foreground', bg: 'bg-muted', text: 'text-muted-foreground' };
   }
@@ -237,8 +237,8 @@ export default function NaipUndersecretary() {
               <span className="text-[10px] text-muted-foreground text-center">إجمالي القرارات</span>
             </div>
             <div className="flex flex-col items-center gap-1">
-              <div className="w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-950/40 flex items-center justify-center">
-                <span className="text-lg font-bold text-amber-600 dark:text-amber-400 tabular-nums">{kpi?.activeWarnings ?? '—'}</span>
+              <div className="w-16 h-16 rounded-full bg-gold/15 dark:bg-gold/40 flex items-center justify-center">
+                <span className="text-lg font-bold text-gold dark:text-gold/80 tabular-nums">{kpi?.activeWarnings ?? '—'}</span>
               </div>
               <span className="text-[10px] text-muted-foreground text-center">تحذيرات نشطة</span>
             </div>
@@ -255,10 +255,10 @@ export default function NaipUndersecretary() {
         <div className="bg-card border border-border rounded-xl overflow-hidden">
           <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-border/60">
             <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-amber-500" />
+              <Clock className="w-4 h-4 text-gold" />
               <h2 className="text-sm font-bold text-foreground">{t('طابور التفويض', 'Delegation Queue')}</h2>
               {kpi?.delegatableCount != null && (
-                <span className="text-xs bg-amber-500 text-white rounded-full px-2 py-0.5 font-bold">{kpi.delegatableCount}</span>
+                <span className="text-xs bg-gold text-white rounded-full px-2 py-0.5 font-bold">{kpi.delegatableCount}</span>
               )}
             </div>
             <Link href="/decisions" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
@@ -359,7 +359,7 @@ export default function NaipUndersecretary() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
             { href: '/governance', icon: <Scale className="w-5 h-5" />, label: 'مركز الحوكمة', labelEn: 'Governance Hub', color: 'text-blue-500' },
-            { href: '/risk-engine', icon: <BarChart3 className="w-5 h-5" />, label: 'محرك المخاطر', labelEn: 'Risk Engine', color: 'text-orange-500' },
+            { href: '/risk-engine', icon: <BarChart3 className="w-5 h-5" />, label: 'محرك المخاطر', labelEn: 'Risk Engine', color: 'text-gold' },
             { href: '/constitutional-intelligence', icon: <ShieldAlert className="w-5 h-5" />, label: 'المراجعة الدستورية', labelEn: 'Constitutional Review', color: 'text-purple-500' },
           ].map((a) => (
             <Link key={a.href} href={a.href}>

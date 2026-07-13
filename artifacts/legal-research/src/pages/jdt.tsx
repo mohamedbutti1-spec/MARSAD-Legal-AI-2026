@@ -178,9 +178,9 @@ function CircleGauge({
 function OutcomeIcon({ outcome }: { outcome: JdtStageOutcome }) {
   switch (outcome) {
     case 'pass':
-      return <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+      return <CheckCircle2 className="w-4 h-4 text-heading shrink-0" />
     case 'partial':
-      return <Minus className="w-4 h-4 text-amber-500 shrink-0" />
+      return <Minus className="w-4 h-4 text-gold shrink-0" />
     case 'fail':
       return <XCircle className="w-4 h-4 text-red-500 shrink-0" />
     case 'not_assessed':
@@ -199,9 +199,9 @@ function ScoreBadge({ score }: { score: number | null | undefined }) {
   }
   const cls =
     score >= 80
-      ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400'
+      ? 'bg-heading/15 text-heading dark:bg-heading/40 dark:text-heading/80'
       : score >= 60
-      ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400'
+      ? 'bg-gold/15 text-gold dark:bg-gold/40 dark:text-gold/80'
       : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'
   return (
     <span className={`text-xs px-2 py-0.5 rounded-full font-mono font-semibold ${cls}`}>
@@ -217,11 +217,11 @@ function PriorityBadge({ priority }: { priority: string }) {
       label: 'حرج',
     },
     high: {
-      cls: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400',
+      cls: 'bg-gold/15 text-gold dark:bg-gold/40 dark:text-gold/80',
       label: 'عالٍ',
     },
     medium: {
-      cls: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400',
+      cls: 'bg-gold/15 text-gold dark:bg-gold/40 dark:text-gold/80',
       label: 'متوسط',
     },
     low: {
@@ -248,9 +248,9 @@ function ReviewStageCard({
 
   const borderColor =
     stage.outcome === 'pass'
-      ? 'border-l-green-500'
+      ? 'border-l-heading'
       : stage.outcome === 'partial'
-      ? 'border-l-amber-500'
+      ? 'border-l-gold'
       : stage.outcome === 'fail'
       ? 'border-l-red-500'
       : 'border-l-border'
@@ -307,7 +307,7 @@ function ReviewStageCard({
               <ul className="space-y-1">
                 {(stage.findings ?? []).map((f, i) => (
                   <li key={i} className="flex items-start gap-2 text-foreground/80">
-                    <span className="text-amber-500 mt-0.5 shrink-0">◆</span>
+                    <span className="text-gold mt-0.5 shrink-0">◆</span>
                     <span>{f}</span>
                   </li>
                 ))}
@@ -334,11 +334,11 @@ function ReviewStageCard({
           )}
 
           {stage.remedyAr && (
-            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-lg px-3 py-2">
-              <div className="text-xs font-bold text-amber-700 dark:text-amber-400 mb-1">
+            <div className="bg-gold/10 dark:bg-gold/30 border border-gold/25 dark:border-gold/40 rounded-lg px-3 py-2">
+              <div className="text-xs font-bold text-gold dark:text-gold/80 mb-1">
                 العلاج المقترح
               </div>
-              <p className="text-amber-800 dark:text-amber-300 text-xs leading-relaxed">
+              <p className="text-gold/75 dark:text-gold/40 text-xs leading-relaxed">
                 {stage.remedyAr}
               </p>
             </div>
@@ -380,11 +380,11 @@ function riskLevelColor(level: JdtRiskLevel | null | undefined): string {
     case 'critical':
       return 'text-red-600 dark:text-red-400'
     case 'high':
-      return 'text-orange-600 dark:text-orange-400'
+      return 'text-gold dark:text-gold/80'
     case 'moderate':
-      return 'text-amber-600 dark:text-amber-400'
+      return 'text-gold dark:text-gold/80'
     case 'low':
-      return 'text-green-600 dark:text-green-400'
+      return 'text-heading dark:text-heading/80'
     default:
       return 'text-muted-foreground'
   }
@@ -407,9 +407,9 @@ function outcomeLabel(outcome: JdtStageOutcome | null | undefined): string {
 function outcomeClass(outcome: JdtStageOutcome | null | undefined): string {
   switch (outcome) {
     case 'pass':
-      return 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400'
+      return 'bg-heading/15 text-heading dark:bg-heading/40 dark:text-heading/80'
     case 'partial':
-      return 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400'
+      return 'bg-gold/15 text-gold dark:bg-gold/40 dark:text-gold/80'
     case 'fail':
       return 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'
     default:
@@ -587,19 +587,19 @@ export default function JdtPage() {
                 </span>
               )}
               {status === 'pending' && (
-                <span className="text-xs px-3 py-1 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 font-medium flex items-center gap-1.5">
+                <span className="text-xs px-3 py-1 rounded-full bg-gold/15 text-gold dark:bg-gold/40 dark:text-gold/80 font-medium flex items-center gap-1.5">
                   <Loader2 className="w-3 h-3 animate-spin" />
                   {t('في الانتظار', 'Pending')}
                 </span>
               )}
               {status === 'running' && (
-                <span className="text-xs px-3 py-1 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 font-medium flex items-center gap-1.5 animate-pulse">
+                <span className="text-xs px-3 py-1 rounded-full bg-gold/15 text-gold dark:bg-gold/40 dark:text-gold/80 font-medium flex items-center gap-1.5 animate-pulse">
                   <Loader2 className="w-3 h-3 animate-spin" />
                   {t('جارٍ التشغيل', 'Running')}
                 </span>
               )}
               {status === 'completed' && (
-                <span className="text-xs px-3 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400 font-medium flex items-center gap-1.5">
+                <span className="text-xs px-3 py-1 rounded-full bg-heading/15 text-heading dark:bg-heading/40 dark:text-heading/80 font-medium flex items-center gap-1.5">
                   <CheckCircle2 className="w-3 h-3" />
                   {t('مكتملة', 'Completed')}
                 </span>
@@ -653,20 +653,20 @@ export default function JdtPage() {
 
         {/* ── SECTION 4 — Running ──────────────────────────────────────── */}
         {!isLoading && status === 'running' && (
-          <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 rounded-2xl p-10 flex flex-col items-center gap-6 text-center">
-            <Loader2 className="w-14 h-14 animate-spin text-amber-500" />
+          <div className="bg-gold/10 dark:bg-gold/20 border border-gold/25 dark:border-gold/40 rounded-2xl p-10 flex flex-col items-center gap-6 text-center">
+            <Loader2 className="w-14 h-14 animate-spin text-gold" />
             <div>
-              <h2 className="text-xl font-bold text-amber-800 dark:text-amber-300 mb-2">
+              <h2 className="text-xl font-bold text-gold/75 dark:text-gold/40 mb-2">
                 {t('جارٍ تشغيل المحاكاة القضائية…', 'Running judicial simulation…')}
               </h2>
-              <p className="text-amber-700 dark:text-amber-400 text-sm max-w-md">
+              <p className="text-gold dark:text-gold/80 text-sm max-w-md">
                 {t(
                   'يتم الآن تحليل القرار عبر المراحل الثماني وأبعاد نظرية الشامسي الستة عشر. ستُحدَّث الصفحة تلقائياً.',
                   'Analysing the decision across 8 stages and 16 Al-Shamsi dimensions. The page will refresh automatically.'
                 )}
               </p>
             </div>
-            <div className="flex flex-wrap gap-2 justify-center text-xs text-amber-700 dark:text-amber-400">
+            <div className="flex flex-wrap gap-2 justify-center text-xs text-gold dark:text-gold/80">
               {[
                 'القبول الشكلي',
                 'الاختصاص',
@@ -679,7 +679,7 @@ export default function JdtPage() {
               ].map((stage, i) => (
                 <span
                   key={i}
-                  className="px-2.5 py-1 bg-amber-100 dark:bg-amber-900/40 rounded-full animate-pulse"
+                  className="px-2.5 py-1 bg-gold/15 dark:bg-gold/40 rounded-full animate-pulse"
                   style={{ animationDelay: `${i * 0.15}s` }}
                 >
                   {stage}
@@ -770,7 +770,7 @@ export default function JdtPage() {
                       <span className="text-foreground font-medium">
                         {t('احتمال رفض الطعن', 'Dismissal Probability')}
                       </span>
-                      <span className="font-mono font-bold text-green-600 dark:text-green-400">
+                      <span className="font-mono font-bold text-heading dark:text-heading/80">
                         {sim?.probabilityDismissal !== null &&
                         sim?.probabilityDismissal !== undefined
                           ? `${Math.round(sim.probabilityDismissal)}%`
@@ -779,7 +779,7 @@ export default function JdtPage() {
                     </div>
                     <div className="h-2 bg-muted rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-green-500 rounded-full transition-all duration-700"
+                        className="h-full bg-heading rounded-full transition-all duration-700"
                         style={{
                           width: `${sim?.probabilityDismissal ?? 0}%`,
                         }}
@@ -793,7 +793,7 @@ export default function JdtPage() {
                       <span className="text-foreground font-medium">
                         {t('احتمال التصحيح', 'Correction Probability')}
                       </span>
-                      <span className="font-mono font-bold text-amber-600 dark:text-amber-400">
+                      <span className="font-mono font-bold text-gold dark:text-gold/80">
                         {sim?.probabilityCorrection !== null &&
                         sim?.probabilityCorrection !== undefined
                           ? `${Math.round(sim.probabilityCorrection)}%`
@@ -802,7 +802,7 @@ export default function JdtPage() {
                     </div>
                     <div className="h-2 bg-muted rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-amber-500 rounded-full transition-all duration-700"
+                        className="h-full bg-gold rounded-full transition-all duration-700"
                         style={{
                           width: `${sim?.probabilityCorrection ?? 0}%`,
                         }}
@@ -836,7 +836,7 @@ export default function JdtPage() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-3">
-                    <Star className="w-5 h-5 text-amber-500 shrink-0" />
+                    <Star className="w-5 h-5 text-gold shrink-0" />
                     <h2 className="text-lg font-bold text-foreground">
                       {t(
                         'تحليل أبعاد نظرية الشامسي™ الستة عشر',
@@ -847,7 +847,7 @@ export default function JdtPage() {
                   {sim?.shamsiOverallScore !== null &&
                     sim?.shamsiOverallScore !== undefined && (
                       <div className="flex items-baseline gap-1 shrink-0">
-                        <span className="text-3xl font-bold tabular-nums text-amber-500">
+                        <span className="text-3xl font-bold tabular-nums text-gold">
                           {Math.round(sim.shamsiOverallScore)}
                         </span>
                         <span className="text-sm text-muted-foreground">
@@ -929,7 +929,7 @@ export default function JdtPage() {
                 {/* Risk Score Card */}
                 <div className="bg-card border border-border rounded-xl p-4 space-y-3">
                   <div className="flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4 text-orange-500" />
+                    <AlertTriangle className="w-4 h-4 text-gold" />
                     <span className="font-semibold text-sm text-foreground">
                       {t('درجة المخاطر', 'Risk Score')}
                     </span>
@@ -960,7 +960,7 @@ export default function JdtPage() {
                 {/* Strengths */}
                 <div className="bg-card border border-border rounded-xl p-5 space-y-3">
                   <div className="flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-green-500" />
+                    <TrendingUp className="w-5 h-5 text-heading" />
                     <h3 className="font-bold text-foreground">
                       {t('نقاط القوة', 'Strengths')}
                     </h3>
@@ -969,7 +969,7 @@ export default function JdtPage() {
                     <ul className="space-y-2">
                       {sim!.strengths!.map((s, i) => (
                         <li key={i} className="flex items-start gap-2 text-sm">
-                          <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
+                          <CheckCircle2 className="w-4 h-4 text-heading shrink-0 mt-0.5" />
                           <span className="text-foreground/80">{s}</span>
                         </li>
                       ))}
@@ -1010,7 +1010,7 @@ export default function JdtPage() {
             {/* ── 6F: Missing Evidence ─────────────────────────────────── */}
             <div className="bg-card border border-border rounded-xl p-5 space-y-3">
               <div className="flex items-center gap-3">
-                <AlertTriangle className="w-5 h-5 text-amber-500" />
+                <AlertTriangle className="w-5 h-5 text-gold" />
                 <h3 className="font-bold text-foreground">
                   {t(
                     'الأدلة والمستندات المفقودة',
@@ -1019,7 +1019,7 @@ export default function JdtPage() {
                 </h3>
               </div>
               {(sim?.missingEvidence?.length ?? 0) === 0 ? (
-                <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                <div className="flex items-center gap-2 text-sm text-heading dark:text-heading/80">
                   <CheckCircle2 className="w-4 h-4" />
                   {t('لا توجد أدلة مفقودة', 'No missing evidence identified')}
                 </div>
@@ -1027,7 +1027,7 @@ export default function JdtPage() {
                 <ul className="space-y-2">
                   {sim!.missingEvidence!.map((ev, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm">
-                      <span className="text-amber-500 shrink-0 mt-0.5">◆</span>
+                      <span className="text-gold shrink-0 mt-0.5">◆</span>
                       <span className="text-foreground/80">{ev}</span>
                     </li>
                   ))}
@@ -1114,14 +1114,14 @@ export default function JdtPage() {
                     </div>
 
                     {sim?.overallAssessment && (
-                      <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 rounded-xl p-5">
+                      <div className="bg-gold/10 dark:bg-gold/20 border border-gold/25 dark:border-gold/40 rounded-xl p-5">
                         <div className="flex items-center gap-2 mb-2">
-                          <Lightbulb className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                          <span className="font-bold text-amber-800 dark:text-amber-300 text-sm">
+                          <Lightbulb className="w-4 h-4 text-gold dark:text-gold/80" />
+                          <span className="font-bold text-gold/75 dark:text-gold/40 text-sm">
                             {t('التقييم الشامل', 'Overall Assessment')}
                           </span>
                         </div>
-                        <p className="text-sm text-amber-800 dark:text-amber-300 leading-relaxed">
+                        <p className="text-sm text-gold/75 dark:text-gold/40 leading-relaxed">
                           {sim.overallAssessment}
                         </p>
                       </div>

@@ -73,7 +73,7 @@ function SessionCard({ session, onDelete }: { session: JreSession; onDelete: (id
             )}
             {/* Theory */}
             {session.theoryLensId && (
-              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-gold/15 text-gold dark:bg-gold/30 dark:text-gold/80">
                 <Sparkles className="w-3 h-3" /> {session.theoryLensName || 'نظرية'}
               </span>
             )}
@@ -389,7 +389,7 @@ export default function JrePage() {
             {/* Theory lens */}
             <div className="space-y-1.5">
               <Label className="text-right block flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                <Sparkles className="w-3.5 h-3.5 text-gold" />
                 التحليل النظري المقارن (اختياري — غير مُلزِم)
               </Label>
               <Select value={form.theoryLensId} onValueChange={(v) => setForm({ ...form, theoryLensId: v })}>
@@ -413,7 +413,7 @@ export default function JrePage() {
                 />
               )}
               {form.theoryLensId && form.theoryLensId !== '__none' && (
-                <p className="text-xs text-amber-600 dark:text-amber-400 flex items-start gap-1 mt-1">
+                <p className="text-xs text-gold dark:text-gold/80 flex items-start gap-1 mt-1">
                   <AlertCircle className="w-3 h-3 mt-0.5 shrink-0" />
                   التحليل النظري غير مُلزِم قانونياً ولا يُشكِّل سلطة قضائية ملزمة. يُعرض منفصلاً عن الحكم دائماً.
                 </p>

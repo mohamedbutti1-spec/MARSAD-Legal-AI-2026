@@ -34,7 +34,7 @@ export default function UaeFrance() {
         <div className="text-center max-w-2xl mx-auto mb-10">
           <div className="flex justify-center items-center gap-4 mb-6">
             <div className="w-12 h-8 rounded shadow-sm overflow-hidden flex">
-              <div className="w-1/3 bg-green-600"></div><div className="w-1/3 bg-white"></div><div className="w-1/3 bg-black"></div>
+              <div className="w-1/3 bg-heading"></div><div className="w-1/3 bg-white"></div><div className="w-1/3 bg-black"></div>
             </div>
             <Scale className="w-8 h-8 text-primary" />
             <div className="w-12 h-8 rounded shadow-sm overflow-hidden flex">
@@ -67,7 +67,7 @@ export default function UaeFrance() {
           <div className="space-y-6 animate-in fade-in duration-500">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* UAE Panel */}
-              <Card className="border-t-4 border-t-green-600">
+              <Card className="border-t-4 border-t-heading">
                 <CardHeader className="bg-muted/10 pb-4">
                   <CardTitle className="font-serif text-xl flex items-center justify-between">
                     UAE Law Application
@@ -106,7 +106,7 @@ export default function UaeFrance() {
                   <ul className="space-y-3">
                     {compareMutation.data.similarities.map((item, i) => (
                       <li key={i} className="flex gap-3 text-sm">
-                        <Check className="w-5 h-5 text-green-500 shrink-0" />
+                        <Check className="w-5 h-5 text-heading shrink-0" />
                         <span className="text-muted-foreground">{item}</span>
                       </li>
                     ))}

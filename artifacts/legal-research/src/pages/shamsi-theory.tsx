@@ -226,13 +226,13 @@ const HUE_CLASSES: Record<string, { bg: string; icon: string; ring: string; badg
   violet:  { bg: 'bg-violet-50',  icon: 'text-violet-600',  ring: 'border-violet-200', badge: 'bg-violet-100 text-violet-700' },
   sky:     { bg: 'bg-sky-50',     icon: 'text-sky-600',     ring: 'border-sky-200',    badge: 'bg-sky-100 text-sky-700' },
   teal:    { bg: 'bg-teal-50',    icon: 'text-teal-600',    ring: 'border-teal-200',   badge: 'bg-teal-100 text-teal-700' },
-  amber:   { bg: 'bg-amber-50',   icon: 'text-amber-600',   ring: 'border-amber-200',  badge: 'bg-amber-100 text-amber-700' },
+  amber:   { bg: 'bg-gold/10',   icon: 'text-gold',   ring: 'border-gold/25',  badge: 'bg-gold/15 text-gold' },
   rose:    { bg: 'bg-rose-50',    icon: 'text-rose-600',    ring: 'border-rose-200',   badge: 'bg-rose-100 text-rose-700' },
   emerald: { bg: 'bg-emerald-50', icon: 'text-emerald-600', ring: 'border-emerald-200',badge: 'bg-emerald-100 text-emerald-700' },
   indigo:  { bg: 'bg-indigo-50',  icon: 'text-indigo-600',  ring: 'border-indigo-200', badge: 'bg-indigo-100 text-indigo-700' },
   purple:  { bg: 'bg-purple-50',  icon: 'text-purple-600',  ring: 'border-purple-200', badge: 'bg-purple-100 text-purple-700' },
   cyan:    { bg: 'bg-cyan-50',    icon: 'text-cyan-600',    ring: 'border-cyan-200',   badge: 'bg-cyan-100 text-cyan-700' },
-  orange:  { bg: 'bg-orange-50',  icon: 'text-orange-600',  ring: 'border-orange-200', badge: 'bg-orange-100 text-orange-700' },
+  orange:  { bg: 'bg-gold/10',  icon: 'text-gold',  ring: 'border-gold/25', badge: 'bg-gold/15 text-gold' },
   lime:    { bg: 'bg-lime-50',    icon: 'text-lime-600',    ring: 'border-lime-200',   badge: 'bg-lime-100 text-lime-700' },
 };
 
@@ -336,9 +336,9 @@ function AsliGauge({ score = 78 }: { score?: number }) {
       <div className="grid grid-cols-2 gap-2 text-xs w-full max-w-xs" dir="rtl">
         {[
           { label: 'خطر شديد', range: '0 – 40', color: 'bg-red-500' },
-          { label: 'امتثال جزئي', range: '41 – 70', color: 'bg-amber-500' },
+          { label: 'امتثال جزئي', range: '41 – 70', color: 'bg-gold' },
           { label: 'مشروع مشروط', range: '71 – 85', color: 'bg-lime-500' },
-          { label: 'مشروع تام', range: '86 – 100', color: 'bg-green-500' },
+          { label: 'مشروع تام', range: '86 – 100', color: 'bg-heading' },
         ].map((item) => (
           <div key={item.label} className="flex items-center gap-1.5">
             <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${item.color}`} />
@@ -494,8 +494,8 @@ export default function ShamsiTheory() {
                 icon: Zap,
                 titleAr: 'سرعة إصدار القرار الرقمي',
                 descAr: 'تُنتج الأنظمة الرقمية قرارات إدارية في أجزاء من الثانية، مما يجعل آليات الرقابة التقليدية عاجزة عن مواكبة الوتيرة أو تقييم المشروعية في الوقت الفعلي.',
-                color: 'border-amber-300 bg-amber-50',
-                iconColor: 'text-amber-600 bg-amber-100',
+                color: 'border-gold/40 bg-gold/10',
+                iconColor: 'text-gold bg-gold/15',
               },
               {
                 icon: AlertTriangle,

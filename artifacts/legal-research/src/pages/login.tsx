@@ -124,19 +124,13 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      {/* Background pattern */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-amber-500/5 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-amber-500/5 blur-3xl" />
-      </div>
-
       <div className="relative w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 mb-4">
-            <Shield className="w-8 h-8 text-amber-500" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gold/10 border border-gold/20 mb-4">
+            <Shield className="w-8 h-8 text-gold" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground mb-1">MARSAD</h1>
+          <h1 className="text-2xl font-bold text-heading mb-1">MARSAD</h1>
           <p className="text-sm text-muted-foreground">
             منصة القرارات الإدارية الذكية
           </p>
@@ -197,12 +191,12 @@ export default function Login() {
 
             <Button
               type="submit"
-              className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold"
+              className="gold-hover-glow w-full bg-gold hover:opacity-90 text-background font-semibold"
               disabled={loading}
             >
               {loading ? (
                 <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span className="w-4 h-4 border-2 border-background/30 border-t-background rounded-full animate-spin" />
                   جارٍ تسجيل الدخول…
                 </span>
               ) : (
@@ -221,11 +215,11 @@ export default function Login() {
               variant="outline"
               onClick={handleGuestLogin}
               disabled={guestLoading || loading}
-              className="w-full border-amber-500/30 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10 font-medium"
+              className="w-full border-gold/30 text-gold hover:bg-gold/10 font-medium"
             >
               {guestLoading ? (
                 <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 border-2 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
+                  <span className="w-4 h-4 border-2 border-gold/30 border-t-gold rounded-full animate-spin" />
                   جارٍ الدخول…
                 </span>
               ) : (
@@ -260,7 +254,7 @@ export default function Login() {
                     onClick={() => fillDemo(acc.username)}
                     className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-muted text-xs text-left transition-colors group"
                   >
-                    <span className="font-mono text-amber-600 group-hover:text-amber-500">
+                    <span className="font-mono text-gold group-hover:text-gold/80">
                       {acc.username}
                     </span>
                     <span className="text-muted-foreground">{acc.labelAr}</span>

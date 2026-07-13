@@ -74,8 +74,8 @@ function StatusRing({ status }: { status: 'complete' | 'skipped' | 'pending' }) 
     </div>
   );
   if (status === 'skipped') return (
-    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-amber-50 dark:bg-amber-950/30 border-2 border-amber-300 dark:border-amber-700 shrink-0">
-      <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gold/10 dark:bg-gold/30 border-2 border-gold/40 dark:border-gold shrink-0">
+      <AlertTriangle className="w-3.5 h-3.5 text-gold" />
     </div>
   );
   return (
@@ -93,7 +93,7 @@ function ConfidenceBadge({ score }: { score: number | null }) {
   const color = pct >= 80
     ? 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-950/30 dark:border-emerald-800/40'
     : pct >= 60
-      ? 'text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-950/30 dark:border-amber-800/40'
+      ? 'text-gold bg-gold/10 border-gold/25 dark:text-gold/80 dark:bg-gold/30 dark:border-gold/40'
       : 'text-red-700 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-950/30 dark:border-red-800/40';
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded border text-[10px] font-bold ${color}`}>
@@ -237,7 +237,7 @@ function StageDetailPanel({ stage }: { stage: ReplayStage }) {
           {stage.riskIndicators && stage.riskIndicators.length > 0 ? (
             <div className="flex flex-wrap gap-1">
               {stage.riskIndicators.map((r, i) => (
-                <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 text-amber-700 dark:text-amber-400">
+                <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-gold/10 dark:bg-gold/30 border border-gold/25 dark:border-gold/40 text-gold dark:text-gold/80">
                   {r}
                 </span>
               ))}
@@ -409,7 +409,7 @@ function TimelineNode({
                   <span className="text-[10px] text-muted-foreground/40 italic">لم يُنفَّذ بعد</span>
                 )}
                 {stage.status === 'skipped' && (
-                  <span className="text-[10px] text-amber-600 dark:text-amber-400 italic">مُشتَق من بيانات ذات صلة</span>
+                  <span className="text-[10px] text-gold dark:text-gold/80 italic">مُشتَق من بيانات ذات صلة</span>
                 )}
               </div>
             </div>
@@ -538,8 +538,8 @@ export default function DecisionReplay({ decisionId }: { decisionId: number }) {
             <span>مكتملة</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3.5 h-3.5 rounded-full bg-amber-50 dark:bg-amber-950/30 border-2 border-amber-300 dark:border-amber-700 flex items-center justify-center">
-              <AlertTriangle className="w-2 h-2 text-amber-500" />
+            <div className="w-3.5 h-3.5 rounded-full bg-gold/10 dark:bg-gold/30 border-2 border-gold/40 dark:border-gold flex items-center justify-center">
+              <AlertTriangle className="w-2 h-2 text-gold" />
             </div>
             <span>مُشتَقة</span>
           </div>

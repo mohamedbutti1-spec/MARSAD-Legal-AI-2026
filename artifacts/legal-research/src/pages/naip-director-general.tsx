@@ -80,7 +80,7 @@ function statusConfig(status: DecisionStatus) {
   switch (status) {
     case 'sealed':   return { label: 'مختوم', bg: 'bg-blue-100 dark:bg-blue-950/40', text: 'text-blue-700 dark:text-blue-400' };
     case 'active':   return { label: 'نشط', bg: 'bg-emerald-100 dark:bg-emerald-950/40', text: 'text-emerald-700 dark:text-emerald-400' };
-    case 'draft':    return { label: 'مسودة', bg: 'bg-amber-100 dark:bg-amber-950/40', text: 'text-amber-700 dark:text-amber-400' };
+    case 'draft':    return { label: 'مسودة', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80' };
     case 'archived': return { label: 'مؤرشف', bg: 'bg-muted', text: 'text-muted-foreground' };
     default:         return { label: status, bg: 'bg-muted', text: 'text-muted-foreground' };
   }
@@ -89,8 +89,8 @@ function statusConfig(status: DecisionStatus) {
 function riskConfig(level: RiskLevel | null | undefined) {
   switch (level) {
     case 'critical': return { label: 'حرج', bg: 'bg-red-100 dark:bg-red-950/40', text: 'text-red-700 dark:text-red-400', bar: 'bg-red-500' };
-    case 'high':     return { label: 'عالٍ', bg: 'bg-orange-100 dark:bg-orange-950/40', text: 'text-orange-700 dark:text-orange-400', bar: 'bg-orange-500' };
-    case 'moderate': return { label: 'متوسط', bg: 'bg-amber-100 dark:bg-amber-950/40', text: 'text-amber-700 dark:text-amber-400', bar: 'bg-amber-500' };
+    case 'high':     return { label: 'عالٍ', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80', bar: 'bg-gold' };
+    case 'moderate': return { label: 'متوسط', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80', bar: 'bg-gold' };
     case 'low':      return { label: 'منخفض', bg: 'bg-emerald-100 dark:bg-emerald-950/40', text: 'text-emerald-700 dark:text-emerald-400', bar: 'bg-emerald-500' };
     default:         return { label: '—', bg: 'bg-muted', text: 'text-muted-foreground', bar: 'bg-muted-foreground' };
   }
@@ -104,7 +104,7 @@ function truncate(str: string, max: number) {
 function ccsColor(score: number | null) {
   if (score == null) return 'text-muted-foreground';
   if (score >= 75) return 'text-emerald-600 dark:text-emerald-400';
-  if (score >= 50) return 'text-amber-600 dark:text-amber-400';
+  if (score >= 50) return 'text-gold dark:text-gold/80';
   return 'text-red-600 dark:text-red-400';
 }
 
@@ -227,7 +227,7 @@ export default function NaipDirectorGeneral() {
             colorClass={
               kpi?.avgNriOrg == null ? 'text-foreground' :
               kpi.avgNriOrg >= 75 ? 'text-red-600 dark:text-red-400' :
-              kpi.avgNriOrg >= 50 ? 'text-amber-600 dark:text-amber-400' :
+              kpi.avgNriOrg >= 50 ? 'text-gold dark:text-gold/80' :
               'text-emerald-600 dark:text-emerald-400'
             }
             icon={<Activity className="w-4 h-4" />}
@@ -243,7 +243,7 @@ export default function NaipDirectorGeneral() {
             labelAr="تحذيرات دستورية"
             labelEn="Constitutional Warnings"
             value={kpi?.criticalWarningsOrg}
-            colorClass="text-amber-600 dark:text-amber-400"
+            colorClass="text-gold dark:text-gold/80"
             icon={<AlertTriangle className="w-4 h-4" />}
           />
         </div>
@@ -318,8 +318,8 @@ export default function NaipDirectorGeneral() {
               <div className="space-y-2">
                 {([
                   { key: 'critical' as const, label: 'حرج', color: 'bg-red-500' },
-                  { key: 'high' as const, label: 'عالٍ', color: 'bg-orange-500' },
-                  { key: 'moderate' as const, label: 'متوسط', color: 'bg-amber-500' },
+                  { key: 'high' as const, label: 'عالٍ', color: 'bg-gold' },
+                  { key: 'moderate' as const, label: 'متوسط', color: 'bg-gold' },
                   { key: 'low' as const, label: 'منخفض', color: 'bg-emerald-500' },
                 ]).map((l) => {
                   const count = riskDist[l.key];
@@ -352,8 +352,8 @@ export default function NaipDirectorGeneral() {
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { key: 'compliant' as const, label: 'ممتثل', color: 'text-emerald-500', bg: 'bg-emerald-100 dark:bg-emerald-950/40' },
-                  { key: 'minorConcern' as const, label: 'قلق بسيط', color: 'text-amber-500', bg: 'bg-amber-100 dark:bg-amber-950/40' },
-                  { key: 'significantConcern' as const, label: 'قلق كبير', color: 'text-orange-500', bg: 'bg-orange-100 dark:bg-orange-950/40' },
+                  { key: 'minorConcern' as const, label: 'قلق بسيط', color: 'text-gold', bg: 'bg-gold/15 dark:bg-gold/40' },
+                  { key: 'significantConcern' as const, label: 'قلق كبير', color: 'text-gold', bg: 'bg-gold/15 dark:bg-gold/40' },
                   { key: 'deficient' as const, label: 'قاصر', color: 'text-red-500', bg: 'bg-red-100 dark:bg-red-950/40' },
                 ].map((l) => (
                   <div key={l.key} className={`${l.bg} rounded-lg p-3 text-center`}>
@@ -372,7 +372,7 @@ export default function NaipDirectorGeneral() {
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {[
             { href: '/decisions', icon: <FileText className="w-5 h-5" />, label: 'القرارات', labelEn: 'Decisions', color: 'text-blue-500' },
-            { href: '/risk-engine', icon: <Target className="w-5 h-5" />, label: 'محرك المخاطر', labelEn: 'Risk Engine', color: 'text-orange-500' },
+            { href: '/risk-engine', icon: <Target className="w-5 h-5" />, label: 'محرك المخاطر', labelEn: 'Risk Engine', color: 'text-gold' },
             { href: '/constitutional-intelligence', icon: <ShieldAlert className="w-5 h-5" />, label: 'المراجعة الدستورية', labelEn: 'Constitutional Review', color: 'text-purple-500' },
           ].map((a) => (
             <Link key={a.href} href={a.href}>

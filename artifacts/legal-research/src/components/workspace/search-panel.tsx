@@ -24,10 +24,10 @@ interface SearchPanelProps {
 const TYPE_LABELS: Record<string, { ar: string; en: string; color: string }> = {
   question:       { ar: 'سؤال',          en: 'Question',        color: 'bg-purple-100 text-purple-800' },
   answer:         { ar: 'جواب',          en: 'Answer',          color: 'bg-blue-100 text-blue-800' },
-  authority:      { ar: 'سلطة قانونية', en: 'Authority',       color: 'bg-green-100 text-green-800' },
-  document:       { ar: 'وثيقة',         en: 'Document',        color: 'bg-amber-100 text-amber-800' },
+  authority:      { ar: 'سلطة قانونية', en: 'Authority',       color: 'bg-heading/15 text-heading/75' },
+  document:       { ar: 'وثيقة',         en: 'Document',        color: 'bg-gold/15 text-gold/75' },
   note:           { ar: 'ملاحظة',        en: 'Note',            color: 'bg-gray-100 text-gray-800' },
-  highlight:      { ar: 'تظليل',         en: 'Highlight',       color: 'bg-yellow-100 text-yellow-800' },
+  highlight:      { ar: 'تظليل',         en: 'Highlight',       color: 'bg-gold/15 text-gold/75' },
   bookmark:       { ar: 'إشارة مرجعية', en: 'Bookmark',        color: 'bg-red-100 text-red-800' },
   timeline_entry: { ar: 'إدخال زمني',   en: 'Timeline Entry',  color: 'bg-indigo-100 text-indigo-800' },
 };

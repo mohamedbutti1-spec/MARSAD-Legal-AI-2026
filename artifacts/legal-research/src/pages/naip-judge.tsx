@@ -88,7 +88,7 @@ function statusConfig(status: DecisionStatus) {
   switch (status) {
     case 'sealed':   return { label: 'مختوم', bg: 'bg-blue-100 dark:bg-blue-950/40', text: 'text-blue-700 dark:text-blue-400' };
     case 'active':   return { label: 'نشط', bg: 'bg-emerald-100 dark:bg-emerald-950/40', text: 'text-emerald-700 dark:text-emerald-400' };
-    case 'draft':    return { label: 'مسودة', bg: 'bg-amber-100 dark:bg-amber-950/40', text: 'text-amber-700 dark:text-amber-400' };
+    case 'draft':    return { label: 'مسودة', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80' };
     case 'archived': return { label: 'مؤرشف', bg: 'bg-muted', text: 'text-muted-foreground' };
     default:         return { label: status, bg: 'bg-muted', text: 'text-muted-foreground' };
   }
@@ -97,8 +97,8 @@ function statusConfig(status: DecisionStatus) {
 function riskConfig(level: RiskLevel | null | undefined) {
   switch (level) {
     case 'critical': return { label: 'حرج', bg: 'bg-red-100 dark:bg-red-950/40', text: 'text-red-700 dark:text-red-400' };
-    case 'high':     return { label: 'عالٍ', bg: 'bg-orange-100 dark:bg-orange-950/40', text: 'text-orange-700 dark:text-orange-400' };
-    case 'moderate': return { label: 'متوسط', bg: 'bg-amber-100 dark:bg-amber-950/40', text: 'text-amber-700 dark:text-amber-400' };
+    case 'high':     return { label: 'عالٍ', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80' };
+    case 'moderate': return { label: 'متوسط', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80' };
     case 'low':      return { label: 'منخفض', bg: 'bg-emerald-100 dark:bg-emerald-950/40', text: 'text-emerald-700 dark:text-emerald-400' };
     default:         return { label: '—', bg: 'bg-muted', text: 'text-muted-foreground' };
   }
@@ -112,21 +112,21 @@ function truncate(str: string, max: number) {
 function jspColor(score: number | null) {
   if (score == null) return 'text-muted-foreground';
   if (score >= 70) return 'text-emerald-600 dark:text-emerald-400';
-  if (score >= 40) return 'text-amber-600 dark:text-amber-400';
+  if (score >= 40) return 'text-gold dark:text-gold/80';
   return 'text-red-600 dark:text-red-400';
 }
 
 function jspGaugeColor(score: number | null) {
   if (score == null) return 'text-muted-foreground';
   if (score >= 70) return 'text-emerald-500';
-  if (score >= 40) return 'text-amber-500';
+  if (score >= 40) return 'text-gold';
   return 'text-red-500';
 }
 
 function ccsColor(score: number | null) {
   if (score == null) return 'text-muted-foreground';
   if (score >= 75) return 'text-emerald-600 dark:text-emerald-400';
-  if (score >= 50) return 'text-amber-600 dark:text-amber-400';
+  if (score >= 50) return 'text-gold dark:text-gold/80';
   return 'text-red-600 dark:text-red-400';
 }
 

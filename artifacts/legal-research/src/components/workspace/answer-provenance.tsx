@@ -23,15 +23,15 @@ interface AnswerProvenanceProps {
 }
 
 const CLASS_CONFIG: Record<string, { label: string; labelEn: string; variant: 'default' | 'secondary' | 'outline'; bg: string }> = {
-  binding:     { label: 'ملزم',     labelEn: 'Binding',      variant: 'default',   bg: 'bg-green-100 text-green-800 border-green-300' },
+  binding:     { label: 'ملزم',     labelEn: 'Binding',      variant: 'default',   bg: 'bg-heading/15 text-heading/75 border-heading/40' },
   persuasive:  { label: 'إرشادي',  labelEn: 'Persuasive',   variant: 'secondary', bg: 'bg-blue-100 text-blue-800 border-blue-300' },
   non_binding: { label: 'غير ملزم', labelEn: 'Non-binding',  variant: 'outline',   bg: 'bg-gray-100 text-gray-700 border-gray-300' },
 };
 
 function confidenceBg(score: number): string {
-  if (score >= 0.85) return 'bg-green-100 text-green-800';
+  if (score >= 0.85) return 'bg-heading/15 text-heading/75';
   if (score >= 0.65) return 'bg-blue-100 text-blue-800';
-  if (score >= 0.4)  return 'bg-amber-100 text-amber-800';
+  if (score >= 0.4)  return 'bg-gold/15 text-gold/75';
   return 'bg-gray-100 text-gray-600';
 }
 
@@ -66,7 +66,7 @@ export function AnswerProvenance({
 
       {/* Summary counts */}
       <div className="flex gap-2 mb-3 flex-wrap">
-        <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-800 border border-green-300">
+        <span className="text-xs px-2 py-0.5 rounded-full bg-heading/15 text-heading/75 border border-heading/40">
           {t('ملزم', 'Binding')}: {binding.length}
         </span>
         <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-300">
