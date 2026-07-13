@@ -50,6 +50,25 @@ function getPerms(role: string) {
   return PERMISSIONS[role as keyof typeof PERMISSIONS] ?? PERMISSIONS.citizen;
 }
 
+/**
+ * Al-Shamsi Theory data (per-principle `alShamsiDimensions`) is owner-only.
+ * Strips it from any CIL assessment/report payload before it is sent to a
+ * non-owner role, regardless of what the underlying stored record contains.
+ */
+function stripShamsiFromCilPayload<T extends { principleResults?: unknown }>(
+  payload: T | null | undefined,
+  role: string,
+): T | null | undefined {
+  if (!payload || role === "owner") return payload;
+  if (!Array.isArray(payload.principleResults)) return payload;
+  return {
+    ...payload,
+    principleResults: payload.principleResults.map((p) =>
+      p && typeof p === "object" ? { ...p, alShamsiDimensions: [] } : p,
+    ),
+  };
+}
+
 type DecisionWithSeal = typeof decisionsTable.$inferSelect & { dciIsSealed: boolean };
 
 async function assertCilAccess(
@@ -355,7 +374,8 @@ router.get(
         return;
       }
 
-      res.json({ assessment, status: assessment.status });
+      const { role } = getUserInfo(req);
+      res.json({ assessment: stripShamsiFromCilPayload(assessment, role), status: assessment.status });
     } catch (err) {
       console.error("[cil.assess.get]", err);
       e500(res, "فشل تحميل تقييم الذكاء الدستوري");
@@ -478,7 +498,8 @@ router.get(
       if (!decision) { e403(res, "لا توجد صلاحية الوصول لهذا القرار"); return; }
 
       const report = await buildCilReport(decisionId);
-      res.json(report);
+      const { role } = getUserInfo(req);
+      res.json(stripShamsiFromCilPayload(report as { principleResults?: unknown }, role));
     } catch (err) {
       console.error("[cil.report.get]", err);
       if (err instanceof Error && err.message.includes("not yet completed")) {

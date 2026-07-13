@@ -26,6 +26,7 @@ import {
 import {
   requirePermission,
   requireGovernanceRead,
+  stripShamsiFromRiskAssessment,
 } from "../middlewares/roleAuth";
 import { logAudit } from "../middlewares/auditLog";
 import { e400, e403, e404, e500 } from "../lib/sendError";
@@ -134,7 +135,13 @@ router.get("/risk/assessment/:decisionId", requirePermission("canReadRiskAssessm
         .orderBy(desc(riskHistoryTable.createdAt)).limit(10),
     ]);
 
-    res.json({ assessment, scenarios, treatments, history });
+    const { role } = getUserInfo(req);
+    res.json({
+      assessment: stripShamsiFromRiskAssessment(assessment, role),
+      scenarios,
+      treatments,
+      history: history.map((h) => stripShamsiFromRiskAssessment(h, role)),
+    });
   } catch (err) {
     console.error("[risk.assessment.get]", err);
     e500(res, "Failed to load risk assessment");
@@ -172,7 +179,7 @@ router.post("/risk/assessment/:decisionId/recalculate", requirePermission("canRe
       triggerReason: "manual_recalculate",
     });
 
-    res.json({ result, message: "تم إعادة احتساب مؤشرات المخاطر بنجاح" });
+    res.json({ result: stripShamsiFromRiskAssessment(result as unknown as Record<string, unknown>, role), message: "تم إعادة احتساب مؤشرات المخاطر بنجاح" });
   } catch (err) {
     console.error("[risk.assessment.recalculate]", err);
     e500(res, (err instanceof Error) ? err.message : "Recalculation failed");
@@ -468,7 +475,8 @@ router.get("/risk/history/:decisionId", requirePermission("canReadRiskAssessment
       .where(eq(riskReviewsTable.decisionId, decisionId))
       .orderBy(desc(riskReviewsTable.createdAt));
 
-    res.json({ history, reviews });
+    const { role } = getUserInfo(req);
+    res.json({ history: history.map((h) => stripShamsiFromRiskAssessment(h, role)), reviews });
   } catch (err) {
     console.error("[risk.history.get]", err);
     e500(res, "Failed to load risk history");

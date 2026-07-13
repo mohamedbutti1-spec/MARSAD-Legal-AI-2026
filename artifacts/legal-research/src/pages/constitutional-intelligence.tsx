@@ -225,6 +225,7 @@ function PrincipleCard({
   expanded: boolean;
   onToggle: () => void;
 }) {
+  const { canUseShamsiFramework } = useUserContext();
   const sc = statusConfig(principle.status);
   const score = principle.complianceScore;
 
@@ -317,8 +318,8 @@ function PrincipleCard({
             </div>
           )}
 
-          {/* Al-Shamsi Dimensions */}
-          {(principle.alShamsiDimensions?.length ?? 0) > 0 && (
+          {/* Al-Shamsi Dimensions — owner-only */}
+          {canUseShamsiFramework && (principle.alShamsiDimensions?.length ?? 0) > 0 && (
             <div>
               <div className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2">أبعاد نظرية الشامسي</div>
               <div className="grid grid-cols-2 gap-2">
@@ -686,7 +687,7 @@ function DecisionAssessmentView({
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 
 export default function ConstitutionalIntelligence() {
-  const { role, userId, userOrg, lang, canViewCilDashboard: canViewCilDashboardPermission, canRunCilAssessment, canAcknowledgeCilWarnings } = useUserContext();
+  const { role, userId, userOrg, lang, canViewCilDashboard: canViewCilDashboardPermission, canRunCilAssessment, canAcknowledgeCilWarnings, canUseShamsiFramework } = useUserContext();
   const t = useT();
   const [selectedDecisionId, setSelectedDecisionId] = useState<number | null>(null);
   const headers = getHeaders(role, userId, userOrg);
@@ -746,7 +747,9 @@ export default function ConstitutionalIntelligence() {
                   {t('المراجعة الدستورية', 'Constitutional Review')}
                 </h1>
                 <p className="text-xs text-muted-foreground">
-                  {t('نظرية الشامسي™ · 12 مبدأً دستورياً', 'Al-Shamsi Theory™ · 12 Constitutional Principles')}
+                  {canUseShamsiFramework
+                    ? t('نظرية الشامسي™ · 12 مبدأً دستورياً', 'Al-Shamsi Theory™ · 12 Constitutional Principles')
+                    : t('12 مبدأً دستورياً', '12 Constitutional Principles')}
                 </p>
               </div>
             </div>

@@ -50,11 +50,18 @@ interface AdpData {
   docHash: string;
   qrDataUrl: string;
   docSerial: string;
+  /**
+   * Al-Shamsi Theory is owner-only. When false, the exported PDF omits the
+   * dedicated 16-dimension section, per-stage Shamsi dimension callouts, and
+   * the Al-Shamsi compliance badge — everyone with export access still gets
+   * the rest of the ADP (DCI, replay timeline, evidence chain, CIL scores).
+   */
+  includeShamsi: boolean;
 }
 
 // ─── Data Assembly ────────────────────────────────────────────────────────────
 
-async function assembleAdpData(decisionId: number): Promise<AdpData> {
+async function assembleAdpData(decisionId: number, includeShamsi: boolean): Promise<AdpData> {
   const [
     decisionRows,
     dciRows,
@@ -128,6 +135,7 @@ async function assembleAdpData(decisionId: number): Promise<AdpData> {
     docHash,
     qrDataUrl,
     docSerial,
+    includeShamsi,
   };
 }
 
@@ -936,7 +944,7 @@ function buildExecutiveSummary(d: AdpData): string {
         <div class="exec-summary-header">الامتثال الدستوري والقانوني / Constitutional & Legal Compliance</div>
         <div class="exec-summary-body">
           ${dci ? fieldRow("التحقق الدستوري", "Constitutional Validation", statusBadge(dci.constitutionalValidationStatus)) : ""}
-          ${dci ? fieldRow("امتثال إطار الشامسي", "Al-Shamsi Framework", badge(dci.alShamsiFrameworkCompliance, "navy")) : ""}
+          ${dci && d.includeShamsi ? fieldRow("امتثال إطار الشامسي", "Al-Shamsi Framework", badge(dci.alShamsiFrameworkCompliance, "navy")) : ""}
           ${dci ? fieldRow("الشرعية القانونية", "Legality Status", statusBadge(dci.legalityStatus)) : ""}
           ${dci ? fieldRow("التناسب", "Proportionality", statusBadge(dci.proportionalityStatus)) : ""}
           ${dci ? fieldRow("مستوى المراقبة البشرية", "Human Oversight Level", badge(dci.humanOversightLevel, "blue")) : ""}
@@ -1038,7 +1046,7 @@ function buildDciSection(d: AdpData): string {
         ${fieldRow("التناسب", "Proportionality", badge(dci.proportionalityStatus, dci.proportionalityStatus === "proportionate" ? "green" : dci.proportionalityStatus === "disproportionate" ? "red" : "amber"))}
         ${fieldRow("الشرعية", "Legality", badge(dci.legalityStatus, dci.legalityStatus === "confirmed" ? "green" : dci.legalityStatus === "violated" ? "red" : "amber"))}
         ${fieldRow("التحقق الدستوري", "Constitutional Validation", badge(dci.constitutionalValidationStatus, dci.constitutionalValidationStatus === "passed" ? "green" : dci.constitutionalValidationStatus === "failed" ? "red" : "grey"))}
-        ${fieldRow("امتثال إطار الشامسي", "Al-Shamsi Framework Compliance", badge(dci.alShamsiFrameworkCompliance, dci.alShamsiFrameworkCompliance === "full" ? "green" : dci.alShamsiFrameworkCompliance === "non_compliant" ? "red" : "amber"))}
+        ${d.includeShamsi ? fieldRow("امتثال إطار الشامسي", "Al-Shamsi Framework Compliance", badge(dci.alShamsiFrameworkCompliance, dci.alShamsiFrameworkCompliance === "full" ? "green" : dci.alShamsiFrameworkCompliance === "non_compliant" ? "red" : "amber")) : ""}
         ${fieldRow("مؤشر الاستقرار القانوني LSI", "Legal Stability Index (LSI)", badge(dci.lsiStatus, dci.lsiStatus === "stable" ? "green" : dci.lsiStatus === "highly_variable" ? "red" : "amber"))}
         ${fieldRow("مستوى تباين QVA", "QVA Variance Level", badge(dci.qvaVarianceLevel, dci.qvaVarianceLevel === "low" ? "green" : dci.qvaVarianceLevel === "high" ? "red" : "amber"))}
         ${fieldRow("عدد تشغيلات QVA", "QVA Run Count", `${dci.qvaRunCount}`)}
@@ -1167,7 +1175,7 @@ function buildStageDetails(d: AdpData): string {
           </div>
         </div>
 
-        ${dims && Object.keys(dims).length > 0 ? `
+        ${d.includeShamsi && dims && Object.keys(dims).length > 0 ? `
         <div class="stage-sub-section">
           <div class="stage-sub-label">أبعاد الشامسي المطبَّقة <span class="en">Applied Al-Shamsi Dimensions</span></div>
           <div class="stage-sub-content" style="font-size:7.5pt;">${Object.entries(dims).slice(0, 4).map(([k, v]) => `<span style="margin-left:10px;"><strong>${esc(k)}:</strong> ${esc(String(v))}</span>`).join("  ·  ")}</div>
@@ -1286,6 +1294,20 @@ function buildAiReasoningSummary(d: AdpData): string {
           ${fieldRow("الاستنتاج", "Conclusion", fmt(humanSection?.conclusion as string))}
         </div>` : ""}
       `}
+    </div>
+  </div>`;
+}
+
+/** Placeholder rendered in place of the Al-Shamsi section for non-owner exports. */
+function buildShamsiRedactedNotice(): string {
+  return `
+  <div class="page-break">
+    <div class="section-header-bar">
+      <div><div class="title-ar">أبعاد نظرية الشامسي — 16 بُعداً</div><div class="title-en">Al-Shamsi Theory Dimensions (16)</div></div>
+      <div class="num">08</div>
+    </div>
+    <div class="section">
+      <p class="not-processed">هذا القسم متاح فقط لمالك النظام / This section is restricted to the platform owner</p>
     </div>
   </div>`;
 }
@@ -1748,7 +1770,7 @@ function buildHtml(data: AdpData): string {
   ${buildStageDetails(data)}
   ${buildEvidenceChain(data)}
   ${buildAiReasoningSummary(data)}
-  ${buildAlShamsiDimensions(data)}
+  ${data.includeShamsi ? buildAlShamsiDimensions(data) : buildShamsiRedactedNotice()}
   ${buildIndicesAndRisk(data)}
   ${buildConstitutionalReviewSummary(data)}
   ${buildCilSection(data)}
@@ -1805,8 +1827,11 @@ async function renderPdf(html: string, docHash: string): Promise<Buffer> {
  * Returns a PDF Buffer ready to stream to the client.
  * Throws if the decision does not exist.
  */
-export async function generateAdpPdf(decisionId: number): Promise<{ pdf: Buffer; filename: string; docHash: string }> {
-  const data = await assembleAdpData(decisionId);
+export async function generateAdpPdf(
+  decisionId: number,
+  includeShamsi: boolean,
+): Promise<{ pdf: Buffer; filename: string; docHash: string }> {
+  const data = await assembleAdpData(decisionId, includeShamsi);
   const html = buildHtml(data);
   const pdf = await renderPdf(html, data.docHash);
   const datePart = data.generatedAt.slice(0, 10);

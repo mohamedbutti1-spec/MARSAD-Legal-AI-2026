@@ -117,14 +117,6 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
       titleEn: 'Legal Reference',
       items: [
         {
-          href: '/shamsi-theory',
-          labelAr: 'نظرية الشامسي',
-          labelEn: 'Al-Shamsi Theory',
-          icon: <Sparkles className="w-4.5 h-4.5" />,
-          show: true,
-          badge: 'مرجع',
-        },
-        {
           href: '/constitutional-principles',
           labelAr: 'المبادئ الدستورية',
           labelEn: 'Constitutional Principles',
@@ -336,6 +328,14 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
       titleAr: 'خاص',
       titleEn: 'Private',
       items: [
+        {
+          href: '/shamsi-theory',
+          labelAr: 'نظرية الشامسي',
+          labelEn: 'Al-Shamsi Theory',
+          icon: <Sparkles className="w-4.5 h-4.5" />,
+          show: isOwner,
+          badge: 'خاص',
+        },
         {
           href: '/constitutional-intelligence',
           labelAr: 'المراجعة الدستورية',

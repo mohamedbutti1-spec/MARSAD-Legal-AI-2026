@@ -131,6 +131,8 @@ export interface RolePermissions {
   canViewJdtSimulation: boolean;
   /** Trigger a new JDT simulation (AI-powered judicial review simulation) */
   canRunJdtSimulation: boolean;
+  /** Owner-only: Al-Shamsi Theory / Framework (admin-os, court simulation, shamsi-analysis, dimension displays) */
+  canUseShamsiFramework: boolean;
 }
 
 // ─── Permission Matrix ────────────────────────────────────────────────────────
@@ -153,7 +155,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canReadConstitutionalAssessment: true, canRunCilAssessment: true,
     canAcknowledgeCilWarnings: true, canViewCilDashboard: true,
     canViewNaipDashboard: true, canViewNaipSearch: true,
-    canViewJdtSimulation: true, canRunJdtSimulation: true,
+    canViewJdtSimulation: true, canRunJdtSimulation: true, canUseShamsiFramework: true,
   },
   supervisor: {
     canReadDecisionList: true, canReadDecisionDetail: true,
@@ -170,7 +172,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canReadConstitutionalAssessment: true, canRunCilAssessment: true,
     canAcknowledgeCilWarnings: true, canViewCilDashboard: true,
     canViewNaipDashboard: true, canViewNaipSearch: true,
-    canViewJdtSimulation: true, canRunJdtSimulation: true,
+    canViewJdtSimulation: true, canRunJdtSimulation: true, canUseShamsiFramework: false,
   },
   viewer: {
     canReadDecisionList: true, canReadDecisionDetail: true,
@@ -187,7 +189,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canReadConstitutionalAssessment: false, canRunCilAssessment: false,
     canAcknowledgeCilWarnings: false, canViewCilDashboard: false,
     canViewNaipDashboard: true, canViewNaipSearch: true,
-    canViewJdtSimulation: false, canRunJdtSimulation: false,
+    canViewJdtSimulation: false, canRunJdtSimulation: false, canUseShamsiFramework: false,
   },
 
   // ── 1. Minister — executive summary only ──────────────────────────────────
@@ -206,7 +208,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canReadConstitutionalAssessment: true, canRunCilAssessment: false,
     canAcknowledgeCilWarnings: false, canViewCilDashboard: true,
     canViewNaipDashboard: true, canViewNaipSearch: true,
-    canViewJdtSimulation: true, canRunJdtSimulation: true,
+    canViewJdtSimulation: true, canRunJdtSimulation: true, canUseShamsiFramework: false,
   },
 
   // ── 2. Undersecretary — decisions + delegation ────────────────────────────
@@ -225,7 +227,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canReadConstitutionalAssessment: true, canRunCilAssessment: false,
     canAcknowledgeCilWarnings: false, canViewCilDashboard: true,
     canViewNaipDashboard: true, canViewNaipSearch: true,
-    canViewJdtSimulation: true, canRunJdtSimulation: true,
+    canViewJdtSimulation: true, canRunJdtSimulation: true, canUseShamsiFramework: false,
   },
 
   // ── 3. Assistant Undersecretary — full stages + JDP, no CAR/audit ─────────
@@ -244,7 +246,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canReadConstitutionalAssessment: true, canRunCilAssessment: true,
     canAcknowledgeCilWarnings: false, canViewCilDashboard: true,
     canViewNaipDashboard: true, canViewNaipSearch: true,
-    canViewJdtSimulation: true, canRunJdtSimulation: true,
+    canViewJdtSimulation: true, canRunJdtSimulation: true, canUseShamsiFramework: false,
   },
 
   // ── 4. Director General — org-scoped, constitutional gates only ───────────
@@ -263,7 +265,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canReadConstitutionalAssessment: true, canRunCilAssessment: false,
     canAcknowledgeCilWarnings: false, canViewCilDashboard: true,
     canViewNaipDashboard: true, canViewNaipSearch: true,
-    canViewJdtSimulation: true, canRunJdtSimulation: false,
+    canViewJdtSimulation: true, canRunJdtSimulation: false, canUseShamsiFramework: false,
   },
 
   // ── 5. Department Director — own dept, stage status only ─────────────────
@@ -282,7 +284,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canReadConstitutionalAssessment: false, canRunCilAssessment: false,
     canAcknowledgeCilWarnings: false, canViewCilDashboard: false,
     canViewNaipDashboard: true, canViewNaipSearch: true,
-    canViewJdtSimulation: false, canRunJdtSimulation: false,
+    canViewJdtSimulation: false, canRunJdtSimulation: false, canUseShamsiFramework: false,
   },
 
   // ── 6. Legal Department — legal basis + full JDP ─────────────────────────
@@ -301,7 +303,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canReadConstitutionalAssessment: true, canRunCilAssessment: true,
     canAcknowledgeCilWarnings: false, canViewCilDashboard: true,
     canViewNaipDashboard: true, canViewNaipSearch: true,
-    canViewJdtSimulation: true, canRunJdtSimulation: true,
+    canViewJdtSimulation: true, canRunJdtSimulation: true, canUseShamsiFramework: false,
   },
 
   // ── 7. Constitutional Reviewer — all constitutional data + JDP + QVA/LSI ──
@@ -320,7 +322,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canReadConstitutionalAssessment: true, canRunCilAssessment: true,
     canAcknowledgeCilWarnings: true, canViewCilDashboard: true,
     canViewNaipDashboard: true, canViewNaipSearch: true,
-    canViewJdtSimulation: true, canRunJdtSimulation: true,
+    canViewJdtSimulation: true, canRunJdtSimulation: true, canUseShamsiFramework: false,
   },
 
   // ── 8. Internal Auditor — full read, no JDP strategy ─────────────────────
@@ -339,7 +341,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canReadConstitutionalAssessment: true, canRunCilAssessment: false,
     canAcknowledgeCilWarnings: false, canViewCilDashboard: true,
     canViewNaipDashboard: true, canViewNaipSearch: true,
-    canViewJdtSimulation: true, canRunJdtSimulation: false,
+    canViewJdtSimulation: true, canRunJdtSimulation: false, canUseShamsiFramework: false,
   },
 
   // ── 9. External Auditor — sealed decisions only + hash verification ───────
@@ -358,7 +360,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canReadConstitutionalAssessment: true, canRunCilAssessment: false,
     canAcknowledgeCilWarnings: false, canViewCilDashboard: true,
     canViewNaipDashboard: true, canViewNaipSearch: true,
-    canViewJdtSimulation: true, canRunJdtSimulation: false,
+    canViewJdtSimulation: true, canRunJdtSimulation: false, canUseShamsiFramework: false,
   },
 
   // ── 10. Judge — complete record except QVA raw ────────────────────────────
@@ -377,7 +379,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canReadConstitutionalAssessment: true, canRunCilAssessment: false,
     canAcknowledgeCilWarnings: true, canViewCilDashboard: true,
     canViewNaipDashboard: true, canViewNaipSearch: true,
-    canViewJdtSimulation: true, canRunJdtSimulation: true,
+    canViewJdtSimulation: true, canRunJdtSimulation: true, canUseShamsiFramework: false,
   },
 
   // ── 11. Citizen — CAR lookup by case number only ──────────────────────────
@@ -396,7 +398,7 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canReadConstitutionalAssessment: false, canRunCilAssessment: false,
     canAcknowledgeCilWarnings: false, canViewCilDashboard: false,
     canViewNaipDashboard: false, canViewNaipSearch: false,
-    canViewJdtSimulation: false, canRunJdtSimulation: false,
+    canViewJdtSimulation: false, canRunJdtSimulation: false, canUseShamsiFramework: false,
   },
 };
 

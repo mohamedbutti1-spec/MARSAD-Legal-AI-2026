@@ -31,7 +31,8 @@ import {
   makeDocCitations,
   makeSrcCitations,
 } from "../utils/rag";
-import { buildTheoryPromptSuffix, parseTheoryResponse } from "../utils/theory-lenses.js";
+import { buildTheoryPromptSuffix, parseTheoryResponse, sanitizeTheoryLensId } from "../utils/theory-lenses.js";
+import { isShamsiFrameworkEnabled } from "../middlewares/roleAuth";
 import { getUserId } from "../lib/route-helpers";
 import { aiAnalysisLimit, guestDailyQuestionLimit } from "../middlewares/rateLimits.js";
 import {
@@ -155,8 +156,14 @@ router.post(
     ? (req.body.legalSourceIds as unknown[]).map(Number).filter((n) => !isNaN(n as number))
     : [];
 
-  // Theory lens — optional overlay that appends a named analytical framework
-  const theoryLensId: string = ((req.body.theoryLensId as string) ?? "uae_only").trim() || "uae_only";
+  // Theory lens — optional overlay that appends a named analytical framework.
+  // Al-Shamsi ('shamsi') is owner-only; downgraded server-side for anyone else,
+  // even if the frontend sent it directly to the API.
+  const theoryLensId: string = sanitizeTheoryLensId(
+    req.body.theoryLensId as string,
+    req.user?.role,
+    isShamsiFrameworkEnabled(),
+  );
   const customTheoryText: string = ((req.body.customTheoryText as string) ?? "").trim();
   const { suffix: theorySuffix, markerLabel: theoryMarkerLabel } =
     buildTheoryPromptSuffix(theoryLensId, customTheoryText);

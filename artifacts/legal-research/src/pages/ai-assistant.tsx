@@ -3650,7 +3650,7 @@ const QUICK_ACTIONS: QuickAction[] = [
 ];
 
 function ActionButtons({
-  mode, isExpanded, userQuery, onExpand, onCollapse, onAction, disabled,
+  mode, isExpanded, userQuery, onExpand, onCollapse, onAction, disabled, canUseShamsiFramework,
 }: {
   mode: ResponseMode;
   isExpanded: boolean;
@@ -3659,7 +3659,10 @@ function ActionButtons({
   onCollapse: () => void;
   onAction: (key: ActionKey, query: string) => void;
   disabled: boolean;
+  /** Al-Shamsi Theory quick action is owner-only — must not appear for other roles. */
+  canUseShamsiFramework: boolean;
 }) {
+  const visibleActions = canUseShamsiFramework ? QUICK_ACTIONS : QUICK_ACTIONS.filter((a) => a.key !== 'shamsi');
   return (
     <div className="mt-3 pt-2.5 border-t border-border/30 space-y-2" dir="rtl">
       {/* Expand / collapse controls for quick & standard modes */}
@@ -3688,7 +3691,7 @@ function ActionButtons({
 
       {/* Visual quick-actions panel */}
       <div className="flex flex-wrap gap-1.5">
-        {QUICK_ACTIONS.map(({ key, emoji, ar, color }) => (
+        {visibleActions.map(({ key, emoji, ar, color }) => (
           <button
             key={key}
             type="button"
@@ -3727,15 +3730,20 @@ function buildMetaMapFromMessages(msgs: Message[]): Record<number, MsgDisplayMet
 // ─── Response mode selector ───────────────────────────────────────────────────
 
 function ResponseModeSelector({
-  value, onChange, disabled,
+  value, onChange, disabled, canUseShamsiFramework,
 }: {
   value: ResponseMode;
   onChange: (m: ResponseMode) => void;
   disabled: boolean;
+  /** Court simulation & Al-Shamsi Theory modes are owner-only. */
+  canUseShamsiFramework: boolean;
 }) {
+  const hiddenModes: ResponseMode[] = canUseShamsiFramework
+    ? ['risk_analysis']
+    : ['risk_analysis', 'court_full', 'shamsi_theory'];
   return (
     <div className="flex items-center gap-1 flex-wrap" dir="rtl">
-      {(Object.keys(MODE_CONFIG) as ResponseMode[]).filter((m) => m !== 'risk_analysis').map((m) => {
+      {(Object.keys(MODE_CONFIG) as ResponseMode[]).filter((m) => !hiddenModes.includes(m)).map((m) => {
         const cfg = MODE_CONFIG[m];
         const isActive = value === m;
         return (
@@ -3770,7 +3778,7 @@ function StreamingCursor() {
 }
 
 function MessageBubble({
-  msg, displayMeta, onAction, actionDisabled, expertMode, applyAdvancedStandard, onDirectSend, isStreaming,
+  msg, displayMeta, onAction, actionDisabled, expertMode, applyAdvancedStandard, onDirectSend, isStreaming, canUseShamsiFramework,
 }: {
   msg: Message;
   displayMeta?: MsgDisplayMeta;
@@ -3780,6 +3788,8 @@ function MessageBubble({
   applyAdvancedStandard: boolean;
   onDirectSend: (text: string) => void;
   isStreaming?: boolean;
+  /** Al-Shamsi Theory is owner-only — must not appear at all for other roles. */
+  canUseShamsiFramework: boolean;
 }) {
   const isUser = msg.role === 'user';
   const citations = (msg.meta?.citations ?? []) as Citation[];
@@ -3788,7 +3798,7 @@ function MessageBubble({
 
   const mode = displayMeta?.mode ?? 'professional';
   const userQuery = displayMeta?.userQuery ?? msg.content;
-  const showShamsi = !isUser && !!displayMeta && (expertMode || applyAdvancedStandard || detectShamsiKeywords(userQuery));
+  const showShamsi = canUseShamsiFramework && !isUser && !!displayMeta && (expertMode || applyAdvancedStandard || detectShamsiKeywords(userQuery));
 
   function handleExpand() { setIsExpanded(true); }
   function handleCollapse() { setIsExpanded(false); }
@@ -3859,9 +3869,10 @@ function MessageBubble({
                   onCollapse={handleCollapse}
                   onAction={(key, query) => onAction(msg.id, key, query)}
                   disabled={actionDisabled}
+                  canUseShamsiFramework={canUseShamsiFramework}
                 />
               )}
-              {/* Al-Shamsi Theory card — auto when keywords detected OR Expert Mode active */}
+              {/* Al-Shamsi Theory card — auto when keywords detected OR Expert Mode active (owner-only) */}
               {showShamsi && !isStreaming && (
                 <ShamsiTheoryCard
                   onActivate={() => onAction(msg.id, 'shamsi', userQuery)}
@@ -3902,7 +3913,7 @@ function MessageBubble({
         {!isUser && (msg.meta?.theoryLensId || msg.meta?.provider) && (
           <div className="flex items-center gap-1.5 mt-1 ms-1 flex-wrap">
             {msg.meta?.theoryLensId && (
-              <TheoryLensBadge lensId={msg.meta.theoryLensId} />
+              <TheoryLensBadge lensId={msg.meta.theoryLensId} hideShamsi={!canUseShamsiFramework} />
             )}
             {msg.meta?.provider && (
               <p className="text-[9px] text-muted-foreground/50">
@@ -4136,7 +4147,7 @@ function CaseLifecycleTracker({
 
 export default function AiAssistant() {
   const t = useT();
-  const { canUseAi, role } = useUserContext();
+  const { canUseAi, role, canUseShamsiFramework } = useUserContext();
   // The backend restricts session/message *writes* to owner|supervisor via
   // requireSupervisorOrOwner — narrower than canUseAi (any non-citizen role,
   // used for read access like GET sessions/messages) — with ONE deliberate
@@ -4258,7 +4269,9 @@ export default function AiAssistant() {
           depth: cfg.answerStyle === 'detailed' ? 'comprehensive' : cfg.answerStyle === 'standard' ? 'detailed' : DEFAULT_SESSION_CONFIG.depth,
           jurisdiction: cfg.legalReference === 'france' ? 'france' : cfg.legalReference === 'comparative' ? 'comparative' : 'uae',
           comparativeMode: cfg.legalReference === 'comparative',
-          applyAdvancedStandard: cfg.legalReference === 'shamsi',
+          // Al-Shamsi is owner-only — ignore this selection for anyone else, even
+          // if it was injected directly into sessionStorage.
+          applyAdvancedStandard: cfg.legalReference === 'shamsi' && canUseShamsiFramework,
         };
         setSessionConfig(appliedSessionConfig);
         if (cfg.trainingMode) {
@@ -4371,17 +4384,17 @@ export default function AiAssistant() {
     setCurrentMode(detectMode(input));
   }, [input, modeLocked]);
 
-  // Sync court mode when court_full response mode is selected
+  // Sync court mode when court_full response mode is selected (owner-only feature)
   useEffect(() => {
-    if (currentMode === 'court_full') setCourtMode(true);
-  }, [currentMode]);
+    if (currentMode === 'court_full' && canUseShamsiFramework) setCourtMode(true);
+  }, [currentMode, canUseShamsiFramework]);
 
-  // Sync Al-Shamsi when shamsi_theory response mode is selected
+  // Sync Al-Shamsi when shamsi_theory response mode is selected (owner-only feature)
   useEffect(() => {
-    if (currentMode === 'shamsi_theory') {
+    if (currentMode === 'shamsi_theory' && canUseShamsiFramework) {
       setSessionConfig((c) => ({ ...c, applyAdvancedStandard: true }));
     }
-  }, [currentMode]);
+  }, [currentMode, canUseShamsiFramework]);
 
   async function createSession() {
     if (!canCreateAiSession) return; // read-only roles cannot create sessions (403) — defensive guard
@@ -4805,6 +4818,9 @@ export default function AiAssistant() {
   /** Handle action button clicks from MessageBubble. */
   function handleAction(_msgId: number, key: ActionKey, userQuery: string) {
     if (key === 'expand' || key === 'collapse') return; // handled locally in ActionButtons
+    // Al-Shamsi Theory is owner-only — the UI never renders this action for other
+    // roles, but this guard is defense-in-depth against a direct dispatch call.
+    if (key === 'shamsi' && !canUseShamsiFramework) return;
     if (key === 'export_pdf' || key === 'export_word') {
       toast({
         title: t('قيد التطوير', 'Coming soon'),
@@ -5103,6 +5119,7 @@ export default function AiAssistant() {
                     applyAdvancedStandard={sessionConfig.applyAdvancedStandard}
                     onDirectSend={(text) => sendMessage(text, 'professional')}
                     isStreaming={streamingMsgId !== null && msg.id === streamingMsgId}
+                    canUseShamsiFramework={canUseShamsiFramework}
                   />
                 ))}
                 {/* Generic "waiting for response" indicator — only when NOT streaming (stream has its own cursor) */}
@@ -5189,6 +5206,7 @@ export default function AiAssistant() {
                   value={currentMode}
                   onChange={(m) => { setCurrentMode(m); setModeLocked(true); }}
                   disabled={sending || !canCreateAiSession}
+                  canUseShamsiFramework={canUseShamsiFramework}
                 />
               </div>
             )}
@@ -5200,12 +5218,13 @@ export default function AiAssistant() {
                   onChange={setTheoryLens}
                   arabic={true}
                   disabled={sending || !canCreateAiSession}
+                  hideShamsi={!canUseShamsiFramework}
                 />
               </div>
             )}
 
-            {/* Stage 5 — Court mode toggles — hidden in the simplified assistant view; court_full mode remains selectable from the answer-mode selector */}
-            {SHOW_LEGACY_CHAT_UI && activeSession && canCreateAiSession && (
+            {/* Stage 5 — Court mode toggles (Al-Shamsi Matrix / ASEP-backed) — owner-only */}
+            {SHOW_LEGACY_CHAT_UI && activeSession && canCreateAiSession && canUseShamsiFramework && (
               <div className="mb-2 flex flex-wrap gap-2" dir="rtl">
                 <button
                   type="button"

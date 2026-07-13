@@ -11,7 +11,8 @@
 import { Router, type IRouter } from "express";
 import { eq, desc, and } from "drizzle-orm";
 import { db, jreSessionsTable } from "@workspace/db";
-import { requireAnyRole, requireWriteRole } from "../middlewares/roleAuth";
+import { requireAnyRole, requireWriteRole, isShamsiFrameworkEnabled } from "../middlewares/roleAuth";
+import { sanitizeTheoryLensId } from "../utils/theory-lenses.js";
 import { aiRouter, TaskType } from "../ai";
 import { parseModelJson } from "../ai/providers/interface";
 import { runJudicialAnalysis } from "../utils/judicial-reasoning-engine";
@@ -116,6 +117,10 @@ router.post("/jre/sessions", requireWriteRole, aiSessionLimit, async (req, res):
 
   const sessionTitle = title?.trim() || `تحليل ${disputeType} — ${new Date().toLocaleDateString("ar-AE")}`;
 
+  // Al-Shamsi is owner-only; downgrade server-side for anyone else.
+  const safeTheoryLensId = sanitizeTheoryLensId(theoryLensId, req.user?.role, isShamsiFrameworkEnabled());
+  const safeTheoryLensName = safeTheoryLensId === theoryLensId ? theoryLensName : null;
+
   // Create session in "analyzing" state
   const [session] = await db.insert(jreSessionsTable).values({
     userId:          uid,
@@ -124,8 +129,8 @@ router.post("/jre/sessions", requireWriteRole, aiSessionLimit, async (req, res):
     parties:         JSON.stringify(normalizedParties),
     disputeType,
     hasAiDecision:   hasAiDecision ? "true" : "false",
-    theoryLensId:    theoryLensId  || null,
-    theoryLensName:  theoryLensName || null,
+    theoryLensId:    safeTheoryLensId !== "uae_only" ? safeTheoryLensId : null,
+    theoryLensName:  safeTheoryLensName || null,
     customTheoryText: customTheoryText || null,
     status:          "analyzing",
     updatedAt:       new Date(),
@@ -147,8 +152,8 @@ router.post("/jre/sessions", requireWriteRole, aiSessionLimit, async (req, res):
         parties:         normalizedParties,
         disputeType,
         hasAiDecision,
-        theoryLensId:    theoryLensId || null,
-        theoryLensName:  theoryLensName || null,
+        theoryLensId:    safeTheoryLensId !== "uae_only" ? safeTheoryLensId : null,
+        theoryLensName:  safeTheoryLensName || null,
         customTheoryText: customTheoryText || null,
         userId:          uid,
       });

@@ -28,7 +28,7 @@ import {
   auditLogsTable,
 } from "@workspace/db";
 import { generateAdminBriefPdf } from "../utils/admin-brief-pdf";
-import { requireAnyRole, requireSupervisorOrOwner } from "../middlewares/roleAuth";
+import { requireShamsiOwner } from "../middlewares/roleAuth";
 import { logAudit } from "../middlewares/auditLog";
 import { aiRouter, TaskType } from "../ai";
 import { parseModelJson } from "../ai/providers/interface";
@@ -62,7 +62,7 @@ const router: IRouter = Router();
  * Returns all active jurisdictions available in the frontend selector.
  * Inactive GCC stubs are excluded (active = false).
  */
-router.get("/admin-os/jurisdictions", requireAnyRole, async (_req, res): Promise<void> => {
+router.get("/admin-os/jurisdictions", requireShamsiOwner, async (_req, res): Promise<void> => {
   const jurisdictions = await db
     .select({
       id: adminJurisdictionsTable.id,
@@ -86,7 +86,7 @@ router.get("/admin-os/jurisdictions", requireAnyRole, async (_req, res): Promise
  * permittedDomains, actionCapabilities, legalBasisAr/En.
  * interviewModifiers are omitted from the list view (full detail on /roles/:key).
  */
-router.get("/admin-os/roles", requireAnyRole, async (_req, res): Promise<void> => {
+router.get("/admin-os/roles", requireShamsiOwner, async (_req, res): Promise<void> => {
   const roles = await db
     .select({
       id: adminDecisionRolesTable.id,
@@ -112,7 +112,7 @@ router.get("/admin-os/roles", requireAnyRole, async (_req, res): Promise<void> =
 /**
  * Returns full detail for a single role, including interviewModifiers.
  */
-router.get("/admin-os/roles/:roleKey", requireAnyRole, async (req, res): Promise<void> => {
+router.get("/admin-os/roles/:roleKey", requireShamsiOwner, async (req, res): Promise<void> => {
   const { roleKey } = req.params as { roleKey: string };
 
   const [role] = await db
@@ -137,7 +137,7 @@ router.get("/admin-os/roles/:roleKey", requireAnyRole, async (req, res): Promise
  *   role          — Phase 2: annotate each type with role's relationship to it
  *                   (can_issue / can_review / can_challenge / none)
  */
-router.get("/admin-os/decision-types", requireAnyRole, async (req, res): Promise<void> => {
+router.get("/admin-os/decision-types", requireShamsiOwner, async (req, res): Promise<void> => {
   const { jurisdiction = "uae", domain, risk_level, role: roleParam } = req.query as Record<string, string | undefined>;
 
   const rows = await db
@@ -210,7 +210,7 @@ router.get("/admin-os/decision-types", requireAnyRole, async (req, res): Promise
  *   role        — role key (optional; returns base template if omitted)
  *   jurisdiction — jurisdiction (default: uae)
  */
-router.get("/admin-os/interview-template/:decisionTypeId", requireAnyRole, async (req, res): Promise<void> => {
+router.get("/admin-os/interview-template/:decisionTypeId", requireShamsiOwner, async (req, res): Promise<void> => {
   const decisionTypeId = parseInt(req.params.decisionTypeId as string, 10);
   if (isNaN(decisionTypeId)) {
     res.status(400).json({ error: "Invalid decisionTypeId" });
@@ -271,7 +271,7 @@ router.get("/admin-os/interview-template/:decisionTypeId", requireAnyRole, async
 });
 
 // ─── GET /admin-os/sessions ────────────────────────────────────────────────────
-router.get("/admin-os/sessions", requireAnyRole, async (req, res): Promise<void> => {
+router.get("/admin-os/sessions", requireShamsiOwner, async (req, res): Promise<void> => {
   const uid = getUserId(req);
   const sessions = await db
     .select({
@@ -293,7 +293,7 @@ router.get("/admin-os/sessions", requireAnyRole, async (req, res): Promise<void>
 });
 
 // ─── GET /admin-os/sessions/:id ───────────────────────────────────────────────
-router.get("/admin-os/sessions/:id", requireAnyRole, async (req, res): Promise<void> => {
+router.get("/admin-os/sessions/:id", requireShamsiOwner, async (req, res): Promise<void> => {
   const id = parseInt(req.params.id as string, 10);
   const uid = getUserId(req);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
@@ -308,7 +308,7 @@ router.get("/admin-os/sessions/:id", requireAnyRole, async (req, res): Promise<v
 });
 
 // ─── DELETE /admin-os/sessions/:id ────────────────────────────────────────────
-router.delete("/admin-os/sessions/:id", requireSupervisorOrOwner, async (req, res): Promise<void> => {
+router.delete("/admin-os/sessions/:id", requireShamsiOwner, async (req, res): Promise<void> => {
   const id = parseInt(req.params.id as string, 10);
   const uid = getUserId(req);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
@@ -334,7 +334,7 @@ router.delete("/admin-os/sessions/:id", requireSupervisorOrOwner, async (req, re
  *   jurisdiction   — "uae" | "france" (default: "uae")
  *   answers        — Record<questionId, string>
  */
-router.post("/admin-os/assess", requireSupervisorOrOwner, async (req, res): Promise<void> => {
+router.post("/admin-os/assess", requireShamsiOwner, async (req, res): Promise<void> => {
   const uid = getUserId(req);
   const { role, decisionTypeId, jurisdiction = "uae", answers } = req.body as {
     role: string;
@@ -547,7 +547,7 @@ router.post("/admin-os/assess", requireSupervisorOrOwner, async (req, res): Prom
 });
 
 // ─── POST /admin-os/followup ───────────────────────────────────────────────────
-router.post("/admin-os/followup", requireSupervisorOrOwner, async (req, res): Promise<void> => {
+router.post("/admin-os/followup", requireShamsiOwner, async (req, res): Promise<void> => {
   const uid = getUserId(req);
   const { sessionId, message } = req.body as { sessionId: number; message: string };
 
@@ -627,7 +627,7 @@ ${ragContext ? `السياق القانوني المتاح:\n${ragContext}` : ""
  * Uses the existing stored brief to provide context to the AI — no answers
  * need to be re-submitted.
  */
-router.post("/admin-os/compare", requireSupervisorOrOwner, async (req, res): Promise<void> => {
+router.post("/admin-os/compare", requireShamsiOwner, async (req, res): Promise<void> => {
   const { sessionId, targetJurisdiction } = req.body;
   const uid = getUserId(req);
 
@@ -836,7 +836,7 @@ ${originalDimsSummary}
  * Phase 5 — Returns the full audit trail for an administrative decision session.
  * Includes: initial assessment, follow-up messages, and PDF exports.
  */
-router.get("/admin-os/sessions/:id/audit", requireSupervisorOrOwner, async (req, res): Promise<void> => {
+router.get("/admin-os/sessions/:id/audit", requireShamsiOwner, async (req, res): Promise<void> => {
   const id = parseInt(req.params.id as string, 10);
   const uid = getUserId(req);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
@@ -864,7 +864,7 @@ router.get("/admin-os/sessions/:id/audit", requireSupervisorOrOwner, async (req,
  * Phase 5 — Aggregate compliance statistics for the legal compliance dashboard.
  * Owners see all sessions; supervisors see their own.
  */
-router.get("/admin-os/stats", requireSupervisorOrOwner, async (req, res): Promise<void> => {
+router.get("/admin-os/stats", requireShamsiOwner, async (req, res): Promise<void> => {
   const uid = getUserId(req);
   const userRole = getValidatedRole(req);
   const isOwner = userRole === "owner";
@@ -959,7 +959,7 @@ router.get("/admin-os/stats", requireSupervisorOrOwner, async (req, res): Promis
  * Phase 5 — Generates and streams a court-grade bilingual PDF brief.
  * Requires Puppeteer/Chromium (auto-downloaded on first use).
  */
-router.get("/admin-os/sessions/:id/export.pdf", requireSupervisorOrOwner, async (req, res): Promise<void> => {
+router.get("/admin-os/sessions/:id/export.pdf", requireShamsiOwner, async (req, res): Promise<void> => {
   const id = parseInt(req.params.id as string, 10);
   const uid = getUserId(req);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }

@@ -70,6 +70,9 @@ export interface UserContextType {
   // JDT
   canViewJdtSimulation: boolean;
   canRunJdtSimulation: boolean;
+  // Al-Shamsi Theory / Framework — owner-only, must not appear at all for other roles
+  isOwner: boolean;
+  canUseShamsiFramework: boolean;
 }
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
@@ -128,6 +131,8 @@ function buildContext(session: SessionPayload | null, lang: AppLanguage): UserCo
     canViewNaipSearch:               permissions.canViewNaipSearch               ?? false,
     canViewJdtSimulation:            permissions.canViewJdtSimulation            ?? false,
     canRunJdtSimulation:             permissions.canRunJdtSimulation             ?? false,
+    isOwner:                         role === 'owner',
+    canUseShamsiFramework:           permissions.canUseShamsiFramework           ?? false,
   };
 }
 

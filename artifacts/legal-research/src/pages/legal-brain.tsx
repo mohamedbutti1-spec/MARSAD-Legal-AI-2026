@@ -1013,17 +1013,19 @@ function RiskAssessmentTab() {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-const TABS = [
+const BASE_TABS = [
   { id: 'judicial',    labelAr: 'الاستدلال القضائي',    icon: <Gavel className="w-3.5 h-3.5" /> },
   { id: 'legality',    labelAr: 'مشروعية القرار الإداري',icon: <Scale className="w-3.5 h-3.5" /> },
-  { id: 'shamsi',      labelAr: 'نظرية الشامسي',         icon: <FlaskConical className="w-3.5 h-3.5" /> },
   { id: 'comparative', labelAr: 'القانون المقارن',        icon: <GitCompareArrows className="w-3.5 h-3.5" /> },
   { id: 'memorandum',  labelAr: 'المذكرات القانونية',    icon: <FileText className="w-3.5 h-3.5" /> },
   { id: 'risk',        labelAr: 'تقييم المخاطر',         icon: <ShieldAlert className="w-3.5 h-3.5" /> },
 ];
+const SHAMSI_TAB = { id: 'shamsi', labelAr: 'نظرية الشامسي', icon: <FlaskConical className="w-3.5 h-3.5" /> };
 
 export default function LegalBrain() {
-  const { canUseAi } = useUserContext();
+  const { canUseAi, canUseShamsiFramework } = useUserContext();
+  // Al-Shamsi Theory tab is owner-only — must not appear at all for other roles.
+  const TABS = canUseShamsiFramework ? [...BASE_TABS, SHAMSI_TAB] : BASE_TABS;
 
   if (!canUseAi) {
     return (
@@ -1080,7 +1082,7 @@ export default function LegalBrain() {
 
           <TabsContent value="judicial">    <JudicialReasoningTab /> </TabsContent>
           <TabsContent value="legality">   <AdminLegalityTab />     </TabsContent>
-          <TabsContent value="shamsi">     <ShamsiTheoryTab />      </TabsContent>
+          {canUseShamsiFramework && <TabsContent value="shamsi"><ShamsiTheoryTab /></TabsContent>}
           <TabsContent value="comparative"><ComparativeAnalysisTab /></TabsContent>
           <TabsContent value="memorandum"> <MemorandumTab />         </TabsContent>
           <TabsContent value="risk">       <RiskAssessmentTab />    </TabsContent>

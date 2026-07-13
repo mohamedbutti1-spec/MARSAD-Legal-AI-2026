@@ -19,8 +19,9 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import {
-  DISPUTE_TYPE_LABELS, THEORY_LENS_OPTIONS, type JreSession,
+  DISPUTE_TYPE_LABELS, THEORY_LENS_OPTIONS, getVisibleTheoryLensOptions, type JreSession,
 } from '@/types/jre';
+import { useUserContext } from '@/lib/user-context';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -138,6 +139,8 @@ const DEFAULT_FORM: NewSessionForm = {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function JrePage() {
+  const { canUseShamsiFramework } = useUserContext();
+  const visibleTheoryLensOptions = getVisibleTheoryLensOptions(canUseShamsiFramework);
   const [, navigate]  = useLocation();
   const { toast }     = useToast();
   const qc            = useQueryClient();
@@ -397,7 +400,7 @@ export default function JrePage() {
                   <SelectValue placeholder="بدون تحليل نظري" />
                 </SelectTrigger>
                 <SelectContent>
-                  {THEORY_LENS_OPTIONS.map((o) => (
+                  {visibleTheoryLensOptions.map((o) => (
                     <SelectItem key={o.value || '__none'} value={o.value || '__none'}>{o.label}</SelectItem>
                   ))}
                 </SelectContent>

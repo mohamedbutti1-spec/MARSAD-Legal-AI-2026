@@ -195,3 +195,34 @@ export function parseTheoryResponse(text: string): {
 
   return { bindingAnalysis, theoryAnalysis, theoryLabel };
 }
+
+/**
+ * Every identifier, across every module, that refers to the Al-Shamsi Theory
+ * lens. Two independent id namespaces exist in this codebase — the chat/JDC
+ * theory-lens-selector uses 'shamsi', while the JRE/JDC session-creation
+ * forms (types/jre.ts THEORY_LENS_OPTIONS) use 'al_shamsi' — so both must be
+ * checked here or a request through the other namespace bypasses the lock.
+ */
+const SHAMSI_LENS_IDS = new Set(["shamsi", "al_shamsi"]);
+
+/**
+ * sanitizeTheoryLensId — Al-Shamsi Theory is owner-only. Any request for a
+ * Shamsi lens id (see SHAMSI_LENS_IDS) coming from a non-owner role (or with
+ * the framework disabled) is silently downgraded to 'uae_only' server-side,
+ * regardless of what the frontend sent — this is the defense-in-depth
+ * backstop for the general chat/JRE/JDC endpoints, which cannot be gated
+ * wholesale like admin-os/court. Callers that use a different "no lens"
+ * sentinel (e.g. JRE/JDC's null/'') already normalize 'uae_only' back to
+ * their own neutral value.
+ */
+export function sanitizeTheoryLensId(
+  lensId: string | null | undefined,
+  role: string | undefined,
+  shamsiEnabled: boolean,
+): string {
+  const id = (lensId ?? "uae_only").trim() || "uae_only";
+  if (SHAMSI_LENS_IDS.has(id) && (!shamsiEnabled || role !== "owner")) {
+    return "uae_only";
+  }
+  return id;
+}

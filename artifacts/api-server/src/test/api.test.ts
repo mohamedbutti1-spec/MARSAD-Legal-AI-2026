@@ -30,7 +30,7 @@ function json(extra: Record<string, string> = {}): Record<string, string> {
 let H_OWNER:      Record<string, string>;
 let H_SUPERVISOR: Record<string, string>;
 let H_VIEWER:     Record<string, string>;
-let H_VIEWER_1:   Record<string, string>; // viewer, userId=1 (admin-os tests)
+let H_VIEWER_1:   Record<string, string>; // viewer, userId=1 — used to assert admin-os/Shamsi denial
 let H_BAD_ROLE:   Record<string, string>; // signed token but invalid role → 401
 const H_ANON: Record<string, string> = {};  // unauthenticated
 
@@ -339,8 +339,13 @@ describe("AI provider abstraction — security invariants", () => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("Admin Decision OS — Phase 2 Role Engine", () => {
+  it("GET /api/admin-os/roles denies non-owner roles (Al-Shamsi Theory is owner-only)", async () => {
+    const { status } = await req("GET", "/api/admin-os/roles", undefined, H_VIEWER_1);
+    assert.equal(status, 403);
+  });
+
   it("GET /api/admin-os/roles returns all 7 roles", async () => {
-    const { status, body } = await req("GET", "/api/admin-os/roles", undefined, H_VIEWER_1);
+    const { status, body } = await req("GET", "/api/admin-os/roles", undefined, H_OWNER);
     assert.equal(status, 200);
     const roles = (body as Record<string, unknown>).roles as Array<Record<string, unknown>>;
     assert.ok(Array.isArray(roles), "roles must be an array");
@@ -352,7 +357,7 @@ describe("Admin Decision OS — Phase 2 Role Engine", () => {
   });
 
   it("GET /api/admin-os/roles/:roleKey returns role detail with interviewModifiers", async () => {
-    const { status, body } = await req("GET", "/api/admin-os/roles/citizen", undefined, H_VIEWER_1);
+    const { status, body } = await req("GET", "/api/admin-os/roles/citizen", undefined, H_OWNER);
     assert.equal(status, 200);
     const role = (body as Record<string, unknown>).role as Record<string, unknown>;
     assert.equal(role.roleKey, "citizen");
@@ -364,12 +369,12 @@ describe("Admin Decision OS — Phase 2 Role Engine", () => {
   });
 
   it("GET /api/admin-os/roles/:roleKey returns 404 for unknown role", async () => {
-    const { status } = await req("GET", "/api/admin-os/roles/superhero", undefined, H_VIEWER_1);
+    const { status } = await req("GET", "/api/admin-os/roles/superhero", undefined, H_OWNER);
     assert.equal(status, 404);
   });
 
   it("GET /api/admin-os/roles each role has required fields", async () => {
-    const { status, body } = await req("GET", "/api/admin-os/roles", undefined, H_VIEWER_1);
+    const { status, body } = await req("GET", "/api/admin-os/roles", undefined, H_OWNER);
     assert.equal(status, 200);
     const roles = (body as Record<string, unknown>).roles as Array<Record<string, unknown>>;
     for (const role of roles) {
@@ -387,7 +392,7 @@ describe("Admin Decision OS — Phase 2 Role Engine", () => {
 
   it("GET /api/admin-os/decision-types?role=minister annotates with roleRelationship", async () => {
     const { status, body } = await req(
-      "GET", "/api/admin-os/decision-types?jurisdiction=uae&role=minister", undefined, H_VIEWER_1,
+      "GET", "/api/admin-os/decision-types?jurisdiction=uae&role=minister", undefined, H_OWNER,
     );
     assert.equal(status, 200);
     const b = body as Record<string, unknown>;
@@ -403,7 +408,7 @@ describe("Admin Decision OS — Phase 2 Role Engine", () => {
 
   it("GET /api/admin-os/decision-types?role=citizen has only can_challenge relationships", async () => {
     const { status, body } = await req(
-      "GET", "/api/admin-os/decision-types?jurisdiction=uae&role=citizen", undefined, H_VIEWER_1,
+      "GET", "/api/admin-os/decision-types?jurisdiction=uae&role=citizen", undefined, H_OWNER,
     );
     assert.equal(status, 200);
     const types = (body as Record<string, unknown>).decisionTypes as Array<Record<string, unknown>>;
@@ -415,7 +420,7 @@ describe("Admin Decision OS — Phase 2 Role Engine", () => {
 
   it("GET /api/admin-os/decision-types?role=administrative_court has only can_review relationships", async () => {
     const { status, body } = await req(
-      "GET", "/api/admin-os/decision-types?jurisdiction=uae&role=administrative_court", undefined, H_VIEWER_1,
+      "GET", "/api/admin-os/decision-types?jurisdiction=uae&role=administrative_court", undefined, H_OWNER,
     );
     assert.equal(status, 200);
     const types = (body as Record<string, unknown>).decisionTypes as Array<Record<string, unknown>>;
@@ -427,7 +432,7 @@ describe("Admin Decision OS — Phase 2 Role Engine", () => {
 
   it("GET /api/admin-os/decision-types?role=hr has can_issue only on personnel domain", async () => {
     const { status, body } = await req(
-      "GET", "/api/admin-os/decision-types?jurisdiction=uae&role=hr", undefined, H_VIEWER_1,
+      "GET", "/api/admin-os/decision-types?jurisdiction=uae&role=hr", undefined, H_OWNER,
     );
     assert.equal(status, 200);
     const types = (body as Record<string, unknown>).decisionTypes as Array<Record<string, unknown>>;
@@ -442,10 +447,10 @@ describe("Admin Decision OS — Phase 2 Role Engine", () => {
   });
 
   it("GET /api/admin-os/interview-template/:id returns base template without role", async () => {
-    const listRes = await req("GET", "/api/admin-os/decision-types?jurisdiction=uae", undefined, H_VIEWER_1);
+    const listRes = await req("GET", "/api/admin-os/decision-types?jurisdiction=uae", undefined, H_OWNER);
     const firstId = ((listRes.body as Record<string, unknown>).decisionTypes as Array<Record<string, unknown>>)[0].id as number;
     const { status, body } = await req(
-      "GET", `/api/admin-os/interview-template/${firstId}`, undefined, H_VIEWER_1,
+      "GET", `/api/admin-os/interview-template/${firstId}`, undefined, H_OWNER,
     );
     assert.equal(status, 200);
     const b = body as Record<string, unknown>;
@@ -455,14 +460,14 @@ describe("Admin Decision OS — Phase 2 Role Engine", () => {
   });
 
   it("GET /api/admin-os/interview-template/:id?role=citizen prepends citizen questions", async () => {
-    const listRes = await req("GET", "/api/admin-os/decision-types?jurisdiction=uae", undefined, H_VIEWER_1);
+    const listRes = await req("GET", "/api/admin-os/decision-types?jurisdiction=uae", undefined, H_OWNER);
     const firstId = ((listRes.body as Record<string, unknown>).decisionTypes as Array<Record<string, unknown>>)[0].id as number;
     const baseRes = await req(
-      "GET", `/api/admin-os/interview-template/${firstId}`, undefined, H_VIEWER_1,
+      "GET", `/api/admin-os/interview-template/${firstId}`, undefined, H_OWNER,
     );
     const baseCount = (baseRes.body as Record<string, unknown>).questionCount as number;
     const { status, body } = await req(
-      "GET", `/api/admin-os/interview-template/${firstId}?role=citizen`, undefined, H_VIEWER_1,
+      "GET", `/api/admin-os/interview-template/${firstId}?role=citizen`, undefined, H_OWNER,
     );
     assert.equal(status, 200);
     const b = body as Record<string, unknown>;
@@ -475,7 +480,7 @@ describe("Admin Decision OS — Phase 2 Role Engine", () => {
 
   it("GET /api/admin-os/interview-template/999999 returns 404", async () => {
     const { status } = await req(
-      "GET", "/api/admin-os/interview-template/999999", undefined, H_VIEWER_1,
+      "GET", "/api/admin-os/interview-template/999999", undefined, H_OWNER,
     );
     assert.equal(status, 404);
   });
@@ -485,7 +490,7 @@ describe("Admin Decision OS — Phase 2 Role Engine", () => {
 describe("Admin Decision OS — Al-Shamsi endpoints", () => {
   it("GET /api/admin-os/decision-types returns seeded UAE catalog", async () => {
     const { status, body } = await req(
-      "GET", "/api/admin-os/decision-types?jurisdiction=uae", undefined, H_VIEWER_1,
+      "GET", "/api/admin-os/decision-types?jurisdiction=uae", undefined, H_OWNER,
     );
     assert.equal(status, 200);
     const b = body as Record<string, unknown>;
@@ -500,7 +505,7 @@ describe("Admin Decision OS — Al-Shamsi endpoints", () => {
 
   it("GET /api/admin-os/decision-types filters by domain", async () => {
     const { status, body } = await req(
-      "GET", "/api/admin-os/decision-types?jurisdiction=uae&domain=procurement", undefined, H_VIEWER_1,
+      "GET", "/api/admin-os/decision-types?jurisdiction=uae&domain=procurement", undefined, H_OWNER,
     );
     assert.equal(status, 200);
     const types = (body as Record<string, unknown>).decisionTypes as Array<Record<string, unknown>>;
@@ -508,13 +513,21 @@ describe("Admin Decision OS — Al-Shamsi endpoints", () => {
     assert.ok(types.every((t) => t.domain === "procurement"), "all returned types must be procurement");
   });
 
-  it("GET /api/admin-os/sessions returns empty array for new user", async () => {
+  it("GET /api/admin-os/sessions returns empty array for new owner user", async () => {
     const { status, body } = await req(
       "GET", "/api/admin-os/sessions", undefined,
-      json({ Cookie: cookieFor("viewer", 99999) }),
+      json({ Cookie: cookieFor("owner", 99999) }),
     );
     assert.equal(status, 200);
     assert.ok(Array.isArray((body as Record<string, unknown>).sessions), "sessions must be an array");
+  });
+
+  it("GET /api/admin-os/sessions denies non-owner roles (Al-Shamsi lock)", async () => {
+    const { status } = await req(
+      "GET", "/api/admin-os/sessions", undefined,
+      json({ Cookie: cookieFor("viewer", 99999) }),
+    );
+    assert.equal(status, 403);
   });
 
   it("POST /api/admin-os/assess rejects missing required fields", async () => {
@@ -550,7 +563,7 @@ describe("Admin Decision OS — Al-Shamsi endpoints", () => {
 
   it("GET /api/admin-os/decision-types each type has required fields", async () => {
     const { status, body } = await req(
-      "GET", "/api/admin-os/decision-types?jurisdiction=uae", undefined, H_VIEWER_1,
+      "GET", "/api/admin-os/decision-types?jurisdiction=uae", undefined, H_OWNER,
     );
     assert.equal(status, 200);
     const types = (body as Record<string, unknown>).decisionTypes as Array<Record<string, unknown>>;
@@ -629,5 +642,53 @@ describe("Court Simulation — Architectural Lock (ASEP + Al-Shamsi Matrix + Dig
       // AbortError is expected if AI phases are running (we only care about headers)
       if ((e as Error).name !== "AbortError") throw e;
     }
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+describe("Judicial Review (CJI) — Al-Shamsi Theory owner lock", () => {
+  it("GET /api/judicial-review/:id denies judge role (whole engine is Shamsi-Framework methodology)", async () => {
+    const { status } = await req(
+      "GET", "/api/judicial-review/1", undefined,
+      json({ Cookie: cookieFor("judge", 1) }),
+    );
+    assert.equal(status, 403);
+  });
+
+  it("POST /api/judicial-review/:id/run denies judge role", async () => {
+    const { status } = await req(
+      "POST", "/api/judicial-review/1/run", undefined,
+      json({ Cookie: cookieFor("judge", 1) }),
+    );
+    assert.equal(status, 403);
+  });
+
+  it("GET /api/judicial-review/:id/report denies judge role", async () => {
+    const { status } = await req(
+      "GET", "/api/judicial-review/1/report", undefined,
+      json({ Cookie: cookieFor("judge", 1) }),
+    );
+    assert.equal(status, 403);
+  });
+
+  it("GET /api/judicial-review/:id denies non-owner and unauthenticated requests", async () => {
+    const { status: viewerStatus } = await req(
+      "GET", "/api/judicial-review/1", undefined, H_VIEWER,
+    );
+    assert.equal(viewerStatus, 403);
+    // No session at all fails auth entirely (401) before it ever reaches the
+    // Shamsi gate — still correctly denied, just at an earlier layer.
+    const { status: anonStatus } = await req("GET", "/api/judicial-review/1", undefined, H_ANON);
+    assert.equal(anonStatus, 401);
+  });
+
+  it("GET /api/judicial-review/:id allows owner role (not_run status for a fresh decision)", async () => {
+    const { status, body } = await req(
+      "GET", "/api/judicial-review/999999999", undefined, H_OWNER,
+    );
+    // Owner passes the Shamsi gate; a non-existent decision then 404s inside
+    // resolveDecision — either way it must NOT be a generic 403 access denial.
+    assert.notEqual(status, 403);
+    void body;
   });
 });

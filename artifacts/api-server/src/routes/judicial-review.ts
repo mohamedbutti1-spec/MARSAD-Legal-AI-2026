@@ -34,6 +34,7 @@ import {
   type RiskLevel,
 } from "@workspace/db/judicial-review-service";
 import { logAudit } from "../middlewares/auditLog";
+import { requireShamsiOwner } from "../middlewares/roleAuth";
 
 const router: IRouter = Router();
 
@@ -52,16 +53,6 @@ function getAnthropic(): Anthropic {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /** Judicial Intelligence is strictly judge-only. */
-function requireJudge(req: Request, res: Response, next: NextFunction): void {
-  if (getValidatedRole(req) !== "judge") {
-    res.status(403).json({
-      error: "الذكاء القضائي الدستوري — الوصول مقتصر على القضاة فقط",
-    });
-    return;
-  }
-  next();
-}
-
 async function resolveDecision(
   req: Request,
   res: Response,
@@ -287,9 +278,12 @@ async function runAiReview(
  * GET /judicial-review/:decisionId
  * Returns the latest stored review, or { status: "not_run" } if none exists.
  */
+// This entire engine applies the Al-Shamsi Framework™ as its core review
+// methodology (its 16 review dimensions are the Al-Shamsi pillars) — every
+// route here is a Shamsi-Framework surface and is owner-only, not judge-only.
 router.get(
   "/judicial-review/:decisionId",
-  requireJudge,
+  requireShamsiOwner,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const decision = await resolveDecision(req, res);
@@ -341,7 +335,7 @@ router.get(
  */
 router.post(
   "/judicial-review/:decisionId/run",
-  requireJudge,
+  requireShamsiOwner,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const decision = await resolveDecision(req, res);
@@ -397,7 +391,7 @@ router.post(
  */
 router.get(
   "/judicial-review/:decisionId/report",
-  requireJudge,
+  requireShamsiOwner,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const decision = await resolveDecision(req, res);

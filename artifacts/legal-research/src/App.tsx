@@ -114,6 +114,7 @@ function Router() {
     canManageSettings,
     canViewAudit,
     canUpload,
+    canUseShamsiFramework,
   } = useUserContext();
 
   return (
@@ -121,7 +122,11 @@ function Router() {
       <Switch>
         {/* ── Main ─────────────────────────────────────────────────── */}
         <Route path="/" component={Dashboard} />
-        <Route path="/shamsi-theory"             component={ShamsiTheory} />
+        <Route path="/shamsi-theory">
+          <RouteGuard allow={canUseShamsiFramework}>
+            <ShamsiTheory />
+          </RouteGuard>
+        </Route>
         <Route path="/constitutional-principles" component={ConstitutionalPrinciples} />
 
         {/* ── Phase 2 — Executive Governance Hub ───────────────────── */}
@@ -216,12 +221,12 @@ function Router() {
           </RouteGuard>
         </Route>
         <Route path="/admin-os/compliance">
-          <RouteGuard allow={canUseAi}>
+          <RouteGuard allow={canUseShamsiFramework}>
             <AdminOsCompliance />
           </RouteGuard>
         </Route>
         <Route path="/admin-os">
-          <RouteGuard allow={canUseAi}>
+          <RouteGuard allow={canUseShamsiFramework}>
             <AdminOs />
           </RouteGuard>
         </Route>

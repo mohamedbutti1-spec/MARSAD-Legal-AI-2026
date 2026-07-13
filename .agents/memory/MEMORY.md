@@ -51,3 +51,4 @@
 - [Judicial Command Center theme rebuild](judicial-command-center-theme.md) — scripted sweep of literal Tailwind color classes onto CSS-var tokens; owner-gating pattern; reuse PreAnalysisPanel/SessionConfigBar
 - [NDJSON streaming resilience pattern](streaming-resilience-pattern.md) — compression buffers NDJSON on mobile; retryable-vs-billing error classification; reset protocol line; poll-based recovery avoids duplicate messages
 - [MLOS Restructured Legal Analysis Flow](mlos-restructured-legal-flow.md) — domain/branch/law-source/answer-format/training selectors; lawSource maps onto existing Jurisdiction field; legacy mode chips gated off
+- [Al-Shamsi owner-lock gating pattern](shamsi-owner-lock-pattern.md) — 3-tier gating (hard lock / field-strip / silent downgrade); branding text is out-of-scope, methodology-derived fields are in-scope; grep all id aliases

@@ -10,7 +10,8 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { sql, eq, desc, and } from "drizzle-orm";
-import { requireAnyRole, requireWriteRole } from "../middlewares/roleAuth";
+import { requireAnyRole, requireWriteRole, isShamsiFrameworkEnabled } from "../middlewares/roleAuth";
+import { sanitizeTheoryLensId } from "../utils/theory-lenses.js";
 import { runChamberDeliberation } from "../utils/judicial-deliberation-chamber.js";
 import type { JreParties } from "../utils/judicial-reasoning-engine.js";
 import type { PanelSize } from "../utils/judicial-deliberation-chamber.js";
@@ -200,6 +201,10 @@ router.post("/jdc/chambers", requireWriteRole, aiSessionLimit, async (req, res):
     respondentAr: parties.respondentAr || parties.respondent     || "",
   };
 
+  // Al-Shamsi is owner-only; downgrade server-side for anyone else.
+  const safeTheoryLensId = sanitizeTheoryLensId(theoryLensId, req.user?.role, isShamsiFrameworkEnabled());
+  const safeTheoryLensName = safeTheoryLensId === theoryLensId ? theoryLensName : null;
+
   const panelLabel = panelSize === 1 ? "قاضٍ فرد" : panelSize === 3 ? "دائرة ثلاثية" : "دائرة خماسية";
   const chamberTitle = title?.trim() || `${panelLabel} — ${disputeType} — ${new Date().toLocaleDateString("ar-AE")}`;
 
@@ -212,8 +217,8 @@ router.post("/jdc/chambers", requireWriteRole, aiSessionLimit, async (req, res):
     disputeSummary:  disputeSummary.trim(),
     parties:         JSON.stringify(normalizedParties),
     hasAiDecision:   hasAiDecision ? "true" : "false",
-    theoryLensId:    theoryLensId  || null,
-    theoryLensName:  theoryLensName || null,
+    theoryLensId:    safeTheoryLensId !== "uae_only" ? safeTheoryLensId : null,
+    theoryLensName:  safeTheoryLensName || null,
     customTheoryText: customTheoryText || null,
     status:          "deliberating",
   });
@@ -230,7 +235,7 @@ router.post("/jdc/chambers", requireWriteRole, aiSessionLimit, async (req, res):
         disputeType,
         panelSize:       panelSize as PanelSize,
         hasAiDecision,
-        theoryLensId:    theoryLensId || null,
+        theoryLensId:    safeTheoryLensId !== "uae_only" ? safeTheoryLensId : null,
         userId:          uid,
       });
 

@@ -48,7 +48,7 @@ import {
   type JudicialQuestion,
   type ExplainabilitySection,
 } from "@workspace/db";
-import { requireAnyRole, requireSupervisorOrOwner, requirePermission } from "../middlewares/roleAuth";
+import { requireAnyRole, requireSupervisorOrOwner, requirePermission, isShamsiFrameworkEnabled } from "../middlewares/roleAuth";
 import { logAudit } from "../middlewares/auditLog";
 import { e400, e403, e404, e500 } from "../lib/sendError";
 import { aiRouter, TaskType } from "../ai";
@@ -1232,10 +1232,12 @@ router.get("/decisions/:id/replay", requirePermission("canReplayDecision"), asyn
     const decisionId = parseInt(req.params.id as string, 10);
     if (isNaN(decisionId)) { e400(res, "Invalid decision id"); return; }
 
-    const roleHeader = (Array.isArray(req.headers["x-user-role"])
-      ? req.headers["x-user-role"][0]
-      : (req.headers["x-user-role"] ?? "viewer")) as string;
+    // Al-Shamsi Theory data (alShamsiDimensions) in this timeline is owner-only —
+    // always use the trusted session role (never the raw header) to decide
+    // whether to include it below.
+    const roleHeader = getValidatedRole(req);
     const permissions = PERMISSIONS[roleHeader as keyof typeof PERMISSIONS] ?? PERMISSIONS.citizen;
+    const includeShamsi = roleHeader === "owner" && isShamsiFrameworkEnabled();
 
     // Governance-aware access check: honour canReadDecisionDetail + seeOwnOrgOnly
     const [decision] = await db.select().from(decisionsTable).where(eq(decisionsTable.id, decisionId));
@@ -1404,11 +1406,14 @@ router.get("/decisions/:id/replay", requirePermission("canReplayDecision"), asyn
       }
 
       // Al-Shamsi dimensions (from replay event or constitutional_validation stage)
+      // — owner-only; never sent to non-owner roles regardless of what's stored.
       let alShamsiDimensions: Record<string, unknown> | null = null;
-      if (replayEvent?.alShamsiDimensions) {
-        alShamsiDimensions = replayEvent.alShamsiDimensions as Record<string, unknown>;
-      } else if (rsk === "replay_09_alshamsi_engine" && outputs) {
-        alShamsiDimensions = (outputs.principleResults as Record<string, unknown>) ?? null;
+      if (includeShamsi) {
+        if (replayEvent?.alShamsiDimensions) {
+          alShamsiDimensions = replayEvent.alShamsiDimensions as Record<string, unknown>;
+        } else if (rsk === "replay_09_alshamsi_engine" && outputs) {
+          alShamsiDimensions = (outputs.principleResults as Record<string, unknown>) ?? null;
+        }
       }
 
       // Confidence score
@@ -2412,11 +2417,12 @@ router.get("/decisions/:id/adp/export", requirePermission("canReplayDecision"), 
     const decisionId = parseInt(req.params.id as string, 10);
     if (isNaN(decisionId)) { e400(res, "Invalid decision ID"); return; }
 
-    // Resolve permissions for org-scoped roles
-    const roleHeader = (Array.isArray(req.headers["x-user-role"])
-      ? req.headers["x-user-role"][0]
-      : (req.headers["x-user-role"] ?? "viewer")) as string;
+    // Resolve permissions for org-scoped roles — trusted session role, not the
+    // raw header, since the exported PDF must redact Al-Shamsi content for
+    // non-owner roles.
+    const roleHeader = getValidatedRole(req);
     const permissions = PERMISSIONS[roleHeader as keyof typeof PERMISSIONS] ?? PERMISSIONS.citizen;
+    const includeShamsi = roleHeader === "owner" && isShamsiFrameworkEnabled();
 
     const [decision] = await db.select().from(decisionsTable).where(eq(decisionsTable.id, decisionId));
     if (!decision) { e404(res, "Decision not found"); return; }
@@ -2450,7 +2456,7 @@ router.get("/decisions/:id/adp/export", requirePermission("canReplayDecision"), 
     });
 
     const { generateAdpPdf } = await import("../lib/adp-generator.js");
-    const { pdf, filename, docHash } = await generateAdpPdf(decisionId);
+    const { pdf, filename, docHash } = await generateAdpPdf(decisionId, includeShamsi);
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);

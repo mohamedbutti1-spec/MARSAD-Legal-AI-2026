@@ -31,6 +31,7 @@ import {
 } from "@workspace/db";
 import { getPermissions, ALL_ROLES } from "@workspace/db/permissions";
 import { getValidatedRole } from "../lib/route-helpers";
+import { canIncludeShamsi } from "../middlewares/roleAuth";
 
 const router: IRouter = Router();
 
@@ -179,11 +180,13 @@ router.get(
     const dci = dciRows[0] ?? null;
     const jdp = jdpRows[0] ?? null;
     const car = carRows[0] ?? null;
+    const role = getValidatedRole(req);
+    const includeShamsi = canIncludeShamsi(role);
 
     // QVA data lives inside the decision stages / session — extract from DCI
     const qvaData = dci
       ? {
-          alShamsiFrameworkCompliance: (dci as Record<string, unknown>).alShamsiFrameworkCompliance,
+          alShamsiFrameworkCompliance: includeShamsi ? (dci as Record<string, unknown>).alShamsiFrameworkCompliance : null,
           legalityScore:               (dci as Record<string, unknown>).legalityScore,
           riskScore:                   (dci as Record<string, unknown>).riskScore,
         }
@@ -221,7 +224,7 @@ router.get(
       dci: dci
         ? {
             currentVersion:               (dci as Record<string, unknown>).currentVersion,
-            alShamsiFrameworkCompliance:  (dci as Record<string, unknown>).alShamsiFrameworkCompliance,
+            alShamsiFrameworkCompliance:  includeShamsi ? (dci as Record<string, unknown>).alShamsiFrameworkCompliance : null,
             isSealed:                     (dci as Record<string, unknown>).isSealed,
             legalJustification:           (dci as Record<string, unknown>).legalJustification,
             constitutionalBasis:          (dci as Record<string, unknown>).constitutionalBasis,

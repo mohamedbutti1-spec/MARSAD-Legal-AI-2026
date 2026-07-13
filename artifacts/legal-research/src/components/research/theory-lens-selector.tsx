@@ -73,6 +73,8 @@ interface TheoryLensSelectorProps {
   /** Render Arabic labels when true. */
   arabic?: boolean;
   disabled?: boolean;
+  /** Al-Shamsi is owner-only — hide the pill entirely for non-owner roles. */
+  hideShamsi?: boolean;
 }
 
 export function TheoryLensSelector({
@@ -80,8 +82,10 @@ export function TheoryLensSelector({
   onChange,
   arabic = true,
   disabled = false,
+  hideShamsi = false,
 }: TheoryLensSelectorProps) {
   const [customDraft, setCustomDraft] = useState(value.customText);
+  const visibleOptions = hideShamsi ? LENS_OPTIONS.filter((o) => o.id !== 'shamsi') : LENS_OPTIONS;
 
   function selectLens(id: TheoryLensId) {
     if (disabled) return;
@@ -101,7 +105,7 @@ export function TheoryLensSelector({
           {arabic ? 'الإطار التحليلي' : 'Theory Lens'}
         </span>
 
-        {LENS_OPTIONS.map((opt) => {
+        {visibleOptions.map((opt) => {
           const Icon = opt.icon;
           const isActive = value.lensId === opt.id;
           return (
@@ -172,9 +176,10 @@ export function TheoryLensSelector({
 
 // ─── Compact inline badge (shown in message bubble header) ────────────────────
 
-export function TheoryLensBadge({ lensId }: { lensId: TheoryLensId | string }) {
+export function TheoryLensBadge({ lensId, hideShamsi = false }: { lensId: TheoryLensId | string; hideShamsi?: boolean }) {
   const opt = LENS_OPTIONS.find((o) => o.id === lensId);
   if (!opt || lensId === 'uae_only') return null;
+  if (hideShamsi && lensId === 'shamsi') return null;
   const Icon = opt.icon;
   return (
     <span className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full border font-medium ${opt.badgeClass} ${opt.ringClass}`}>

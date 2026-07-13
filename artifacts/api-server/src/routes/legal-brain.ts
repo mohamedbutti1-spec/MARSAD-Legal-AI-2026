@@ -10,7 +10,7 @@
  */
 
 import { Router, type IRouter, type Request, type Response } from "express";
-import { requireAnyRole }         from "../middlewares/roleAuth";
+import { requireAnyRole, requireShamsiOwner } from "../middlewares/roleAuth";
 import { aiRouter, TaskType }     from "../ai";
 import { parseModelJson }         from "../ai/providers/interface";
 import { logAudit }               from "../middlewares/auditLog";
@@ -223,6 +223,7 @@ ${decisionText}
 // ─── POST /legal-brain/shamsi-analysis ────────────────────────────────────────
 router.post(
   "/legal-brain/shamsi-analysis",
+  requireShamsiOwner,
   requireAnyRole,
   aiAnalysisLimit,
   async (req, res): Promise<void> => {

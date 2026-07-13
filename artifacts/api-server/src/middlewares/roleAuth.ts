@@ -7,6 +7,7 @@
  */
 import type { Request, Response, NextFunction } from "express";
 import { ALL_ROLES, getPermissions } from "@workspace/db/permissions";
+import { logAudit } from "./auditLog.js";
 
 export type UserRole = (typeof ALL_ROLES)[number];
 
@@ -111,4 +112,91 @@ export function requireWriteRoleOrGuestDemo(
     return;
   }
   requireWriteRole(req, res, next);
+}
+
+/**
+ * isShamsiFrameworkEnabled — reads the SHAMSI_FRAMEWORK_ENABLED env flag.
+ * Defaults to enabled (true) unless explicitly set to "false".
+ */
+export function isShamsiFrameworkEnabled(): boolean {
+  return process.env.SHAMSI_FRAMEWORK_ENABLED !== "false";
+}
+
+/**
+ * requireShamsiOwner — gate for every Al-Shamsi Theory / Framework surface
+ * (admin-os, legal-brain/shamsi-analysis, court simulation, and any future
+ * Shamsi-branded route).
+ *
+ * Restricted to the "owner" role only, and only while SHAMSI_FRAMEWORK_ENABLED
+ * is not explicitly disabled. Every denial — whether from wrong role, missing
+ * auth, or the framework being disabled — is logged to the audit trail and
+ * returns a generic 403 so the response never reveals that a Shamsi-specific
+ * feature exists behind the gate.
+ */
+export function requireShamsiOwner(req: Request, res: Response, next: NextFunction): void {
+  const deny = (reason: string) => {
+    logAudit(req, "shamsi.access_denied", {
+      details: { path: req.path, method: req.method, reason },
+    });
+    res.status(403).json({ error: "Unauthorized" });
+  };
+
+  if (!isShamsiFrameworkEnabled()) {
+    deny("framework_disabled");
+    return;
+  }
+  if (!req.user) {
+    deny("unauthenticated");
+    return;
+  }
+  if (req.user.role !== "owner") {
+    deny("not_owner");
+    return;
+  }
+  next();
+}
+
+/**
+ * canIncludeShamsi — true only when the trusted session role is "owner" and
+ * the framework is not disabled. Use this (never the raw x-user-role header)
+ * to decide whether an otherwise-broadly-accessible response may include
+ * Al-Shamsi Theory data (alShamsiDimensions / alShamsiMapping / alShamsiDrivers
+ * / alShamsiFrameworkCompliance).
+ */
+export function canIncludeShamsi(role: string): boolean {
+  return role === "owner" && isShamsiFrameworkEnabled();
+}
+
+/**
+ * stripShamsiFromRiskAssessment — redacts Al-Shamsi Theory outputs from a
+ * risk assessment row for non-owner roles: the 16-dimension mapping
+ * (alShamsiMapping) and, per individual risk index, which Shamsi dimensions
+ * drove that index's score (alShamsiDrivers). All other risk data (scores,
+ * reasons, legal citations) remains visible — this is redaction, not a
+ * route-level lock, since risk assessment is a legitimate broader-access
+ * feature that merely happens to carry Shamsi-derived fields.
+ */
+export function stripShamsiFromRiskAssessment<T extends Record<string, unknown>>(
+  assessment: T | null | undefined,
+  role: string,
+): T | null | undefined {
+  if (!assessment || canIncludeShamsi(role)) return assessment;
+  const clone: Record<string, unknown> = { ...assessment };
+  clone.alShamsiMapping = null;
+  // Present-tense assessments use `indices`; risk_history rows snapshot the
+  // same shape under `indicesSnapshot` — strip Shamsi drivers from whichever
+  // is present.
+  for (const field of ["indices", "indicesSnapshot"] as const) {
+    const value = clone[field];
+    if (value && typeof value === "object") {
+      const indices = value as Record<string, Record<string, unknown>>;
+      const strippedIndices: Record<string, unknown> = {};
+      for (const key of Object.keys(indices)) {
+        const idx = indices[key];
+        strippedIndices[key] = idx && typeof idx === "object" ? { ...idx, alShamsiDrivers: [] } : idx;
+      }
+      clone[field] = strippedIndices;
+    }
+  }
+  return clone as T;
 }

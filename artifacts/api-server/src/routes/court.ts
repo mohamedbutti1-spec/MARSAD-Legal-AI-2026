@@ -24,7 +24,7 @@
  */
 
 import { Router, type IRouter, type Response } from "express";
-import { requireAnyRole }      from "../middlewares/roleAuth";
+import { requireShamsiOwner }  from "../middlewares/roleAuth";
 import { aiRouter, TaskType }  from "../ai";
 import { parseModelJson }      from "../ai/providers/interface";
 import { logAudit }            from "../middlewares/auditLog";
@@ -148,7 +148,7 @@ function terminalExit(
 
 router.post(
   "/court/simulate",
-  requireAnyRole,
+  requireShamsiOwner,
   aiAnalysisLimit,
   async (req, res): Promise<void> => {
     const caseText = safeStr(req.body?.caseText, 5000);
@@ -451,7 +451,7 @@ ${caseText}
 
 router.post(
   "/court/supreme-review",
-  requireAnyRole,
+  requireShamsiOwner,
   aiAnalysisLimit,
   async (req, res): Promise<void> => {
     const caseText = safeStr(req.body?.caseText, 5000);

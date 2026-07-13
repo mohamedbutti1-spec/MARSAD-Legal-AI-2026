@@ -181,3 +181,16 @@ export const THEORY_LENS_OPTIONS = [
   { value: 'comparative_french', label: 'القانون الإداري الفرنسي المقارن' },
   { value: 'custom',           label: 'إطار نظري مخصص' },
 ];
+
+/**
+ * THEORY_LENS_OPTIONS filtered for the current user. Al-Shamsi Theory
+ * ('al_shamsi') is owner-only — pass `canUseShamsiFramework` from
+ * useUserContext() so non-owner roles never see it as a selectable option.
+ * The server independently re-enforces this in sanitizeTheoryLensId, so this
+ * is UI-level hiding, not the security boundary itself.
+ */
+export function getVisibleTheoryLensOptions(canUseShamsiFramework: boolean) {
+  return canUseShamsiFramework
+    ? THEORY_LENS_OPTIONS
+    : THEORY_LENS_OPTIONS.filter((o) => o.value !== 'al_shamsi');
+}

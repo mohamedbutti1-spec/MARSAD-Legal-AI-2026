@@ -18,11 +18,12 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { DISPUTE_TYPE_LABELS, THEORY_LENS_OPTIONS } from '@/types/jre';
+import { DISPUTE_TYPE_LABELS, THEORY_LENS_OPTIONS, getVisibleTheoryLensOptions } from '@/types/jre';
 import {
   PANEL_SIZE_CONFIG, DISPOSAL_POSITION_CONFIG, STATUS_CONFIG,
   type JdcChamber, type PanelSize,
 } from '@/types/jdc';
+import { useUserContext } from '@/lib/user-context';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -148,6 +149,8 @@ interface CreateDialogProps {
 }
 
 function CreateDialog({ open, onOpenChange, onSubmit, isLoading }: CreateDialogProps) {
+  const { canUseShamsiFramework } = useUserContext();
+  const visibleTheoryLensOptions = getVisibleTheoryLensOptions(canUseShamsiFramework);
   const [form, setForm] = useState({
     title:          '',
     disputeSummary: '',
@@ -307,7 +310,7 @@ function CreateDialog({ open, onOpenChange, onSubmit, isLoading }: CreateDialogP
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {THEORY_LENS_OPTIONS.map((opt) => (
+                {visibleTheoryLensOptions.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                 ))}
               </SelectContent>

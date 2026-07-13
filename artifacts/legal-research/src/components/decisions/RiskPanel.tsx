@@ -141,7 +141,7 @@ function ScoreGauge({ label, value, inverted = false }: { label: string; value: 
 
 export function RiskPanel({ decisionId }: { decisionId: number }) {
   const qc = useQueryClient();
-  const { role, userId, userOrg, canWriteRiskTreatment, canRecalculateRisk } = useUserContext();
+  const { role, userId, userOrg, canWriteRiskTreatment, canRecalculateRisk, canUseShamsiFramework } = useUserContext();
 
   const headers = {
     'Content-Type': 'application/json',
@@ -336,7 +336,7 @@ export function RiskPanel({ decisionId }: { decisionId: number }) {
                             ))}
                           </div>
                         )}
-                        {val.alShamsiDrivers.length > 0 && (
+                        {canUseShamsiFramework && val.alShamsiDrivers.length > 0 && (
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-[10px] text-muted-foreground">أبعاد الشامسي:</span>
                             {val.alShamsiDrivers.map((d) => (

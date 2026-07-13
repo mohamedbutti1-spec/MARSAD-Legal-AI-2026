@@ -201,6 +201,7 @@ function DecisionRow({
   onDelegate?: () => void;
   delegating?: boolean;
 }) {
+  const { canUseShamsiFramework } = useUserContext();
   return (
     <div
       onClick={onClick}
@@ -221,7 +222,7 @@ function DecisionRow({
         </div>
         <p className="text-sm font-medium text-foreground line-clamp-1 mb-1">{d.titleAr}</p>
         <div className="flex items-center gap-3 flex-wrap">
-          {d.dci?.alShamsiFrameworkCompliance && <ComplianceChip value={d.dci.alShamsiFrameworkCompliance} />}
+          {canUseShamsiFramework && d.dci?.alShamsiFrameworkCompliance && <ComplianceChip value={d.dci.alShamsiFrameworkCompliance} />}
           {showHii && d.dci?.humanInfluenceIndex && <HiiChip value={d.dci.humanInfluenceIndex} />}
           {d.organizationUnit && <span className="text-[11px] text-muted-foreground">{d.organizationUnit}</span>}
         </div>
@@ -249,6 +250,7 @@ function DecisionRow({
 // ─── 1. Minister Dashboard ────────────────────────────────────────────────────
 
 function MinisterDashboard() {
+  const { canUseShamsiFramework } = useUserContext();
   const { data, isLoading, error } = useQuery({
     queryKey: ['gov-dashboard-minister'],
     queryFn: () => apiFetch('GET', '/api/governance/dashboard'),
@@ -364,6 +366,7 @@ function MinisterDashboard() {
 // ─── 2. Undersecretary Dashboard ─────────────────────────────────────────────
 
 function UndersecretaryDashboard() {
+  const { canUseShamsiFramework } = useUserContext();
   const queryClient = useQueryClient();
   const [delegating, setDelegating] = useState<number | null>(null);
 
@@ -430,7 +433,7 @@ function UndersecretaryDashboard() {
           <SectionHeader icon={<Shield className="w-4 h-4" />} title="ملخص الهوية الدستورية (DCI) — آخر قرار" />
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
             {[
-              { label: 'الامتثال لإطار الشامسي', value: <ComplianceChip value={decisions[0].dci.alShamsiFrameworkCompliance} /> },
+              ...(canUseShamsiFramework ? [{ label: 'الامتثال لإطار الشامسي', value: <ComplianceChip value={decisions[0].dci.alShamsiFrameworkCompliance} /> }] : []),
               { label: 'الحالة الدستورية', value: decisions[0].dci.constitutionalValidationStatus ?? '—' },
               { label: 'حالة الختم', value: <SealChip isSealed={decisions[0].dci.isSealed} /> },
               { label: 'مؤشر تأثير الإنسان', value: <HiiChip value={decisions[0].dci.humanInfluenceIndex} /> },
@@ -456,6 +459,7 @@ function UndersecretaryDashboard() {
 // ─── 3. Assistant Undersecretary Dashboard ────────────────────────────────────
 
 function AssistantUndersecretaryDashboard() {
+  const { canUseShamsiFramework } = useUserContext();
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const listQuery = useQuery({
@@ -548,7 +552,7 @@ function AssistantUndersecretaryDashboard() {
               <div className="bg-white rounded-xl border border-border shadow-xs p-5">
                 <SectionHeader icon={<Shield className="w-4 h-4" />} title="الهوية الدستورية (DCI)" />
                 <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div><span className="text-xs text-muted-foreground block mb-1">الامتثال</span><ComplianceChip value={dci.alShamsiFrameworkCompliance as string} /></div>
+                  {canUseShamsiFramework && <div><span className="text-xs text-muted-foreground block mb-1">الامتثال</span><ComplianceChip value={dci.alShamsiFrameworkCompliance as string} /></div>}
                   <div><span className="text-xs text-muted-foreground block mb-1">الحالة الدستورية</span><span className="font-medium">{(dci.constitutionalValidationStatus as string) ?? '—'}</span></div>
                   <div><span className="text-xs text-muted-foreground block mb-1">بوابات المرحلة 9</span><span className="font-medium">{(dci.lsiStatus as string) ?? '—'}</span></div>
                   <div><span className="text-xs text-muted-foreground block mb-1">ختم DCI</span><SealChip isSealed={dci.isSealed as boolean} /></div>
@@ -565,6 +569,7 @@ function AssistantUndersecretaryDashboard() {
 // ─── 4. Director General Dashboard ───────────────────────────────────────────
 
 function DirectorGeneralDashboard() {
+  const { canUseShamsiFramework } = useUserContext();
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const listQuery = useQuery({
@@ -610,7 +615,7 @@ function DirectorGeneralDashboard() {
                   <SectionHeader icon={<Shield className="w-4 h-4" />} title="التحقق الدستوري" />
                   <div className="grid grid-cols-2 gap-4">
                     {[
-                      { label: 'الامتثال لإطار الشامسي', value: <ComplianceChip value={dci.alShamsiFrameworkCompliance as string} /> },
+                      ...(canUseShamsiFramework ? [{ label: 'الامتثال لإطار الشامسي', value: <ComplianceChip value={dci.alShamsiFrameworkCompliance as string} /> }] : []),
                       { label: 'حالة التحقق الدستوري', value: (dci.constitutionalValidationStatus as string) ?? '—' },
                       { label: 'حالة مبدأ الشرعية (LSI)', value: (dci.lsiStatus as string) ?? '—' },
                       { label: 'ختم DCI', value: <SealChip isSealed={dci.isSealed as boolean} /> },
@@ -650,6 +655,7 @@ function DirectorGeneralDashboard() {
 // ─── 5. Department Director Dashboard ────────────────────────────────────────
 
 function DepartmentDirectorDashboard() {
+  const { canUseShamsiFramework } = useUserContext();
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const listQuery = useQuery({
@@ -722,6 +728,7 @@ function DepartmentDirectorDashboard() {
 // ─── 6. Legal Department Dashboard ───────────────────────────────────────────
 
 function LegalDepartmentDashboard() {
+  const { canUseShamsiFramework } = useUserContext();
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const listQuery = useQuery({
@@ -785,7 +792,7 @@ function LegalDepartmentDashboard() {
               <div className="bg-white rounded-xl border border-border shadow-xs p-5">
                 <SectionHeader icon={<Shield className="w-4 h-4" />} title="الهوية الدستورية" />
                 <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div><span className="text-xs text-muted-foreground block mb-1">الامتثال</span><ComplianceChip value={dci.alShamsiFrameworkCompliance as string} /></div>
+                  {canUseShamsiFramework && <div><span className="text-xs text-muted-foreground block mb-1">الامتثال</span><ComplianceChip value={dci.alShamsiFrameworkCompliance as string} /></div>}
                   <div><span className="text-xs text-muted-foreground block mb-1">بوابات LSI</span><span>{(dci.lsiStatus as string) ?? '—'}</span></div>
                   <div><span className="text-xs text-muted-foreground block mb-1">الحالة الدستورية</span><span>{(dci.constitutionalValidationStatus as string) ?? '—'}</span></div>
                   <div><span className="text-xs text-muted-foreground block mb-1">ختم DCI</span><SealChip isSealed={dci.isSealed as boolean} /></div>
@@ -802,6 +809,7 @@ function LegalDepartmentDashboard() {
 // ─── 7. Constitutional Reviewer Dashboard ─────────────────────────────────────
 
 function ConstitutionalReviewerDashboard() {
+  const { canUseShamsiFramework } = useUserContext();
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const listQuery = useQuery({
@@ -828,7 +836,7 @@ function ConstitutionalReviewerDashboard() {
           <div key={d.id} onClick={() => setSelectedId(d.id)} className={`p-3 rounded-lg border cursor-pointer transition-all ${selectedId === d.id ? 'border-primary/40 bg-primary/5' : 'border-border hover:border-primary/20 hover:bg-muted/30'}`}>
             <div className="flex items-center gap-2 mb-1 flex-wrap">
               <span className="text-xs font-mono text-muted-foreground">{d.caseNumber}</span>
-              <ComplianceChip value={d.dci?.alShamsiFrameworkCompliance} />
+              {canUseShamsiFramework && <ComplianceChip value={d.dci?.alShamsiFrameworkCompliance} />}
             </div>
             <p className="text-sm font-medium line-clamp-1">{d.titleAr}</p>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
@@ -856,7 +864,7 @@ function ConstitutionalReviewerDashboard() {
                 <SectionHeader icon={<Shield className="w-4 h-4" />} title="الهوية الدستورية الكاملة (DCI)" />
                 <div className="grid grid-cols-2 gap-4">
                   {[
-                    { label: 'الامتثال لإطار الشامسي', value: <ComplianceChip value={dci.alShamsiFrameworkCompliance as string} /> },
+                    ...(canUseShamsiFramework ? [{ label: 'الامتثال لإطار الشامسي', value: <ComplianceChip value={dci.alShamsiFrameworkCompliance as string} /> }] : []),
                     { label: 'حالة التحقق الدستوري', value: <span className={`text-sm font-semibold ${dci.constitutionalValidationStatus === 'passed' ? 'text-emerald-600' : dci.constitutionalValidationStatus === 'failed' ? 'text-red-600' : 'text-slate-500'}`}>{(dci.constitutionalValidationStatus as string) ?? '—'}</span> },
                     { label: 'مبدأ الشرعية (LSI)', value: (dci.lsiStatus as string) ?? '—' },
                     { label: 'مستوى تباين QVA', value: (dci.qvaVarianceLevel as string) ?? '—' },
@@ -903,6 +911,7 @@ function ConstitutionalReviewerDashboard() {
 // ─── 8. Internal Auditor Dashboard ───────────────────────────────────────────
 
 function InternalAuditorDashboard() {
+  const { canUseShamsiFramework } = useUserContext();
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const listQuery = useQuery({
@@ -949,7 +958,7 @@ function InternalAuditorDashboard() {
                 <div className="grid grid-cols-2 gap-3">
                   <div><span className="text-xs text-muted-foreground block mb-1">مؤشر تأثير الإنسان</span><HiiChip value={dci.humanInfluenceIndex as string} /></div>
                   <div><span className="text-xs text-muted-foreground block mb-1">تأثير الذكاء الاصطناعي الفعلي</span><span className="text-sm font-medium">{(dci.aiActualInfluence as string) ?? '—'}</span></div>
-                  <div><span className="text-xs text-muted-foreground block mb-1">الامتثال</span><ComplianceChip value={dci.alShamsiFrameworkCompliance as string} /></div>
+                  {canUseShamsiFramework && <div><span className="text-xs text-muted-foreground block mb-1">الامتثال</span><ComplianceChip value={dci.alShamsiFrameworkCompliance as string} /></div>}
                   <div><span className="text-xs text-muted-foreground block mb-1">الختم</span><SealChip isSealed={dci.isSealed as boolean} /></div>
                 </div>
               </div>
@@ -1025,6 +1034,7 @@ function InternalAuditorDashboard() {
 // ─── 9. External Auditor Dashboard ───────────────────────────────────────────
 
 function ExternalAuditorDashboard() {
+  const { canUseShamsiFramework } = useUserContext();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [verifying, setVerifying] = useState(false);
   const [verifyResult, setVerifyResult] = useState<Record<string, unknown> | null>(null);
@@ -1074,7 +1084,7 @@ function ExternalAuditorDashboard() {
               <SealChip isSealed />
             </div>
             <p className="text-sm font-medium line-clamp-1">{d.titleAr}</p>
-            {d.dci?.alShamsiFrameworkCompliance && <div className="mt-1"><ComplianceChip value={d.dci.alShamsiFrameworkCompliance} /></div>}
+            {canUseShamsiFramework && d.dci?.alShamsiFrameworkCompliance && <div className="mt-1"><ComplianceChip value={d.dci.alShamsiFrameworkCompliance} /></div>}
           </div>
         ))}
         {decisions.length === 0 && (
@@ -2630,6 +2640,7 @@ function JudicialIntelligenceTab({ decisionId }: { decisionId: number }) {
 // ─── 10. Judge Dashboard ──────────────────────────────────────────────────────
 
 function JudgeDashboard() {
+  const { canUseShamsiFramework } = useUserContext();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [tab, setTab] = useState<'stages' | 'jdp' | 'dci' | 'car' | 'audit' | 'custody' | 'memory' | 'evidence' | 'judicial'>('stages');
 
@@ -2655,6 +2666,9 @@ function JudgeDashboard() {
 
   if (listQuery.isLoading) return <LoadingSpinner />;
 
+  // The Judicial Intelligence tab applies the Al-Shamsi Framework as its core
+  // review methodology end-to-end, so it is owner-only — hidden for judges
+  // and every other non-owner role, matching the backend route lock.
   const TABS: { key: typeof tab; label: string }[] = [
     { key: 'stages',   label: 'المراحل' },
     { key: 'jdp',      label: 'الحزمة الدفاعية' },
@@ -2664,7 +2678,7 @@ function JudgeDashboard() {
     { key: 'custody',  label: '⛓ الحيازة' },
     { key: 'memory',   label: '📜 الذاكرة الدستورية' },
     { key: 'evidence', label: '🔐 سجل الأدلة' },
-    { key: 'judicial', label: '⚖️ الذكاء القضائي' },
+    ...(canUseShamsiFramework ? [{ key: 'judicial' as const, label: '⚖️ الذكاء القضائي' }] : []),
   ];
 
   return (
@@ -2681,7 +2695,7 @@ function JudgeDashboard() {
             </div>
             <p className="text-sm font-medium line-clamp-1">{d.titleAr}</p>
             <div className="mt-1 flex gap-2">
-              <ComplianceChip value={d.dci?.alShamsiFrameworkCompliance} />
+              {canUseShamsiFramework && <ComplianceChip value={d.dci?.alShamsiFrameworkCompliance} />}
             </div>
           </div>
         ))}
@@ -2751,7 +2765,7 @@ function JudgeDashboard() {
                 {dci ? (
                   <div className="grid grid-cols-2 gap-4">
                     {[
-                      { label: 'الامتثال لإطار الشامسي', value: <ComplianceChip value={dci.alShamsiFrameworkCompliance as string} /> },
+                      ...(canUseShamsiFramework ? [{ label: 'الامتثال لإطار الشامسي', value: <ComplianceChip value={dci.alShamsiFrameworkCompliance as string} /> }] : []),
                       { label: 'حالة التحقق الدستوري', value: (dci.constitutionalValidationStatus as string) ?? '—' },
                       { label: 'مؤشر تأثير الإنسان', value: <HiiChip value={dci.humanInfluenceIndex as string} /> },
                       { label: 'تأثير الذكاء الاصطناعي الفعلي', value: (dci.aiActualInfluence as string) ?? '—' },
@@ -2855,7 +2869,7 @@ function JudgeDashboard() {
               </div>
             ) : null}
 
-            {tab === 'judicial' && selectedId ? (
+            {tab === 'judicial' && selectedId && canUseShamsiFramework ? (
               <div className="bg-white rounded-xl border border-border shadow-xs p-5">
                 <JudicialIntelligenceTab decisionId={selectedId} />
               </div>
@@ -2937,7 +2951,7 @@ function RoleBanner({ role }: { role: string }) {
 // ─── Main Export ──────────────────────────────────────────────────────────────
 
 export default function GovernanceHub() {
-  const { role, lang, canViewGovernanceDashboard } = useUserContext();
+  const { role, lang, canViewGovernanceDashboard, canUseShamsiFramework } = useUserContext();
 
   // Citizen goes to /citizen portal
   if (role === 'citizen') {
@@ -2996,9 +3010,13 @@ export default function GovernanceHub() {
           {titleMap[role] ?? 'مركز الحوكمة التنفيذية'}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {lang === 'ar'
-            ? 'طبقة الحوكمة التنفيذية — المرحلة 2 | إطار الشامسي™'
-            : 'Executive Governance Layer — Phase 2 | Al-Shamsi Framework™'}
+          {canUseShamsiFramework
+            ? (lang === 'ar'
+                ? 'طبقة الحوكمة التنفيذية — المرحلة 2 | إطار الشامسي™'
+                : 'Executive Governance Layer — Phase 2 | Al-Shamsi Framework™')
+            : (lang === 'ar'
+                ? 'طبقة الحوكمة التنفيذية — المرحلة 2'
+                : 'Executive Governance Layer — Phase 2')}
         </p>
       </div>
 
@@ -3020,7 +3038,9 @@ export default function GovernanceHub() {
       {/* Footer */}
       <div className="pt-8 border-t border-border">
         <p className="text-center text-xs text-muted-foreground">
-          مرصد (MARSAD) Alpha 1.0 · منصة القرارات الإدارية الذكية · إطار الشامسي الدستوري™
+          {canUseShamsiFramework
+            ? 'مرصد (MARSAD) Alpha 1.0 · منصة القرارات الإدارية الذكية · إطار الشامسي الدستوري™'
+            : 'مرصد (MARSAD) Alpha 1.0 · منصة القرارات الإدارية الذكية'}
         </p>
       </div>
     </div>

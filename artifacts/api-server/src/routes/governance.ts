@@ -150,11 +150,13 @@ router.get("/governance/dashboard", allowAnyGovernanceRole, async (req, res) => 
       }
     }
 
-    // Compliance distribution
+    // Compliance distribution — Al-Shamsi Framework data is owner-only.
     const complianceDistribution: Record<string, number> = {};
-    for (const d of allDci) {
-      const k = d.alShamsiFrameworkCompliance ?? "pending";
-      complianceDistribution[k] = (complianceDistribution[k] ?? 0) + 1;
+    if (role === "owner") {
+      for (const d of allDci) {
+        const k = d.alShamsiFrameworkCompliance ?? "pending";
+        complianceDistribution[k] = (complianceDistribution[k] ?? 0) + 1;
+      }
     }
 
     // Decisions needing attention — scoped to what this role is allowed to see.
@@ -242,7 +244,9 @@ router.get("/governance/decisions", allowAnyGovernanceRole, async (req, res) => 
           ? {
               isSealed: dci.isSealed,
               sealedAt: dci.sealedAt,
-              alShamsiFrameworkCompliance: dci.alShamsiFrameworkCompliance,
+              ...(role === "owner"
+                ? { alShamsiFrameworkCompliance: dci.alShamsiFrameworkCompliance }
+                : {}),
               constitutionalValidationStatus: dci.constitutionalValidationStatus,
               lsiStatus: dci.lsiStatus,
               humanDecisionOwner: dci.humanDecisionOwner,
@@ -366,7 +370,7 @@ router.get(
           decisionId: dciRow.decisionId,
           isSealed: dciRow.isSealed,
           sealedAt: dciRow.sealedAt,
-          alShamsiFrameworkCompliance: dciRow.alShamsiFrameworkCompliance,
+          alShamsiFrameworkCompliance: role === "owner" ? dciRow.alShamsiFrameworkCompliance : undefined,
           constitutionalValidationStatus: dciRow.constitutionalValidationStatus,
           createdAt: dciRow.createdAt,
           updatedAt: dciRow.updatedAt,

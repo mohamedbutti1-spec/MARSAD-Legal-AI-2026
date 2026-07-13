@@ -5,6 +5,7 @@
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useUserContext } from '@/lib/user-context';
 import {
   Play, ChevronUp, ChevronDown, Check, Clock, AlertTriangle,
   Shield, FileText, Users, Scale, Sparkles, Hash, Link2,
@@ -430,6 +431,7 @@ function TimelineNode({
 
 export default function DecisionReplay({ decisionId }: { decisionId: number }) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const { canUseShamsiFramework } = useUserContext();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['replay', decisionId],
@@ -438,7 +440,12 @@ export default function DecisionReplay({ decisionId }: { decisionId: number }) {
   });
 
   const timeline: ReplayTimeline | null = data?.timeline ?? null;
-  const stages: ReplayStage[] = timeline?.stages ?? [];
+  // Defense-in-depth: the API already omits Al-Shamsi data for non-owner
+  // roles, but strip it again client-side in case a stale/cached response
+  // still carries it.
+  const stages: ReplayStage[] = (timeline?.stages ?? []).map((stage) =>
+    canUseShamsiFramework ? stage : { ...stage, alShamsiDimensions: null },
+  );
 
   // Keyboard navigation
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
