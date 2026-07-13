@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useSearchParams } from 'wouter';
 import { AppLayout } from '@/components/layout/app-layout';
 import { apiFetch } from '@/lib/api-fetch';
 import { useT, useUserContext } from '@/lib/user-context';
@@ -2942,7 +2943,6 @@ function ScenarioInputPanel({
 
 function PreAnalysisPanel({
   config, onChange, onStart, expertMode, onToggleExpert, currentInput, onInputChange,
-  trainingOutputType, onTrainingOutputTypeChange, trainingText, onTrainingTextChange, onSubmit,
 }: {
   config: SessionConfig;
   onChange: (c: SessionConfig) => void;
@@ -2951,11 +2951,6 @@ function PreAnalysisPanel({
   onToggleExpert: () => void;
   currentInput?: string;
   onInputChange?: (value: string) => void;
-  trainingOutputType: TrainingOutputType | '';
-  onTrainingOutputTypeChange: (v: TrainingOutputType | '') => void;
-  trainingText: string;
-  onTrainingTextChange: (v: string) => void;
-  onSubmit: () => void;
 }) {
   // Derive the selected identity — only set once the user actually picks one;
   // 'unspecified' (the default) shows the dropdown placeholder instead.
@@ -3272,63 +3267,96 @@ function PreAnalysisPanel({
             </select>
           </CfgSection>
 
-          {/* ── سيناريوهات التدريب والمراجعة القضائية الافتراضية ──────────── */}
-          <div className="bg-card border border-border/60 rounded-xl overflow-hidden px-3 pt-3 pb-3">
-            <p className="text-[11px] font-bold text-foreground mb-2 flex items-center gap-1.5">
-              <span>🎓</span>
-              سيناريوهات التدريب والمراجعة القضائية الافتراضية
-              <span className="text-[9px] font-normal text-muted-foreground">(اختياري)</span>
-            </p>
-
-            <div role="radiogroup" aria-label="نوع المخرج التدريبي" className="grid grid-cols-2 gap-1.5 mb-3">
-              {(Object.entries(TRAINING_OUTPUT_CFG) as [TrainingOutputType, { ar: string }][]).map(([k, v]) => {
-                const selected = trainingOutputType === k;
-                return (
-                  <button
-                    key={k}
-                    type="button"
-                    role="radio"
-                    aria-checked={selected}
-                    onClick={() => onTrainingOutputTypeChange(selected ? '' : k)}
-                    className={`flex items-center justify-between gap-1 rounded-lg border px-2.5 py-2 text-[11px] font-semibold text-start transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 min-h-[40px] ${
-                      selected
-                        ? 'border-primary bg-primary/10 text-primary'
-                        : 'border-border bg-background text-foreground hover:border-primary/40'
-                    }`}
-                  >
-                    <span>{v.ar}</span>
-                    {selected && <Check className="w-3.5 h-3.5 shrink-0" aria-hidden />}
-                  </button>
-                );
-              })}
-            </div>
-
-            <label htmlFor="training-scenario-textarea" className="text-[10px] font-semibold text-muted-foreground block mb-1">
-              ماذا تريد للتدريب؟ اكتب هنا...
-            </label>
-            <textarea
-              id="training-scenario-textarea"
-              aria-label="ماذا تريد للتدريب؟"
-              rows={3}
-              className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary/40 leading-relaxed"
-              placeholder="ماذا تريد للتدريب؟ اكتب هنا..."
-              dir="rtl"
-              value={trainingText}
-              onChange={(e) => onTrainingTextChange(e.target.value)}
-            />
-          </div>
-
-          {/* ── زر الإرسال أو التنفيذ ─────────────────────────────────────── */}
+          {/* ── زر الإرسال ────────────────────────────────────────────────── */}
           <Button
             type="button"
-            onClick={onSubmit}
-            disabled={!currentInput?.trim() && !(trainingText.trim() && trainingOutputType)}
+            onClick={onStart}
+            disabled={!currentInput?.trim()}
             className="w-full h-11 rounded-xl text-sm font-bold"
           >
             <Send className="w-4 h-4 me-2" aria-hidden />
             إرسال / تنفيذ
           </Button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Training scenario workspace (سيناريوهات التدريب والمراجعة القضائية) ──────
+// Reached from the sidebar sub-menu (النقل من الصفحة الرئيسية — نفس المنطق والمخرجات،
+// مع وراثة تلقائية للتصنيف القانوني/الفرع/التخصص/مصدر القانون من نفس الجلسة).
+
+function TrainingScenarioWorkspace({
+  outputType, config, trainingText, onTrainingTextChange, onStart, busy,
+}: {
+  outputType: TrainingOutputType;
+  config: SessionConfig;
+  trainingText: string;
+  onTrainingTextChange: (v: string) => void;
+  onStart: () => void;
+  busy: boolean;
+}) {
+  const cfg = TRAINING_OUTPUT_CFG[outputType];
+  const branch = getLegalBranchDef(config.legalDomain, config.legalBranch);
+  const spec = getLegalSpecializationDef(config.legalDomain, config.legalBranch, config.legalSpecialization);
+
+  return (
+    <div className="flex-1 overflow-y-auto px-3 sm:px-5 py-4" dir="rtl">
+      <div className="max-w-xl mx-auto">
+        <div className="text-center mb-5">
+          <div className="inline-flex items-center gap-2 mb-2">
+            <span className="text-xl">🎓</span>
+            <h2 className="text-base font-bold text-foreground">
+              تدريب على إعداد {cfg.ar}
+            </h2>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            سيناريوهات التدريب والمراجعة القضائية الافتراضية
+          </p>
+        </div>
+
+        {/* ── التصنيف الموروث تلقائياً من الجلسة الحالية ────────────────── */}
+        {(config.legalDomain || config.lawSource) && (
+          <div className="mb-3 flex flex-wrap gap-1.5 justify-center">
+            {config.legalDomain && (
+              <span className="text-[10px] bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-medium">
+                🧭 {LEGAL_TAXONOMY[config.legalDomain].ar}
+                {branch ? ` · ${branch.ar}` : ''}
+                {spec ? ` · ${spec.ar}` : ''}
+              </span>
+            )}
+            {config.lawSource && (
+              <span className="text-[10px] bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-medium">
+                📚 {LAW_SOURCE_CFG[config.lawSource].ar}
+              </span>
+            )}
+          </div>
+        )}
+
+        <label htmlFor="training-workspace-textarea" className="text-[11px] font-semibold text-muted-foreground block mb-1.5">
+          اكتب الواقعة أو القضية أو السؤال القانوني هنا...
+        </label>
+        <textarea
+          id="training-workspace-textarea"
+          aria-label="اكتب الواقعة أو القضية أو السؤال القانوني هنا"
+          rows={6}
+          className="w-full resize-none rounded-xl border-2 border-primary/25 bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:border-primary/50 leading-relaxed"
+          placeholder="اكتب الواقعة أو القضية أو السؤال القانوني هنا..."
+          dir="rtl"
+          value={trainingText}
+          onChange={(e) => onTrainingTextChange(e.target.value)}
+        />
+
+        <Button
+          type="button"
+          onClick={onStart}
+          disabled={!trainingText.trim() || busy}
+          className="w-full h-11 rounded-xl text-sm font-bold mt-3"
+        >
+          <Send className="w-4 h-4 me-2" aria-hidden />
+          بدء التدريب
+        </Button>
       </div>
     </div>
   );
@@ -4139,8 +4167,15 @@ export default function AiAssistant() {
   /** True once user dismisses the pre-analysis panel for the current session. */
   const [configCommitted, setConfigCommitted] = useState(false);
   /** MLOS restructured flow — سيناريوهات التدريب والمراجعة القضائية الافتراضية (Path 2). Independent of the main question box. */
-  const [trainingOutputType, setTrainingOutputType] = useState<TrainingOutputType | ''>('');
   const [trainingText, setTrainingText] = useState('');
+  // Query param set by the sidebar's "سيناريوهات التدريب والمراجعة القضائية" sub-menu
+  // (e.g. /assistant?train=legal_memorandum). The component stays mounted across
+  // sub-menu clicks (path never changes), so sessionConfig — and therefore the
+  // legal domain/branch/specialization/source classification — is inherited automatically.
+  const [searchParams] = useSearchParams();
+  const trainParam = searchParams.get('train');
+  const activeTrainingType: TrainingOutputType | '' =
+    trainParam && trainParam in TRAINING_OUTPUT_CFG ? (trainParam as TrainingOutputType) : '';
 
   // ── Scenario Engine config ─────────────────────────────────────────────────
   const [scenarioConfig, setScenarioConfig] = useState<ScenarioConfig>(DEFAULT_SCENARIO_CONFIG);
@@ -4948,6 +4983,21 @@ export default function AiAssistant() {
               </div>
             ) : messages.length === 0 ? (
               !configCommitted ? (
+                activeTrainingType ? (
+                  <TrainingScenarioWorkspace
+                    outputType={activeTrainingType}
+                    config={sessionConfig}
+                    trainingText={trainingText}
+                    onTrainingTextChange={setTrainingText}
+                    busy={sending}
+                    onStart={() => {
+                      if (!trainingText.trim()) return;
+                      setConfigCommitted(true);
+                      sendMessage(trainingText, undefined, buildTrainingRequestContent(sessionConfig, activeTrainingType, trainingText));
+                      setTrainingText('');
+                    }}
+                  />
+                ) : (
                 <PreAnalysisPanel
                   config={sessionConfig}
                   onChange={setSessionConfig}
@@ -4960,22 +5010,8 @@ export default function AiAssistant() {
                   onToggleExpert={() => setExpertMode((v) => !v)}
                   currentInput={input}
                   onInputChange={setInput}
-                  trainingOutputType={trainingOutputType}
-                  onTrainingOutputTypeChange={setTrainingOutputType}
-                  trainingText={trainingText}
-                  onTrainingTextChange={setTrainingText}
-                  onSubmit={() => {
-                    if (trainingText.trim() && trainingOutputType) {
-                      setConfigCommitted(true);
-                      sendMessage(trainingText, undefined, buildTrainingRequestContent(sessionConfig, trainingOutputType, trainingText));
-                      setTrainingText('');
-                      setTrainingOutputType('');
-                    } else if (input.trim()) {
-                      setConfigCommitted(true);
-                      sendMessage(input, undefined, buildGeneralRequestContent(sessionConfig, input));
-                    }
-                  }}
                 />
+                )
               ) : (
               <div className="h-full flex flex-col items-center justify-center gap-4 text-center" dir="rtl">
                 <Bot className="w-10 h-10 text-muted-foreground/30" aria-hidden />

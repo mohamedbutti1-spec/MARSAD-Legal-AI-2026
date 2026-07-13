@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'wouter';
+import { Link, useLocation, useSearch } from 'wouter';
 import {
   LayoutDashboard,
   Search,
@@ -30,6 +30,7 @@ import {
   Brain,
   Compass,
   UserCircle,
+  GraduationCap,
 } from 'lucide-react';
 import { useUserContext } from '@/lib/user-context';
 
@@ -47,6 +48,8 @@ interface NavItem {
   icon: React.ReactNode;
   show: boolean;
   badge?: string;
+  /** Optional sub-menu — item becomes an expand/collapse toggle instead of a direct link. */
+  children?: NavItem[];
 }
 
 interface NavSection {
@@ -58,14 +61,26 @@ interface NavSection {
 
 export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: SidebarProps) {
   const [location] = useLocation();
+  const search = useSearch();
   const { role, lang, canManageUsers, canManageSettings, canUseAi, canViewAudit, canViewGovernanceDashboard, canViewRiskDashboard, canViewCilDashboard, canViewNaipDashboard, canViewJdtSimulation } = useUserContext();
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+  // Sub-menu expand/collapse state, keyed by parent href (e.g. training scenarios).
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
   const toggleSection = (id: string) => {
     setCollapsedSections((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleItem = (href: string) => {
+    setExpandedItems((prev) => {
+      const next = new Set(prev);
+      if (next.has(href)) next.delete(href);
+      else next.add(href);
       return next;
     });
   };
@@ -236,6 +251,61 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           show: canUseAi,
           badge: 'v2',
         },
+        // ── سيناريوهات التدريب والمراجعة القضائية — merged from the home page.
+        // Same logic/output as before (see ai-assistant.tsx TRAINING_OUTPUT_CFG),
+        // just relocated here as a sub-menu; each child opens the dedicated
+        // training workspace at /assistant?train=<type>.
+        {
+          href: '/assistant?train=legal_memorandum',
+          labelAr: 'سيناريوهات التدريب والمراجعة القضائية',
+          labelEn: 'Training & Mock Judicial Review Scenarios',
+          icon: <GraduationCap className="w-4.5 h-4.5" />,
+          show: canUseAi,
+          children: [
+            {
+              href: '/assistant?train=legal_memorandum',
+              labelAr: 'مذكرة قانونية',
+              labelEn: 'Legal Memorandum',
+              icon: <ScrollText className="w-4 h-4" />,
+              show: true,
+            },
+            {
+              href: '/assistant?train=judicial_judgment',
+              labelAr: 'حكم قضائي',
+              labelEn: 'Judicial Judgment',
+              icon: <Gavel className="w-4 h-4" />,
+              show: true,
+            },
+            {
+              href: '/assistant?train=legislative_draft',
+              labelAr: 'مسودة تشريعية',
+              labelEn: 'Legislative Draft',
+              icon: <Landmark className="w-4 h-4" />,
+              show: true,
+            },
+            {
+              href: '/assistant?train=executive_report',
+              labelAr: 'تقرير تنفيذي',
+              labelEn: 'Executive Report',
+              icon: <BarChart3 className="w-4 h-4" />,
+              show: true,
+            },
+            {
+              href: '/assistant?train=comparative_study',
+              labelAr: 'دراسة مقارنة',
+              labelEn: 'Comparative Study',
+              icon: <GitCompareArrows className="w-4 h-4" />,
+              show: true,
+            },
+            {
+              href: '/assistant?train=mini_academic_research',
+              labelAr: 'بحث علمي مصغر',
+              labelEn: 'Mini Academic Research',
+              icon: <BookOpenText className="w-4 h-4" />,
+              show: true,
+            },
+          ],
+        },
       ],
     },
     // ── الخدمات — public-facing services ─────────────────────────────────────
@@ -311,8 +381,12 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
     // from the sidebar per the visual rebuild, routes remain intact.
   ];
 
-  const isActive = (href: string) =>
-    href === '/' ? location === '/' : location.startsWith(href);
+  const isActive = (href: string) => {
+    const [path, query] = href.split('?');
+    if (path === '/') return location === '/' && !query;
+    if (!location.startsWith(path)) return false;
+    return query ? search === query : true;
+  };
 
   const handleLinkClick = () => {
     if (setMobileOpen) setMobileOpen(false);
@@ -420,7 +494,79 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
               {!isSectionCollapsed && (
                 <div className={`${collapsed ? 'px-2' : 'px-2'} space-y-0.5`}>
                   {visibleItems.map((item) => {
-                    const active = isActive(item.href);
+                    const visibleChildren = item.children?.filter((c) => c.show) ?? [];
+                    const hasChildren = visibleChildren.length > 0;
+                    const childActive = hasChildren && visibleChildren.some((c) => isActive(c.href));
+                    const active = hasChildren ? childActive : isActive(item.href);
+                    const isOpen = hasChildren && (expandedItems.has(item.href) || childActive);
+
+                    if (hasChildren) {
+                      return (
+                        <div key={item.href}>
+                          <button
+                            type="button"
+                            onClick={() => toggleItem(item.href)}
+                            title={collapsed ? (lang === 'ar' ? item.labelAr : item.labelEn) : undefined}
+                            className={`
+                              w-full flex items-center gap-3 px-3 py-2.5 rounded-md transition-all duration-150 relative group
+                              ${active ? 'nav-item-active' : 'text-sidebar-foreground/60 hover:nav-item-hover'}
+                            `}
+                          >
+                            <div className={`shrink-0 ${active ? 'text-white' : 'text-sidebar-foreground/50 group-hover:text-sidebar-foreground/80'}`}>
+                              {item.icon}
+                            </div>
+                            {!collapsed && (
+                              <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
+                                <span className={`text-sm font-medium truncate ${active ? 'text-white' : ''}`}>
+                                  {lang === 'ar' ? item.labelAr : item.labelEn}
+                                </span>
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  {item.badge && (
+                                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border border-gold/30 bg-gold/10 text-gold">
+                                      {item.badge}
+                                    </span>
+                                  )}
+                                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isOpen ? '' : '-rotate-90'} ${active ? 'text-white' : 'text-sidebar-foreground/40'}`} />
+                                </div>
+                              </div>
+                            )}
+                            {collapsed && (
+                              <div className="absolute start-full ms-2 px-2 py-1 bg-sidebar-primary text-sidebar-primary-foreground text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 shadow-lg border border-sidebar-border">
+                                {lang === 'ar' ? item.labelAr : item.labelEn}
+                              </div>
+                            )}
+                          </button>
+
+                          {/* Sub-menu — one item visible/open at a time per the source spec */}
+                          {!collapsed && isOpen && (
+                            <div className="mt-0.5 ms-4 ps-3 border-s border-sidebar-border space-y-0.5">
+                              {visibleChildren.map((child) => {
+                                const childIsActive = isActive(child.href);
+                                return (
+                                  <Link
+                                    key={child.href}
+                                    href={child.href}
+                                    onClick={handleLinkClick}
+                                    className={`
+                                      flex items-center gap-2.5 px-3 py-2 rounded-md transition-all duration-150 group
+                                      ${childIsActive ? 'nav-item-active' : 'text-sidebar-foreground/55 hover:nav-item-hover'}
+                                    `}
+                                  >
+                                    <div className={`shrink-0 ${childIsActive ? 'text-white' : 'text-sidebar-foreground/45 group-hover:text-sidebar-foreground/75'}`}>
+                                      {child.icon}
+                                    </div>
+                                    <span className={`text-[13px] font-medium truncate ${childIsActive ? 'text-white' : ''}`}>
+                                      {lang === 'ar' ? child.labelAr : child.labelEn}
+                                    </span>
+                                  </Link>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
+
                     return (
                       <Link
                         key={item.href}
