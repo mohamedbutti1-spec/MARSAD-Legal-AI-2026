@@ -7,11 +7,12 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useLocation } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
+import { useUserContext } from '@/lib/user-context';
 import {
   Shield, CheckCircle2, XCircle, Clock, ChevronLeft, ChevronDown, ChevronUp,
   Sparkles, Scale, AlertTriangle, Building2, FileText, Loader2, ArrowRight,
   Lock, Check, Fingerprint, Gavel, BookOpen, Users, Link2, HelpCircle,
-  Download, Hash, RotateCcw, UserCheck, Activity, Eye, ChevronRight, Play, FileCheck,
+  Download, Hash, RotateCcw, UserCheck, Activity, Eye, ChevronRight, Play, FileCheck, Brain,
 } from 'lucide-react';
 import DecisionReplay from '@/components/decisions/DecisionReplay';
 import { RiskPanel } from '@/components/decisions/RiskPanel';
@@ -2023,6 +2024,7 @@ export default function DecisionWorkspace() {
   const params = useParams<{ id?: string }>();
   const [, navigate] = useLocation();
   const qc = useQueryClient();
+  const { canViewJdtSimulation } = useUserContext();
 
   const decisionId = params.id ? parseInt(params.id) : null;
   const [activeStage, setActiveStage] = useState<StageKey>('administrative_request');
@@ -2305,6 +2307,18 @@ export default function DecisionWorkspace() {
               >
                 <Activity className="w-3.5 h-3.5" /> مؤشرات المخاطر
               </button>
+              {canViewJdtSimulation && decisionId && (
+                <button
+                  role="tab"
+                  aria-selected={false}
+                  title="فتح المحاكاة القضائية الكاملة لهذا القرار"
+                  onClick={() => navigate(`/jdt/${decisionId}`)}
+                  className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold border-b-2 border-transparent text-muted-foreground hover:text-foreground transition-colors -mb-px whitespace-nowrap"
+                >
+                  <Brain className="w-3.5 h-3.5" /> التوأم الرقمي القضائي JDT
+                  <ArrowRight className="w-3 h-3 opacity-50" />
+                </button>
+              )}
             </div>
 
             {/* ── Two-column layout ─────────────────────────────── */}

@@ -52,3 +52,4 @@
 - [NDJSON streaming resilience pattern](streaming-resilience-pattern.md) — compression buffers NDJSON on mobile; retryable-vs-billing error classification; reset protocol line; poll-based recovery avoids duplicate messages
 - [MLOS Restructured Legal Analysis Flow](mlos-restructured-legal-flow.md) — domain/branch/law-source/answer-format/training selectors; lawSource maps onto existing Jurisdiction field; legacy mode chips gated off
 - [Al-Shamsi owner-lock gating pattern](shamsi-owner-lock-pattern.md) — 3-tier gating (hard lock / field-strip / silent downgrade); branding text is out-of-scope, methodology-derived fields are in-scope; grep all id aliases
+- [Nav restoration + hardening pass](nav-restoration-and-hardening.md) — hidden-nav comment blocks are deliberate, not bugs; route-dedup via Redirect; AI-repair flags must surface; double-opacity sweep cleanup pass

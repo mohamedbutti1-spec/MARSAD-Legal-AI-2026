@@ -221,22 +221,22 @@ const DOMAIN_META: Record<string, { ar: string; en: string }> = {
 };
 
 const RISK_CONFIG: Record<string, { ar: string; color: string; bg: string }> = {
-  low:      { ar: 'خطر منخفض', color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200' },
+  low:      { ar: 'خطر منخفض', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/30' },
   medium:   { ar: 'خطر متوسط', color: 'text-gold',   bg: 'bg-gold/10 border-gold/25' },
   high:     { ar: 'خطر مرتفع', color: 'text-gold',  bg: 'bg-gold/10 border-gold/25' },
-  critical: { ar: 'خطر حرج',   color: 'text-red-700',     bg: 'bg-red-50 border-red-200' },
+  critical: { ar: 'خطر حرج',   color: 'text-destructive',     bg: 'bg-destructive/10 border-destructive/30' },
 };
 
 const STATUS_CONFIG: Record<string, { ar: string; color: string }> = {
-  'compliant':     { ar: 'ممتثل',        color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  'compliant':     { ar: 'ممتثل',        color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' },
   'partial':       { ar: 'ممتثل جزئياً', color: 'bg-gold/10 text-gold border-gold/25' },
-  'non-compliant': { ar: 'غير ممتثل',    color: 'bg-red-50 text-red-700 border-red-200' },
+  'non-compliant': { ar: 'غير ممتثل',    color: 'bg-destructive/10 text-destructive border-destructive/30' },
   'unknown':       { ar: 'غير محدد',     color: 'bg-gray-50 text-gray-600 border-gray-200' },
 };
 
 const RELATIONSHIP_CONFIG: Record<string, { ar: string; color: string }> = {
-  can_issue:     { ar: 'يمكنك الإصدار',  color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  can_review:    { ar: 'صلاحية المراجعة', color: 'bg-blue-50 text-blue-700 border-blue-200' },
+  can_issue:     { ar: 'يمكنك الإصدار',  color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' },
+  can_review:    { ar: 'صلاحية المراجعة', color: 'bg-heading/10 text-heading border-heading/30' },
   can_challenge: { ar: 'يمكن الطعن',     color: 'bg-gold/10 text-gold border-gold/25' },
   none:          { ar: 'خارج النطاق',    color: 'bg-gray-50 text-gray-500 border-gray-200' },
 };
@@ -272,7 +272,7 @@ function ScoreRing({ score, label, size = 88 }: { score: number; label: string; 
   const circ = 2 * Math.PI * r;
   const offset = circ - (Math.min(Math.max(score, 0), 100) / 100) * circ;
   const color = score >= 80 ? '#16a34a' : score >= 60 ? '#d97706' : '#dc2626';
-  const textColor = score >= 80 ? 'text-emerald-700' : score >= 60 ? 'text-gold' : 'text-red-700';
+  const textColor = score >= 80 ? 'text-emerald-400' : score >= 60 ? 'text-gold' : 'text-destructive';
   return (
     <div className="flex flex-col items-center gap-1.5">
       <div className="relative" style={{ width: size, height: size }}>
@@ -329,7 +329,7 @@ function MiniCitationChip({ token, citation }: { token: string; citation?: Citat
           <div className="bg-muted/40 rounded p-2 text-[11px] leading-relaxed whitespace-pre-wrap mb-2">{citation.formats[fmt]}</div>
           <button type="button" onClick={() => copy(citation.formats![fmt])}
             className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground">
-            {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+            {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
             {copied ? 'تم النسخ' : 'نسخ'}
           </button>
         </div>
@@ -411,8 +411,8 @@ function RoleSelectionScreen({ roles, loading, onSelect }: {
               {roles.map(role => {
                 const cap = role.actionCapabilities;
                 const capLabel = cap.canIssue ? 'إصدار' : cap.canReview ? 'مراجعة' : 'طعن';
-                const capColor = cap.canIssue ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                  : cap.canReview ? 'bg-blue-50 text-blue-700 border-blue-200'
+                const capColor = cap.canIssue ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                  : cap.canReview ? 'bg-heading/10 text-heading border-heading/30'
                   : 'bg-gold/10 text-gold border-gold/25';
                 return (
                   <button key={role.roleKey} type="button" onClick={() => onSelect(role)}
@@ -661,7 +661,7 @@ function InterviewScreen({ role, decisionType, questions, answers, onAnswer, onA
                 title={g.meta.ar}
                 className={`flex flex-col items-center gap-0.5 min-w-[3.5rem] px-1 py-1.5 rounded-lg transition-all border ${
                   active ? 'border-primary bg-primary/10' :
-                  done   ? 'border-emerald-200 bg-emerald-50/60' :
+                  done   ? 'border-emerald-500/30 bg-emerald-500/60' :
                            'border-border bg-muted/30 hover:border-border/80'
                 }`}>
                 <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black transition-all ${
@@ -672,7 +672,7 @@ function InterviewScreen({ role, decisionType, questions, answers, onAnswer, onA
                   {done && !active ? <Check className="w-3 h-3" /> : i + 1}
                 </div>
                 <span className={`text-[9px] font-medium text-center leading-tight line-clamp-2 ${
-                  active ? 'text-primary' : done ? 'text-emerald-700' : 'text-muted-foreground'
+                  active ? 'text-primary' : done ? 'text-emerald-400' : 'text-muted-foreground'
                 }`} style={{ maxWidth: '3rem' }}>
                   {g.meta.ar}
                 </span>
@@ -759,7 +759,7 @@ function QuestionCard({ q, value, onChange, dimMeta }: {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-foreground leading-relaxed">
             {q.questionAr}
-            {q.required && <span className="text-red-500 ms-1 text-xs">*</span>}
+            {q.required && <span className="text-destructive ms-1 text-xs">*</span>}
           </p>
           {q.hintAr && <p className="text-xs text-muted-foreground mt-0.5">{q.hintAr}</p>}
         </div>
@@ -849,7 +849,7 @@ function LoadingScreen({ activeDims }: { activeDims: string[] }) {
             const isProcessing = !isActive && i === activeDims.length;
             return (
               <div key={key} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all duration-500 ${
-                isActive ? 'border-emerald-200 bg-emerald-50' :
+                isActive ? 'border-emerald-500/30 bg-emerald-500/10' :
                 isProcessing ? 'border-primary/40 bg-primary/5' :
                 'border-border/50 bg-muted/10 opacity-50'
               }`}>
@@ -863,14 +863,14 @@ function LoadingScreen({ activeDims }: { activeDims: string[] }) {
                    <span className="text-[10px] font-black">{i + 1}</span>}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className={`text-sm font-semibold leading-tight ${isActive ? 'text-emerald-800' : isProcessing ? 'text-primary' : 'text-muted-foreground'}`}>
+                  <p className={`text-sm font-semibold leading-tight ${isActive ? 'text-emerald-400' : isProcessing ? 'text-primary' : 'text-muted-foreground'}`}>
                     {meta.ar}
                   </p>
-                  <p className={`text-[10px] leading-tight ${isActive ? 'text-emerald-600' : 'text-muted-foreground/60'}`}>
+                  <p className={`text-[10px] leading-tight ${isActive ? 'text-emerald-400' : 'text-muted-foreground/60'}`}>
                     {meta.en}
                   </p>
                 </div>
-                <span className={`text-[10px] font-bold shrink-0 ${isActive ? 'text-emerald-600' : isProcessing ? 'text-primary' : 'text-muted-foreground/40'}`}>
+                <span className={`text-[10px] font-bold shrink-0 ${isActive ? 'text-emerald-400' : isProcessing ? 'text-primary' : 'text-muted-foreground/40'}`}>
                   {isActive ? 'اكتمل ✓' : isProcessing ? 'جارٍ...' : `${meta.weight}%`}
                 </span>
               </div>
@@ -895,10 +895,10 @@ function DimensionCard({ dimKey, result, dimIndex }: {
   const [expanded, setExpanded] = useState(false);
   const meta = DIMENSION_META[dimKey as DimensionKey];
   const st = STATUS_CONFIG[result.status] ?? STATUS_CONFIG['unknown'];
-  const scoreColor = result.score >= 80 ? 'text-emerald-700' : result.score >= 60 ? 'text-gold' : 'text-red-700';
-  const cardBg = result.status === 'compliant' ? 'border-emerald-200 bg-emerald-50/20 hover:bg-emerald-50/40'
+  const scoreColor = result.score >= 80 ? 'text-emerald-400' : result.score >= 60 ? 'text-gold' : 'text-destructive';
+  const cardBg = result.status === 'compliant' ? 'border-emerald-500/30 bg-emerald-500/20 hover:bg-emerald-500/40'
     : result.status === 'partial' ? 'border-gold/25 bg-gold/20 hover:bg-gold/40'
-    : result.status === 'non-compliant' ? 'border-red-200 bg-red-50/20 hover:bg-red-50/40'
+    : result.status === 'non-compliant' ? 'border-destructive/30 bg-destructive/20 hover:bg-destructive/40'
     : 'border-border bg-muted/10 hover:bg-muted/20';
 
   return (
@@ -906,9 +906,9 @@ function DimensionCard({ dimKey, result, dimIndex }: {
       <button type="button" onClick={() => setExpanded(o => !o)}
         className="w-full text-start px-3 py-3 flex items-center gap-2.5">
         <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-black shrink-0 ${
-          result.status === 'compliant' ? 'bg-emerald-100 text-emerald-700' :
+          result.status === 'compliant' ? 'bg-emerald-500/10 text-emerald-400' :
           result.status === 'partial' ? 'bg-gold/15 text-gold' :
-          result.status === 'non-compliant' ? 'bg-red-100 text-red-700' :
+          result.status === 'non-compliant' ? 'bg-destructive/15 text-destructive' :
           'bg-muted text-muted-foreground'
         }`}>{dimIndex + 1}</div>
 
@@ -933,12 +933,12 @@ function DimensionCard({ dimKey, result, dimIndex }: {
           <p className="text-sm text-foreground leading-relaxed">{result.explanationAr}</p>
           {result.missingRequirements?.length > 0 && (
             <div>
-              <p className="text-xs font-bold text-red-700 mb-1.5 flex items-center gap-1">
+              <p className="text-xs font-bold text-destructive mb-1.5 flex items-center gap-1">
                 <ShieldAlert className="w-3.5 h-3.5" /> المتطلبات الناقصة
               </p>
               <ul className="space-y-1">
                 {result.missingRequirements.map((r, i) => (
-                  <li key={i} className="flex items-start gap-1.5 text-xs text-red-700/90">
+                  <li key={i} className="flex items-start gap-1.5 text-xs text-destructive/90">
                     <XCircle className="w-3 h-3 mt-0.5 shrink-0" />{r}
                   </li>
                 ))}
@@ -1113,7 +1113,7 @@ function BriefScreen({ brief, role, decisionType, sessionId, citations, onReset,
             {briefHash && (
               <button type="button" onClick={copyAuditRef}
                 className="flex items-center gap-1 mt-0.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors">
-                {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
                 <span className="font-mono">#{sessionId} · {briefHash.slice(-8)}</span>
               </button>
             )}
@@ -1233,14 +1233,14 @@ function BriefScreen({ brief, role, decisionType, sessionId, citations, onReset,
           <BriefSection title="الوثائق والمستندات المطلوبة" icon={<ClipboardList className="w-4 h-4" />} count={brief.requiredDocuments.length}>
             <div className="space-y-2.5">
               {brief.requiredDocuments.map((doc, i) => (
-                <div key={i} className={`flex items-start gap-3 p-3 rounded-xl border ${doc.mandatory ? 'border-red-200 bg-red-50/30' : 'border-border bg-muted/10'}`}>
-                  <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 mt-0.5 ${doc.mandatory ? 'border-red-400 bg-white' : 'border-border bg-white'}`}>
-                    {doc.mandatory && <span className="text-red-500 text-[8px] font-black">!</span>}
+                <div key={i} className={`flex items-start gap-3 p-3 rounded-xl border ${doc.mandatory ? 'border-destructive/30 bg-destructive/30' : 'border-border bg-muted/10'}`}>
+                  <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 mt-0.5 ${doc.mandatory ? 'border-destructive/40 bg-white' : 'border-border bg-white'}`}>
+                    {doc.mandatory && <span className="text-destructive text-[8px] font-black">!</span>}
                   </div>
                   <div>
-                    <p className={`font-semibold text-sm ${doc.mandatory ? 'text-red-800' : 'text-foreground'}`}>{doc.nameAr}</p>
+                    <p className={`font-semibold text-sm ${doc.mandatory ? 'text-destructive' : 'text-foreground'}`}>{doc.nameAr}</p>
                     {doc.descriptionAr && <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{doc.descriptionAr}</p>}
-                    {doc.mandatory && <p className="text-[10px] text-red-600 font-bold mt-1">إلزامي</p>}
+                    {doc.mandatory && <p className="text-[10px] text-destructive font-bold mt-1">إلزامي</p>}
                   </div>
                 </div>
               ))}
@@ -1251,19 +1251,19 @@ function BriefScreen({ brief, role, decisionType, sessionId, citations, onReset,
         {/* Government authority */}
         {brief.governmentAuthority?.nameAr && (
           <BriefSection title="الجهة الحكومية المختصة وسلسلة التفويض" icon={<Building2 className="w-4 h-4" />}>
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-2">
-              <p className="font-black text-blue-900 text-base">{brief.governmentAuthority.nameAr}</p>
-              {brief.governmentAuthority.nameEn && <p className="text-xs text-blue-700">{brief.governmentAuthority.nameEn}</p>}
-              {brief.governmentAuthority.department && <p className="text-sm text-blue-800">📋 {brief.governmentAuthority.department}</p>}
+            <div className="bg-heading/10 border border-heading/30 rounded-xl p-4 space-y-2">
+              <p className="font-black text-heading text-base">{brief.governmentAuthority.nameAr}</p>
+              {brief.governmentAuthority.nameEn && <p className="text-xs text-heading">{brief.governmentAuthority.nameEn}</p>}
+              {brief.governmentAuthority.department && <p className="text-sm text-heading">📋 {brief.governmentAuthority.department}</p>}
               {brief.governmentAuthority.competenceBasis && (
-                <div className="pt-2 border-t border-blue-200">
-                  <p className="text-xs font-bold text-blue-800 mb-0.5">أساس الاختصاص القانوني:</p>
-                  <p className="text-xs text-blue-700 leading-relaxed">{brief.governmentAuthority.competenceBasis}</p>
+                <div className="pt-2 border-t border-heading/30">
+                  <p className="text-xs font-bold text-heading mb-0.5">أساس الاختصاص القانوني:</p>
+                  <p className="text-xs text-heading leading-relaxed">{brief.governmentAuthority.competenceBasis}</p>
                 </div>
               )}
               {brief.governmentAuthority.website && (
                 <a href={brief.governmentAuthority.website} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-xs text-blue-700 hover:underline">
+                  className="flex items-center gap-1 text-xs text-heading hover:underline">
                   <Globe className="w-3 h-3" />{brief.governmentAuthority.website}
                 </a>
               )}
@@ -1403,8 +1403,8 @@ function BriefScreen({ brief, role, decisionType, sessionId, citations, onReset,
 // ─── History Sidebar (desktop) ────────────────────────────────────────────────
 
 const VERDICT_ICONS: Record<string, React.ReactNode> = {
-  yes:         <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />,
-  no:          <XCircle className="w-3 h-3 text-red-500 shrink-0" />,
+  yes:         <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />,
+  no:          <XCircle className="w-3 h-3 text-destructive shrink-0" />,
   conditional: <AlertTriangle className="w-3 h-3 text-gold shrink-0" />,
 };
 
@@ -1492,9 +1492,9 @@ function HistoryDrawer({ open, sessions, onSelect, onDelete, onClose, t }: {
 // ─── Phase 4: Cross-Jurisdiction Comparison Panel ─────────────────────────────
 
 const STATUS_CHIP: Record<string, { bg: string; icon: React.ReactNode }> = {
-  compliant:     { bg: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: <CheckCircle2 className="w-3 h-3" /> },
+  compliant:     { bg: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30', icon: <CheckCircle2 className="w-3 h-3" /> },
   partial:       { bg: 'bg-gold/10 text-gold border-gold/25',      icon: <AlertTriangle className="w-3 h-3" /> },
-  'non-compliant': { bg: 'bg-red-50 text-red-700 border-red-200',          icon: <XCircle className="w-3 h-3" /> },
+  'non-compliant': { bg: 'bg-destructive/10 text-destructive border-destructive/30',          icon: <XCircle className="w-3 h-3" /> },
   unknown:       { bg: 'bg-muted text-muted-foreground border-border',      icon: <HelpCircle className="w-3 h-3" /> },
 };
 
@@ -1538,20 +1538,20 @@ function ComparisonPanel({ result }: { result: CompareResult }) {
       <div className="px-4 py-3 flex items-center gap-4">
         <div className="flex-1 text-center">
           <p className="text-[10px] text-muted-foreground mb-0.5">{result.originalJurisdictionNameAr}</p>
-          <p className={`text-xl font-black ${result.originalLegalityScore >= 80 ? 'text-emerald-600' : result.originalLegalityScore >= 60 ? 'text-gold' : 'text-red-600'}`}>
+          <p className={`text-xl font-black ${result.originalLegalityScore >= 80 ? 'text-emerald-400' : result.originalLegalityScore >= 60 ? 'text-gold' : 'text-destructive'}`}>
             {result.originalLegalityScore}
           </p>
           <p className="text-[9px] text-muted-foreground">/100 مشروعية</p>
         </div>
         <div className="flex flex-col items-center gap-1">
           <ArrowRight className="w-4 h-4 text-muted-foreground" />
-          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${overallDelta >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
+          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${overallDelta >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-destructive/10 text-destructive'}`}>
             {overallDelta >= 0 ? '+' : ''}{overallDelta}
           </span>
         </div>
         <div className="flex-1 text-center">
           <p className="text-[10px] text-muted-foreground mb-0.5">{result.targetJurisdictionNameAr}</p>
-          <p className={`text-xl font-black ${result.targetLegalityScore >= 80 ? 'text-emerald-600' : result.targetLegalityScore >= 60 ? 'text-gold' : 'text-red-600'}`}>
+          <p className={`text-xl font-black ${result.targetLegalityScore >= 80 ? 'text-emerald-400' : result.targetLegalityScore >= 60 ? 'text-gold' : 'text-destructive'}`}>
             {result.targetLegalityScore}
           </p>
           <p className="text-[9px] text-muted-foreground">/100 مشروعية</p>
@@ -1585,7 +1585,7 @@ function ComparisonPanel({ result }: { result: CompareResult }) {
                     <span className="text-muted-foreground font-mono">{dim.targetScore}</span>
                   </div>
                   <span className={`ms-auto shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                    delta >= 5 ? 'bg-emerald-50 text-emerald-700' : delta <= -5 ? 'bg-red-50 text-red-700' : 'bg-muted text-muted-foreground'
+                    delta >= 5 ? 'bg-emerald-500/10 text-emerald-400' : delta <= -5 ? 'bg-destructive/10 text-destructive' : 'bg-muted text-muted-foreground'
                   }`}>
                     {delta >= 0 ? '+' : ''}{delta}
                   </span>
@@ -1616,13 +1616,13 @@ function ComparisonPanel({ result }: { result: CompareResult }) {
           {result.commonPrinciplesAr.length > 0 && (
             <div className="px-4 py-3 border-t border-primary/20">
               <p className="text-xs font-bold text-foreground mb-2 flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                 مبادئ مشتركة في كلا النظامين
               </p>
               <ul className="space-y-1">
                 {result.commonPrinciplesAr.map((p, i) => (
                   <li key={i} className="text-xs text-muted-foreground flex gap-2">
-                    <span className="text-emerald-500 shrink-0">•</span>
+                    <span className="text-emerald-400 shrink-0">•</span>
                     <span>{p}</span>
                   </li>
                 ))}

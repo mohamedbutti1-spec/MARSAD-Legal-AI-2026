@@ -637,6 +637,10 @@ router.post("/adkg/decisions/:id/analyze", requireWriteRole, aiAnalysisLimit, as
   }
 
   let brief: AdminDecisionBriefData;
+  // Tracks whether the AI response had to be repaired from a token-limit
+  // truncation. Surfaced to the client (never silently hidden) so a reviewer
+  // knows the analysis may be missing detail and can choose to re-run it.
+  let wasTruncatedAndRepaired = false;
   try {
     const aiResult = await provider.complete({
       taskType: TaskType.RAG,
@@ -652,6 +656,7 @@ router.post("/adkg/decisions/:id/analyze", requireWriteRole, aiAnalysisLimit, as
       const repaired = repairTruncatedJson(stripped.replace(/^```(?:json)?\s*\n?/m, "").replace(/\n?```\s*$/m, "").trim());
       if (repaired) {
         req.log.warn("ADKG: repaired truncated JSON response");
+        wasTruncatedAndRepaired = true;
         parseResult = parseModelJson<Record<string, unknown>>(repaired);
       }
     }
@@ -709,6 +714,9 @@ router.post("/adkg/decisions/:id/analyze", requireWriteRole, aiAnalysisLimit, as
       riskScore,
       analyzedAt: new Date().toISOString(),
       decisionId,
+      // Explicit flag — never silently patch a truncated AI response without
+      // telling the reviewer. See repairTruncatedJson above.
+      truncationRepaired: wasTruncatedAndRepaired,
     },
   };
 

@@ -88,10 +88,10 @@ interface DashboardStats {
 
 function StatusChip({ status }: { status: string }) {
   const map: Record<string, { label: string; cls: string }> = {
-    complete:          { label: 'مكتمل', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    in_progress:       { label: 'جارٍ', cls: 'bg-sky-50 text-sky-700 border-sky-200' },
+    complete:          { label: 'مكتمل', cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' },
+    in_progress:       { label: 'جارٍ', cls: 'bg-heading/10 text-heading border-heading/30' },
     draft:             { label: 'مسودة', cls: 'bg-slate-50 text-slate-600 border-slate-200' },
-    validation_failed: { label: 'فشل التحقق', cls: 'bg-red-50 text-red-700 border-red-200' },
+    validation_failed: { label: 'فشل التحقق', cls: 'bg-destructive/10 text-destructive border-destructive/30' },
     pending_review:    { label: 'قيد المراجعة', cls: 'bg-gold/10 text-gold border-gold/25' },
   };
   const s = map[status] ?? { label: status, cls: 'bg-slate-50 text-slate-600 border-slate-200' };
@@ -101,9 +101,9 @@ function StatusChip({ status }: { status: string }) {
 function ComplianceChip({ value }: { value?: string }) {
   if (!value) return <span className="text-muted-foreground text-xs">—</span>;
   const map: Record<string, { label: string; cls: string }> = {
-    full:    { label: 'امتثال كامل', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+    full:    { label: 'امتثال كامل', cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' },
     partial: { label: 'امتثال جزئي', cls: 'bg-gold/10 text-gold border-gold/25' },
-    none:    { label: 'عدم امتثال', cls: 'bg-red-50 text-red-700 border-red-200' },
+    none:    { label: 'عدم امتثال', cls: 'bg-destructive/10 text-destructive border-destructive/30' },
     pending: { label: 'قيد التقييم', cls: 'bg-slate-50 text-slate-600 border-slate-200' },
   };
   const s = map[value] ?? { label: value, cls: 'bg-slate-50 text-slate-600 border-slate-200' };
@@ -113,7 +113,7 @@ function ComplianceChip({ value }: { value?: string }) {
 function HiiChip({ value }: { value?: string }) {
   if (!value) return <span className="text-muted-foreground text-xs">—</span>;
   const map: Record<string, { label: string; cls: string }> = {
-    human_will:      { label: 'الإرادة البشرية', cls: 'bg-blue-50 text-blue-700 border-blue-200' },
+    human_will:      { label: 'الإرادة البشرية', cls: 'bg-heading/10 text-heading border-heading/30' },
     ai_recommendation: { label: 'توصية الذكاء', cls: 'bg-violet-50 text-violet-700 border-violet-200' },
     joint_decision:  { label: 'قرار مشترك', cls: 'bg-teal-50 text-teal-700 border-teal-200' },
     pending:         { label: 'معلّق', cls: 'bg-slate-50 text-slate-600 border-slate-200' },
@@ -124,7 +124,7 @@ function HiiChip({ value }: { value?: string }) {
 
 function SealChip({ isSealed }: { isSealed?: boolean }) {
   return isSealed
-    ? <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-semibold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200"><Lock className="w-3 h-3" />مختوم</span>
+    ? <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"><Lock className="w-3 h-3" />مختوم</span>
     : <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-semibold rounded-full bg-slate-50 text-slate-500 border border-slate-200"><UnlockKeyhole className="w-3 h-3" />غير مختوم</span>;
 }
 
@@ -164,7 +164,7 @@ function LoadingSpinner({ label = 'جارٍ التحميل...' }: { label?: stri
 
 function ErrorCard({ message }: { message: string }) {
   return (
-    <div className="flex items-center gap-3 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
+    <div className="flex items-center gap-3 p-4 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive">
       <AlertTriangle className="w-5 h-5 shrink-0" />
       <span className="text-sm">{message}</span>
     </div>
@@ -235,7 +235,7 @@ function DecisionRow({
             className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg border transition-colors ${
               d.delegatedForReview
                 ? 'border-gold/25 bg-gold/10 text-gold hover:bg-gold/15'
-                : 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100'
+                : 'border-heading/30 bg-heading/10 text-heading hover:bg-heading/10'
             }`}
           >
             {d.delegatedForReview ? 'إلغاء الإحالة' : 'إحالة للمراجعة'}
@@ -283,7 +283,7 @@ function MinisterDashboard() {
           <div className="space-y-3">
             {[
               { key: 'complete',          label: 'مكتملة',      color: 'bg-emerald-500' },
-              { key: 'in_progress',       label: 'جارية',       color: 'bg-sky-500' },
+              { key: 'in_progress',       label: 'جارية',       color: 'bg-heading' },
               { key: 'draft',             label: 'مسودات',      color: 'bg-slate-400' },
               { key: 'validation_failed', label: 'فشل التحقق', color: 'bg-red-500' },
             ].map(({ key, label, color }) => {
@@ -337,7 +337,7 @@ function MinisterDashboard() {
         <div className="bg-white rounded-xl border border-border p-5 shadow-xs">
           <SectionHeader icon={<AlertTriangle className="w-4 h-4" />} title="قرارات تحتاج انتباهاً" sub="فشل التحقق أو متأخرة" />
           {stats.attentionDecisions.length === 0 ? (
-            <EmptyState icon={<CheckCircle2 className="w-5 h-5 text-emerald-500" />} title="لا توجد قرارات معلّقة" sub="جميع القرارات ضمن المعايير" />
+            <EmptyState icon={<CheckCircle2 className="w-5 h-5 text-emerald-400" />} title="لا توجد قرارات معلّقة" sub="جميع القرارات ضمن المعايير" />
           ) : (
             <div className="space-y-2">
               {stats.attentionDecisions.map((d) => (
@@ -510,14 +510,14 @@ function AssistantUndersecretaryDashboard() {
               <div className="space-y-2">
                 {stages.map((s, i) => (
                   <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/30">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${s.status === 'complete' ? 'bg-emerald-100 text-emerald-700' : s.status === 'active' ? 'bg-sky-100 text-sky-700' : 'bg-slate-100 text-slate-500'}`}>
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${s.status === 'complete' ? 'bg-emerald-500/10 text-emerald-400' : s.status === 'active' ? 'bg-heading/10 text-heading' : 'bg-slate-100 text-slate-500'}`}>
                       {(s.stageNumber as number) + 1}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-foreground">{(s.titleAr as string) || (s.stageKey as string)}</p>
                       {s.aiAnalysis ? <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5">{s.aiAnalysis as string}</p> : null}
                     </div>
-                    <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${s.status === 'complete' ? 'bg-emerald-50 text-emerald-700' : s.status === 'active' ? 'bg-sky-50 text-sky-700' : 'bg-slate-50 text-slate-500'}`}>
+                    <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${s.status === 'complete' ? 'bg-emerald-500/10 text-emerald-400' : s.status === 'active' ? 'bg-heading/10 text-heading' : 'bg-slate-50 text-slate-500'}`}>
                       {s.status === 'complete' ? 'مكتمل' : s.status === 'active' ? 'جارٍ' : 'معلّق'}
                     </span>
                   </div>
@@ -635,8 +635,8 @@ function DirectorGeneralDashboard() {
                 <div className="grid grid-cols-2 gap-2">
                   {stages.map((s, i) => (
                     <div key={i} className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/30">
-                      <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${s.status === 'complete' ? 'bg-emerald-100' : s.status === 'active' ? 'bg-sky-100' : 'bg-slate-100'}`}>
-                        {s.status === 'complete' ? <CheckCircle2 className="w-3 h-3 text-emerald-600" /> : s.status === 'active' ? <Clock className="w-3 h-3 text-sky-600" /> : <XCircle className="w-3 h-3 text-slate-400" />}
+                      <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${s.status === 'complete' ? 'bg-emerald-500/10' : s.status === 'active' ? 'bg-heading/10' : 'bg-slate-100'}`}>
+                        {s.status === 'complete' ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : s.status === 'active' ? <Clock className="w-3 h-3 text-heading" /> : <XCircle className="w-3 h-3 text-slate-400" />}
                       </div>
                       <span className="text-xs font-medium truncate">{(s.titleAr as string) || `مرحلة ${(s.stageNumber as number) + 1}`}</span>
                     </div>
@@ -703,15 +703,15 @@ function DepartmentDirectorDashboard() {
             )}
             <div className="space-y-2">
               {stages.map((s, i) => (
-                <div key={i} className={`flex items-center gap-3 p-3 rounded-lg ${s.status === 'complete' ? 'bg-emerald-50/60 border border-emerald-100' : s.status === 'active' ? 'bg-sky-50/60 border border-sky-100' : 'bg-muted/30 border border-transparent'}`}>
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${s.status === 'complete' ? 'bg-emerald-100 text-emerald-700' : s.status === 'active' ? 'bg-sky-100 text-sky-700' : 'bg-slate-100 text-slate-500'}`}>
+                <div key={i} className={`flex items-center gap-3 p-3 rounded-lg ${s.status === 'complete' ? 'bg-emerald-500/60 border border-emerald-500/30' : s.status === 'active' ? 'bg-heading/60 border border-heading/30' : 'bg-muted/30 border border-transparent'}`}>
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${s.status === 'complete' ? 'bg-emerald-500/10 text-emerald-400' : s.status === 'active' ? 'bg-heading/10 text-heading' : 'bg-slate-100 text-slate-500'}`}>
                     {(s.stageNumber as number) + 1}
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-medium">{(s.titleAr as string) || `مرحلة ${(s.stageNumber as number) + 1}`}</p>
                     {s.completedAt ? <p className="text-[11px] text-muted-foreground">{new Date(s.completedAt as string).toLocaleDateString('ar-AE')}</p> : null}
                   </div>
-                  <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${s.status === 'complete' ? 'bg-emerald-100 text-emerald-700' : s.status === 'active' ? 'bg-sky-100 text-sky-700' : 'bg-slate-100 text-slate-500'}`}>
+                  <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${s.status === 'complete' ? 'bg-emerald-500/10 text-emerald-400' : s.status === 'active' ? 'bg-heading/10 text-heading' : 'bg-slate-100 text-slate-500'}`}>
                     {s.status === 'complete' ? '✓ مكتمل' : s.status === 'active' ? 'جارٍ' : 'معلّق'}
                   </span>
                 </div>
@@ -841,7 +841,7 @@ function ConstitutionalReviewerDashboard() {
             <p className="text-sm font-medium line-clamp-1">{d.titleAr}</p>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               {d.dci?.constitutionalValidationStatus && (
-                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${d.dci.constitutionalValidationStatus === 'passed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : d.dci.constitutionalValidationStatus === 'failed' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-slate-50 text-slate-500 border-slate-200'}`}>
+                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${d.dci.constitutionalValidationStatus === 'passed' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : d.dci.constitutionalValidationStatus === 'failed' ? 'bg-destructive/10 text-destructive border-destructive/30' : 'bg-slate-50 text-slate-500 border-slate-200'}`}>
                   {d.dci.constitutionalValidationStatus === 'passed' ? '✓ اجتاز' : d.dci.constitutionalValidationStatus === 'failed' ? '✗ فشل' : '— معلّق'}
                 </span>
               )}
@@ -865,7 +865,7 @@ function ConstitutionalReviewerDashboard() {
                 <div className="grid grid-cols-2 gap-4">
                   {[
                     ...(canUseShamsiFramework ? [{ label: 'الامتثال لإطار الشامسي', value: <ComplianceChip value={dci.alShamsiFrameworkCompliance as string} /> }] : []),
-                    { label: 'حالة التحقق الدستوري', value: <span className={`text-sm font-semibold ${dci.constitutionalValidationStatus === 'passed' ? 'text-emerald-600' : dci.constitutionalValidationStatus === 'failed' ? 'text-red-600' : 'text-slate-500'}`}>{(dci.constitutionalValidationStatus as string) ?? '—'}</span> },
+                    { label: 'حالة التحقق الدستوري', value: <span className={`text-sm font-semibold ${dci.constitutionalValidationStatus === 'passed' ? 'text-emerald-400' : dci.constitutionalValidationStatus === 'failed' ? 'text-destructive' : 'text-slate-500'}`}>{(dci.constitutionalValidationStatus as string) ?? '—'}</span> },
                     { label: 'مبدأ الشرعية (LSI)', value: (dci.lsiStatus as string) ?? '—' },
                     { label: 'مستوى تباين QVA', value: (dci.qvaVarianceLevel as string) ?? '—' },
                     { label: 'عدد جولات QVA', value: String(dci.qvaRunCount ?? '—') },
@@ -890,10 +890,10 @@ function ConstitutionalReviewerDashboard() {
                 <SectionHeader icon={<GitMerge className="w-4 h-4" />} title="بوابات الامتثال الدستوري لكل مرحلة" />
                 <div className="space-y-2">
                   {stages.map((s, i) => (
-                    <div key={i} className={`flex items-center gap-3 p-2.5 rounded-lg border ${s.status === 'complete' ? 'border-emerald-100 bg-emerald-50/40' : 'border-border bg-muted/20'}`}>
+                    <div key={i} className={`flex items-center gap-3 p-2.5 rounded-lg border ${s.status === 'complete' ? 'border-emerald-500/30 bg-emerald-500/40' : 'border-border bg-muted/20'}`}>
                       <span className="text-xs font-bold text-muted-foreground w-6 text-center">{(s.stageNumber as number) + 1}</span>
                       <span className="text-sm font-medium flex-1">{(s.titleAr as string) || `مرحلة ${(s.stageNumber as number) + 1}`}</span>
-                      <span className={`text-[11px] font-semibold ${s.status === 'complete' ? 'text-emerald-600' : 'text-muted-foreground'}`}>
+                      <span className={`text-[11px] font-semibold ${s.status === 'complete' ? 'text-emerald-400' : 'text-muted-foreground'}`}>
                         {s.status === 'complete' ? '✓ اجتازت البوابة' : '—'}
                       </span>
                     </div>
@@ -976,10 +976,10 @@ function InternalAuditorDashboard() {
                         <p className="text-xs font-medium mb-0.5">{sh.stageKey as string}</p>
                         {sh.auditHash
                           ? <code className="text-[10px] font-mono text-muted-foreground break-all">{(sh.auditHash as string).substring(0, 32)}…</code>
-                          : <span className="text-[11px] text-red-500">هاش مفقود</span>}
+                          : <span className="text-[11px] text-destructive">هاش مفقود</span>}
                       </div>
                       {sh.auditHash
-                        ? <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                        ? <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                         : <XCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />}
                     </div>
                   ))}
@@ -1129,7 +1129,7 @@ function ExternalAuditorDashboard() {
                         <p className="text-xs font-medium mb-0.5">{sh.stageKey as string}</p>
                         <code className="text-[10px] font-mono text-muted-foreground">{sh.auditHash ? `${(sh.auditHash as string).substring(0, 20)}…` : '(مفقود)'}</code>
                       </div>
-                      {sh.auditHash ? <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" /> : <XCircle className="w-4 h-4 text-red-400 shrink-0" />}
+                      {sh.auditHash ? <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" /> : <XCircle className="w-4 h-4 text-red-400 shrink-0" />}
                     </div>
                   ))}
                 </div>
@@ -1153,13 +1153,13 @@ function ExternalAuditorDashboard() {
               )}
 
               {verifyResult && (
-                <div className={`mt-4 p-4 rounded-xl border-2 ${verifyResult.verified ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50'}`}>
+                <div className={`mt-4 p-4 rounded-xl border-2 ${verifyResult.verified ? 'border-emerald-500/30 bg-emerald-500/10' : 'border-destructive/40 bg-destructive/10'}`}>
                   <div className="flex items-center gap-3 mb-3">
                     {verifyResult.verified
-                      ? <CheckCircle2 className="w-6 h-6 text-emerald-600" />
-                      : <XCircle className="w-6 h-6 text-red-600" />}
+                      ? <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+                      : <XCircle className="w-6 h-6 text-destructive" />}
                     <div>
-                      <p className={`font-bold ${verifyResult.verified ? 'text-emerald-700' : 'text-red-700'}`}>
+                      <p className={`font-bold ${verifyResult.verified ? 'text-emerald-400' : 'text-destructive'}`}>
                         {verifyResult.verified ? '✓ السلسلة سليمة — الهاشات متطابقة' : '✗ تحذير: الهاشات غير متطابقة'}
                       </p>
                       <p className="text-xs text-muted-foreground">{verifyResult.stagesChecked as number} مرحلة تم فحصها</p>
@@ -1211,11 +1211,11 @@ interface CustodyRecord {
 }
 
 const ACTION_CATEGORY_COLORS: Record<string, string> = {
-  decision:   'bg-blue-100 text-blue-800 ring-blue-200',
-  stage:      'bg-purple-100 text-purple-800 ring-purple-200',
+  decision:   'bg-heading/10 text-heading ring-blue-200',
+  stage:      'bg-heading/10 text-heading ring-purple-200',
   dci:        'bg-gold/15 text-gold/75 ring-gold/25',
   qva:        'bg-indigo-100 text-indigo-800 ring-indigo-200',
-  car:        'bg-emerald-100 text-emerald-800 ring-emerald-200',
+  car:        'bg-emerald-500/10 text-emerald-400 ring-emerald-200',
   jdp:        'bg-teal-100 text-teal-800 ring-teal-200',
   governance: 'bg-rose-100 text-rose-800 ring-rose-200',
 };
@@ -1346,9 +1346,9 @@ function ConstitutionalMemoryTab({ decisionId }: { decisionId: number }) {
 
   const statusColor = (s: string | null) => {
     if (!s) return 'bg-slate-100 text-slate-500';
-    if (['compliant', 'valid', 'issued', 'none'].includes(s)) return 'bg-emerald-100 text-emerald-700';
+    if (['compliant', 'valid', 'issued', 'none'].includes(s)) return 'bg-emerald-500/10 text-emerald-400';
     if (['pending', 'draft', 'challenged'].includes(s)) return 'bg-gold/15 text-gold';
-    return 'bg-red-100 text-red-700';
+    return 'bg-destructive/15 text-destructive';
   };
 
   return (
@@ -1362,14 +1362,14 @@ function ConstitutionalMemoryTab({ decisionId }: { decisionId: number }) {
             <p className="text-xs text-[#5C5C7A] font-mono">{data.constitutionalNumber}</p>
           </div>
           {current.sealed && (
-            <span className="flex items-center gap-1 text-[10px] font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full">
+            <span className="flex items-center gap-1 text-[10px] font-bold text-heading bg-heading/10 px-2 py-0.5 rounded-full">
               <Lock className="w-3 h-3" />مختوم
             </span>
           )}
           {integrity && (
             integrity.valid
-              ? <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full"><ShieldCheck className="w-3 h-3" />سلسلة سليمة</span>
-              : <span className="flex items-center gap-1 text-[10px] font-bold text-red-700 bg-red-100 px-2 py-0.5 rounded-full"><ShieldAlert className="w-3 h-3" />تحذير: عُبث كُشف</span>
+              ? <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full"><ShieldCheck className="w-3 h-3" />سلسلة سليمة</span>
+              : <span className="flex items-center gap-1 text-[10px] font-bold text-destructive bg-destructive/15 px-2 py-0.5 rounded-full"><ShieldAlert className="w-3 h-3" />تحذير: عُبث كُشف</span>
           )}
         </div>
 
@@ -1436,20 +1436,20 @@ function ConstitutionalMemoryTab({ decisionId }: { decisionId: number }) {
 
       {/* Integrity report */}
       {integrity && (
-        <div className={`rounded-xl border p-3 ${integrity.valid ? 'border-emerald-200 bg-emerald-50/50' : 'border-red-200 bg-red-50/50'}`}>
+        <div className={`rounded-xl border p-3 ${integrity.valid ? 'border-emerald-500/30 bg-emerald-500/50' : 'border-destructive/30 bg-destructive/50'}`}>
           <div className="flex items-center gap-1.5 mb-2">
-            {integrity.valid ? <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> : <ShieldAlert className="w-3.5 h-3.5 text-red-600" />}
+            {integrity.valid ? <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> : <ShieldAlert className="w-3.5 h-3.5 text-destructive" />}
             <p className="text-xs font-bold text-[#1A1A2E]">تقرير سلامة الذاكرة الدستورية</p>
           </div>
           <div className="grid grid-cols-3 gap-2 text-center text-[11px]">
             <div><p className="text-muted-foreground">النسخ المفحوصة</p><p className="font-bold">{integrity.versionsChecked}</p></div>
             <div><p className="text-muted-foreground">الأحداث المفحوصة</p><p className="font-bold">{integrity.timelineChecked}</p></div>
-            <div><p className="text-muted-foreground">الأخطاء</p><p className={`font-bold ${integrity.errors.length ? 'text-red-600' : 'text-emerald-600'}`}>{integrity.errors.length}</p></div>
+            <div><p className="text-muted-foreground">الأخطاء</p><p className={`font-bold ${integrity.errors.length ? 'text-destructive' : 'text-emerald-400'}`}>{integrity.errors.length}</p></div>
           </div>
           {integrity.errors.length > 0 && (
             <div className="mt-2 space-y-1">
               {integrity.errors.map((e, i) => (
-                <p key={i} className="text-[10px] text-red-600 bg-red-100 px-2 py-1 rounded font-mono">[{e.location}] {e.type}: {e.detail}</p>
+                <p key={i} className="text-[10px] text-destructive bg-destructive/15 px-2 py-1 rounded font-mono">[{e.location}] {e.type}: {e.detail}</p>
               ))}
             </div>
           )}
@@ -1581,7 +1581,7 @@ function CustodyTimeline({ decisionId }: { decisionId: number }) {
               جارٍ التحقق من سلامة السلسلة…
             </div>
           ) : (
-            <div className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full ${isValid ? 'bg-heading/15 text-heading/75' : 'bg-red-100 text-red-800'}`}>
+            <div className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full ${isValid ? 'bg-heading/15 text-heading/75' : 'bg-destructive/15 text-destructive'}`}>
               {isValid ? <CheckCircle2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
               {isValid ? 'سلسلة سليمة' : `عُبث كُشف — موضع #${String((verifyData as {firstTamperedSequence?: number}).firstTamperedSequence ?? '?')}`}
             </div>
@@ -1647,7 +1647,7 @@ function CustodyTimeline({ decisionId }: { decisionId: number }) {
                   <div className="mt-2 pt-1.5 border-t border-border space-y-0.5 text-[11px]">
                     {r.legalJustification && <p><span className="font-semibold text-foreground">التبرير القانوني: </span>{r.legalJustification}</p>}
                     {r.aiRecommendation && <p><span className="font-semibold text-violet-700">توصية الذكاء الاصطناعي: </span>{r.aiRecommendation}</p>}
-                    {r.humanModification && <p><span className="font-semibold text-blue-700">التعديل البشري: </span>{r.humanModification}</p>}
+                    {r.humanModification && <p><span className="font-semibold text-heading">التعديل البشري: </span>{r.humanModification}</p>}
                   </div>
                 )}
 
@@ -1670,10 +1670,10 @@ function CustodyTimeline({ decisionId }: { decisionId: number }) {
 
       {/* Verification summary */}
       {verifyData && (
-        <div className={`rounded-lg border p-3 text-xs ${isValid ? 'border-heading/25 bg-heading/10' : 'border-red-200 bg-red-50'}`}>
+        <div className={`rounded-lg border p-3 text-xs ${isValid ? 'border-heading/25 bg-heading/10' : 'border-destructive/30 bg-destructive/10'}`}>
           <div className="flex items-center gap-2 mb-2">
-            {isValid ? <Shield className="w-4 h-4 text-heading" /> : <AlertTriangle className="w-4 h-4 text-red-700" />}
-            <span className={`font-bold ${isValid ? 'text-heading/75' : 'text-red-800'}`}>
+            {isValid ? <Shield className="w-4 h-4 text-heading" /> : <AlertTriangle className="w-4 h-4 text-destructive" />}
+            <span className={`font-bold ${isValid ? 'text-heading/75' : 'text-destructive'}`}>
               {isValid ? 'التحقق الكامل: سلسلة الحيازة سليمة — لم يُعبث بها' : `تحذير: كُشف تلاعب في السجل رقم ${String(verifyData.firstTamperedSequence ?? '?')}`}
             </span>
           </div>
@@ -1722,23 +1722,23 @@ interface EvidenceVerification {
 }
 
 const EVENT_CATEGORY_COLORS: Record<string, string> = {
-  creation:       'bg-sky-100 text-sky-700 border-sky-200',
+  creation:       'bg-heading/10 text-heading border-heading/30',
   stage:          'bg-violet-100 text-violet-700 border-violet-200',
   identity:       'bg-gold/15 text-gold border-gold/25',
   governance:     'bg-teal-100 text-teal-700 border-teal-200',
   validation:     'bg-indigo-100 text-indigo-700 border-indigo-200',
   accountability: 'bg-rose-100 text-rose-700 border-rose-200',
-  judicial:       'bg-emerald-100 text-emerald-700 border-emerald-200',
+  judicial:       'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
   archive:        'bg-slate-100 text-slate-600 border-slate-200',
   default:        'bg-muted text-muted-foreground border-border',
 };
 
 function IntegrityScoreBadge({ score, valid }: { score: number; valid: boolean }) {
   const color = valid
-    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
     : score >= 60
       ? 'bg-gold/10 text-gold border-gold/25'
-      : 'bg-red-50 text-red-700 border-red-200';
+      : 'bg-destructive/10 text-destructive border-destructive/30';
 
   return (
     <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border ${color}`}>
@@ -1800,7 +1800,7 @@ function EvidenceEventCard({ ev, expanded, onToggle }: {
           {new Date(ev.timestamp).toLocaleTimeString('ar-AE', { hour: '2-digit', minute: '2-digit', hour12: false })}
         </span>
         {/* Hash valid indicator */}
-        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
         {expanded ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" /> : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
       </button>
 
@@ -1833,7 +1833,7 @@ function EvidenceEventCard({ ev, expanded, onToggle }: {
             <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground pt-0.5">
               <Link2 className="w-3 h-3" />
               <span>مرتبط بالحدث السابق — السلسلة مستمرة</span>
-              <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+              <CheckCircle2 className="w-3 h-3 text-emerald-400" />
             </div>
           )}
 
@@ -1948,11 +1948,11 @@ function EvidenceLedgerTab({ decisionId }: { decisionId: number }) {
 
       {/* Integrity detail panel */}
       {verification && (
-        <div className={`p-3 rounded-xl border text-xs space-y-1 ${verification.valid ? 'bg-emerald-50/60 border-emerald-200' : 'bg-red-50/60 border-red-200'}`}>
+        <div className={`p-3 rounded-xl border text-xs space-y-1 ${verification.valid ? 'bg-emerald-500/60 border-emerald-500/30' : 'bg-destructive/60 border-destructive/30'}`}>
           <div className="flex gap-4 flex-wrap">
             <span><span className="text-muted-foreground">الأحداث المفحوصة: </span><strong>{verification.eventsChecked}</strong></span>
-            <span><span className="text-muted-foreground">أخطاء الهاش: </span><strong className={verification.hashErrors ? 'text-red-600' : 'text-emerald-600'}>{verification.hashErrors}</strong></span>
-            <span><span className="text-muted-foreground">كسور الروابط: </span><strong className={verification.brokenLinks ? 'text-red-600' : 'text-emerald-600'}>{verification.brokenLinks}</strong></span>
+            <span><span className="text-muted-foreground">أخطاء الهاش: </span><strong className={verification.hashErrors ? 'text-destructive' : 'text-emerald-400'}>{verification.hashErrors}</strong></span>
+            <span><span className="text-muted-foreground">كسور الروابط: </span><strong className={verification.brokenLinks ? 'text-destructive' : 'text-emerald-400'}>{verification.brokenLinks}</strong></span>
           </div>
           {verification.genesisHash && (
             <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
@@ -1969,9 +1969,9 @@ function EvidenceLedgerTab({ decisionId }: { decisionId: number }) {
             </div>
           )}
           {verification.errors.length > 0 && (
-            <div className="mt-1 pt-1 border-t border-red-200 space-y-0.5">
+            <div className="mt-1 pt-1 border-t border-destructive/30 space-y-0.5">
               {verification.errors.map((e, i) => (
-                <div key={i} className="flex gap-2 text-[10px] text-red-700">
+                <div key={i} className="flex gap-2 text-[10px] text-destructive">
                   <XCircle className="w-3 h-3 shrink-0 mt-0.5" />
                   <span>[{e.sequence}] {e.detail}</span>
                 </div>
@@ -1990,7 +1990,7 @@ function EvidenceLedgerTab({ decisionId }: { decisionId: number }) {
               {/* Node dot */}
               <div className="relative z-10 mt-3.5">
                 <div className={`w-3 h-3 rounded-full border-2 border-white ring-1 ${
-                  (EVENT_CATEGORY_COLORS[ev.eventCategory] ?? '').includes('sky')       ? 'bg-sky-400 ring-sky-300' :
+                  (EVENT_CATEGORY_COLORS[ev.eventCategory] ?? '').includes('sky')       ? 'bg-heading ring-sky-300' :
                   (EVENT_CATEGORY_COLORS[ev.eventCategory] ?? '').includes('violet')    ? 'bg-violet-400 ring-violet-300' :
                   (EVENT_CATEGORY_COLORS[ev.eventCategory] ?? '').includes('amber')     ? 'bg-gold/80 ring-gold/40' :
                   (EVENT_CATEGORY_COLORS[ev.eventCategory] ?? '').includes('teal')      ? 'bg-teal-400 ring-teal-300' :
@@ -2132,10 +2132,10 @@ const DIMENSION_LABELS_AR: Record<string, string> = {
 };
 
 const DIMENSION_STATUS_COLORS: Record<JudicialDimensionStatus, string> = {
-  compliant:             'bg-emerald-100 text-emerald-700 border-emerald-200',
+  compliant:             'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
   minor_concern:         'bg-gold/15 text-gold border-gold/25',
   significant_concern:   'bg-gold/15 text-gold border-gold/25',
-  deficient:             'bg-red-100 text-red-700 border-red-200',
+  deficient:             'bg-destructive/15 text-destructive border-destructive/30',
   not_assessed:          'bg-slate-100 text-slate-500 border-slate-200',
 };
 
@@ -2148,25 +2148,25 @@ const DIMENSION_STATUS_LABELS: Record<JudicialDimensionStatus, string> = {
 };
 
 const DEFECT_SEVERITY_COLORS: Record<string, string> = {
-  critical: 'bg-red-50 border-red-300 text-red-800',
+  critical: 'bg-destructive/10 border-destructive/40 text-destructive',
   major:    'bg-gold/10 border-gold/40 text-gold/75',
   minor:    'bg-gold/10 border-gold/40 text-gold/75',
-  advisory: 'bg-sky-50 border-sky-300 text-sky-800',
+  advisory: 'bg-heading/10 border-heading/30 text-heading',
 };
 
 const OUTCOME_CONFIG: Record<string, { ar: string; color: string; icon: React.ReactNode }> = {
-  likely_lawful:             { ar: 'على الأرجح مشروع',          color: 'bg-emerald-50 border-emerald-300 text-emerald-800', icon: <CheckCircle2 className="w-5 h-5 text-emerald-600" /> },
+  likely_lawful:             { ar: 'على الأرجح مشروع',          color: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400', icon: <CheckCircle2 className="w-5 h-5 text-emerald-400" /> },
   likely_partially_unlawful: { ar: 'على الأرجح مشروع جزئياً',  color: 'bg-gold/10 border-gold/40 text-gold/75',   icon: <AlertTriangle className="w-5 h-5 text-gold" /> },
-  likely_void:               { ar: 'على الأرجح باطل',           color: 'bg-red-50 border-red-300 text-red-800',            icon: <XCircle className="w-5 h-5 text-red-600" /> },
+  likely_void:               { ar: 'على الأرجح باطل',           color: 'bg-destructive/10 border-destructive/40 text-destructive',            icon: <XCircle className="w-5 h-5 text-destructive" /> },
   requires_further_review:   { ar: 'يستلزم مراجعة إضافية',     color: 'bg-violet-50 border-violet-300 text-violet-800',   icon: <Eye className="w-5 h-5 text-violet-600" /> },
 };
 
 const REMEDY_CONFIG: Record<string, { ar: string; color: string }> = {
-  uphold:                    { ar: 'تأييد القرار',                    color: 'bg-emerald-50 border-emerald-300 text-emerald-800' },
-  annul:                     { ar: 'إلغاء القرار',                    color: 'bg-red-50 border-red-300 text-red-800' },
+  uphold:                    { ar: 'تأييد القرار',                    color: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' },
+  annul:                     { ar: 'إلغاء القرار',                    color: 'bg-destructive/10 border-destructive/40 text-destructive' },
   partial_annulment:         { ar: 'إلغاء جزئي',                     color: 'bg-gold/10 border-gold/40 text-gold/75' },
   remit_for_reconsideration: { ar: 'إعادة للنظر',                   color: 'bg-gold/10 border-gold/40 text-gold/75' },
-  request_further_evidence:  { ar: 'طلب مزيد من الأدلة',           color: 'bg-sky-50 border-sky-300 text-sky-800' },
+  request_further_evidence:  { ar: 'طلب مزيد من الأدلة',           color: 'bg-heading/10 border-heading/30 text-heading' },
 };
 
 function DimensionCard({ dim, expanded, onToggle }: {
@@ -2272,12 +2272,12 @@ function JudicialIntelligenceTab({ decisionId }: { decisionId: number }) {
             يحلل الذكاء الاصطناعي هذا القرار عبر 16 بُعداً دستورياً تماماً كما يفعل القاضي الإداري.
           </p>
           {failed && review?.errorMessage && (
-            <p className="text-xs text-red-600 mt-2 bg-red-50 rounded-lg px-3 py-1.5">
+            <p className="text-xs text-destructive mt-2 bg-destructive/10 rounded-lg px-3 py-1.5">
               خطأ سابق: {review.errorMessage}
             </p>
           )}
           {runError && (
-            <p className="text-xs text-red-600 mt-2 bg-red-50 rounded-lg px-3 py-1.5">{runError}</p>
+            <p className="text-xs text-destructive mt-2 bg-destructive/10 rounded-lg px-3 py-1.5">{runError}</p>
           )}
         </div>
         <button
@@ -2434,8 +2434,8 @@ function JudicialIntelligenceTab({ decisionId }: { decisionId: number }) {
         <div className="space-y-2">
           {defects.length === 0 ? (
             <div className="flex flex-col items-center py-8 gap-2">
-              <CheckCircle2 className="w-8 h-8 text-emerald-500" />
-              <p className="text-sm font-semibold text-emerald-700">لا توجد عيوب دستورية مكتشفة</p>
+              <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+              <p className="text-sm font-semibold text-emerald-400">لا توجد عيوب دستورية مكتشفة</p>
               <p className="text-xs text-muted-foreground">اجتاز القرار فحص العيوب الدستورية</p>
             </div>
           ) : (
@@ -2521,7 +2521,7 @@ function JudicialIntelligenceTab({ decisionId }: { decisionId: number }) {
               <ul className="space-y-1">
                 {(review.aiObservations ?? []).map((o, i) => (
                   <li key={i} className="flex gap-1.5 text-xs text-foreground">
-                    <CircleDot className="w-3 h-3 shrink-0 text-sky-500 mt-0.5" />{o}
+                    <CircleDot className="w-3 h-3 shrink-0 text-heading mt-0.5" />{o}
                   </li>
                 ))}
               </ul>
@@ -2604,7 +2604,7 @@ function JudicialIntelligenceTab({ decisionId }: { decisionId: number }) {
                 <Gavel className="w-4 h-4" />
                 <span className="font-bold text-sm">{REMEDY_CONFIG[remedy.remedy]?.ar ?? remedy.remedy}</span>
                 <span className={`ms-auto text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                  remedy.urgency === 'immediate' ? 'bg-red-200 text-red-800' :
+                  remedy.urgency === 'immediate' ? 'bg-destructive/15 text-destructive' :
                   remedy.urgency === 'standard'  ? 'bg-gold/25 text-gold/75' :
                   'bg-heading/25 text-heading/75'
                 }`}>
@@ -2720,11 +2720,11 @@ function JudgeDashboard() {
             {tab === 'stages' && (
               <div className="bg-white rounded-xl border border-border shadow-xs p-5 space-y-2">
                 {stages.map((s, i) => (
-                  <div key={i} className={`p-3 rounded-lg border ${s.status === 'complete' ? 'border-emerald-100 bg-emerald-50/40' : 'border-border bg-muted/20'}`}>
+                  <div key={i} className={`p-3 rounded-lg border ${s.status === 'complete' ? 'border-emerald-500/30 bg-emerald-500/40' : 'border-border bg-muted/20'}`}>
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-xs font-bold">{(s.stageNumber as number) + 1}.</span>
                       <span className="text-sm font-medium flex-1">{(s.titleAr as string) || (s.stageKey as string)}</span>
-                      <span className={`text-[11px] font-semibold ${s.status === 'complete' ? 'text-emerald-600' : s.status === 'active' ? 'text-sky-600' : 'text-slate-400'}`}>
+                      <span className={`text-[11px] font-semibold ${s.status === 'complete' ? 'text-emerald-400' : s.status === 'active' ? 'text-heading' : 'text-slate-400'}`}>
                         {s.status === 'complete' ? '✓' : s.status === 'active' ? '⋯' : '○'}
                       </span>
                     </div>
@@ -2793,7 +2793,7 @@ function JudgeDashboard() {
                               <span className="w-4 text-muted-foreground">{(sh.stageNumber as number) + 1}</span>
                               <span className="text-muted-foreground">{sh.stageKey as string}</span>
                               <span className="flex-1 truncate">{sh.auditHash ? `${(sh.auditHash as string).substring(0, 24)}…` : '(مفقود)'}</span>
-                              {sh.auditHash ? <CheckCircle2 className="w-3 h-3 text-emerald-500" /> : <XCircle className="w-3 h-3 text-red-400" />}
+                              {sh.auditHash ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : <XCircle className="w-3 h-3 text-red-400" />}
                             </div>
                           ))}
                         </div>
@@ -2908,9 +2908,9 @@ function LegacyGovernanceView() {
         <div className="bg-white rounded-xl border border-border p-5 shadow-xs">
           <SectionHeader icon={<Shield className="w-4 h-4" />} title="قم بتبديل الدور" />
           <p className="text-sm text-muted-foreground">استخدم القائمة المنسدلة في أعلى الصفحة لتجربة أي من الأدوار الـ 11 الجديدة.</p>
-          <div className="mt-4 p-3 rounded-lg bg-sky-50 border border-sky-200">
-            <p className="text-xs text-sky-700 font-semibold">المرحلة 2 — طبقة الحوكمة التنفيذية</p>
-            <p className="text-xs text-sky-600 mt-1">كل دور يرى فقط البيانات المصرّح له بها قانونياً.</p>
+          <div className="mt-4 p-3 rounded-lg bg-heading/10 border border-heading/30">
+            <p className="text-xs text-heading font-semibold">المرحلة 2 — طبقة الحوكمة التنفيذية</p>
+            <p className="text-xs text-heading mt-1">كل دور يرى فقط البيانات المصرّح له بها قانونياً.</p>
           </div>
         </div>
       </div>
@@ -2925,9 +2925,9 @@ function RoleBanner({ role }: { role: string }) {
   if (!meta) return null;
   const tierColors: Record<string, string> = {
     legacy:    'bg-gold/10 border-gold/25 text-gold/75',
-    executive: 'bg-sky-50 border-sky-200 text-sky-800',
+    executive: 'bg-heading/10 border-heading/30 text-heading',
     oversight: 'bg-violet-50 border-violet-200 text-violet-800',
-    judicial:  'bg-emerald-50 border-emerald-200 text-emerald-800',
+    judicial:  'bg-emerald-500/10 border-emerald-500/30 text-emerald-400',
     public:    'bg-slate-50 border-slate-200 text-slate-700',
   };
   return (

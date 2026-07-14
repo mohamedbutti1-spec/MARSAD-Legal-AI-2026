@@ -218,17 +218,21 @@ export default function Login() {
               variant="outline"
               onClick={handleGuestLogin}
               disabled={guestLoading || loading}
-              className="w-full border-gold/30 text-gold hover:bg-gold/10 font-medium"
+              className="w-full h-auto min-h-10 border-gold/30 text-gold hover:bg-gold/10 font-medium whitespace-normal py-2 px-3"
             >
               {guestLoading ? (
                 <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 border-2 border-gold/30 border-t-gold rounded-full animate-spin" />
+                  <span className="w-4 h-4 shrink-0 border-2 border-gold/30 border-t-gold rounded-full animate-spin" />
                   جارٍ الدخول…
                 </span>
               ) : (
-                <span className="flex items-center gap-2">
-                  <Eye className="w-4 h-4" />
-                  دخول كمقيّم — قراءة فقط / Guest Evaluation Login (Read-only)
+                <span className="flex items-center justify-center gap-2 text-center leading-snug">
+                  <Eye className="w-4 h-4 shrink-0" />
+                  <span>
+                    <span className="block sm:inline">دخول كمقيّم — قراءة فقط</span>
+                    <span className="hidden sm:inline"> / </span>
+                    <span className="block sm:inline text-[13px] sm:text-sm opacity-90">Guest Evaluation Login (Read-only)</span>
+                  </span>
                 </span>
               )}
             </Button>

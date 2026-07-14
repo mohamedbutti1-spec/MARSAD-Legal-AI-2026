@@ -10,93 +10,94 @@ import Login from '@/pages/login';
 import { BetaFeedbackWidget } from '@/components/beta/FeedbackWidget';
 
 // ─── Pages ────────────────────────────────────────────────────────────────────
-import NotFound           from '@/pages/not-found';
-import Dashboard          from '@/pages/dashboard';
-import LegalSearchHub     from '@/pages/legal-search-hub';
+import NotFound from '@/pages/not-found';
+import Dashboard from '@/pages/dashboard';
+const LegalSearchHub = React.lazy(() => import('@/pages/legal-search-hub'));
 
 // Research Tools
-import LegalResearch      from '@/pages/legal-research';
-import AiAssistant        from '@/pages/ai-assistant';
-import LiteratureReview   from '@/pages/literature-review';
-import LegalOs            from '@/pages/legal-os';
-import AdminOs            from '@/pages/admin-os';
-import AdminOsCompliance  from '@/pages/admin-os-compliance';
+const LegalResearch = React.lazy(() => import('@/pages/legal-research'));
+const AiAssistant = React.lazy(() => import('@/pages/ai-assistant'));
+const LiteratureReview = React.lazy(() => import('@/pages/literature-review'));
+const LegalOs = React.lazy(() => import('@/pages/legal-os'));
+const AdminOs = React.lazy(() => import('@/pages/admin-os'));
+const AdminOsCompliance = React.lazy(() => import('@/pages/admin-os-compliance'));
 
 // Legal Sources
-import UaeLegislation     from '@/pages/uae-legislation';
-import UaeCaseLaw         from '@/pages/uae-caselaw';
-import FranceLaw          from '@/pages/france-law';
-import EuLaw              from '@/pages/eu-law';
+const UaeLegislation = React.lazy(() => import('@/pages/uae-legislation'));
+const UaeCaseLaw = React.lazy(() => import('@/pages/uae-caselaw'));
+const FranceLaw = React.lazy(() => import('@/pages/france-law'));
+const EuLaw = React.lazy(() => import('@/pages/eu-law'));
 
 // Productivity
-import Citations          from '@/pages/citations';
-import DocumentComparison from '@/pages/document-comparison';
-import PersonalLibrary    from '@/pages/personal-library';
+const Citations = React.lazy(() => import('@/pages/citations'));
+const DocumentComparison = React.lazy(() => import('@/pages/document-comparison'));
+const PersonalLibrary = React.lazy(() => import('@/pages/personal-library'));
 
 // Theory & Governance
-import ShamsiTheory              from '@/pages/shamsi-theory';
-import ConstitutionalPrinciples  from '@/pages/constitutional-principles';
+const ShamsiTheory = React.lazy(() => import('@/pages/shamsi-theory'));
+const ConstitutionalPrinciples = React.lazy(() => import('@/pages/constitutional-principles'));
 // Module 1 — Intelligent Administrative Decision
-import Decisions                 from '@/pages/decisions';
-import DecisionWorkspace         from '@/pages/decision-workspace';
-import GovernanceHub             from '@/pages/governance-hub';
-import CitizenPortal             from '@/pages/citizen-portal';
+const Decisions = React.lazy(() => import('@/pages/decisions'));
+const DecisionWorkspace = React.lazy(() => import('@/pages/decision-workspace'));
+const GovernanceHub = React.lazy(() => import('@/pages/governance-hub'));
+const CitizenPortal = React.lazy(() => import('@/pages/citizen-portal'));
 // NRME — National Risk Modeling Engine
-import RiskEngine                from '@/pages/risk-engine';
+const RiskEngine = React.lazy(() => import('@/pages/risk-engine'));
 // Phase 42 — Constitutional Intelligence Layer (CIL)
-import ConstitutionalIntelligence from '@/pages/constitutional-intelligence';
+const ConstitutionalIntelligence = React.lazy(() => import('@/pages/constitutional-intelligence'));
 // Phase 44 — Judicial Digital Twin (JDT)
-import JdtPage from '@/pages/jdt';
+const JdtPage = React.lazy(() => import('@/pages/jdt'));
 
 // Phase 57 — Legal Research Workspace
-import WorkspaceDashboard from '@/pages/workspace-dashboard';
-import WorkspaceProject   from '@/pages/workspace-project';
-import WorkspaceItem      from '@/pages/workspace-item';
+const WorkspaceDashboard = React.lazy(() => import('@/pages/workspace-dashboard'));
+const WorkspaceProject = React.lazy(() => import('@/pages/workspace-project'));
+const WorkspaceItem = React.lazy(() => import('@/pages/workspace-item'));
 // Phase 58 — Administrative Decision Knowledge Graph
-import AdkgDashboard from '@/pages/adkg-dashboard';
-import AdkgDetail    from '@/pages/adkg-detail';
+const AdkgDashboard = React.lazy(() => import('@/pages/adkg-dashboard'));
+const AdkgDetail = React.lazy(() => import('@/pages/adkg-detail'));
 // Phase 59 — KB Cross-Reference Search
-import KbSearch from '@/pages/kb-search';
+const KbSearch = React.lazy(() => import('@/pages/kb-search'));
 // JRE — Judicial Reasoning Engine
-import JrePage    from '@/pages/jre';
-import JreSession from '@/pages/jre-session';
+const JrePage = React.lazy(() => import('@/pages/jre'));
+const JreSession = React.lazy(() => import('@/pages/jre-session'));
 // Phase 59 — Judicial Deliberation Chamber
-import JdcPage    from '@/pages/jdc';
-import JdcChamber from '@/pages/jdc-chamber';
+const JdcPage = React.lazy(() => import('@/pages/jdc'));
+const JdcChamber = React.lazy(() => import('@/pages/jdc-chamber'));
 // Stage 4 — Legal Intelligence Brain
-import LegalBrain from '@/pages/legal-brain';
+const LegalBrain = React.lazy(() => import('@/pages/legal-brain'));
 // SPG — Smart Professional Guidance
-import SpgPage    from '@/pages/spg';
-import SpgSession from '@/pages/spg-session';
+const SpgPage = React.lazy(() => import('@/pages/spg'));
+const SpgSession = React.lazy(() => import('@/pages/spg-session'));
 // PGF — Professional Guidance Framework
-import PgfPage    from '@/pages/pgf';
-import PgfSession from '@/pages/pgf-session';
+const PgfPage = React.lazy(() => import('@/pages/pgf'));
+const PgfSession = React.lazy(() => import('@/pages/pgf-session'));
 
 // NAIP — Role-Specific Executive Dashboards
-import NaipMinister        from '@/pages/naip-minister';
-import NaipUndersecretary  from '@/pages/naip-undersecretary';
-import NaipDirectorGeneral from '@/pages/naip-director-general';
-import NaipRiskOfficer     from '@/pages/naip-risk-officer';
-import NaipJudge           from '@/pages/naip-judge';
+const NaipMinister = React.lazy(() => import('@/pages/naip-minister'));
+const NaipUndersecretary = React.lazy(() => import('@/pages/naip-undersecretary'));
+const NaipDirectorGeneral = React.lazy(() => import('@/pages/naip-director-general'));
+const NaipRiskOfficer = React.lazy(() => import('@/pages/naip-risk-officer'));
+const NaipJudge = React.lazy(() => import('@/pages/naip-judge'));
 
 // Phase 43 — NAIP (National Administrative Intelligence Platform)
-import NaipHome      from '@/pages/naip-home';
-import NaipDashboard from '@/pages/naip-dashboard';
-import NaipKpi       from '@/pages/naip-kpi';
+const NaipHome = React.lazy(() => import('@/pages/naip-home'));
+const NaipDashboard = React.lazy(() => import('@/pages/naip-dashboard'));
+const NaipKpi = React.lazy(() => import('@/pages/naip-kpi'));
 
 // Admin
-import UserManagement     from '@/pages/user-management';
-import Settings           from '@/pages/settings';
-import AdminLegalOS       from '@/pages/admin-legal-os';
+const UserManagement = React.lazy(() => import('@/pages/user-management'));
+const Settings = React.lazy(() => import('@/pages/settings'));
+const AdminLegalOS = React.lazy(() => import('@/pages/admin-legal-os'));
 
 // Legacy route aliases (keep old URLs working)
-import UaeFrance          from '@/pages/uae-france';
-import Comparisons        from '@/pages/comparisons';
-import Documents          from '@/pages/documents';
-import UploadPage         from '@/pages/upload';
-import Analytics          from '@/pages/analytics';
-import AuditLog           from '@/pages/audit-log';
-import Users              from '@/pages/users';
+const UaeFrance = React.lazy(() => import('@/pages/uae-france'));
+const Comparisons = React.lazy(() => import('@/pages/comparisons'));
+const Documents = React.lazy(() => import('@/pages/documents'));
+const UploadPage = React.lazy(() => import('@/pages/upload'));
+const Analytics = React.lazy(() => import('@/pages/analytics'));
+const AuditLog = React.lazy(() => import('@/pages/audit-log'));
+// NOTE: `Users` (pages/users.tsx) is superseded by UserManagement at /admin/users.
+// The component file is kept intact (no module deletion); /users now redirects there.
 
 // ─── Query Client ─────────────────────────────────────────────────────────────
 const queryClient = new QueryClient({
@@ -119,6 +120,13 @@ function Router() {
 
   return (
     <ErrorBoundary>
+      <React.Suspense
+        fallback={
+          <div className="min-h-screen flex items-center justify-center bg-background">
+            <div className="w-8 h-8 border-2 border-gold/30 border-t-gold rounded-full animate-spin" />
+          </div>
+        }
+      >
       <Switch>
         {/* ── Main ─────────────────────────────────────────────────── */}
         <Route path="/" component={Dashboard} />
@@ -290,10 +298,9 @@ function Router() {
             <AuditLog />
           </RouteGuard>
         </Route>
+        {/* Legacy alias — canonical user management now lives at /admin/users */}
         <Route path="/users">
-          <RouteGuard allow={canManageUsers}>
-            <Users />
-          </RouteGuard>
+          <Redirect to="/admin/users" />
         </Route>
         <Route path="/comparisons">
           <RouteGuard allow={canUseAi}><Comparisons /></RouteGuard>
@@ -364,6 +371,7 @@ function Router() {
 
         <Route component={NotFound} />
       </Switch>
+      </React.Suspense>
     </ErrorBoundary>
   );
 }

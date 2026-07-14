@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import {
   ChevronLeft, Loader2, Download, Network, Link2,
-  Clock, BarChart3, FileText, Plus, Trash2, RefreshCw, ShieldCheck,
+  Clock, BarChart3, FileText, Plus, Trash2, RefreshCw, ShieldCheck, AlertTriangle,
 } from 'lucide-react';
 import { DecisionGraph } from '@/components/adkg/decision-graph';
 import { DecisionTimeline } from '@/components/adkg/decision-timeline';
@@ -62,6 +62,10 @@ interface PillarAnalysis {
   canIssueToday: 'yes' | 'no' | 'conditional';
   canIssueTodayRationale: string;
   analyzedAt?: string;
+  /** True when the AI response was truncated (token limit) and automatically
+   *  repaired — the analysis may be missing detail; always shown to the user,
+   *  never silently patched. */
+  truncationRepaired?: boolean;
   [key: string]: unknown;
 }
 
@@ -657,6 +661,25 @@ function PillarAnalysisTab({
       {/* Results */}
       {analysis && !analyzing && (
         <>
+          {/* Truncation warning — the AI response hit a length limit and was
+              auto-repaired. Never hide this from the reviewer silently. */}
+          {analysis.truncationRepaired && (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 flex items-start gap-2.5">
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <div className="text-xs text-amber-900">
+                <p className="font-semibold">
+                  {t('تحليل جزئي — تم إصلاح استجابة مبتورة', 'Partial analysis — a truncated response was repaired')}
+                </p>
+                <p className="mt-0.5 text-amber-800">
+                  {t(
+                    'استجابة الذكاء الاصطناعي تجاوزت الحد الأقصى للطول وتمت إعادة بنائها تلقائياً. قد يكون بعض تحليل الأعمدة ناقصاً — يُنصح بإعادة التحليل للتأكد من اكتماله.',
+                    'The AI response exceeded the length limit and was automatically reconstructed. Some pillar findings may be incomplete — consider re-running the analysis to confirm completeness.',
+                  )}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Score summary cards */}
           <div className="grid grid-cols-3 gap-3">
             <div className="rounded-lg border p-4 text-center">

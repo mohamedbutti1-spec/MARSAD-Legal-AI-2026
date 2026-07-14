@@ -70,8 +70,8 @@ function apiFetch(path: string) {
 
 function StatusRing({ status }: { status: 'complete' | 'skipped' | 'pending' }) {
   if (status === 'complete') return (
-    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-emerald-100 dark:bg-emerald-950/50 border-2 border-emerald-400 dark:border-emerald-600 shrink-0">
-      <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-emerald-500/10 dark:bg-emerald-950/50 border-2 border-emerald-400 dark:border-emerald-600 shrink-0">
+      <Check className="w-4 h-4 text-emerald-400 dark:text-emerald-400" />
     </div>
   );
   if (status === 'skipped') return (
@@ -92,10 +92,10 @@ function ConfidenceBadge({ score }: { score: number | null }) {
   if (score === null) return null;
   const pct = Math.round(score * 100);
   const color = pct >= 80
-    ? 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-950/30 dark:border-emerald-800/40'
+    ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30 dark:text-emerald-400 dark:bg-emerald-950/30 dark:border-emerald-800/40'
     : pct >= 60
       ? 'text-gold bg-gold/10 border-gold/25 dark:text-gold/80 dark:bg-gold/30 dark:border-gold/40'
-      : 'text-red-700 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-950/30 dark:border-red-800/40';
+      : 'text-destructive bg-destructive/10 border-destructive/30 dark:text-red-400 dark:bg-red-950/30 dark:border-red-800/40';
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded border text-[10px] font-bold ${color}`}>
       <Activity className="w-2.5 h-2.5" /> {pct}%
@@ -214,8 +214,8 @@ function StageDetailPanel({ stage }: { stage: ReplayStage }) {
                 : null;
               return (
                 <div key={dim} className="flex items-center gap-1.5 text-[10px]">
-                  {passed === true && <Check className="w-3 h-3 text-emerald-500 shrink-0" />}
-                  {passed === false && <X className="w-3 h-3 text-red-500 shrink-0" />}
+                  {passed === true && <Check className="w-3 h-3 text-emerald-400 shrink-0" />}
+                  {passed === false && <X className="w-3 h-3 text-destructive shrink-0" />}
                   {passed === null && <Info className="w-3 h-3 text-muted-foreground/40 shrink-0" />}
                   <span className="text-foreground/70 font-mono">{dim}</span>
                 </div>
@@ -243,7 +243,7 @@ function StageDetailPanel({ stage }: { stage: ReplayStage }) {
                 </span>
               ))}
             </div>
-          ) : <span className="text-xs text-emerald-600 dark:text-emerald-400 text-sm">لا مخاطر مُسجَّلة</span>}
+          ) : <span className="text-xs text-emerald-400 dark:text-emerald-400 text-sm">لا مخاطر مُسجَّلة</span>}
         </div>
       </div>
 
@@ -366,7 +366,7 @@ function TimelineNode({
         <div className="mt-1">
           <StatusRing status={stage.status} />
         </div>
-        {!isLast && <div className={`w-0.5 flex-1 mt-1 ${stage.status === 'complete' ? 'bg-emerald-200 dark:bg-emerald-800/40' : 'bg-border/40'}`} />}
+        {!isLast && <div className={`w-0.5 flex-1 mt-1 ${stage.status === 'complete' ? 'bg-emerald-500/20 dark:bg-emerald-800/40' : 'bg-border/40'}`} />}
       </div>
 
       {/* Node content */}
@@ -539,8 +539,8 @@ export default function DecisionReplay({ decisionId }: { decisionId: number }) {
         {/* Legend */}
         <div className="flex items-center gap-4 text-[10px] text-muted-foreground/60 flex-wrap">
           <div className="flex items-center gap-1.5">
-            <div className="w-3.5 h-3.5 rounded-full bg-emerald-100 dark:bg-emerald-950/50 border-2 border-emerald-400 dark:border-emerald-600 flex items-center justify-center">
-              <Check className="w-2 h-2 text-emerald-600" />
+            <div className="w-3.5 h-3.5 rounded-full bg-emerald-500/10 dark:bg-emerald-950/50 border-2 border-emerald-400 dark:border-emerald-600 flex items-center justify-center">
+              <Check className="w-2 h-2 text-emerald-400" />
             </div>
             <span>مكتملة</span>
           </div>

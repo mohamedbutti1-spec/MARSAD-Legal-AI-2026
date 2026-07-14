@@ -62,7 +62,7 @@ interface NavSection {
 export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: SidebarProps) {
   const [location] = useLocation();
   const search = useSearch();
-  const { role, lang, canManageUsers, canManageSettings, canUseAi, canViewAudit, canViewGovernanceDashboard, canViewRiskDashboard, canViewCilDashboard, canViewNaipDashboard, canViewJdtSimulation } = useUserContext();
+  const { role, lang, canManageUsers, canManageSettings, canUseAi, canViewAudit, canViewGovernanceDashboard, canViewRiskDashboard, canViewCilDashboard, canViewNaipDashboard, canViewJdtSimulation, canUseShamsiFramework } = useUserContext();
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
   // Sub-menu expand/collapse state, keyed by parent href (e.g. training scenarios).
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
@@ -177,16 +177,13 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           badge: 'جديد',
         },
         {
+          // Canonical search entry point — replaces the previously scattered
+          // ai-search / kb-search / naip-search / legacy "/research" links.
+          // "/research" and "/ai-search" still resolve (backward compatible),
+          // they are just no longer separate menu entries.
           href: '/search',
           labelAr: 'البحث القانوني الذكي',
           labelEn: 'Smart Legal Search',
-          icon: <Search className="w-4.5 h-4.5" />,
-          show: canUseAi,
-        },
-        {
-          href: '/research',
-          labelAr: 'البحث القانوني',
-          labelEn: 'Legal Research',
           icon: <Search className="w-4.5 h-4.5" />,
           show: canUseAi,
         },
@@ -198,11 +195,54 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           show: canUseAi,
         },
         {
+          href: '/literature-review',
+          labelAr: 'مراجعة الأدبيات',
+          labelEn: 'Literature Review',
+          icon: <BookOpenText className="w-4.5 h-4.5" />,
+          show: canUseAi,
+        },
+        {
+          href: '/comparison',
+          labelAr: 'مقارنة المستندات',
+          labelEn: 'Document Comparison',
+          icon: <GitCompareArrows className="w-4.5 h-4.5" />,
+          show: true,
+        },
+        {
           href: '/library',
           labelAr: 'مكتبتي الشخصية',
           labelEn: 'Personal Library',
           icon: <Library className="w-4.5 h-4.5" />,
           show: true,
+        },
+      ],
+    },
+    // ── القرارات والحوكمة — Module 1 decisions + executive oversight ────────
+    {
+      id: 'decisions-governance',
+      titleAr: 'القرارات والحوكمة',
+      titleEn: 'Decisions & Governance',
+      items: [
+        {
+          href: '/decisions',
+          labelAr: 'القرارات الإدارية',
+          labelEn: 'Administrative Decisions',
+          icon: <Gavel className="w-4.5 h-4.5" />,
+          show: canUseAi,
+        },
+        {
+          href: '/governance',
+          labelAr: 'مركز الحوكمة التنفيذية',
+          labelEn: 'Executive Governance Hub',
+          icon: <Landmark className="w-4.5 h-4.5" />,
+          show: canViewGovernanceDashboard,
+        },
+        {
+          href: '/risk-engine',
+          labelAr: 'محرك المخاطر الوطني',
+          labelEn: 'National Risk Modeling Engine',
+          icon: <ShieldAlert className="w-4.5 h-4.5" />,
+          show: canViewRiskDashboard,
         },
       ],
     },
@@ -218,6 +258,13 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           labelEn: 'Scenario Catalog',
           icon: <Compass className="w-4.5 h-4.5" />,
           show: canManageUsers,
+        },
+        {
+          href: '/legal-os',
+          labelAr: 'نظام العمليات القانونية',
+          labelEn: 'Legal Operations System',
+          icon: <Cpu className="w-4.5 h-4.5" />,
+          show: canUseAi,
         },
         {
           href: '/spg',
@@ -368,17 +415,22 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           show: canManageUsers,
           badge: 'خاص',
         },
+        {
+          href: '/admin-os',
+          labelAr: 'نظام القرارات الإدارية',
+          labelEn: 'Administrative Decision OS',
+          icon: <ShieldAlert className="w-4.5 h-4.5" />,
+          show: canUseShamsiFramework,
+          badge: 'خاص',
+        },
       ],
     },
     // ── Hidden — code and routes preserved, removed from navigation only ────
-    // القرارات الإدارية ('/decisions'), مركز الحوكمة التنفيذية ('/governance'),
-    // تقييم المخاطر ('/risk-engine'), لوحة الوزير/الوكيل/المدير العام/مسؤول
-    // المخاطر/القاضي (NAIP role dashboards), الإطار الاحترافي الموجَّه ('/pgf'),
-    // نظام القرارات الإدارية ('/admin-os'), لوحة الامتثال القانوني
-    // ('/admin-os/compliance'), مراجعة الأدبيات ('/literature-review'),
-    // التشريعات الإماراتية ('/legislation/uae'), لوحة الذكاء الوطني
-    // ('/naip/dashboard'), مقارنة الوثائق ('/comparison') — all unreachable
-    // from the sidebar per the visual rebuild, routes remain intact.
+    // لوحة الوزير/الوكيل/المدير العام/مسؤول المخاطر/القاضي (NAIP role
+    // dashboards), الإطار الاحترافي الموجَّه ('/pgf'), لوحة الامتثال القانوني
+    // ('/admin-os/compliance'), التشريعات الإماراتية ('/legislation/uae'),
+    // لوحة الذكاء الوطني ('/naip/dashboard') — all unreachable from the
+    // sidebar per the visual rebuild, routes remain intact.
   ];
 
   const isActive = (href: string) => {

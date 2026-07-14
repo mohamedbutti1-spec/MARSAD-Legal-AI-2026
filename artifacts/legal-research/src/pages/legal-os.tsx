@@ -83,9 +83,9 @@ const ROLE_ICONS: Record<string, React.ReactNode> = {
 // ─── Category pill ────────────────────────────────────────────────────────────
 
 const CATEGORY_CONFIG: Record<AnswerCategory, { label: string; color: string; dot: string }> = {
-  mandatory:     { label: 'إلزامي',       color: 'bg-red-50 text-red-700 border-red-200',         dot: '🔴' },
+  mandatory:     { label: 'إلزامي',       color: 'bg-destructive/10 text-destructive border-destructive/30',         dot: '🔴' },
   opinion:       { label: 'رأي قانوني',   color: 'bg-gold/10 text-gold border-gold/25',   dot: '🟡' },
-  best_practice: { label: 'ممارسة مثلى', color: 'bg-emerald-50 text-emerald-700 border-emerald-200', dot: '🟢' },
+  best_practice: { label: 'ممارسة مثلى', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30', dot: '🟢' },
   optional:      { label: 'اختياري',      color: 'bg-slate-50 text-slate-600 border-slate-200',    dot: '⚪' },
 };
 
@@ -102,10 +102,10 @@ function CategoryPill({ category }: { category: AnswerCategory }) {
 // ─── Risk badge ───────────────────────────────────────────────────────────────
 
 const RISK_CONFIG: Record<RiskLevel, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
-  low:      { label: 'منخفض',    color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200', icon: <CheckCircle2 className="w-5 h-5 text-emerald-600" /> },
+  low:      { label: 'منخفض',    color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/30', icon: <CheckCircle2 className="w-5 h-5 text-emerald-400" /> },
   medium:   { label: 'متوسط',    color: 'text-gold',   bg: 'bg-gold/10 border-gold/25',     icon: <AlertTriangle className="w-5 h-5 text-gold" /> },
   high:     { label: 'مرتفع',    color: 'text-gold',  bg: 'bg-gold/10 border-gold/25',   icon: <AlertTriangle className="w-5 h-5 text-gold" /> },
-  critical: { label: 'حرج جداً', color: 'text-red-700',     bg: 'bg-red-50 border-red-200',         icon: <XCircle className="w-5 h-5 text-red-600" /> },
+  critical: { label: 'حرج جداً', color: 'text-destructive',     bg: 'bg-destructive/10 border-destructive/30',         icon: <XCircle className="w-5 h-5 text-destructive" /> },
 };
 
 function RiskBadge({ level }: { level: RiskLevel }) {
@@ -124,8 +124,8 @@ function CanIssueBanner({ decision, explanation, conditions }: {
   decision: CanIssue; explanation: string; conditions: string[];
 }) {
   const configs = {
-    yes:         { icon: <CheckCircle2 className="w-7 h-7 text-emerald-600 shrink-0" />, label: 'يمكن اتخاذ القرار اليوم', bg: 'bg-emerald-50 border-emerald-300', text: 'text-emerald-800' },
-    no:          { icon: <XCircle className="w-7 h-7 text-red-600 shrink-0" />,          label: 'لا يمكن اتخاذ القرار اليوم', bg: 'bg-red-50 border-red-300',         text: 'text-red-800' },
+    yes:         { icon: <CheckCircle2 className="w-7 h-7 text-emerald-400 shrink-0" />, label: 'يمكن اتخاذ القرار اليوم', bg: 'bg-emerald-500/10 border-emerald-500/30', text: 'text-emerald-400' },
+    no:          { icon: <XCircle className="w-7 h-7 text-destructive shrink-0" />,          label: 'لا يمكن اتخاذ القرار اليوم', bg: 'bg-destructive/10 border-destructive/40',         text: 'text-destructive' },
     conditional: { icon: <AlertTriangle className="w-7 h-7 text-gold shrink-0" />, label: 'يمكن اتخاذ القرار بشروط',   bg: 'bg-gold/10 border-gold/40',       text: 'text-gold/75' },
   };
   const c = configs[decision] ?? configs.conditional;
@@ -220,7 +220,7 @@ function MiniCitationChip({ token, citation }: { token: string; citation?: Citat
           <div className="bg-muted/40 rounded p-2 text-[11px] leading-relaxed whitespace-pre-wrap mb-2">{citation.formats[fmt]}</div>
           <button type="button" onClick={() => copy(citation.formats![fmt])}
             className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground">
-            {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+            {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
             {copied ? 'تم النسخ' : 'نسخ'}
           </button>
         </div>
@@ -233,9 +233,9 @@ function MiniCitationChip({ token, citation }: { token: string; citation?: Citat
 
 const ACTOR_LABELS: Record<ActorType, { label: string; color: string }> = {
   user:      { label: 'المستخدم',          color: 'bg-primary/10 text-primary' },
-  lawyer:    { label: 'المحامي',            color: 'bg-purple-100 text-purple-700' },
-  court:     { label: 'المحكمة',            color: 'bg-red-100 text-red-700' },
-  authority: { label: 'الجهة الحكومية',    color: 'bg-blue-100 text-blue-700' },
+  lawyer:    { label: 'المحامي',            color: 'bg-heading/10 text-heading' },
+  court:     { label: 'المحكمة',            color: 'bg-destructive/15 text-destructive' },
+  authority: { label: 'الجهة الحكومية',    color: 'bg-heading/10 text-heading' },
 };
 
 function ActorBadge({ actor }: { actor: ActorType | string }) {
@@ -463,24 +463,24 @@ function DecisionBriefView({ brief, scenario, role, sessionId, citations, isStre
         {/* 4. Government Authority */}
         {brief.governmentAuthority?.nameAr ? (
           <BriefSection title="الجهة الحكومية المختصة" icon={<Building2 className="w-4 h-4" />}>
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-              <p className="font-bold text-blue-900 text-base">{brief.governmentAuthority.nameAr}</p>
+            <div className="bg-heading/10 border border-heading/30 rounded-xl p-4">
+              <p className="font-bold text-heading text-base">{brief.governmentAuthority.nameAr}</p>
               {brief.governmentAuthority.nameEn && (
-                <p className="text-xs text-blue-700 mt-0.5">{brief.governmentAuthority.nameEn}</p>
+                <p className="text-xs text-heading mt-0.5">{brief.governmentAuthority.nameEn}</p>
               )}
               {brief.governmentAuthority.department && (
-                <p className="text-sm text-blue-800 mt-1.5">📋 {brief.governmentAuthority.department}</p>
+                <p className="text-sm text-heading mt-1.5">📋 {brief.governmentAuthority.department}</p>
               )}
               {brief.governmentAuthority.website && (
                 <a href={brief.governmentAuthority.website} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs text-blue-700 hover:underline mt-1.5">
+                  className="inline-flex items-center gap-1 text-xs text-heading hover:underline mt-1.5">
                   🌐 {brief.governmentAuthority.website}
                 </a>
               )}
               {brief.governmentAuthority.whatToBring && (
-                <div className="mt-3 pt-3 border-t border-blue-200">
-                  <p className="text-xs font-bold text-blue-800 mb-1">ما تحتاج إحضاره:</p>
-                  <p className="text-xs text-blue-700 leading-relaxed">{brief.governmentAuthority.whatToBring}</p>
+                <div className="mt-3 pt-3 border-t border-heading/30">
+                  <p className="text-xs font-bold text-heading mb-1">ما تحتاج إحضاره:</p>
+                  <p className="text-xs text-heading leading-relaxed">{brief.governmentAuthority.whatToBring}</p>
                 </div>
               )}
             </div>
@@ -529,7 +529,7 @@ function DecisionBriefView({ brief, scenario, role, sessionId, citations, isStre
             </div>
             <div className="flex gap-2">
               <Button size="sm" variant="outline" onClick={copyDraft} className="gap-1.5 text-xs">
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 {copied ? 'تم النسخ' : 'نسخ النص'}
               </Button>
               <Button size="sm" variant="outline" onClick={downloadDraft} className="gap-1.5 text-xs">
@@ -891,7 +891,7 @@ function InterviewScreen({ scenario, answers, currentIndex, onAnswer, onBack, on
             </Button>
           )}
           {!isLast && (
-            <Button variant="outline" className="gap-2 text-emerald-700 border-emerald-200 hover:bg-emerald-50"
+            <Button variant="outline" className="gap-2 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
               disabled={assessing} onClick={() => { if (isTextBased) onAnswer(q.id, effectiveCurrent); onAssess(); }}>
               {assessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
               {assessing ? 'جارٍ...' : 'تقييم الآن'}
@@ -965,7 +965,7 @@ function HistoryDrawer({ open, sessions, onSelect, onDelete, onClose, t }: {
   t: (ar: string, en: string) => string;
 }) {
   const RISK_COLORS: Record<string, string> = {
-    low: 'text-emerald-600', medium: 'text-gold', high: 'text-gold', critical: 'text-red-600',
+    low: 'text-emerald-400', medium: 'text-gold', high: 'text-gold', critical: 'text-destructive',
   };
   return (
     <>
@@ -1014,7 +1014,7 @@ function HistorySidebar({ sessions, onSelect, onDelete, currentId, t }: {
   t: (ar: string, en: string) => string;
 }) {
   const RISK_COLORS: Record<string, string> = {
-    low: 'text-emerald-500', medium: 'text-gold', high: 'text-gold', critical: 'text-red-500',
+    low: 'text-emerald-400', medium: 'text-gold', high: 'text-gold', critical: 'text-destructive',
   };
   return (
     <div className="hidden md:flex flex-col w-60 border-s border-border shrink-0 bg-muted/10" dir="rtl">

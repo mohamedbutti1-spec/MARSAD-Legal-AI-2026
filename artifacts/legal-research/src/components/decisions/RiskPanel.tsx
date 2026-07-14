@@ -82,10 +82,10 @@ const INDEX_LABELS: Record<string, string> = {
 };
 
 function scoreColor(score: number): string {
-  if (score >= 75) return 'text-red-600 dark:text-red-400';
+  if (score >= 75) return 'text-destructive dark:text-red-400';
   if (score >= 55) return 'text-gold dark:text-gold/80';
   if (score >= 35) return 'text-gold dark:text-gold/80';
-  return 'text-emerald-600 dark:text-emerald-400';
+  return 'text-emerald-400 dark:text-emerald-400';
 }
 
 function scoreBg(score: number): string {
@@ -97,10 +97,10 @@ function scoreBg(score: number): string {
 
 function riskLevelBadge(level: RiskLevel | null | undefined) {
   switch (level) {
-    case 'critical': return 'bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/40';
+    case 'critical': return 'bg-destructive/15 dark:bg-red-950/40 text-destructive dark:text-red-400 border-destructive/30 dark:border-red-800/40';
     case 'high':     return 'bg-gold/15 dark:bg-gold/40 text-gold dark:text-gold/80 border-gold/25 dark:border-gold/40';
     case 'moderate': return 'bg-gold/15 dark:bg-gold/40 text-gold dark:text-gold/80 border-gold/25 dark:border-gold/40';
-    default:         return 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40';
+    default:         return 'bg-emerald-500/10 dark:bg-emerald-950/40 text-emerald-400 dark:text-emerald-400 border-emerald-500/30 dark:border-emerald-800/40';
   }
 }
 
@@ -116,8 +116,8 @@ function ScoreGauge({ label, value, inverted = false }: { label: string; value: 
   const circumference = 2 * Math.PI * 32;
   const offset = circumference - (score / 100) * circumference;
   const colorClass = inverted
-    ? (score >= 70 ? 'text-emerald-500' : score >= 50 ? 'text-gold' : 'text-red-500')
-    : (score >= 75 ? 'text-red-500' : score >= 55 ? 'text-gold' : score >= 35 ? 'text-gold' : 'text-emerald-500');
+    ? (score >= 70 ? 'text-emerald-400' : score >= 50 ? 'text-gold' : 'text-destructive')
+    : (score >= 75 ? 'text-destructive' : score >= 55 ? 'text-gold' : score >= 35 ? 'text-gold' : 'text-emerald-400');
   return (
     <div className="flex flex-col items-center gap-2 p-4 bg-card border border-border/60 rounded-xl">
       <div className="relative w-20 h-20">
@@ -263,7 +263,7 @@ export function RiskPanel({ decisionId }: { decisionId: number }) {
         </div>
       )}
       {isError && (
-        <div className="flex items-center gap-3 p-4 rounded-lg border border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-950/20 text-sm text-red-700 dark:text-red-400">
+        <div className="flex items-center gap-3 p-4 rounded-lg border border-destructive/30 dark:border-red-800/40 bg-destructive/10 dark:bg-red-950/20 text-sm text-destructive dark:text-red-400">
           <XCircle className="w-4 h-4 shrink-0" />
           تعذر تحميل بيانات تقييم المخاطر
         </div>
@@ -330,7 +330,7 @@ export function RiskPanel({ decisionId }: { decisionId: number }) {
                         {val.legalCitations.length > 0 && (
                           <div className="flex flex-wrap gap-1.5">
                             {val.legalCitations.map((c) => (
-                              <span key={c} className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/40">
+                              <span key={c} className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-heading/10 dark:bg-blue-950/30 text-heading dark:text-heading border border-heading/30 dark:border-blue-800/40">
                                 {c}
                               </span>
                             ))}
@@ -380,7 +380,7 @@ export function RiskPanel({ decisionId }: { decisionId: number }) {
                       <p className="text-xs font-semibold text-foreground">{s.titleAr}</p>
                       {s.severity && (
                         <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
-                          s.severity === 'critical' ? 'bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/40' :
+                          s.severity === 'critical' ? 'bg-destructive/10 dark:bg-red-950/30 text-destructive dark:text-red-400 border-destructive/30 dark:border-red-800/40' :
                           s.severity === 'high' ? 'bg-gold/10 dark:bg-gold/30 text-gold dark:text-gold/80 border-gold/25 dark:border-gold/40' :
                           'bg-gold/10 dark:bg-gold/30 text-gold dark:text-gold/80 border-gold/25 dark:border-gold/40'
                         }`}>
@@ -390,7 +390,7 @@ export function RiskPanel({ decisionId }: { decisionId: number }) {
                     </div>
                     {s.descriptionAr && <p className="text-xs text-muted-foreground">{s.descriptionAr}</p>}
                     {s.preventiveActionAr && (
-                      <div className="flex items-start gap-1.5 text-xs text-emerald-700 dark:text-emerald-400">
+                      <div className="flex items-start gap-1.5 text-xs text-emerald-400 dark:text-emerald-400">
                         <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                         {s.preventiveActionAr}
                       </div>
@@ -486,8 +486,8 @@ export function RiskPanel({ decisionId }: { decisionId: number }) {
                       {t.treatmentType}
                     </span>
                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
-                      t.status === 'completed' ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40' :
-                      t.status === 'in_progress' ? 'bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/40' :
+                      t.status === 'completed' ? 'bg-emerald-500/10 dark:bg-emerald-950/30 text-emerald-400 dark:text-emerald-400 border-emerald-500/30 dark:border-emerald-800/40' :
+                      t.status === 'in_progress' ? 'bg-heading/10 dark:bg-blue-950/30 text-heading dark:text-heading border-heading/30 dark:border-blue-800/40' :
                       'bg-muted/50 text-muted-foreground border-border/40'
                     }`}>
                       {t.status}
@@ -502,7 +502,7 @@ export function RiskPanel({ decisionId }: { decisionId: number }) {
                   <button
                     onClick={() => deleteTreatmentMutation.mutate(t.id)}
                     disabled={deleteTreatmentMutation.isPending}
-                    className="shrink-0 p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/20 text-muted-foreground hover:text-red-500 transition-colors"
+                    className="shrink-0 p-1 rounded hover:bg-destructive/10 dark:hover:bg-red-950/20 text-muted-foreground hover:text-destructive transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
