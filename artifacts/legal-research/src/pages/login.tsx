@@ -228,7 +228,7 @@ export default function Login() {
               ) : (
                 <span className="flex items-center gap-2">
                   <Eye className="w-4 h-4" />
-                  تجربة المنصة / Demo Access
+                  دخول كمقيّم — قراءة فقط / Guest Evaluation Login (Read-only)
                 </span>
               )}
             </Button>

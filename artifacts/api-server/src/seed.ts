@@ -178,17 +178,26 @@ async function migrateAuth() {
   }
 
   // ── Permanent accounts ────────────────────────────────────────────────────
-  // Inserted once on first startup. Existing records are never overwritten
-  // (password changes must go through the application's password-reset flow).
-  // No plaintext fallback exists — provisioning is skipped in every
-  // environment when the account's bootstrap env var is unset.
+  // Provisioned on first startup. No plaintext fallback exists anywhere in
+  // source — provisioning is skipped in every environment when the account's
+  // bootstrap env var is unset.
+  //
+  // Password recovery: the bootstrap env var doubles as a recovery lever.
+  // On every startup, if the account already exists AND the bootstrap secret
+  // is set, we bcrypt-compare it against the stored hash and re-hash/update
+  // only on a mismatch (cheap no-op restart-to-restart otherwise). This lets
+  // the account holder regain access — e.g. after an unknown/lost password —
+  // by setting/rotating the Replit Secret and restarting, without ever
+  // storing or logging the plaintext value. Safe because only whoever
+  // controls this project's Secrets can set that env var in the first place.
   for (const account of PERMANENT_ACCOUNTS) {
-    const { rows: existing } = await pool.query<{ id: number }>(
-      `SELECT id FROM users WHERE username = $1`,
+    const bootstrapPassword = process.env[account.bootstrapEnvVar];
+    const { rows: existing } = await pool.query<{ id: number; password_hash: string | null }>(
+      `SELECT id, password_hash FROM users WHERE username = $1`,
       [account.username],
     );
+
     if (existing.length === 0) {
-      const bootstrapPassword = process.env[account.bootstrapEnvVar];
       if (!bootstrapPassword) {
         logger.warn(
           { username: account.username },
@@ -197,8 +206,6 @@ async function migrateAuth() {
         continue;
       }
       const hash = await bcrypt.hash(bootstrapPassword, 10);
-      // DO NOTHING: an existing row (matched by email) is never updated — credentials
-      // can only be changed through the application's password-reset flow.
       await pool.query(
         `INSERT INTO users (name, email, role, username, password_hash, is_demo, is_active)
          VALUES ($1, $2, $3, $4, $5, FALSE, TRUE)
@@ -206,6 +213,20 @@ async function migrateAuth() {
         [account.name, account.email, account.role, account.username, hash],
       );
       logger.info({ username: account.username }, "Permanent account provisioned");
+    } else if (bootstrapPassword) {
+      const currentHash = existing[0].password_hash;
+      const matches = currentHash ? await bcrypt.compare(bootstrapPassword, currentHash) : false;
+      if (!matches) {
+        const hash = await bcrypt.hash(bootstrapPassword, 10);
+        await pool.query(
+          `UPDATE users SET password_hash = $1, is_active = TRUE WHERE username = $2`,
+          [hash, account.username],
+        );
+        logger.info(
+          { username: account.username },
+          "Permanent account password resynced from bootstrap secret (mismatch detected)",
+        );
+      }
     }
   }
 
