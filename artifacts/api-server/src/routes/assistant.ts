@@ -500,9 +500,15 @@ ${ragContext
     .join("\n\n");
   const fullPrompt = thread ? `${thread}\n\nالمستخدم: ${content}` : content;
 
+  // routeWithFallback resolves both the primary provider for this task (Claude,
+  // for the main RAG assistant chat) and its automatic failover partner
+  // (Gemini) — see ai/tasks.ts FALLBACK_PROVIDER. `fallback` is null when
+  // Gemini has no key configured, in which case behavior is unchanged from
+  // before Gemini was added.
   let provider;
+  let fallbackProvider;
   try {
-    provider = await aiRouter.routeFor(TaskType.RAG);
+    ({ primary: provider, fallback: fallbackProvider } = await aiRouter.routeWithFallback(TaskType.RAG));
   } catch (err: unknown) {
     res.status(503).json({ error: (err as Error).message }); return;
   }
@@ -591,16 +597,61 @@ ${ragContext
       }
     }
 
+    // ── Attempt 4 — cross-provider failover. Everything above has been the
+    // primary provider (Claude) failing in every possible way (stream,
+    // retry, non-streaming). If a fallback provider is configured and
+    // available (Gemini), try it once before surfacing an error — this is
+    // what makes a primary-vendor outage (e.g. Anthropic credit exhaustion)
+    // transparent to end users instead of blocking the assistant entirely.
+    let usedFallbackProvider = false;
+    if (fullText === null && fallbackProvider) {
+      emitLine({ reset: true });
+      try {
+        if (typeof fallbackProvider.streamChunks === "function") {
+          let text = "";
+          for await (const chunk of fallbackProvider.streamChunks({
+            taskType: TaskType.RAG,
+            prompt: fullPrompt,
+            systemPrompt,
+            maxTokens: 8000,
+          })) {
+            text += chunk;
+            emitLine({ delta: chunk });
+          }
+          fullText = text;
+        } else {
+          const result = await fallbackProvider.complete({
+            taskType: TaskType.RAG,
+            prompt: fullPrompt,
+            systemPrompt,
+            maxTokens: 8000,
+          });
+          fullText = result.text;
+          emitLine({ delta: fullText, fellBackToNonStreaming: true });
+        }
+        lastErr = null;
+        usedFallbackProvider = true;
+        req.log.info(
+          { fallbackProvider: fallbackProvider.name },
+          "Assistant chat recovered via cross-provider failover after primary provider failures",
+        );
+      } catch (err4) {
+        lastErr = err4;
+        req.log.error({ err: err4 }, "Assistant cross-provider failover also failed");
+      }
+    }
+
     if (fullText === null) {
       const code = classifyAnthropicError(lastErr);
       emitLine({
-        error: "AI streaming failed after retry and non-streaming fallback. Please try again.",
+        error: "AI streaming failed after retry, non-streaming fallback, and cross-provider failover. Please try again.",
         code,
         arabicMessage: CLAUDE_ERROR_MESSAGES_AR[code],
       });
       res.end();
       return;
     }
+    void usedFallbackProvider; // reserved for future metadata surfacing on the message
 
     // Post-stream phase: citation resolution, DB save, session update, audit.
     // Headers are already flushed so we can no longer send HTTP status codes —
@@ -663,13 +714,36 @@ ${ragContext
       req.log.error({ err }, "Assistant chat failed (attempt 1)");
       // Retry once — same rationale as the streaming path: only retryable
       // (network/timeout/5xx) failures are worth a second attempt.
-      if (!isRetryableAnthropicError(err)) throw err;
-      aiResult = await provider.complete({
-        taskType: TaskType.RAG,
-        prompt: fullPrompt,
-        systemPrompt,
-        maxTokens: 8000,
-      });
+      try {
+        if (!isRetryableAnthropicError(err)) throw err;
+        aiResult = await provider.complete({
+          taskType: TaskType.RAG,
+          prompt: fullPrompt,
+          systemPrompt,
+          maxTokens: 8000,
+        });
+      } catch (err2) {
+        req.log.error({ err: err2 }, "Assistant chat failed (attempt 2 / retry)");
+        // Cross-provider failover — same rationale as the streaming path:
+        // if the primary provider (Claude) is completely down, try the
+        // configured fallback (Gemini) once before giving up.
+        if (!fallbackProvider) throw err2;
+        try {
+          aiResult = await fallbackProvider.complete({
+            taskType: TaskType.RAG,
+            prompt: fullPrompt,
+            systemPrompt,
+            maxTokens: 8000,
+          });
+          req.log.info(
+            { fallbackProvider: fallbackProvider.name },
+            "Assistant chat recovered via cross-provider failover",
+          );
+        } catch (err3) {
+          req.log.error({ err: err3 }, "Assistant cross-provider failover also failed");
+          throw err3;
+        }
+      }
     }
 
     // Parse theory overlay sections (when a theory lens is active the model

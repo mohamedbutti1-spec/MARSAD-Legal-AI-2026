@@ -17,9 +17,10 @@
  *   const [claude, perplexity] = await aiRouter.routeAll(TaskType.MIXED);
  */
 
-import { TASK_ROUTING, TaskType, type ProviderName } from "./tasks";
+import { TASK_ROUTING, FALLBACK_PROVIDER, TaskType, type ProviderName } from "./tasks";
 import { getProviderKey } from "./key-service";
 import { ClaudeProvider } from "./providers/claude.provider";
+import { GeminiProvider } from "./providers/gemini.provider";
 import { PerplexityProvider } from "./providers/perplexity.provider";
 import { OpenAIProvider } from "./providers/openai.provider";
 import type { AIProvider } from "./providers/interface";
@@ -41,6 +42,33 @@ export class AIRouter {
   }
 
   /**
+   * Route a single-provider task AND resolve its automatic failover partner
+   * (see FALLBACK_PROVIDER in ai/tasks.ts — e.g. claude <-> gemini).
+   *
+   * Callers should try `primary` first; if every attempt against `primary`
+   * fails, retry once against `fallback` (when non-null and available)
+   * before surfacing an error to the user. This is what makes an outage on
+   * one vendor (e.g. Anthropic credit exhaustion) transparent to end users
+   * instead of taking the whole assistant down.
+   */
+  async routeWithFallback(
+    task: TaskType,
+  ): Promise<{ primary: AIProvider; fallback: AIProvider | null }> {
+    const providers = TASK_ROUTING[task];
+    if (providers.length > 1) {
+      throw new Error(
+        `Task "${task}" requires multiple providers. Use aiRouter.routeAll() instead.`,
+      );
+    }
+    const primary = await this.buildProvider(providers[0]);
+    const fallbackName = FALLBACK_PROVIDER[providers[0]];
+    if (!fallbackName) return { primary, fallback: null };
+
+    const fallback = await this.buildProvider(fallbackName);
+    return { primary, fallback: fallback.isAvailable ? fallback : null };
+  }
+
+  /**
    * Route a multi-provider task (e.g. MIXED).
    * Returns providers in the order defined in TASK_ROUTING.
    */
@@ -54,13 +82,15 @@ export class AIRouter {
    * Useful for health checks and the settings UI.
    */
   async availability(): Promise<Record<ProviderName, boolean>> {
-    const [claude, perplexity, openai] = await Promise.all([
+    const [claude, gemini, perplexity, openai] = await Promise.all([
       getProviderKey("claude"),
+      getProviderKey("gemini"),
       getProviderKey("perplexity"),
       getProviderKey("openai"),
     ]);
     return {
       claude:     Boolean(claude),
+      gemini:     Boolean(gemini),
       perplexity: Boolean(perplexity),
       openai:     Boolean(openai),
     };
@@ -81,6 +111,15 @@ export class AIRouter {
           );
         }
         return new ClaudeProvider(key);
+
+      case "gemini":
+        if (!key) {
+          throw new Error(
+            "Gemini (Google) API key is not configured. " +
+            "Set the GEMINI_API_KEY environment variable.",
+          );
+        }
+        return new GeminiProvider(key);
 
       case "perplexity":
         // The key check is deferred to the provider itself — it will throw a

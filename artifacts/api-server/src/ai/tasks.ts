@@ -37,20 +37,32 @@ export enum TaskType {
 }
 
 /** Provider names that can be returned by the router. */
-export type ProviderName = "claude" | "perplexity" | "openai";
+export type ProviderName = "claude" | "gemini" | "perplexity" | "openai";
 
 /**
  * Canonical routing table: each task type maps to one or more providers.
  * For MIXED tasks the router returns all listed providers in order.
+ *
+ * Claude vs. Gemini split (added alongside Claude — Claude's existing
+ * routing for RAG/assessment/review/compare is unchanged and keeps working
+ * exactly as before):
+ *  - Gemini is primary for fast, low-latency tasks: quick citation
+ *    generation and document search lookups.
+ *  - Claude stays primary for long-form output and heavy analysis: the main
+ *    RAG assistant chat (long legal opinions), the 12-principle
+ *    constitutional assessment, literature review over large documents, and
+ *    side-by-side document comparison.
+ * See FALLBACK_PROVIDER below for automatic cross-provider failover.
  */
 export const TASK_ROUTING: Record<TaskType, ProviderName[]> = {
-  // Claude
-  [TaskType.DOCUMENT_SEARCH]:          ["claude"],
+  // Claude — long-form / heavy analysis
   [TaskType.CONSTITUTIONAL_ASSESSMENT]:["claude"],
   [TaskType.RAG]:                ["claude"],
   [TaskType.LITERATURE_REVIEW]:  ["claude"],
-  [TaskType.CITATION]:           ["claude"],
   [TaskType.DOCUMENT_COMPARE]:   ["claude"],
+  // Gemini — fast / instant tasks
+  [TaskType.DOCUMENT_SEARCH]:    ["gemini"],
+  [TaskType.CITATION]:           ["gemini"],
   // Perplexity
   [TaskType.LIVE_WEB_SEARCH]:    ["perplexity"],
   [TaskType.LATEST_LEGISLATION]: ["perplexity"],
@@ -58,6 +70,20 @@ export const TASK_ROUTING: Record<TaskType, ProviderName[]> = {
   [TaskType.LEGAL_NEWS]:         ["perplexity"],
   // Mixed
   [TaskType.MIXED]:              ["claude", "perplexity"],
+};
+
+/**
+ * Automatic cross-provider failover map. When a single-provider task's
+ * primary provider throws, AIRouter.routeWithFallback() resolves this
+ * partner provider so callers can retry once on a different account/vendor
+ * before giving up. Perplexity/OpenAI have no configured partner yet (both
+ * remain placeholders) so they map to null.
+ */
+export const FALLBACK_PROVIDER: Record<ProviderName, ProviderName | null> = {
+  claude: "gemini",
+  gemini: "claude",
+  perplexity: null,
+  openai: null,
 };
 
 /** Human-readable descriptions for the UI. */

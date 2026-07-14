@@ -14,6 +14,7 @@ import type { ProviderName } from "./tasks";
 
 const ENV_KEYS: Record<ProviderName, string> = {
   claude:     "ANTHROPIC_API_KEY",
+  gemini:     "GEMINI_API_KEY",
   perplexity: "PERPLEXITY_API_KEY",
   openai:     "OPENAI_API_KEY",
 };
@@ -43,6 +44,10 @@ export async function getProviderKey(provider: ProviderName): Promise<string | n
   if (row) {
     if (provider === "claude") dbKey = row.claudeApiKey ?? null;
     if (provider === "perplexity") dbKey = row.perplexityApiKey ?? null;
+    // Note: "gemini" and "openai" have no DB-stored column today — they are
+    // env-var-only providers (see ENV_KEYS above). This mirrors "openai"'s
+    // existing (placeholder) behavior; add a settingsTable column later if
+    // DB-managed Gemini keys become necessary.
   }
 
   keyCache.set(provider, { value: dbKey, expiresAt: Date.now() + KEY_CACHE_TTL_MS });
@@ -60,13 +65,15 @@ export function invalidateKeyCache(provider?: ProviderName): void {
 
 /** Return boolean availability flags — safe to send to the browser. */
 export async function getKeyStatus(): Promise<Record<ProviderName, boolean>> {
-  const [claude, perplexity, openai] = await Promise.all([
+  const [claude, gemini, perplexity, openai] = await Promise.all([
     getProviderKey("claude"),
+    getProviderKey("gemini"),
     getProviderKey("perplexity"),
     getProviderKey("openai"),
   ]);
   return {
     claude:     Boolean(claude),
+    gemini:     Boolean(gemini),
     perplexity: Boolean(perplexity),
     openai:     Boolean(openai),
   };

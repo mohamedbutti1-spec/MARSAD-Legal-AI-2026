@@ -5,7 +5,7 @@
  * Never import from provider files directly.
  */
 
-export { TaskType, TASK_ROUTING, TASK_DESCRIPTIONS } from "./tasks";
+export { TaskType, TASK_ROUTING, TASK_DESCRIPTIONS, FALLBACK_PROVIDER } from "./tasks";
 export type { ProviderName } from "./tasks";
 export { aiRouter } from "./router";
 export type { AIProvider, AIProviderResult, AITaskContext } from "./providers/interface";
