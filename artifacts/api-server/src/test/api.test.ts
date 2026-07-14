@@ -646,49 +646,29 @@ describe("Court Simulation — Architectural Lock (ASEP + Al-Shamsi Matrix + Dig
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("Judicial Review (CJI) — Al-Shamsi Theory owner lock", () => {
-  it("GET /api/judicial-review/:id denies judge role (whole engine is Shamsi-Framework methodology)", async () => {
+// Judicial Review (CJI) stays judge-accessible: it's a general constitutional
+// review engine (generic 16-dimension schema), not an Al-Shamsi-branded tool.
+// The single "Al-Shamsi Framework™" mention lives only inside the internal AI
+// prompt and is never returned in any response, so it needs no route lock —
+// locking it out broke a legitimate judge-facing AI feature and was reverted.
+describe("Judicial Review (CJI) — judge access preserved, not Shamsi-gated", () => {
+  it("GET /api/judicial-review/:id allows judge role (not_run status for a fresh decision)", async () => {
     const { status } = await req(
-      "GET", "/api/judicial-review/1", undefined,
+      "GET", "/api/judicial-review/999999999", undefined,
       json({ Cookie: cookieFor("judge", 1) }),
     );
-    assert.equal(status, 403);
+    // Judge passes; a non-existent decision then 404s inside resolveDecision.
+    assert.notEqual(status, 403);
   });
 
-  it("POST /api/judicial-review/:id/run denies judge role", async () => {
-    const { status } = await req(
-      "POST", "/api/judicial-review/1/run", undefined,
-      json({ Cookie: cookieFor("judge", 1) }),
-    );
-    assert.equal(status, 403);
-  });
-
-  it("GET /api/judicial-review/:id/report denies judge role", async () => {
-    const { status } = await req(
-      "GET", "/api/judicial-review/1/report", undefined,
-      json({ Cookie: cookieFor("judge", 1) }),
-    );
-    assert.equal(status, 403);
-  });
-
-  it("GET /api/judicial-review/:id denies non-owner and unauthenticated requests", async () => {
+  it("GET /api/judicial-review/:id denies non-judge roles (owner included — feature is judge-only, not owner-only)", async () => {
     const { status: viewerStatus } = await req(
       "GET", "/api/judicial-review/1", undefined, H_VIEWER,
     );
     assert.equal(viewerStatus, 403);
-    // No session at all fails auth entirely (401) before it ever reaches the
-    // Shamsi gate — still correctly denied, just at an earlier layer.
-    const { status: anonStatus } = await req("GET", "/api/judicial-review/1", undefined, H_ANON);
-    assert.equal(anonStatus, 401);
-  });
-
-  it("GET /api/judicial-review/:id allows owner role (not_run status for a fresh decision)", async () => {
-    const { status, body } = await req(
-      "GET", "/api/judicial-review/999999999", undefined, H_OWNER,
+    const { status: ownerStatus } = await req(
+      "GET", "/api/judicial-review/1", undefined, H_OWNER,
     );
-    // Owner passes the Shamsi gate; a non-existent decision then 404s inside
-    // resolveDecision — either way it must NOT be a generic 403 access denial.
-    assert.notEqual(status, 403);
-    void body;
+    assert.equal(ownerStatus, 403);
   });
 });

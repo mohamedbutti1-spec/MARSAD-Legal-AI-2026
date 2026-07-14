@@ -2666,9 +2666,6 @@ function JudgeDashboard() {
 
   if (listQuery.isLoading) return <LoadingSpinner />;
 
-  // The Judicial Intelligence tab applies the Al-Shamsi Framework as its core
-  // review methodology end-to-end, so it is owner-only — hidden for judges
-  // and every other non-owner role, matching the backend route lock.
   const TABS: { key: typeof tab; label: string }[] = [
     { key: 'stages',   label: 'المراحل' },
     { key: 'jdp',      label: 'الحزمة الدفاعية' },
@@ -2678,7 +2675,7 @@ function JudgeDashboard() {
     { key: 'custody',  label: '⛓ الحيازة' },
     { key: 'memory',   label: '📜 الذاكرة الدستورية' },
     { key: 'evidence', label: '🔐 سجل الأدلة' },
-    ...(canUseShamsiFramework ? [{ key: 'judicial' as const, label: '⚖️ الذكاء القضائي' }] : []),
+    { key: 'judicial', label: '⚖️ الذكاء القضائي' },
   ];
 
   return (
@@ -2869,7 +2866,7 @@ function JudgeDashboard() {
               </div>
             ) : null}
 
-            {tab === 'judicial' && selectedId && canUseShamsiFramework ? (
+            {tab === 'judicial' && selectedId ? (
               <div className="bg-white rounded-xl border border-border shadow-xs p-5">
                 <JudicialIntelligenceTab decisionId={selectedId} />
               </div>
