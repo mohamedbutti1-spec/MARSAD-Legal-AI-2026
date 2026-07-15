@@ -13,13 +13,26 @@ import { logAudit } from "../middlewares/auditLog";
 
 const router: IRouter = Router();
 
+// Public projection of the users table. Never return raw rows: they carry
+// passwordHash (bcrypt), username, isDemo, and passwordVersion, none of which
+// may ever reach the browser — not even for the owner role.
+const publicUserColumns = {
+  id:           usersTable.id,
+  name:         usersTable.name,
+  email:        usersTable.email,
+  role:         usersTable.role,
+  isActive:     usersTable.isActive,
+  lastActiveAt: usersTable.lastActiveAt,
+  createdAt:    usersTable.createdAt,
+};
+
 // GET /users (paginated)
 router.get("/users", requireOwner, async (req, res): Promise<void> => {
   const limit = Math.min(200, Math.max(1, parseInt(String(req.query.limit ?? "50"), 10) || 50));
   const offset = Math.max(0, parseInt(String(req.query.offset ?? "0"), 10) || 0);
 
   const [users, [countRow]] = await Promise.all([
-    db.select().from(usersTable).orderBy(usersTable.createdAt).limit(limit).offset(offset),
+    db.select(publicUserColumns).from(usersTable).orderBy(usersTable.createdAt).limit(limit).offset(offset),
     db.select({ cnt: sql<number>`count(*)::int` }).from(usersTable),
   ]);
   res.json({ users, total: countRow?.cnt ?? 0, limit, offset });
@@ -37,7 +50,7 @@ router.post("/users", requireOwner, async (req, res): Promise<void> => {
     res.status(409).json({ error: "A user with this email already exists." });
     return;
   }
-  const [user] = await db.insert(usersTable).values(parsed.data).returning();
+  const [user] = await db.insert(usersTable).values(parsed.data).returning(publicUserColumns);
   logAudit(req, "user.create", { entityType: "user", entityId: user.id, details: { email: user.email, role: user.role } });
   res.status(201).json(user);
 });
@@ -49,7 +62,10 @@ router.get("/users/:id", requireOwner, async (req, res): Promise<void> => {
     res.status(400).json({ error: params.error.message });
     return;
   }
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, params.data.id));
+  const [user] = await db
+    .select(publicUserColumns)
+    .from(usersTable)
+    .where(eq(usersTable.id, params.data.id));
   if (!user) { res.status(404).json({ error: "User not found" }); return; }
   res.json(user);
 });
@@ -64,7 +80,7 @@ router.patch("/users/:id", requireOwner, async (req, res): Promise<void> => {
     .update(usersTable)
     .set(body.data)
     .where(eq(usersTable.id, params.data.id))
-    .returning();
+    .returning(publicUserColumns);
   if (!user) { res.status(404).json({ error: "User not found" }); return; }
   logAudit(req, "user.update", { entityType: "user", entityId: user.id });
   res.json(user);
@@ -80,7 +96,7 @@ router.delete("/users/:id", requireOwner, async (req, res): Promise<void> => {
   const [user] = await db
     .delete(usersTable)
     .where(eq(usersTable.id, params.data.id))
-    .returning();
+    .returning({ id: usersTable.id, email: usersTable.email });
   if (!user) { res.status(404).json({ error: "User not found" }); return; }
   logAudit(req, "user.delete", { entityType: "user", entityId: params.data.id, details: { email: user.email } });
   res.sendStatus(204);
