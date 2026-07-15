@@ -38,7 +38,7 @@ export default function Dashboard() {
       <div className="flex flex-col h-full overflow-y-auto bg-background">
         <div className="flex-1 flex items-center justify-center px-4 py-12">
           <div
-            className="w-full max-w-lg moj-card rounded-xl px-6 py-10 sm:px-10 sm:py-12 text-center"
+            className="w-full max-w-2xl moj-card rounded-2xl px-6 py-12 sm:px-12 sm:py-16 lg:px-16 lg:py-20 text-center"
             style={{
               opacity: visible ? 1 : 0,
               transform: visible ? 'translateY(0)' : 'translateY(16px)',
@@ -52,22 +52,22 @@ export default function Dashboard() {
             </div>
 
             <h1
-              className="text-2xl sm:text-3xl font-bold text-heading mb-2"
+              className="text-3xl sm:text-4xl font-bold text-heading mb-3"
               style={{ fontFamily: 'var(--app-font-serif)' }}
             >
               {t(greeting.ar, greeting.en)}
             </h1>
-            <p className="text-sm sm:text-base text-muted-foreground font-medium mb-8">
+            <p className="text-base sm:text-lg text-muted-foreground font-medium mb-10">
               {t('منصة القرار الإداري الذكي', 'Intelligent Administrative Decision Platform')}
             </p>
 
             <button
               type="button"
               onClick={() => navigate('/assistant')}
-              className="gold-hover-glow inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-gold text-background text-sm sm:text-base font-bold hover:opacity-90 transition-all"
+              className="gold-hover-glow inline-flex items-center gap-3 px-8 py-3.5 sm:px-10 sm:py-4 rounded-xl bg-gold text-background text-base sm:text-lg font-bold hover:opacity-90 transition-all"
             >
               {t('ابدأ الرحلة معنا من هنا', 'Start your journey here')}
-              <ArrowIcon className="w-4 h-4" aria-hidden />
+              <ArrowIcon className="w-5 h-5" aria-hidden />
             </button>
           </div>
         </div>
