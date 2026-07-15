@@ -205,7 +205,10 @@ router.post("/documents/upload", requireSupervisorOrOwner, upload.single("file")
   }
 
   const ext = path.extname(file.originalname).toLowerCase().replace(".", "");
-  const uploadedById = req.body.uploadedById ? parseInt(req.body.uploadedById, 10) : null;
+  // Attribution comes from the verified JWT session — never from the form
+  // body, which any client could set to another user's id (or omit) and
+  // thereby falsify the upload trail.
+  const uploadedById = req.user?.userId ?? null;
 
   // Real content extraction for all supported types
   const content = await extractContent(file.path, ext);
