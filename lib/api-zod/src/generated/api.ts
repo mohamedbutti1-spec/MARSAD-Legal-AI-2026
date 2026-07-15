@@ -316,6 +316,8 @@ export const ListUsersResponseItem = zod.object({
   "name": zod.string(),
   "email": zod.string(),
   "role": zod.enum(['owner', 'supervisor', 'viewer']),
+  "isActive": zod.boolean(),
+  "lastActiveAt": zod.coerce.date().nullish(),
   "createdAt": zod.coerce.date()
 })
 export const ListUsersResponse = zod.array(ListUsersResponseItem)
@@ -338,6 +340,8 @@ export const CreateUserResponse = zod.object({
   "name": zod.string(),
   "email": zod.string(),
   "role": zod.enum(['owner', 'supervisor', 'viewer']),
+  "isActive": zod.boolean(),
+  "lastActiveAt": zod.coerce.date().nullish(),
   "createdAt": zod.coerce.date()
 })
 
@@ -354,12 +358,14 @@ export const GetUserResponse = zod.object({
   "name": zod.string(),
   "email": zod.string(),
   "role": zod.enum(['owner', 'supervisor', 'viewer']),
+  "isActive": zod.boolean(),
+  "lastActiveAt": zod.coerce.date().nullish(),
   "createdAt": zod.coerce.date()
 })
 
 
 /**
- * @summary Update user role (admin only)
+ * @summary Update a user's name, email, role, or active status (admin only)
  */
 export const UpdateUserParams = zod.object({
   "id": zod.coerce.number()
@@ -371,7 +377,8 @@ export const UpdateUserParams = zod.object({
 export const UpdateUserBody = zod.object({
   "name": zod.string().min(1).optional(),
   "email": zod.string().optional(),
-  "role": zod.enum(['owner', 'supervisor', 'viewer']).optional()
+  "role": zod.enum(['owner', 'supervisor', 'viewer']).optional(),
+  "isActive": zod.boolean().optional()
 })
 
 export const UpdateUserResponse = zod.object({
@@ -379,6 +386,8 @@ export const UpdateUserResponse = zod.object({
   "name": zod.string(),
   "email": zod.string(),
   "role": zod.enum(['owner', 'supervisor', 'viewer']),
+  "isActive": zod.boolean(),
+  "lastActiveAt": zod.coerce.date().nullish(),
   "createdAt": zod.coerce.date()
 })
 
