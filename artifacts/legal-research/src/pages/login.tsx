@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Shield, Lock, User, AlertCircle, ChevronDown, Eye } from 'lucide-react';
 import { useUserContext } from '@/lib/user-context';
+// Type-only import — erased at compile time; the module itself is only ever
+// loaded through the DEV-guarded dynamic import inside the component below.
+import type { DemoAccount } from '@/lib/demo-accounts.dev';
 
 // True when built for production (Vite replaces this at compile time).
 const IS_PROD = import.meta.env.PROD;
@@ -37,23 +40,6 @@ async function apiGuestLogin() {
   return data as { userId: number; name: string; email: string; role: string; org: string };
 }
 
-const DEMO_ACCOUNTS = [
-  { username: 'admin',          role: 'Owner / Platform Administrator',              labelAr: 'مالك المنصة' },
-  { username: 'supervisor',     role: 'Supervisor',                                  labelAr: 'مشرف' },
-  { username: 'minister',       role: 'Minister',                                    labelAr: 'وزير' },
-  { username: 'undersecretary', role: 'Undersecretary',                              labelAr: 'وكيل وزارة' },
-  { username: 'dir_general',    role: 'Director General',                            labelAr: 'مدير عام' },
-  { username: 'dept_director',  role: 'Department Director',                         labelAr: 'مدير قسم' },
-  { username: 'judge',          role: 'Judge',                                       labelAr: 'قاضٍ' },
-  { username: 'legal_dept',     role: 'Legal Department',                            labelAr: 'الشؤون القانونية' },
-  { username: 'int_auditor',    role: 'Internal Auditor',                            labelAr: 'مدقق داخلي' },
-  { username: 'ext_auditor',    role: 'External Auditor',                            labelAr: 'مدقق خارجي' },
-  { username: 'const_reviewer', role: 'Constitutional Reviewer',                     labelAr: 'مراجع دستوري' },
-  { username: 'asst_undersec',  role: 'Assistant Undersecretary',                    labelAr: 'وكيل وزارة مساعد' },
-  { username: 'viewer',         role: 'Viewer (read-only)',                          labelAr: 'مشاهد' },
-  { username: 'citizen',        role: 'Citizen (portal only)',                       labelAr: 'مواطن' },
-];
-
 export default function Login() {
   const [, navigate] = useLocation();
   const { refreshSession } = useUserContext();
@@ -63,6 +49,18 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [showDemo, setShowDemo] = useState(false);
   const [guestLoading, setGuestLoading] = useState(false);
+  const [demoAccounts, setDemoAccounts] = useState<DemoAccount[]>([]);
+
+  // Demo quick-fill credentials live in a separate module that is loaded ONLY
+  // in dev builds. import.meta.env.DEV is compile-time false in production, so
+  // Vite drops this branch and never emits the chunk — the seed passwords are
+  // physically absent from production bundles (previously they were inlined
+  // here and shipped to every visitor regardless of the UI gate).
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      void import('@/lib/demo-accounts.dev').then((m) => setDemoAccounts(m.DEMO_ACCOUNTS));
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,26 +97,9 @@ export default function Login() {
   };
 
   // Demo account quick-fill (dev only — accounts are blocked in production).
-  // Passwords match seed.ts DEMO_ACCOUNTS (DEMO_SEED_VERSION = 2).
-  const fillDemo = (u: string) => {
-    setUsername(u);
-    const pwdMap: Record<string, string> = {
-      admin:          '7KW@ltkOeo3Qc6Ys',
-      supervisor:     'QCBTr&Jnu9sesK11',
-      viewer:         'ODT6jy3nz7HxX3@3',
-      judge:          '2W8zzGLhWxLysxM&',
-      citizen:        'CH94uTB2%Elu8RDA',
-      minister:       'sDk9OZ^XR08NmK6a',
-      undersecretary: 'iuyVisM7r#pgGCpi',
-      asst_undersec:  'YZ9yOO2MId#oiNi1',
-      dir_general:    'ATm1W2%8A5yM92rg',
-      dept_director:  '0s^mlN3FeOcpwP7i',
-      legal_dept:     'O#vlNZVdSGz6jlN7',
-      const_reviewer: 'AKN^2YD0Efnlgm2F',
-      int_auditor:    'jbSRQc0l1jRiMN&g',
-      ext_auditor:    'gJuHBN$VPxg3hFx3',
-    };
-    setPassword(pwdMap[u] ?? '');
+  const fillDemo = (acc: DemoAccount) => {
+    setUsername(acc.username);
+    setPassword(acc.password);
     setShowDemo(false);
   };
 
@@ -238,8 +219,9 @@ export default function Login() {
             </Button>
           </div>
 
-          {/* Demo accounts panel — hidden in production (accounts are blocked there) */}
-          {!IS_PROD && (
+          {/* Demo accounts panel — dev builds only. The account list (and its
+              credentials) is absent from production bundles entirely. */}
+          {!IS_PROD && demoAccounts.length > 0 && (
           <div className="mt-6 pt-5 border-t border-border">
             <button
               type="button"
@@ -254,11 +236,11 @@ export default function Login() {
 
             {showDemo && (
               <div className="mt-3 space-y-1 max-h-56 overflow-y-auto pr-1">
-                {DEMO_ACCOUNTS.map((acc) => (
+                {demoAccounts.map((acc) => (
                   <button
                     key={acc.username}
                     type="button"
-                    onClick={() => fillDemo(acc.username)}
+                    onClick={() => fillDemo(acc)}
                     className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-muted text-xs text-left transition-colors group"
                   >
                     <span className="font-mono text-gold group-hover:text-gold/80">
