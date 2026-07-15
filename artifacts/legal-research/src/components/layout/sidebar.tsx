@@ -33,12 +33,154 @@ import {
   GraduationCap,
 } from 'lucide-react';
 import { useUserContext } from '@/lib/user-context';
+import {
+  LEGAL_TAXONOMY, getLegalBranchDef, LAW_SOURCE_CFG, ANSWER_FORMAT_CFG, BRANCH_LEVEL_LABEL,
+  type LegalDomain, type LawSource, type AnswerFormat,
+  type LegalBranchDef, type LegalDomainDef, type LegalSpecializationDef,
+} from '@/lib/legal-taxonomy';
+import { useLegalContextSelection } from '@/lib/legal-context-store';
 
 interface SidebarProps {
   collapsed: boolean;
   setCollapsed: (c: boolean) => void;
   mobileOpen?: boolean;
   setMobileOpen?: (o: boolean) => void;
+}
+
+// ─── الإعدادات القانونية — legal-context selectors ────────────────────────────
+// Per the approved dashboard-workflow redesign the legal selectors live in the
+// sidebar menu. They write to the shared legal-context store; the assistant's
+// session config is seeded from (and kept in sync with) the same store, so the
+// existing analysis pipeline receives exactly the same fields as before.
+
+function SidebarSelect({ id, label, value, placeholder, onChange, children }: {
+  id: string;
+  label: string;
+  value: string;
+  placeholder: string;
+  onChange: (v: string) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label htmlFor={id} className="text-[10px] font-semibold text-sidebar-foreground/50 block mb-1">
+        {label}
+      </label>
+      <select
+        id={id}
+        aria-label={label}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-lg border border-sidebar-border bg-sidebar-primary/40 px-2.5 py-2 text-[13px] text-sidebar-foreground focus:outline-none focus:ring-2 focus:ring-gold/40 appearance-none cursor-pointer"
+        style={{ direction: 'rtl' }}
+      >
+        <option value="" disabled>{placeholder}</option>
+        {children}
+      </select>
+    </div>
+  );
+}
+
+function SidebarLegalSelectors({ lang, idPrefix }: { lang: string; idPrefix: string }) {
+  const [selection, updateSelection] = useLegalContextSelection();
+
+  // Cascade rules mirror the assistant's PreAnalysisPanel exactly:
+  // changing a level always clears every level beneath it.
+  const applyDomain = (domain: string) =>
+    updateSelection({ ...selection, legalDomain: domain as LegalDomain | '', legalBranch: '', legalSpecialization: '' });
+  const applyBranch = (branchId: string) =>
+    updateSelection({ ...selection, legalBranch: branchId, legalSpecialization: '' });
+  const applySpecialization = (specId: string) =>
+    updateSelection({ ...selection, legalSpecialization: specId });
+  const applyLawSource = (src: string) =>
+    updateSelection({ ...selection, lawSource: src as LawSource | '' });
+  const applyAnswerFormat = (fmt: string) =>
+    updateSelection({ ...selection, answerFormat: fmt as AnswerFormat | '' });
+
+  const branchOptions: LegalBranchDef[] = selection.legalDomain
+    ? LEGAL_TAXONOMY[selection.legalDomain].branches
+    : [];
+  const selectedBranch = getLegalBranchDef(selection.legalDomain, selection.legalBranch);
+  const specializationOptions: LegalSpecializationDef[] = selectedBranch?.specializations ?? [];
+
+  const hasAnySelection =
+    !!(selection.legalDomain || selection.lawSource || selection.answerFormat);
+
+  return (
+    <div className="px-4 pb-2 space-y-2.5" dir="rtl">
+      <SidebarSelect
+        id={`${idPrefix}-legal-domain`}
+        label="التصنيف القانوني الرئيسي"
+        value={selection.legalDomain}
+        placeholder="اختر التصنيف القانوني الرئيسي"
+        onChange={applyDomain}
+      >
+        {(Object.entries(LEGAL_TAXONOMY) as [LegalDomain, LegalDomainDef][]).map(([k, v]) => (
+          <option key={k} value={k}>{v.ar}</option>
+        ))}
+      </SidebarSelect>
+
+      {branchOptions.length > 0 && (
+        <SidebarSelect
+          id={`${idPrefix}-legal-branch`}
+          label={BRANCH_LEVEL_LABEL[selection.legalDomain as LegalDomain]}
+          value={selection.legalBranch}
+          placeholder={`اختر ${BRANCH_LEVEL_LABEL[selection.legalDomain as LegalDomain]}`}
+          onChange={applyBranch}
+        >
+          {branchOptions.map((b) => (
+            <option key={b.id} value={b.id}>{b.ar}</option>
+          ))}
+        </SidebarSelect>
+      )}
+
+      {specializationOptions.length > 0 && (
+        <SidebarSelect
+          id={`${idPrefix}-legal-specialization`}
+          label="التخصص الدقيق"
+          value={selection.legalSpecialization}
+          placeholder="اختر التخصص الدقيق"
+          onChange={applySpecialization}
+        >
+          {specializationOptions.map((s) => (
+            <option key={s.id} value={s.id}>{s.ar}</option>
+          ))}
+        </SidebarSelect>
+      )}
+
+      <SidebarSelect
+        id={`${idPrefix}-law-source`}
+        label="مصدر القانون"
+        value={selection.lawSource}
+        placeholder="اختر مصدر القانون"
+        onChange={applyLawSource}
+      >
+        {(Object.entries(LAW_SOURCE_CFG) as [LawSource, { ar: string }][]).map(([k, v]) => (
+          <option key={k} value={k}>{v.ar}</option>
+        ))}
+      </SidebarSelect>
+
+      <SidebarSelect
+        id={`${idPrefix}-answer-format`}
+        label="شكل الإجابة"
+        value={selection.answerFormat}
+        placeholder="اختر شكل الإجابة"
+        onChange={applyAnswerFormat}
+      >
+        {(Object.entries(ANSWER_FORMAT_CFG) as [AnswerFormat, { ar: string }][]).map(([k, v]) => (
+          <option key={k} value={k}>{v.ar}</option>
+        ))}
+      </SidebarSelect>
+
+      {hasAnySelection && (
+        <p className="text-[10px] text-gold/60 leading-relaxed">
+          {lang === 'ar'
+            ? 'تُطبَّق هذه الاختيارات تلقائياً على جلسات المساعد الذكي.'
+            : 'These selections apply automatically to AI Assistant sessions.'}
+        </p>
+      )}
+    </div>
+  );
 }
 
 interface NavItem {
@@ -654,6 +796,29 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
                       </Link>
                     );
                   })}
+                </div>
+              )}
+
+              {/* ── الإعدادات القانونية — legal selectors, directly under الرئيسية ── */}
+              {section.id === 'main' && canUseAi && !collapsed && (
+                <div className="mt-1">
+                  <button
+                    onClick={() => toggleSection('legal-context')}
+                    className="w-full flex items-center justify-between px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-heading/50 hover:text-heading/80 transition-colors"
+                  >
+                    <span>{lang === 'ar' ? 'الإعدادات القانونية' : 'Legal Context'}</span>
+                    <ChevronDown
+                      className={`w-3 h-3 transition-transform ${collapsedSections.has('legal-context') ? '-rotate-90' : ''}`}
+                    />
+                  </button>
+                  {/* The desktop and mobile sidebars are both mounted — scope the
+                      select ids per instance so the DOM never carries duplicates. */}
+                  {!collapsedSections.has('legal-context') && (
+                    <SidebarLegalSelectors
+                      lang={lang}
+                      idPrefix={mobileOpen !== undefined ? 'sidebar-m' : 'sidebar'}
+                    />
+                  )}
                 </div>
               )}
             </div>

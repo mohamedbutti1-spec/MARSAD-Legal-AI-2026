@@ -1,9 +1,10 @@
 /**
  * Authentication routes — no JWT required (these establish the session).
  *
- *   POST /api/auth/login   — verify credentials, issue session cookie
- *   GET  /api/auth/me      — return the current session's user payload
- *   POST /api/auth/logout  — clear the session cookie
+ *   POST /api/auth/login    — verify credentials, issue session cookie
+ *   POST /api/auth/register — create a read-only account, issue session cookie
+ *   GET  /api/auth/me       — return the current session's user payload
+ *   POST /api/auth/logout   — clear the session cookie
  */
 import { Router, type IRouter } from "express";
 import { db, usersTable, getPermissions } from "@workspace/db";
@@ -95,6 +96,91 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   logger.info({ userId: user.id, role: user.role }, "User authenticated");
 
   res.json({
+    userId: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    org,
+  });
+});
+
+// ── POST /api/auth/register ──────────────────────────────────────────────────
+// Self-service registration for the login/registration journey step. Every
+// self-registered account is created with the fixed role "viewer" (read-only
+// across all modules; the assistant allows a small capped number of questions
+// per day for this role). Elevated roles are only ever granted by the owner
+// through user management — self-registration can never escalate RBAC.
+const USERNAME_RE = /^[a-z0-9_.-]{3,32}$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+router.post("/auth/register", async (req, res): Promise<void> => {
+  const { name, username, email, password } = req.body as {
+    name?: unknown; username?: unknown; email?: unknown; password?: unknown;
+  };
+
+  if (typeof name !== "string" || name.trim().length < 2 || name.trim().length > 80) {
+    res.status(400).json({ error: "Full name is required (2–80 characters)." });
+    return;
+  }
+  const normalizedUsername = typeof username === "string" ? username.trim().toLowerCase() : "";
+  if (!USERNAME_RE.test(normalizedUsername)) {
+    res.status(400).json({ error: "Username must be 3–32 characters: lowercase letters, digits, dot, dash or underscore." });
+    return;
+  }
+  const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
+  if (!EMAIL_RE.test(normalizedEmail) || normalizedEmail.length > 254) {
+    res.status(400).json({ error: "A valid email address is required." });
+    return;
+  }
+  if (typeof password !== "string" || password.length < 8 || password.length > 128) {
+    res.status(400).json({ error: "Password must be 8–128 characters." });
+    return;
+  }
+
+  const passwordHash = await bcrypt.hash(password, 10);
+
+  let user: typeof usersTable.$inferSelect | undefined;
+  try {
+    [user] = await db
+      .insert(usersTable)
+      .values({
+        name: name.trim(),
+        username: normalizedUsername,
+        email: normalizedEmail,
+        passwordHash,
+        role: "viewer", // fixed read-only default — never client-controlled
+        isActive: true,
+        isDemo: false,
+      })
+      .returning();
+  } catch (err) {
+    // Unique-constraint race or duplicate — one generic message for both
+    // username and email so the endpoint stays unenumerable-ish while still
+    // being actionable for the honest user.
+    logger.info({ err: String(err) }, "Registration rejected (duplicate username/email)");
+    res.status(409).json({ error: "This username or email is already in use." });
+    return;
+  }
+
+  if (!user) {
+    res.status(500).json({ error: "Registration failed. Please try again." });
+    return;
+  }
+
+  const org = orgForRole(user.role);
+  const token = signToken({ userId: user.id, role: user.role, org });
+
+  res.cookie(COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: IS_PRODUCTION,
+    sameSite: "lax",
+    maxAge: COOKIE_MAX_AGE_MS,
+    path: "/",
+  });
+
+  logger.info({ userId: user.id, role: user.role }, "User registered");
+
+  res.status(201).json({
     userId: user.id,
     name: user.name,
     email: user.email,

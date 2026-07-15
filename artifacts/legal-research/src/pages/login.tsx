@@ -3,7 +3,7 @@ import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Shield, Lock, User, AlertCircle, ChevronDown, Eye } from 'lucide-react';
+import { Shield, Lock, User, AlertCircle, ChevronDown, Eye, Mail, UserPlus } from 'lucide-react';
 import { useUserContext } from '@/lib/user-context';
 
 // True when built for production (Vite replaces this at compile time).
@@ -27,6 +27,21 @@ async function apiLogin(username: string, password: string) {
 // account (role "viewer"). Available in every environment, including
 // production, so external reviewers/QA/AI agents can exercise the full
 // journey without needing credentials or ever creating/editing/deleting data.
+// Self-service registration — creates a permanent read-only ("viewer")
+// account and signs it in immediately, so the dashboard opens automatically
+// per the approved journey (login/registration → dashboard → journey button).
+async function apiRegister(name: string, username: string, email: string, password: string) {
+  const res = await fetch(`${BASE}/api/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ name, username, email, password }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? 'Registration failed');
+  return data as { userId: number; name: string; email: string; role: string; org: string };
+}
+
 async function apiGuestLogin() {
   const res = await fetch(`${BASE}/api/auth/guest-login`, {
     method: 'POST',
@@ -57,16 +72,44 @@ const DEMO_ACCOUNTS = [
 export default function Login() {
   const [, navigate] = useLocation();
   const { refreshSession } = useUserContext();
+  const [mode, setMode] = useState<'login' | 'register'>('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  // Registration-only fields
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showDemo, setShowDemo] = useState(false);
   const [guestLoading, setGuestLoading] = useState(false);
 
+  const switchMode = (m: 'login' | 'register') => {
+    setMode(m);
+    setError('');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    if (mode === 'register') {
+      if (password !== confirmPassword) {
+        setError('كلمتا المرور غير متطابقتين. / Passwords do not match.');
+        return;
+      }
+      setLoading(true);
+      try {
+        await apiRegister(fullName.trim(), username.trim(), email.trim(), password);
+        // Same in-place session refresh as login — see the comment below.
+        await refreshSession();
+        navigate('/');
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
     setLoading(true);
     try {
       await apiLogin(username.trim(), password);
@@ -139,9 +182,80 @@ export default function Login() {
           </p>
         </div>
 
-        {/* Login card */}
+        {/* Login / registration card */}
         <div className="bg-card border border-border rounded-2xl shadow-xl p-8">
+          {/* Mode toggle — تسجيل الدخول / حساب جديد */}
+          <div className="grid grid-cols-2 gap-1 p-1 mb-6 rounded-xl bg-muted/40 border border-border/60">
+            <button
+              type="button"
+              onClick={() => switchMode('login')}
+              className={`py-2 rounded-lg text-sm font-semibold transition-colors ${
+                mode === 'login'
+                  ? 'bg-gold text-background'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              تسجيل الدخول
+            </button>
+            <button
+              type="button"
+              onClick={() => switchMode('register')}
+              className={`py-2 rounded-lg text-sm font-semibold transition-colors ${
+                mode === 'register'
+                  ? 'bg-gold text-background'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              حساب جديد
+            </button>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-5">
+            {mode === 'register' && (
+              <>
+                <div className="space-y-1.5">
+                  <Label htmlFor="fullName" className="text-sm font-medium">
+                    الاسم الكامل / Full Name
+                  </Label>
+                  <div className="relative">
+                    <UserPlus className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="fullName"
+                      type="text"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="الاسم الكامل"
+                      className="pl-9"
+                      autoComplete="name"
+                      required
+                      minLength={2}
+                      maxLength={80}
+                      disabled={loading}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="email" className="text-sm font-medium">
+                    البريد الإلكتروني / Email
+                  </Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="name@example.com"
+                      className="pl-9"
+                      autoComplete="email"
+                      required
+                      disabled={loading}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
             <div className="space-y-1.5">
               <Label htmlFor="username" className="text-sm font-medium">
                 اسم المستخدم / Username
@@ -175,12 +289,41 @@ export default function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="pl-9"
-                  autoComplete="current-password"
+                  autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
                   required
+                  minLength={mode === 'register' ? 8 : undefined}
                   disabled={loading}
                 />
               </div>
+              {mode === 'register' && (
+                <p className="text-[11px] text-muted-foreground">
+                  ٨ أحرف على الأقل / At least 8 characters
+                </p>
+              )}
             </div>
+
+            {mode === 'register' && (
+              <div className="space-y-1.5">
+                <Label htmlFor="confirmPassword" className="text-sm font-medium">
+                  تأكيد كلمة المرور / Confirm Password
+                </Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="pl-9"
+                    autoComplete="new-password"
+                    required
+                    minLength={8}
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+            )}
 
             {error && (
               <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
@@ -197,12 +340,22 @@ export default function Login() {
               {loading ? (
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 border-2 border-background/30 border-t-background rounded-full animate-spin" />
-                  جارٍ تسجيل الدخول…
+                  {mode === 'register' ? 'جارٍ إنشاء الحساب…' : 'جارٍ تسجيل الدخول…'}
                 </span>
+              ) : mode === 'register' ? (
+                'إنشاء الحساب / Create Account'
               ) : (
                 'تسجيل الدخول / Sign In'
               )}
             </Button>
+
+            {mode === 'register' && (
+              <p className="text-[11px] text-muted-foreground leading-relaxed text-center">
+                يُنشأ الحساب الجديد بصلاحية «مشاهد» (قراءة فقط) — تُمنح الصلاحيات الأعلى من إدارة المستخدمين.
+                <br />
+                New accounts start as read-only «Viewer»; elevated roles are granted via User Management.
+              </p>
+            )}
           </form>
 
           {/* Guest/demo login — always available, including production. Signs
@@ -212,6 +365,7 @@ export default function Login() {
               5/day) — see requireWriteRoleOrGuestDemo on the backend. No
               create/update/delete permissions anywhere else, and no access
               to admin settings, user management, or system configuration. */}
+          {mode === 'login' && (
           <div className="mt-5">
             <Button
               type="button"
@@ -237,9 +391,10 @@ export default function Login() {
               )}
             </Button>
           </div>
+          )}
 
           {/* Demo accounts panel — hidden in production (accounts are blocked there) */}
-          {!IS_PROD && (
+          {mode === 'login' && !IS_PROD && (
           <div className="mt-6 pt-5 border-t border-border">
             <button
               type="button"

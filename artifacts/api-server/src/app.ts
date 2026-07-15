@@ -181,6 +181,7 @@ const loginLimiter = rateLimit({
 });
 app.use("/api/auth/login", loginLimiter);
 app.use("/api/auth/guest-login", loginLimiter);
+app.use("/api/auth/register", loginLimiter);
 
 // ── Audit middleware ─────────────────────────────────────────────────────────
 app.use(auditMiddleware);
@@ -194,6 +195,7 @@ app.use("/api", (req: Request, res: Response, next: NextFunction) => {
   if (
     req.path === "/auth/login" ||
     req.path === "/auth/guest-login" ||
+    req.path === "/auth/register" ||
     req.path === "/auth/logout" ||
     req.path === "/auth/me"
   ) {
