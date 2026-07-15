@@ -125,22 +125,39 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="relative w-full max-w-md">
-        {/* Header */}
+        {/* Header — executive wordmark */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gold/10 border border-gold/20 mb-4">
+          <div
+            className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gold/10 mb-4"
+            style={{ border: '1px solid var(--gold-border-strong)' }}
+          >
             <Shield className="w-8 h-8 text-gold" />
           </div>
-          <h1 className="text-2xl font-bold text-heading mb-1">MARSAD</h1>
+          <h1
+            className="text-3xl font-bold mb-1"
+            style={{ fontFamily: 'var(--app-font-serif)', color: 'hsl(var(--gold))' }}
+          >
+            مرصد
+          </h1>
+          <p className="text-[10px] font-mono font-bold tracking-[0.35em] text-gold/60 uppercase select-none mb-2">
+            MARSAD · MLOS
+          </p>
           <p className="text-sm text-muted-foreground">
-            منصة القرارات الإدارية الذكية
+            منصة القرار الإداري الذكي
           </p>
           <p className="text-xs text-muted-foreground mt-0.5">
             Intelligent Administrative Decision Platform
           </p>
         </div>
 
-        {/* Login card */}
-        <div className="bg-card border border-border rounded-2xl shadow-xl p-8">
+        {/* Login card — double gold frame */}
+        <div
+          className="bg-card rounded-2xl shadow-xl p-8"
+          style={{
+            border: '1px solid var(--gold-border-strong)',
+            boxShadow: 'var(--shadow-xl), 0 0 50px -25px var(--gold-glow)',
+          }}
+        >
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-1.5">
               <Label htmlFor="username" className="text-sm font-medium">
@@ -237,6 +254,15 @@ export default function Login() {
               )}
             </Button>
           </div>
+
+          {/* New-account path — accounts are provisioned via User Management
+              (no self-registration endpoint exists in the preserved backend). */}
+          <p className="mt-4 text-center text-[11px] text-muted-foreground/80 leading-relaxed">
+            لا تملك حساباً؟ تُنشأ الحسابات الرسمية عبر إدارة المنصة.
+            <span className="block text-[10px] opacity-80">
+              New accounts are provisioned by the platform administration.
+            </span>
+          </p>
 
           {/* Demo accounts panel — hidden in production (accounts are blocked there) */}
           {!IS_PROD && (

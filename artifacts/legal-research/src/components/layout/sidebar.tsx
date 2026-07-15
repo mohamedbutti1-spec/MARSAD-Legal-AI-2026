@@ -125,6 +125,13 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           badge: 'دستوري',
         },
         {
+          href: '/legislation/uae',
+          labelAr: 'التشريعات الإماراتية',
+          labelEn: 'UAE Legislation',
+          icon: <ScrollText className="w-4.5 h-4.5" />,
+          show: true,
+        },
+        {
           href: '/caselaw/uae',
           labelAr: 'الاجتهاد القضائي',
           labelEn: 'UAE Case Law',
@@ -428,9 +435,8 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
     // ── Hidden — code and routes preserved, removed from navigation only ────
     // لوحة الوزير/الوكيل/المدير العام/مسؤول المخاطر/القاضي (NAIP role
     // dashboards), الإطار الاحترافي الموجَّه ('/pgf'), لوحة الامتثال القانوني
-    // ('/admin-os/compliance'), التشريعات الإماراتية ('/legislation/uae'),
-    // لوحة الذكاء الوطني ('/naip/dashboard') — all unreachable from the
-    // sidebar per the visual rebuild, routes remain intact.
+    // ('/admin-os/compliance'), لوحة الذكاء الوطني ('/naip/dashboard') — all
+    // unreachable from the sidebar per the visual rebuild, routes remain intact.
   ];
 
   const isActive = (href: string) => {
@@ -471,11 +477,16 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
               <Scale className="w-5 h-5 text-accent" />
             </div>
             <div className="min-w-0">
-              {/* MLOS badge */}
+              {/* Executive wordmark — مرصد leads, MLOS supports */}
               <div className="flex items-baseline gap-1.5 leading-none mb-0.5">
-                <span className="font-black text-lg tracking-[0.1em] text-sidebar-foreground">MLOS</span>
+                <span
+                  className="font-bold text-lg text-gold"
+                  style={{ fontFamily: 'var(--app-font-serif)' }}
+                >
+                  مرصد
+                </span>
                 <span className="text-sidebar-foreground/30 text-xs select-none">·</span>
-                <span className="font-bold text-xs text-sidebar-foreground/80">مرصد</span>
+                <span className="font-black text-[11px] tracking-[0.2em] text-sidebar-foreground/80">MLOS</span>
               </div>
               <div className="text-sidebar-foreground/55 text-[10px] font-medium leading-tight truncate">
                 Marsad Legal Operating System

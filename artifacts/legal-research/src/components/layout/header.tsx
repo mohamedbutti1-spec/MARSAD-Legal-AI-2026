@@ -6,12 +6,15 @@ interface HeaderProps {
   onMenuClick?: () => void;
 }
 
+// Role-tier chips on the matte-black executive header — brand palette only:
+// gold for legacy/owner tiers, heading-blue for executive/judicial tiers,
+// violet for oversight, slate for public. No light-mode washes.
 const TIER_STYLES: Record<string, string> = {
-  legacy:    'bg-gold/10 text-gold/75 border-gold/25',
-  executive: 'bg-sky-50 text-sky-800 border-sky-200',
-  oversight: 'bg-violet-50 text-violet-800 border-violet-200',
-  judicial:  'bg-emerald-50 text-emerald-800 border-emerald-200',
-  public:    'bg-slate-50 text-slate-700 border-slate-200',
+  legacy:    'bg-gold/10 text-gold border-gold/30',
+  executive: 'bg-sky-400/10 text-sky-300 border-sky-400/30',
+  oversight: 'bg-violet-400/10 text-violet-300 border-violet-400/30',
+  judicial:  'bg-[hsl(var(--heading-blue))]/10 text-heading border-[hsl(var(--heading-blue))]/30',
+  public:    'bg-slate-400/10 text-slate-300 border-slate-400/30',
 };
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
@@ -39,25 +42,25 @@ export function Header({ onMenuClick }: HeaderProps) {
   };
 
   return (
-    <header className="h-14 bg-white border-b border-border flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20 shrink-0 shadow-xs">
+    <header className="h-14 bg-sidebar border-b border-border flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20 shrink-0">
       <div className="flex items-center gap-3">
         <button
-          className="lg:hidden text-muted-foreground hover:text-foreground p-1.5 rounded-md hover:bg-muted/50 transition-colors"
+          className="lg:hidden text-muted-foreground hover:text-foreground p-1.5 rounded-md hover:bg-white/5 transition-colors"
           onClick={onMenuClick}
           aria-label="Open menu"
         >
           <Menu className="w-5 h-5" />
         </button>
         <div className="lg:hidden flex items-center gap-2">
-          <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
-            <Scale className="w-4 h-4 text-white" />
+          <div className="w-7 h-7 rounded-md bg-gold/15 border border-gold/30 flex items-center justify-center">
+            <Scale className="w-4 h-4 text-gold" />
           </div>
           <span className="font-bold text-foreground text-base">مرصد</span>
         </div>
-        <div className="hidden lg:flex items-center gap-2 text-sm text-muted-foreground">
-          <Scale className="w-4 h-4 text-primary" />
-          <span className="font-semibold text-foreground">
-            {isAr ? 'مرصد — منصة البحث القانوني' : 'Marsad — Legal Research Platform'}
+        <div className="hidden lg:flex items-center gap-2 text-sm">
+          <Scale className="w-4 h-4 text-gold" />
+          <span className="font-semibold text-foreground/85">
+            {isAr ? 'مرصد — منصة القرار الإداري الذكي' : 'Marsad — Intelligent Administrative Decision Platform'}
           </span>
         </div>
       </div>
@@ -66,16 +69,16 @@ export function Header({ onMenuClick }: HeaderProps) {
         {/* Language toggle */}
         <button
           onClick={() => setLang(isAr ? 'en' : 'ar')}
-          className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+          className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-md border border-border text-muted-foreground hover:text-gold hover:border-gold/40 transition-colors"
         >
           <Globe className="w-3.5 h-3.5" />
           <span>{isAr ? 'EN' : 'ع'}</span>
         </button>
 
         {/* Notifications */}
-        <button className="relative p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors">
+        <button className="relative p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors">
           <Bell className="w-4 h-4" />
-          <span className="absolute top-1.5 end-1.5 w-1.5 h-1.5 bg-accent rounded-full" />
+          <span className="absolute top-1.5 end-1.5 w-1.5 h-1.5 bg-gold rounded-full" />
         </button>
 
         {/* User / role menu */}
@@ -93,11 +96,11 @@ export function Header({ onMenuClick }: HeaderProps) {
           {userMenuOpen && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setUserMenuOpen(false)} />
-              <div className="absolute end-0 top-full mt-2 w-64 bg-white border border-border rounded-xl shadow-xl z-20 overflow-hidden">
+              <div className="absolute end-0 top-full mt-2 w-64 bg-popover border border-border rounded-xl shadow-xl z-20 overflow-hidden">
                 {/* User info */}
-                <div className="px-4 py-3 border-b border-border bg-muted/30">
+                <div className="px-4 py-3 border-b border-border bg-muted/40">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold font-serif">
+                    <div className="w-9 h-9 rounded-lg bg-gold/15 border border-gold/30 flex items-center justify-center text-gold font-bold font-serif">
                       {(meta?.ar ?? 'م')[0]}
                     </div>
                     <div>
@@ -130,7 +133,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                 <div className="p-2">
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive-foreground/90 hover:bg-destructive/20 rounded-lg transition-colors"
                   >
                     <LogOut className="w-4 h-4" />
                     <span>{isAr ? 'تسجيل الخروج' : 'Sign out'}</span>
