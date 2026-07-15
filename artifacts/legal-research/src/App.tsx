@@ -11,7 +11,10 @@ import { BetaFeedbackWidget } from '@/components/beta/FeedbackWidget';
 
 // ─── Pages ────────────────────────────────────────────────────────────────────
 import NotFound from '@/pages/not-found';
-import Dashboard from '@/pages/dashboard';
+// V2 homepage replacement — ONE central card + ONE action. The previous
+// dashboard (pages/dashboard.tsx) is superseded but its module is kept
+// intact per the no-module-deletion rule.
+import ExecutiveDashboard from '@/pages/executive-dashboard';
 const LegalSearchHub = React.lazy(() => import('@/pages/legal-search-hub'));
 
 // ── MARSAD V2 workflow — persona hub, academy, scenarios, Nafe ──────────────
@@ -135,7 +138,7 @@ function Router() {
       >
       <Switch>
         {/* ── Main ─────────────────────────────────────────────────── */}
-        <Route path="/" component={Dashboard} />
+        <Route path="/" component={ExecutiveDashboard} />
 
         {/* ── MARSAD V2 workflow (open to all roles — RBAC still gates
                anything each service links into) ─────────────────────── */}
