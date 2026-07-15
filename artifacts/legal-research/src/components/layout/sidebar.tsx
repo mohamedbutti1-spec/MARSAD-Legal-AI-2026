@@ -22,7 +22,6 @@ import {
   Scale,
   ChevronDown,
   BarChart3,
-  Sparkles,
   Shield,
   ShieldAlert,
   Target,
@@ -31,6 +30,9 @@ import {
   Compass,
   UserCircle,
   GraduationCap,
+  Lightbulb,
+  Megaphone,
+  Lock,
 } from 'lucide-react';
 import { useUserContext } from '@/lib/user-context';
 
@@ -100,6 +102,14 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           labelEn: 'Dashboard',
           icon: <LayoutDashboard className="w-4.5 h-4.5" />,
           show: true,
+        },
+        {
+          href: '/welcome',
+          labelAr: 'مساري المهني',
+          labelEn: 'My Professional Path',
+          icon: <UserCircle className="w-4.5 h-4.5" />,
+          show: true,
+          badge: 'V2',
         },
         {
           href: '/assistant',
@@ -253,6 +263,22 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
       titleEn: 'Training & Development',
       items: [
         {
+          href: '/academy',
+          labelAr: 'أكاديمية مرصد للمحاكاة المهنية',
+          labelEn: 'Marsad Simulation Academy',
+          icon: <GraduationCap className="w-4.5 h-4.5" />,
+          show: true,
+          badge: 'جديد',
+        },
+        {
+          href: '/scenarios',
+          labelAr: 'محرك السيناريوهات',
+          labelEn: 'Scenario Engine',
+          icon: <Lightbulb className="w-4.5 h-4.5" />,
+          show: true,
+          badge: 'جديد',
+        },
+        {
           href: '/admin/legal-os',
           labelAr: 'فهرس السيناريوهات',
           labelEn: 'Scenario Catalog',
@@ -354,6 +380,14 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
       titleEn: 'Services',
       items: [
         {
+          href: '/nafe',
+          labelAr: 'نافع — التوعية والتحذير',
+          labelEn: 'Nafe — Public Awareness',
+          icon: <Megaphone className="w-4.5 h-4.5" />,
+          show: true,
+          badge: 'وطني',
+        },
+        {
           href: '/citizen',
           labelAr: 'بوابة المواطن',
           labelEn: 'Citizen Portal',
@@ -376,12 +410,14 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
       titleEn: 'Private',
       items: [
         {
+          // رمز القفل — restricted-access module (V2 spec): visible only to
+          // authorized users, and marked with a lock even for them.
           href: '/shamsi-theory',
           labelAr: 'نظرية الشامسي',
           labelEn: 'Al-Shamsi Theory',
-          icon: <Sparkles className="w-4.5 h-4.5" />,
+          icon: <Lock className="w-4.5 h-4.5" />,
           show: isOwner,
-          badge: 'خاص',
+          badge: '🔒 خاص',
         },
         {
           href: '/constitutional-intelligence',

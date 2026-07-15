@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, UserCircle } from 'lucide-react';
 import { useUserContext, useT } from '@/lib/user-context';
 import { useLocation } from 'wouter';
+import { getStoredPersona, getPersonaGreeting, getPersonaCategory } from '@/lib/marsad-personas';
 
 // ─── Judicial Command Center — Dashboard ───────────────────────────────────────
 // Per the visual rebuild spec: the dashboard is a single command card with one
@@ -33,6 +34,11 @@ export default function Dashboard() {
   const greeting = getGreeting();
   const ArrowIcon = lang === 'ar' ? ArrowLeft : ArrowRight;
 
+  // ── V2 smart greeting — persona-aware when a professional path is chosen ──
+  const persona = getStoredPersona();
+  const personaGreeting = getPersonaGreeting(persona);
+  const personaCategory = getPersonaCategory(persona?.categoryId);
+
   return (
     <AppLayout>
       <div className="flex flex-col h-full overflow-y-auto bg-background">
@@ -55,20 +61,40 @@ export default function Dashboard() {
               className="text-2xl sm:text-3xl font-bold text-heading mb-2"
               style={{ fontFamily: 'var(--app-font-serif)' }}
             >
-              {t(greeting.ar, greeting.en)}
+              {personaGreeting ?? t(greeting.ar, greeting.en)}
             </h1>
             <p className="text-sm sm:text-base text-muted-foreground font-medium mb-8">
-              {t('منصة القرار الإداري الذكي', 'Intelligent Administrative Decision Platform')}
+              {personaCategory
+                ? t(
+                    `حزمتكم المهنية جاهزة — فئة ${personaCategory.ar}`,
+                    'Your professional package is ready',
+                  )
+                : t('منصة القرار الإداري الذكي', 'Intelligent Administrative Decision Platform')}
             </p>
 
             <button
               type="button"
-              onClick={() => navigate('/assistant')}
+              onClick={() => navigate('/welcome')}
               className="gold-hover-glow inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-gold text-background text-sm sm:text-base font-bold hover:opacity-90 transition-all"
             >
-              {t('ابدأ الرحلة معنا من هنا', 'Start your journey here')}
+              {persona
+                ? t('حزمتي المهنية والخدمات', 'My professional package')
+                : t('ابدأ الرحلة معنا من هنا', 'Start your journey here')}
               <ArrowIcon className="w-4 h-4" aria-hidden />
             </button>
+
+            {persona && (
+              <div className="mt-4">
+                <button
+                  type="button"
+                  onClick={() => navigate('/assistant')}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-gold/80 hover:text-gold transition-colors"
+                >
+                  <UserCircle className="w-3.5 h-3.5" aria-hidden />
+                  {t('الانتقال مباشرة إلى المساعد الذكي', 'Go straight to the AI assistant')}
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

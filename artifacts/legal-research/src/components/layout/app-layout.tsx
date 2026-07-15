@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Sidebar } from './sidebar';
 import { Header } from './header';
 import { useUserContext } from '@/lib/user-context';
+import { MARSAD_CLOSING_MESSAGE, MARSAD_CLOSING_PRAYER } from '@/lib/marsad-personas';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -88,8 +89,14 @@ export function AppLayout({ children, variant = 'default', hideDemoBanner = fals
             <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
               {children}
             </div>
-            {/* Platform footer */}
-            <footer className="border-t border-border/40 px-4 sm:px-6 lg:px-8 py-3">
+            {/* Platform footer — الرسالة الختامية (V2 spec: shown on every page) */}
+            <footer className="border-t border-border/40 px-4 sm:px-6 lg:px-8 py-4 space-y-1.5">
+              <p className="text-[10px] text-muted-foreground/60 text-center leading-relaxed max-w-3xl mx-auto select-none" dir="rtl">
+                {MARSAD_CLOSING_MESSAGE}
+              </p>
+              <p className="text-[10px] text-gold/50 text-center font-semibold select-none" dir="rtl">
+                {MARSAD_CLOSING_PRAYER}
+              </p>
               <p className="text-[10px] text-muted-foreground/40 text-center tracking-wide select-none" dir="ltr">
                 مرصد (MARSAD) · منصة القرارات الإدارية الذكية · إطار الشامسي الدستوري™ Alpha 1.0
               </p>

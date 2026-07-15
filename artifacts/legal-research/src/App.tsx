@@ -14,6 +14,12 @@ import NotFound from '@/pages/not-found';
 import Dashboard from '@/pages/dashboard';
 const LegalSearchHub = React.lazy(() => import('@/pages/legal-search-hub'));
 
+// ── MARSAD V2 workflow — persona hub, academy, scenarios, Nafe ──────────────
+const PersonaSelect = React.lazy(() => import('@/pages/persona-select'));
+const Academy = React.lazy(() => import('@/pages/academy'));
+const Scenarios = React.lazy(() => import('@/pages/scenarios'));
+const Nafe = React.lazy(() => import('@/pages/nafe'));
+
 // Research Tools
 const LegalResearch = React.lazy(() => import('@/pages/legal-research'));
 const AiAssistant = React.lazy(() => import('@/pages/ai-assistant'));
@@ -130,6 +136,13 @@ function Router() {
       <Switch>
         {/* ── Main ─────────────────────────────────────────────────── */}
         <Route path="/" component={Dashboard} />
+
+        {/* ── MARSAD V2 workflow (open to all roles — RBAC still gates
+               anything each service links into) ─────────────────────── */}
+        <Route path="/welcome"   component={PersonaSelect} />
+        <Route path="/academy"   component={Academy} />
+        <Route path="/scenarios" component={Scenarios} />
+        <Route path="/nafe"      component={Nafe} />
         <Route path="/shamsi-theory">
           <RouteGuard allow={canUseShamsiFramework}>
             <ShamsiTheory />

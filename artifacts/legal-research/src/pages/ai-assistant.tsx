@@ -16,6 +16,7 @@ import { TheoryLensSelector, TheoryLensBadge, type TheoryLensState } from '@/com
 import { CourtSessionPanel } from '@/components/research/court-session-panel';
 import type { CourtSessionData } from '@/lib/court-types';
 import type { GuidedAssistantConfig } from '@/lib/guided-assistant-config';
+import { getPersonaQuestionPlaceholder } from '@/lib/marsad-personas';
 
 // ─── Judicial Command Center rebuild ───────────────────────────────────────────
 // The assistant page is visually reduced to: conversation, input, legal-context
@@ -114,7 +115,7 @@ type UserGoal =
   | 'risk_assessment' | 'compliance_review' | 'ai_decision_analysis';
 
 type ConfigAnswerMode = 'quick' | 'standard' | 'academic' | 'judicial' | 'memorandum' | 'legislative' | 'executive_report' | 'comparative' | 'scientific';
-type Jurisdiction    = 'uae' | 'france' | 'saudi' | 'egypt' | 'eu' | 'gcc' | 'comparative' | 'other';
+type Jurisdiction    = 'uae' | 'france' | 'saudi' | 'egypt' | 'bahrain' | 'kuwait' | 'morocco' | 'jordan' | 'eu' | 'gcc' | 'comparative' | 'other';
 
 // ─── MLOS Hierarchical Legal Taxonomy ──────────────────────────────────────────
 // "التصنيف القانوني الرئيسي" — exactly 4 top-level options.
@@ -123,10 +124,22 @@ type LegalDomain = 'public_law' | 'private_law' | 'criminal_law' | 'mixed_regula
 // against LEGAL_TAXONOMY (too many branch/specialization combinations for a
 // union type to stay maintainable) — never indexed without going through
 // getLegalBranchDef/getLegalSpecializationDef below.
-// مصدر القانون — exactly 5 options (Al-Shamsi Theory and "other" removed).
-type LawSource = 'uae_law' | 'french_law' | 'egyptian_law' | 'saudi_law' | 'comparative_law';
-// شكل الإجابة — exactly 2 options.
-type AnswerFormat = 'urgent_brief_answer' | 'specialized_legal_analysis';
+// مصدر القانون — V2 workflow: 9 options (الإمارات، السعودية، مصر، فرنسا،
+// البحرين، الكويت، المغرب، الأردن، القانون المقارن). Al-Shamsi Theory and
+// "other" remain removed.
+type LawSource =
+  | 'uae_law' | 'french_law' | 'egyptian_law' | 'saudi_law'
+  | 'bahraini_law' | 'kuwaiti_law' | 'moroccan_law' | 'jordanian_law'
+  | 'comparative_law';
+// نوع الدراسة — V2 workflow: 9 study lenses applied on top of the taxonomy.
+type StudyType =
+  | 'legal' | 'judicial' | 'constitutional' | 'jurisprudential' | 'administrative'
+  | 'criminal' | 'economic' | 'regulatory' | 'legislative';
+// شكل الإجابة — the 2 original formats + the 8 V2 نمط الإجابة modes.
+type AnswerFormat =
+  | 'urgent_brief_answer' | 'specialized_legal_analysis'
+  | 'mode_brief' | 'mode_detailed' | 'mode_extensive' | 'mode_judicial'
+  | 'mode_academic' | 'mode_executive' | 'mode_training' | 'mode_comparative';
 // سيناريوهات التدريب والمراجعة القضائية الافتراضية — exactly 6 output types.
 type TrainingOutputType =
   | 'legal_memorandum' | 'judicial_judgment' | 'legislative_draft'
@@ -160,6 +173,8 @@ interface SessionConfig {
   legalSpecialization: string;
   /** مصدر القانون — '' until the user picks one. */
   lawSource: LawSource | '';
+  /** نوع الدراسة — '' until the user picks one. */
+  studyType: StudyType | '';
   /** شكل الإجابة — '' until the user picks one. */
   answerFormat: AnswerFormat | '';
 }
@@ -182,7 +197,7 @@ const DEFAULT_SESSION_CONFIG: SessionConfig = {
   sources: ['all'], citStyle: 'uae', depth: 'detailed',
   applyAdvancedStandard: false, comparativeMode: false,
   maturityLevel: 'mid',
-  legalDomain: '', legalBranch: '', legalSpecialization: '', lawSource: '', answerFormat: '',
+  legalDomain: '', legalBranch: '', legalSpecialization: '', lawSource: '', studyType: '', answerFormat: '',
 };
 
 // ─── MLOS Hierarchical Legal Taxonomy — التصنيف القانوني الرئيسي → الفرع → التخصص الدقيق ──
@@ -321,10 +336,27 @@ function getLegalSpecializationDef(domain: LegalDomain | '', branchId: string, s
 // ─── مصدر القانون ───────────────────────────────────────────────────────────
 const LAW_SOURCE_CFG: Record<LawSource, { ar: string; jurisdiction: Jurisdiction; comparativeMode: boolean }> = {
   uae_law:         { ar: 'القانون الإماراتي', jurisdiction: 'uae',         comparativeMode: false },
-  french_law:      { ar: 'القانون الفرنسي',   jurisdiction: 'france',      comparativeMode: false },
-  egyptian_law:    { ar: 'القانون المصري',    jurisdiction: 'egypt',       comparativeMode: false },
   saudi_law:       { ar: 'القانون السعودي',   jurisdiction: 'saudi',       comparativeMode: false },
+  egyptian_law:    { ar: 'القانون المصري',    jurisdiction: 'egypt',       comparativeMode: false },
+  french_law:      { ar: 'القانون الفرنسي',   jurisdiction: 'france',      comparativeMode: false },
+  bahraini_law:    { ar: 'القانون البحريني',  jurisdiction: 'bahrain',     comparativeMode: false },
+  kuwaiti_law:     { ar: 'القانون الكويتي',   jurisdiction: 'kuwait',      comparativeMode: false },
+  moroccan_law:    { ar: 'القانون المغربي',   jurisdiction: 'morocco',     comparativeMode: false },
+  jordanian_law:   { ar: 'القانون الأردني',   jurisdiction: 'jordan',      comparativeMode: false },
   comparative_law: { ar: 'القانون المقارن',   jurisdiction: 'comparative', comparativeMode: true },
+};
+
+// ─── نوع الدراسة ─────────────────────────────────────────────────────────────
+const STUDY_TYPE_CFG: Record<StudyType, { ar: string; instructions: string }> = {
+  legal:           { ar: 'قانونية',   instructions: 'تحليل قانوني عام يستوعب النصوص والقواعد الموضوعية والإجرائية ذات الصلة.' },
+  judicial:        { ar: 'قضائية',    instructions: 'دراسة قضائية ترتكز على الأحكام والمبادئ القضائية والاتجاهات السائدة في المحاكم.' },
+  constitutional:  { ar: 'دستورية',   instructions: 'دراسة دستورية تعرض النصوص الدستورية والمبادئ العليا وضوابط الرقابة الدستورية.' },
+  jurisprudential: { ar: 'فقهية',     instructions: 'دراسة فقهية تعرض آراء الفقه واتجاهاته وأدلته مع المناقشة والترجيح المسبب.' },
+  administrative:  { ar: 'إدارية',    instructions: 'دراسة إدارية تركز على القرار الإداري والمشروعية والملاءمة وقضاء الإلغاء والتعويض.' },
+  criminal:        { ar: 'جنائية',    instructions: 'دراسة جنائية تتناول الأركان والمسؤولية والعقوبة والإجراءات الجزائية ذات الصلة.' },
+  economic:        { ar: 'اقتصادية',  instructions: 'دراسة اقتصادية تحلل الأثر الاقتصادي والمالي للقواعد والقرارات محل البحث.' },
+  regulatory:      { ar: 'تنظيمية',   instructions: 'دراسة تنظيمية تتناول الأطر الرقابية واللوائح والامتثال ومتطلبات الجهات التنظيمية.' },
+  legislative:     { ar: 'تشريعية',   instructions: 'دراسة تشريعية تقيم النصوص القائمة وثغراتها وتقترح الصياغات والتعديلات التشريعية.' },
 };
 
 // ─── شكل الإجابة ─────────────────────────────────────────────────────────────
@@ -341,6 +373,55 @@ const ANSWER_FORMAT_CFG: Record<AnswerFormat, { ar: string; instructions: string
       '[شكل الإجابة: تحليل قانوني متخصص]\n' +
       'قدّم تحليلاً منظماً يشمل: تحديد الوقائع، تحديد المسائل القانونية، بيان القواعد القانونية، التطبيق القانوني، ثم النتيجة، ' +
       'مع الإشارة إلى المخاطر أو أوجه الاختلاف عند الحاجة.\n',
+  },
+  // ── V2 نمط الإجابة — the 8 workflow answer modes ──────────────────────────
+  mode_brief: {
+    ar: 'موجز',
+    instructions:
+      '[نمط الإجابة: موجز]\n' +
+      'أجب في نقاط مركزة قصيرة تصل إلى النتيجة مباشرة مع الأساس القانوني الأهم فقط.\n',
+  },
+  mode_detailed: {
+    ar: 'تفصيلي',
+    instructions:
+      '[نمط الإجابة: تفصيلي]\n' +
+      'أجب بتفصيل منظم يغطي كل مسألة قانونية على حدة مع أساسها ونتيجتها.\n',
+  },
+  mode_extensive: {
+    ar: 'مستفيض',
+    instructions:
+      '[نمط الإجابة: مستفيض]\n' +
+      'قدّم معالجة مستفيضة شاملة: التأصيل، والنصوص، والاتجاهات المختلفة، والتطبيقات، والنتائج، والتوصيات.\n',
+  },
+  mode_judicial: {
+    ar: 'قضائي',
+    instructions:
+      '[نمط الإجابة: قضائي]\n' +
+      'صغ الإجابة بأسلوب قضائي رصين: عرض الوقائع، ثم حيث إن...، مع منهج التسبيب القضائي وصولاً إلى النتيجة.\n',
+  },
+  mode_academic: {
+    ar: 'أكاديمي',
+    instructions:
+      '[نمط الإجابة: أكاديمي]\n' +
+      'صغ الإجابة بمنهج أكاديمي: إشكالية، وتقسيم إلى مباحث، وتوثيق للمصادر، وخاتمة بالنتائج.\n',
+  },
+  mode_executive: {
+    ar: 'تنفيذي',
+    instructions:
+      '[نمط الإجابة: تنفيذي]\n' +
+      'صغ الإجابة كتقرير تنفيذي لصانع قرار: ملخص تنفيذي، ثم الخيارات ومخاطرها، ثم التوصية الواضحة.\n',
+  },
+  mode_training: {
+    ar: 'تدريبي',
+    instructions:
+      '[نمط الإجابة: تدريبي]\n' +
+      'صغ الإجابة بأسلوب تدريبي تفاعلي: اشرح خطوة بخطوة، ونبّه إلى الأخطاء الشائعة، واختم بأسئلة تحقق من الفهم.\n',
+  },
+  mode_comparative: {
+    ar: 'مقارن',
+    instructions:
+      '[نمط الإجابة: مقارن]\n' +
+      'صغ الإجابة بمنهج مقارن: اعرض موقف كل نظام قانوني ذي صلة في جدول مقارن مع أوجه الاتفاق والاختلاف والتقييم.\n',
   },
 };
 
@@ -387,6 +468,10 @@ function buildDomainAndSourceLine(config: SessionConfig): string {
   }
   if (config.lawSource) {
     line += `مصدر القانون المعتمد: ${LAW_SOURCE_CFG[config.lawSource].ar}\n`;
+  }
+  if (config.studyType) {
+    const st = STUDY_TYPE_CFG[config.studyType];
+    line += `نوع الدراسة: ${st.ar} — ${st.instructions}\n`;
   }
   return line;
 }
@@ -590,6 +675,10 @@ const JURISDICTION_CFG: Record<Jurisdiction, { ar: string; flag: string }> = {
   france:      { ar: 'فرنسا',                    flag: '🇫🇷' },
   saudi:       { ar: 'المملكة العربية السعودية', flag: '🇸🇦' },
   egypt:       { ar: 'مصر',                      flag: '🇪🇬' },
+  bahrain:     { ar: 'البحرين',                  flag: '🇧🇭' },
+  kuwait:      { ar: 'الكويت',                   flag: '🇰🇼' },
+  morocco:     { ar: 'المغرب',                   flag: '🇲🇦' },
+  jordan:      { ar: 'الأردن',                   flag: '🇯🇴' },
   eu:          { ar: 'الاتحاد الأوروبي',         flag: '🇪🇺' },
   gcc:         { ar: 'دول مجلس التعاون',        flag: '🌙' },
   comparative: { ar: 'قانون مقارن',              flag: '🌐' },
@@ -3169,6 +3258,26 @@ function PreAnalysisPanel({
             </select>
           </CfgSection>
 
+          {/* ── نوع الدراسة ──────────────────────────────────────────────── */}
+          <CfgSection title="نوع الدراسة" icon="🔬">
+            <label htmlFor="study-type-select" className="text-[10px] font-semibold text-muted-foreground block mb-1">
+              اختر نوع الدراسة
+            </label>
+            <select
+              id="study-type-select"
+              aria-label="اختر نوع الدراسة"
+              value={config.studyType}
+              onChange={(e) => onChange({ ...config, studyType: e.target.value as StudyType | '' })}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 appearance-none cursor-pointer"
+              style={{ direction: 'rtl' }}
+            >
+              <option value="" disabled>اختر نوع الدراسة</option>
+              {(Object.entries(STUDY_TYPE_CFG) as [StudyType, { ar: string }][]).map(([k, v]) => (
+                <option key={k} value={k}>• {v.ar}</option>
+              ))}
+            </select>
+          </CfgSection>
+
           {/* ── Comparative Law toggle, Al-Shamsi toggle & Expert Mode toggle — hidden in the simplified assistant view */}
           {SHOW_LEGACY_CHAT_UI && (
           <>
@@ -3225,7 +3334,7 @@ function PreAnalysisPanel({
             <textarea
               rows={4}
               className="w-full resize-none rounded-2xl bg-transparent px-4 py-4 pe-14 text-sm sm:text-base text-foreground placeholder:text-muted-foreground/70 focus:outline-none leading-relaxed"
-              placeholder="اكتب سؤالك القانوني"
+              placeholder={getPersonaQuestionPlaceholder() ?? 'اكتب سؤالك القانوني'}
               dir="rtl"
               value={currentInput ?? ''}
               onChange={(e) => onInputChange?.(e.target.value)}
@@ -3389,6 +3498,11 @@ function SessionConfigBar({ config, expertMode, onEdit }: {
       {config.lawSource && (
         <span className="text-[10px] bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-medium">
           📚 {LAW_SOURCE_CFG[config.lawSource].ar}
+        </span>
+      )}
+      {config.studyType && (
+        <span className="text-[10px] bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-medium">
+          🔬 دراسة {STUDY_TYPE_CFG[config.studyType].ar}
         </span>
       )}
       {config.answerFormat && (
