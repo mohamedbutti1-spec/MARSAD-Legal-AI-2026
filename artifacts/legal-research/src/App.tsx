@@ -146,12 +146,6 @@ function Router() {
             الشاشة ٢: الصفحة الرئيسية (/) ← بعد الدخول مباشرة
             الشاشات ٣→٨: التقدم الطبيعي عبر /journey/… حتى النتيجة الذكية */}
         <Route path="/" component={JourneyHome} />
-        <Route path="/dashboard">
-          <Redirect to="/" />
-        </Route>
-        <Route path="/journey">
-          <Redirect to="/" />
-        </Route>
         <Route path="/journey-services" component={MarsadServicesPage} />
         <Route path="/journey/result/:sessionId" component={JourneyResult} />
         <Route path="/journey/:pathId/:categoryId/:serviceId/incident/:incidentId" component={JourneyCase} />
@@ -330,10 +324,6 @@ function Router() {
           <RouteGuard allow={canViewAudit}>
             <AuditLog />
           </RouteGuard>
-        </Route>
-        {/* Legacy alias — canonical user management now lives at /admin/users */}
-        <Route path="/users">
-          <Redirect to="/admin/users" />
         </Route>
         <Route path="/comparisons">
           <RouteGuard allow={canUseAi}><Comparisons /></RouteGuard>

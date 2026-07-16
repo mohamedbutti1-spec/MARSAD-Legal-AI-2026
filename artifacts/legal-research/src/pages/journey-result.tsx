@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, useLocation } from 'wouter';
+import { useParams, useLocation, Redirect } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
@@ -123,7 +123,7 @@ export default function JourneyResultPage() {
       if (!res.ok) throw new Error('not found');
       return res.json() as Promise<{ session: SpgSession }>;
     },
-    enabled: !!id,
+    enabled: !!id && !!meta,
     // استمر بالاستطلاع حتى اكتمال التحليل الخلفي — نفس آلية SPG الحالية
     refetchInterval: (query) =>
       query.state.data?.session.status === 'analyzing' || query.state.data?.session.status === 'draft'
@@ -133,6 +133,12 @@ export default function JourneyResultPage() {
 
   const session = data?.session;
   const output = session?.output ?? null;
+
+  // الشاشة ٨ لا تُفتح مباشرة أبداً: بدون سياق رحلة جارية (يُخزَّن عند الشاشة ٧)
+  // يعاد التوجيه إلى الصفحة الرئيسية العامة (الشاشة ٢).
+  if (!meta || !id) {
+    return <Redirect to="/" />;
+  }
 
   const handleShare = async () => {
     const text = output ? `النتيجة الذكية — ${meta?.serviceNameAr ?? 'مرصد'}\n\n${output.summary}` : '';
