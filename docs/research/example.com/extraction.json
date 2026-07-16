@@ -1,0 +1,889 @@
+{
+  "viewports": {
+    "desktop-1440": {
+      "title": "Example Domain",
+      "doctype": "html",
+      "rawHTML": "<html><head>\n    <title>Example Domain</title>\n\n    <meta charset=\"utf-8\">\n    <meta http-equiv=\"Content-type\" content=\"text/html; charset=utf-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n    <style type=\"text/css\">\n    body {\n        background-color: #f0f0f2;\n        margin: 0;\n        padding: 0;\n        font-family: -apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif;\n\n    }\n    div {\n        width: 600px;\n        margin: 5em auto;\n        padding: 2em;\n        background-color: #fdfdff;\n        border-radius: 0.5em;\n        box-shadow: 2px 3px 7px 2px rgba(0,0,0,0.02);\n    }\n    a:link, a:visited {\n        color: #38488f;\n        text-decoration: none;\n    }\n    @media (max-width: 700px) {\n        div {\n            margin: 0 auto;\n            width: auto;\n        }\n    }\n    </style>\n</head>\n\n<body>\n<div>\n    <h1>Example Domain</h1>\n    <p>This domain is for use in illustrative examples in documents. You may use this\n    domain in literature without prior coordination or asking for permission.</p>\n    <p><a href=\"https://www.iana.org/domains/example/\">More information...</a></p>\n</div>\n\n\n</body></html>",
+      "styleSheets": [
+        "\n    body {\n        background-color: #f0f0f2;\n        margin: 0;\n        padding: 0;\n        font-family: -apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif;\n\n    }\n    div {\n        width: 600px;\n        margin: 5em auto;\n        padding: 2em;\n        background-color: #fdfdff;\n        border-radius: 0.5em;\n        box-shadow: 2px 3px 7px 2px rgba(0,0,0,0.02);\n    }\n    a:link, a:visited {\n        color: #38488f;\n        text-decoration: none;\n    }\n    @media (max-width: 700px) {\n        div {\n            margin: 0 auto;\n            width: auto;\n        }\n    }\n    "
+      ],
+      "linkedCSS": [],
+      "scripts": [],
+      "metas": [
+        {
+          "name": "utf-8",
+          "content": ""
+        },
+        {
+          "name": "Content-type",
+          "content": "text/html; charset=utf-8"
+        },
+        {
+          "name": "viewport",
+          "content": "width=device-width, initial-scale=1"
+        }
+      ],
+      "favicons": [],
+      "images": [],
+      "videos": 0,
+      "svgs": 0,
+      "fonts": [
+        "\"Times New Roman\"",
+        "-apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif"
+      ],
+      "tree": {
+        "tag": "body",
+        "text": null,
+        "href": null,
+        "styles": {
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "fontFamily": "-apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+          "color": "rgb(0, 0, 0)",
+          "textAlign": "start",
+          "backgroundColor": "rgb(240, 240, 242)",
+          "background": "rgb(240, 240, 242) none repeat scroll 0% 0% / auto padding-box border-box",
+          "paddingTop": "0px",
+          "paddingRight": "0px",
+          "paddingBottom": "0px",
+          "paddingLeft": "0px",
+          "marginTop": "0px",
+          "marginRight": "0px",
+          "marginBottom": "0px",
+          "marginLeft": "0px",
+          "width": "1440px",
+          "height": "252.875px",
+          "display": "block",
+          "borderRadius": "0px",
+          "position": "static",
+          "opacity": "1",
+          "transition": "all"
+        },
+        "rect": {
+          "x": 0,
+          "y": 80,
+          "width": 1440,
+          "height": 252.875,
+          "top": 80,
+          "right": 1440,
+          "bottom": 332.875,
+          "left": 0
+        },
+        "children": [
+          {
+            "tag": "div",
+            "text": null,
+            "href": null,
+            "styles": {
+              "fontSize": "16px",
+              "fontWeight": "400",
+              "fontFamily": "-apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+              "color": "rgb(0, 0, 0)",
+              "textAlign": "start",
+              "backgroundColor": "rgb(253, 253, 255)",
+              "background": "rgb(253, 253, 255) none repeat scroll 0% 0% / auto padding-box border-box",
+              "paddingTop": "32px",
+              "paddingRight": "32px",
+              "paddingBottom": "32px",
+              "paddingLeft": "32px",
+              "marginTop": "80px",
+              "marginRight": "388px",
+              "marginBottom": "80px",
+              "marginLeft": "388px",
+              "width": "600px",
+              "height": "188.875px",
+              "display": "block",
+              "borderRadius": "8px",
+              "boxShadow": "rgba(0, 0, 0, 0.02) 2px 3px 7px 2px",
+              "position": "static",
+              "opacity": "1",
+              "transition": "all"
+            },
+            "rect": {
+              "x": 388,
+              "y": 80,
+              "width": 664,
+              "height": 252.875,
+              "top": 80,
+              "right": 1052,
+              "bottom": 332.875,
+              "left": 388
+            },
+            "children": [
+              {
+                "tag": "h1",
+                "text": "Example Domain",
+                "href": null,
+                "styles": {
+                  "fontSize": "32px",
+                  "fontWeight": "700",
+                  "fontFamily": "-apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+                  "color": "rgb(0, 0, 0)",
+                  "textAlign": "start",
+                  "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box",
+                  "paddingTop": "0px",
+                  "paddingRight": "0px",
+                  "paddingBottom": "0px",
+                  "paddingLeft": "0px",
+                  "marginTop": "21.44px",
+                  "marginRight": "0px",
+                  "marginBottom": "21.44px",
+                  "marginLeft": "0px",
+                  "width": "600px",
+                  "height": "38px",
+                  "display": "block",
+                  "borderRadius": "0px",
+                  "position": "static",
+                  "opacity": "1",
+                  "transition": "all"
+                },
+                "rect": {
+                  "x": 420,
+                  "y": 133.4375,
+                  "width": 600,
+                  "height": 38,
+                  "top": 133.4375,
+                  "right": 1020,
+                  "bottom": 171.4375,
+                  "left": 420
+                },
+                "children": []
+              },
+              {
+                "tag": "p",
+                "text": "This domain is for use in illustrative examples in documents. You may use this\n    domain in literature without prior coordination or asking for permission.",
+                "href": null,
+                "styles": {
+                  "fontSize": "16px",
+                  "fontWeight": "400",
+                  "fontFamily": "-apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+                  "color": "rgb(0, 0, 0)",
+                  "textAlign": "start",
+                  "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box",
+                  "paddingTop": "0px",
+                  "paddingRight": "0px",
+                  "paddingBottom": "0px",
+                  "paddingLeft": "0px",
+                  "marginTop": "16px",
+                  "marginRight": "0px",
+                  "marginBottom": "16px",
+                  "marginLeft": "0px",
+                  "width": "600px",
+                  "height": "57px",
+                  "display": "block",
+                  "borderRadius": "0px",
+                  "position": "static",
+                  "opacity": "1",
+                  "transition": "all"
+                },
+                "rect": {
+                  "x": 420,
+                  "y": 192.875,
+                  "width": 600,
+                  "height": 57,
+                  "top": 192.875,
+                  "right": 1020,
+                  "bottom": 249.875,
+                  "left": 420
+                },
+                "children": []
+              },
+              {
+                "tag": "p",
+                "text": null,
+                "href": null,
+                "styles": {
+                  "fontSize": "16px",
+                  "fontWeight": "400",
+                  "fontFamily": "-apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+                  "color": "rgb(0, 0, 0)",
+                  "textAlign": "start",
+                  "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box",
+                  "paddingTop": "0px",
+                  "paddingRight": "0px",
+                  "paddingBottom": "0px",
+                  "paddingLeft": "0px",
+                  "marginTop": "16px",
+                  "marginRight": "0px",
+                  "marginBottom": "16px",
+                  "marginLeft": "0px",
+                  "width": "600px",
+                  "height": "19px",
+                  "display": "block",
+                  "borderRadius": "0px",
+                  "position": "static",
+                  "opacity": "1",
+                  "transition": "all"
+                },
+                "rect": {
+                  "x": 420,
+                  "y": 265.875,
+                  "width": 600,
+                  "height": 19,
+                  "top": 265.875,
+                  "right": 1020,
+                  "bottom": 284.875,
+                  "left": 420
+                },
+                "children": [
+                  {
+                    "tag": "a",
+                    "text": "More information...",
+                    "href": "https://www.iana.org/domains/example/",
+                    "styles": {
+                      "fontSize": "16px",
+                      "fontWeight": "400",
+                      "fontFamily": "-apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+                      "color": "rgb(56, 72, 143)",
+                      "textAlign": "start",
+                      "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box",
+                      "paddingTop": "0px",
+                      "paddingRight": "0px",
+                      "paddingBottom": "0px",
+                      "paddingLeft": "0px",
+                      "marginTop": "0px",
+                      "marginRight": "0px",
+                      "marginBottom": "0px",
+                      "marginLeft": "0px",
+                      "display": "inline",
+                      "borderRadius": "0px",
+                      "position": "static",
+                      "opacity": "1",
+                      "transition": "all",
+                      "cursor": "pointer"
+                    },
+                    "rect": {
+                      "x": 420,
+                      "y": 265.875,
+                      "width": 152.359375,
+                      "height": 19,
+                      "top": 265.875,
+                      "right": 572.359375,
+                      "bottom": 284.875,
+                      "left": 420
+                    },
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "htmlStyles": {
+        "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box",
+        "backgroundColor": "rgba(0, 0, 0, 0)"
+      },
+      "bodyStyles": {
+        "backgroundColor": "rgb(240, 240, 242)",
+        "background": "rgb(240, 240, 242) none repeat scroll 0% 0% / auto padding-box border-box",
+        "fontFamily": "-apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+        "margin": "0px",
+        "padding": "0px"
+      },
+      "linkHover": {
+        "before": {
+          "color": "rgb(56, 72, 143)",
+          "textDecoration": "none",
+          "transition": "all"
+        },
+        "after": {
+          "color": "rgb(56, 72, 143)",
+          "textDecoration": "none",
+          "transition": "all"
+        }
+      },
+      "pageScrollable": false
+    },
+    "tablet-768": {
+      "title": "Example Domain",
+      "doctype": "html",
+      "rawHTML": "<html><head>\n    <title>Example Domain</title>\n\n    <meta charset=\"utf-8\">\n    <meta http-equiv=\"Content-type\" content=\"text/html; charset=utf-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n    <style type=\"text/css\">\n    body {\n        background-color: #f0f0f2;\n        margin: 0;\n        padding: 0;\n        font-family: -apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif;\n\n    }\n    div {\n        width: 600px;\n        margin: 5em auto;\n        padding: 2em;\n        background-color: #fdfdff;\n        border-radius: 0.5em;\n        box-shadow: 2px 3px 7px 2px rgba(0,0,0,0.02);\n    }\n    a:link, a:visited {\n        color: #38488f;\n        text-decoration: none;\n    }\n    @media (max-width: 700px) {\n        div {\n            margin: 0 auto;\n            width: auto;\n        }\n    }\n    </style>\n</head>\n\n<body>\n<div>\n    <h1>Example Domain</h1>\n    <p>This domain is for use in illustrative examples in documents. You may use this\n    domain in literature without prior coordination or asking for permission.</p>\n    <p><a href=\"https://www.iana.org/domains/example/\">More information...</a></p>\n</div>\n\n\n</body></html>",
+      "styleSheets": [
+        "\n    body {\n        background-color: #f0f0f2;\n        margin: 0;\n        padding: 0;\n        font-family: -apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif;\n\n    }\n    div {\n        width: 600px;\n        margin: 5em auto;\n        padding: 2em;\n        background-color: #fdfdff;\n        border-radius: 0.5em;\n        box-shadow: 2px 3px 7px 2px rgba(0,0,0,0.02);\n    }\n    a:link, a:visited {\n        color: #38488f;\n        text-decoration: none;\n    }\n    @media (max-width: 700px) {\n        div {\n            margin: 0 auto;\n            width: auto;\n        }\n    }\n    "
+      ],
+      "linkedCSS": [],
+      "scripts": [],
+      "metas": [
+        {
+          "name": "utf-8",
+          "content": ""
+        },
+        {
+          "name": "Content-type",
+          "content": "text/html; charset=utf-8"
+        },
+        {
+          "name": "viewport",
+          "content": "width=device-width, initial-scale=1"
+        }
+      ],
+      "favicons": [],
+      "images": [],
+      "videos": 0,
+      "svgs": 0,
+      "fonts": [
+        "\"Times New Roman\"",
+        "-apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif"
+      ],
+      "tree": {
+        "tag": "body",
+        "text": null,
+        "href": null,
+        "styles": {
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "fontFamily": "-apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+          "color": "rgb(0, 0, 0)",
+          "textAlign": "start",
+          "backgroundColor": "rgb(240, 240, 242)",
+          "background": "rgb(240, 240, 242) none repeat scroll 0% 0% / auto padding-box border-box",
+          "paddingTop": "0px",
+          "paddingRight": "0px",
+          "paddingBottom": "0px",
+          "paddingLeft": "0px",
+          "marginTop": "0px",
+          "marginRight": "0px",
+          "marginBottom": "0px",
+          "marginLeft": "0px",
+          "width": "768px",
+          "height": "252.875px",
+          "display": "block",
+          "borderRadius": "0px",
+          "position": "static",
+          "opacity": "1",
+          "transition": "all"
+        },
+        "rect": {
+          "x": 0,
+          "y": 80,
+          "width": 768,
+          "height": 252.875,
+          "top": 80,
+          "right": 768,
+          "bottom": 332.875,
+          "left": 0
+        },
+        "children": [
+          {
+            "tag": "div",
+            "text": null,
+            "href": null,
+            "styles": {
+              "fontSize": "16px",
+              "fontWeight": "400",
+              "fontFamily": "-apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+              "color": "rgb(0, 0, 0)",
+              "textAlign": "start",
+              "backgroundColor": "rgb(253, 253, 255)",
+              "background": "rgb(253, 253, 255) none repeat scroll 0% 0% / auto padding-box border-box",
+              "paddingTop": "32px",
+              "paddingRight": "32px",
+              "paddingBottom": "32px",
+              "paddingLeft": "32px",
+              "marginTop": "80px",
+              "marginRight": "52px",
+              "marginBottom": "80px",
+              "marginLeft": "52px",
+              "width": "600px",
+              "height": "188.875px",
+              "display": "block",
+              "borderRadius": "8px",
+              "boxShadow": "rgba(0, 0, 0, 0.02) 2px 3px 7px 2px",
+              "position": "static",
+              "opacity": "1",
+              "transition": "all"
+            },
+            "rect": {
+              "x": 52,
+              "y": 80,
+              "width": 664,
+              "height": 252.875,
+              "top": 80,
+              "right": 716,
+              "bottom": 332.875,
+              "left": 52
+            },
+            "children": [
+              {
+                "tag": "h1",
+                "text": "Example Domain",
+                "href": null,
+                "styles": {
+                  "fontSize": "32px",
+                  "fontWeight": "700",
+                  "fontFamily": "-apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+                  "color": "rgb(0, 0, 0)",
+                  "textAlign": "start",
+                  "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box",
+                  "paddingTop": "0px",
+                  "paddingRight": "0px",
+                  "paddingBottom": "0px",
+                  "paddingLeft": "0px",
+                  "marginTop": "21.44px",
+                  "marginRight": "0px",
+                  "marginBottom": "21.44px",
+                  "marginLeft": "0px",
+                  "width": "600px",
+                  "height": "38px",
+                  "display": "block",
+                  "borderRadius": "0px",
+                  "position": "static",
+                  "opacity": "1",
+                  "transition": "all"
+                },
+                "rect": {
+                  "x": 84,
+                  "y": 133.4375,
+                  "width": 600,
+                  "height": 38,
+                  "top": 133.4375,
+                  "right": 684,
+                  "bottom": 171.4375,
+                  "left": 84
+                },
+                "children": []
+              },
+              {
+                "tag": "p",
+                "text": "This domain is for use in illustrative examples in documents. You may use this\n    domain in literature without prior coordination or asking for permission.",
+                "href": null,
+                "styles": {
+                  "fontSize": "16px",
+                  "fontWeight": "400",
+                  "fontFamily": "-apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+                  "color": "rgb(0, 0, 0)",
+                  "textAlign": "start",
+                  "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box",
+                  "paddingTop": "0px",
+                  "paddingRight": "0px",
+                  "paddingBottom": "0px",
+                  "paddingLeft": "0px",
+                  "marginTop": "16px",
+                  "marginRight": "0px",
+                  "marginBottom": "16px",
+                  "marginLeft": "0px",
+                  "width": "600px",
+                  "height": "57px",
+                  "display": "block",
+                  "borderRadius": "0px",
+                  "position": "static",
+                  "opacity": "1",
+                  "transition": "all"
+                },
+                "rect": {
+                  "x": 84,
+                  "y": 192.875,
+                  "width": 600,
+                  "height": 57,
+                  "top": 192.875,
+                  "right": 684,
+                  "bottom": 249.875,
+                  "left": 84
+                },
+                "children": []
+              },
+              {
+                "tag": "p",
+                "text": null,
+                "href": null,
+                "styles": {
+                  "fontSize": "16px",
+                  "fontWeight": "400",
+                  "fontFamily": "-apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+                  "color": "rgb(0, 0, 0)",
+                  "textAlign": "start",
+                  "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box",
+                  "paddingTop": "0px",
+                  "paddingRight": "0px",
+                  "paddingBottom": "0px",
+                  "paddingLeft": "0px",
+                  "marginTop": "16px",
+                  "marginRight": "0px",
+                  "marginBottom": "16px",
+                  "marginLeft": "0px",
+                  "width": "600px",
+                  "height": "19px",
+                  "display": "block",
+                  "borderRadius": "0px",
+                  "position": "static",
+                  "opacity": "1",
+                  "transition": "all"
+                },
+                "rect": {
+                  "x": 84,
+                  "y": 265.875,
+                  "width": 600,
+                  "height": 19,
+                  "top": 265.875,
+                  "right": 684,
+                  "bottom": 284.875,
+                  "left": 84
+                },
+                "children": [
+                  {
+                    "tag": "a",
+                    "text": "More information...",
+                    "href": "https://www.iana.org/domains/example/",
+                    "styles": {
+                      "fontSize": "16px",
+                      "fontWeight": "400",
+                      "fontFamily": "-apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+                      "color": "rgb(56, 72, 143)",
+                      "textAlign": "start",
+                      "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box",
+                      "paddingTop": "0px",
+                      "paddingRight": "0px",
+                      "paddingBottom": "0px",
+                      "paddingLeft": "0px",
+                      "marginTop": "0px",
+                      "marginRight": "0px",
+                      "marginBottom": "0px",
+                      "marginLeft": "0px",
+                      "display": "inline",
+                      "borderRadius": "0px",
+                      "position": "static",
+                      "opacity": "1",
+                      "transition": "all",
+                      "cursor": "pointer"
+                    },
+                    "rect": {
+                      "x": 84,
+                      "y": 265.875,
+                      "width": 152.359375,
+                      "height": 19,
+                      "top": 265.875,
+                      "right": 236.359375,
+                      "bottom": 284.875,
+                      "left": 84
+                    },
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "htmlStyles": {
+        "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box",
+        "backgroundColor": "rgba(0, 0, 0, 0)"
+      },
+      "bodyStyles": {
+        "backgroundColor": "rgb(240, 240, 242)",
+        "background": "rgb(240, 240, 242) none repeat scroll 0% 0% / auto padding-box border-box",
+        "fontFamily": "-apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+        "margin": "0px",
+        "padding": "0px"
+      },
+      "linkHover": {
+        "before": {
+          "color": "rgb(56, 72, 143)",
+          "textDecoration": "none",
+          "transition": "all"
+        },
+        "after": {
+          "color": "rgb(56, 72, 143)",
+          "textDecoration": "none",
+          "transition": "all"
+        }
+      },
+      "pageScrollable": false
+    },
+    "mobile-390": {
+      "title": "Example Domain",
+      "doctype": "html",
+      "rawHTML": "<html><head>\n    <title>Example Domain</title>\n\n    <meta charset=\"utf-8\">\n    <meta http-equiv=\"Content-type\" content=\"text/html; charset=utf-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n    <style type=\"text/css\">\n    body {\n        background-color: #f0f0f2;\n        margin: 0;\n        padding: 0;\n        font-family: -apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif;\n\n    }\n    div {\n        width: 600px;\n        margin: 5em auto;\n        padding: 2em;\n        background-color: #fdfdff;\n        border-radius: 0.5em;\n        box-shadow: 2px 3px 7px 2px rgba(0,0,0,0.02);\n    }\n    a:link, a:visited {\n        color: #38488f;\n        text-decoration: none;\n    }\n    @media (max-width: 700px) {\n        div {\n            margin: 0 auto;\n            width: auto;\n        }\n    }\n    </style>\n</head>\n\n<body>\n<div>\n    <h1>Example Domain</h1>\n    <p>This domain is for use in illustrative examples in documents. You may use this\n    domain in literature without prior coordination or asking for permission.</p>\n    <p><a href=\"https://www.iana.org/domains/example/\">More information...</a></p>\n</div>\n\n\n</body></html>",
+      "styleSheets": [
+        "\n    body {\n        background-color: #f0f0f2;\n        margin: 0;\n        padding: 0;\n        font-family: -apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif;\n\n    }\n    div {\n        width: 600px;\n        margin: 5em auto;\n        padding: 2em;\n        background-color: #fdfdff;\n        border-radius: 0.5em;\n        box-shadow: 2px 3px 7px 2px rgba(0,0,0,0.02);\n    }\n    a:link, a:visited {\n        color: #38488f;\n        text-decoration: none;\n    }\n    @media (max-width: 700px) {\n        div {\n            margin: 0 auto;\n            width: auto;\n        }\n    }\n    "
+      ],
+      "linkedCSS": [],
+      "scripts": [],
+      "metas": [
+        {
+          "name": "utf-8",
+          "content": ""
+        },
+        {
+          "name": "Content-type",
+          "content": "text/html; charset=utf-8"
+        },
+        {
+          "name": "viewport",
+          "content": "width=device-width, initial-scale=1"
+        }
+      ],
+      "favicons": [],
+      "images": [],
+      "videos": 0,
+      "svgs": 0,
+      "fonts": [
+        "\"Times New Roman\"",
+        "-apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif"
+      ],
+      "tree": {
+        "tag": "body",
+        "text": null,
+        "href": null,
+        "styles": {
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "fontFamily": "-apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+          "color": "rgb(0, 0, 0)",
+          "textAlign": "start",
+          "backgroundColor": "rgb(240, 240, 242)",
+          "background": "rgb(240, 240, 242) none repeat scroll 0% 0% / auto padding-box border-box",
+          "paddingTop": "0px",
+          "paddingRight": "0px",
+          "paddingBottom": "0px",
+          "paddingLeft": "0px",
+          "marginTop": "0px",
+          "marginRight": "0px",
+          "marginBottom": "0px",
+          "marginLeft": "0px",
+          "width": "390px",
+          "height": "271.875px",
+          "display": "block",
+          "borderRadius": "0px",
+          "position": "static",
+          "opacity": "1",
+          "transition": "all"
+        },
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 271.875,
+          "top": 0,
+          "right": 390,
+          "bottom": 271.875,
+          "left": 0
+        },
+        "children": [
+          {
+            "tag": "div",
+            "text": null,
+            "href": null,
+            "styles": {
+              "fontSize": "16px",
+              "fontWeight": "400",
+              "fontFamily": "-apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+              "color": "rgb(0, 0, 0)",
+              "textAlign": "start",
+              "backgroundColor": "rgb(253, 253, 255)",
+              "background": "rgb(253, 253, 255) none repeat scroll 0% 0% / auto padding-box border-box",
+              "paddingTop": "32px",
+              "paddingRight": "32px",
+              "paddingBottom": "32px",
+              "paddingLeft": "32px",
+              "marginTop": "0px",
+              "marginRight": "0px",
+              "marginBottom": "0px",
+              "marginLeft": "0px",
+              "width": "326px",
+              "height": "207.875px",
+              "display": "block",
+              "borderRadius": "8px",
+              "boxShadow": "rgba(0, 0, 0, 0.02) 2px 3px 7px 2px",
+              "position": "static",
+              "opacity": "1",
+              "transition": "all"
+            },
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 271.875,
+              "top": 0,
+              "right": 390,
+              "bottom": 271.875,
+              "left": 0
+            },
+            "children": [
+              {
+                "tag": "h1",
+                "text": "Example Domain",
+                "href": null,
+                "styles": {
+                  "fontSize": "32px",
+                  "fontWeight": "700",
+                  "fontFamily": "-apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+                  "color": "rgb(0, 0, 0)",
+                  "textAlign": "start",
+                  "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box",
+                  "paddingTop": "0px",
+                  "paddingRight": "0px",
+                  "paddingBottom": "0px",
+                  "paddingLeft": "0px",
+                  "marginTop": "21.44px",
+                  "marginRight": "0px",
+                  "marginBottom": "21.44px",
+                  "marginLeft": "0px",
+                  "width": "326px",
+                  "height": "38px",
+                  "display": "block",
+                  "borderRadius": "0px",
+                  "position": "static",
+                  "opacity": "1",
+                  "transition": "all"
+                },
+                "rect": {
+                  "x": 32,
+                  "y": 53.4375,
+                  "width": 326,
+                  "height": 38,
+                  "top": 53.4375,
+                  "right": 358,
+                  "bottom": 91.4375,
+                  "left": 32
+                },
+                "children": []
+              },
+              {
+                "tag": "p",
+                "text": "This domain is for use in illustrative examples in documents. You may use this\n    domain in literature without prior coordination or asking for permission.",
+                "href": null,
+                "styles": {
+                  "fontSize": "16px",
+                  "fontWeight": "400",
+                  "fontFamily": "-apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+                  "color": "rgb(0, 0, 0)",
+                  "textAlign": "start",
+                  "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box",
+                  "paddingTop": "0px",
+                  "paddingRight": "0px",
+                  "paddingBottom": "0px",
+                  "paddingLeft": "0px",
+                  "marginTop": "16px",
+                  "marginRight": "0px",
+                  "marginBottom": "16px",
+                  "marginLeft": "0px",
+                  "width": "326px",
+                  "height": "76px",
+                  "display": "block",
+                  "borderRadius": "0px",
+                  "position": "static",
+                  "opacity": "1",
+                  "transition": "all"
+                },
+                "rect": {
+                  "x": 32,
+                  "y": 112.875,
+                  "width": 326,
+                  "height": 76,
+                  "top": 112.875,
+                  "right": 358,
+                  "bottom": 188.875,
+                  "left": 32
+                },
+                "children": []
+              },
+              {
+                "tag": "p",
+                "text": null,
+                "href": null,
+                "styles": {
+                  "fontSize": "16px",
+                  "fontWeight": "400",
+                  "fontFamily": "-apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+                  "color": "rgb(0, 0, 0)",
+                  "textAlign": "start",
+                  "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box",
+                  "paddingTop": "0px",
+                  "paddingRight": "0px",
+                  "paddingBottom": "0px",
+                  "paddingLeft": "0px",
+                  "marginTop": "16px",
+                  "marginRight": "0px",
+                  "marginBottom": "16px",
+                  "marginLeft": "0px",
+                  "width": "326px",
+                  "height": "19px",
+                  "display": "block",
+                  "borderRadius": "0px",
+                  "position": "static",
+                  "opacity": "1",
+                  "transition": "all"
+                },
+                "rect": {
+                  "x": 32,
+                  "y": 204.875,
+                  "width": 326,
+                  "height": 19,
+                  "top": 204.875,
+                  "right": 358,
+                  "bottom": 223.875,
+                  "left": 32
+                },
+                "children": [
+                  {
+                    "tag": "a",
+                    "text": "More information...",
+                    "href": "https://www.iana.org/domains/example/",
+                    "styles": {
+                      "fontSize": "16px",
+                      "fontWeight": "400",
+                      "fontFamily": "-apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+                      "color": "rgb(56, 72, 143)",
+                      "textAlign": "start",
+                      "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box",
+                      "paddingTop": "0px",
+                      "paddingRight": "0px",
+                      "paddingBottom": "0px",
+                      "paddingLeft": "0px",
+                      "marginTop": "0px",
+                      "marginRight": "0px",
+                      "marginBottom": "0px",
+                      "marginLeft": "0px",
+                      "display": "inline",
+                      "borderRadius": "0px",
+                      "position": "static",
+                      "opacity": "1",
+                      "transition": "all",
+                      "cursor": "pointer"
+                    },
+                    "rect": {
+                      "x": 32,
+                      "y": 204.875,
+                      "width": 152.359375,
+                      "height": 19,
+                      "top": 204.875,
+                      "right": 184.359375,
+                      "bottom": 223.875,
+                      "left": 32
+                    },
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "htmlStyles": {
+        "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box",
+        "backgroundColor": "rgba(0, 0, 0, 0)"
+      },
+      "bodyStyles": {
+        "backgroundColor": "rgb(240, 240, 242)",
+        "background": "rgb(240, 240, 242) none repeat scroll 0% 0% / auto padding-box border-box",
+        "fontFamily": "-apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+        "margin": "0px",
+        "padding": "0px"
+      },
+      "linkHover": {
+        "before": {
+          "color": "rgb(56, 72, 143)",
+          "textDecoration": "none",
+          "transition": "all"
+        },
+        "after": {
+          "color": "rgb(56, 72, 143)",
+          "textDecoration": "none",
+          "transition": "all"
+        }
+      },
+      "pageScrollable": false
+    }
+  }
+}
