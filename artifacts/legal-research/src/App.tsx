@@ -11,7 +11,6 @@ import { BetaFeedbackWidget } from '@/components/beta/FeedbackWidget';
 
 // ─── Pages ────────────────────────────────────────────────────────────────────
 import NotFound from '@/pages/not-found';
-import Dashboard from '@/pages/dashboard';
 import JourneyHome from '@/pages/journey-home';
 const LegalSearchHub = React.lazy(() => import('@/pages/legal-search-hub'));
 
@@ -142,14 +141,17 @@ function Router() {
         }
       >
       <Switch>
-        {/* ── Main — التخطيط التنفيذي المعتمد: لوحة القيادة مباشرة بعد الدخول ── */}
-        <Route path="/" component={Dashboard} />
+        {/* ── المنتج = سير العمل ذو الشاشات الثماني (المرجع المعتمد الوحيد) ──
+            الشاشة ١: التسجيل (AuthGate/Login) ← قبل الدخول
+            الشاشة ٢: الصفحة الرئيسية (/) ← بعد الدخول مباشرة
+            الشاشات ٣→٨: التقدم الطبيعي عبر /journey/… حتى النتيجة الذكية */}
+        <Route path="/" component={JourneyHome} />
         <Route path="/dashboard">
           <Redirect to="/" />
         </Route>
-
-        {/* ── رحلة مرصد الموجهة (قوالب المرفق ١ — أداة ثانوية من القائمة الجانبية) ── */}
-        <Route path="/journey" component={JourneyHome} />
+        <Route path="/journey">
+          <Redirect to="/" />
+        </Route>
         <Route path="/journey-services" component={MarsadServicesPage} />
         <Route path="/journey/result/:sessionId" component={JourneyResult} />
         <Route path="/journey/:pathId/:categoryId/:serviceId/incident/:incidentId" component={JourneyCase} />

@@ -21,7 +21,7 @@ export default function JourneyCategoryPage() {
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-muted-foreground" dir="rtl">
           <AlertCircle className="w-10 h-10" />
           <p>المسار غير موجود</p>
-          <Button variant="outline" onClick={() => navigate('/journey')}>رجوع</Button>
+          <Button variant="outline" onClick={() => navigate('/')}>رجوع</Button>
         </div>
       </AppLayout>
     );
@@ -42,7 +42,7 @@ export default function JourneyCategoryPage() {
           </div>
           <button
             type="button"
-            onClick={() => navigate('/journey')}
+            onClick={() => navigate('/')}
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             رجوع <ArrowRight className="w-4 h-4" aria-hidden />

@@ -23,7 +23,7 @@ export default function JourneyIncidentPage() {
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-muted-foreground" dir="rtl">
           <AlertCircle className="w-10 h-10" />
           <p>الخدمة غير موجودة</p>
-          <Button variant="outline" onClick={() => navigate('/journey')}>رجوع</Button>
+          <Button variant="outline" onClick={() => navigate('/')}>رجوع</Button>
         </div>
       </AppLayout>
     );

@@ -161,7 +161,7 @@ export default function JourneyResultPage() {
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-muted-foreground" dir="rtl">
           <AlertCircle className="w-10 h-10" />
           <p>لم يتم العثور على نتيجة التحليل</p>
-          <Button variant="outline" onClick={() => navigate('/journey')}>رحلة مرصد</Button>
+          <Button variant="outline" onClick={() => navigate('/')}>الصفحة الرئيسية</Button>
         </div>
       </AppLayout>
     );
@@ -203,10 +203,10 @@ export default function JourneyResultPage() {
           <h1 className="text-xl sm:text-2xl font-bold text-heading">النتيجة الذكية</h1>
           <button
             type="button"
-            onClick={() => navigate('/journey')}
+            onClick={() => navigate('/')}
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            رحلة مرصد <ArrowRight className="w-4 h-4" aria-hidden />
+            الصفحة الرئيسية <ArrowRight className="w-4 h-4" aria-hidden />
           </button>
         </div>
 
