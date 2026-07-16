@@ -3,6 +3,7 @@ import { Link, useLocation } from 'wouter';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useUserContext } from '@/lib/user-context';
 import { Lock, ChevronLeft, Bell, Users, ShieldCheck } from 'lucide-react';
+import { PathIcon } from '@/components/icons/prosecution-emblem';
 import {
   JOURNEY_PATHS, NEW_IN_MARSAD, MARSAD_SERVICES,
   NAFE_ALERTS, COMMUNITY_FEATURES, COMMUNITY_POSTS, SHAMSI_PILLARS,
@@ -11,7 +12,7 @@ import {
 // ─── الصفحة الرئيسية — مرحباً بك في مرصد (المرفق ١ / الشاشة ٢) ────────────────
 // ترتيب المسارات والعناصر هنا يطابق ترتيب المرفق حرفياً — لا تعد ترتيبها.
 
-function PathTile({ icon, nameAr, href }: { icon: string; nameAr: string; href: string }) {
+function PathTile({ icon, nameAr, href }: { icon: React.ReactNode; nameAr: string; href: string }) {
   return (
     <Link href={href}>
       <div className="moj-card rounded-2xl p-6 sm:p-7 flex flex-col items-center justify-center gap-3.5 text-center cursor-pointer border border-border hover:border-gold/50 hover:shadow-lg transition-all min-h-[150px] sm:min-h-[170px] group">
@@ -52,7 +53,12 @@ export default function JourneyHome() {
         {/* ── المسارات المهنية (بترتيب المرفق) ── */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
           {JOURNEY_PATHS.map((p) => (
-            <PathTile key={p.id} icon={p.icon} nameAr={p.nameAr} href={`/journey/${p.id}`} />
+            <PathTile
+              key={p.id}
+              icon={<PathIcon path={p} className="w-11 h-11 sm:w-14 sm:h-14 text-gold" />}
+              nameAr={p.nameAr}
+              href={`/journey/${p.id}`}
+            />
           ))}
           {/* خدمات مرصد — البلاطة الثامنة */}
           <PathTile icon="🧰" nameAr="خدمات مرصد" href="/journey-services" />

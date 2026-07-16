@@ -4,6 +4,7 @@ import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, AlertCircle } from 'lucide-react';
 import { findPath } from '@/lib/journey-catalog';
+import { PathIcon } from '@/components/icons/prosecution-emblem';
 
 // ─── اختيار الفئة التفصيلية (المرفق ١ / الشاشة ٣) ─────────────────────────────
 // بعد اختيار المسار المهني يختار المستخدم فئته التفصيلية، وتظهر رسالة ترحيب
@@ -35,8 +36,9 @@ export default function JourneyCategoryPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-heading">
-              اختيار الفئة: {path.nameAr} {path.icon}
+            <h1 className="text-xl sm:text-2xl font-bold text-heading flex items-center gap-2">
+              اختيار الفئة: {path.nameAr}
+              <PathIcon path={path} className="w-8 h-8 text-gold inline-block" />
             </h1>
             <p className="text-sm text-muted-foreground mt-1">اختر فئتك التفصيلية</p>
           </div>

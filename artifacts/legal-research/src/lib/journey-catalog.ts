@@ -392,7 +392,9 @@ export const JOURNEY_PATHS: JourneyPath[] = [
     ],
   },
   {
-    id: 'prosecution', nameAr: 'النيابة العامة', nameEn: 'Public Prosecution', icon: '🔨',
+    // شعار النيابة العامة يُعرض كـ SVG معتمد (الخيار 5 — ميزان بمحور إنسان وغصن غار)
+    // عبر PathIcon في components/icons/prosecution-emblem.tsx؛ الرمز هنا احتياطي فقط.
+    id: 'prosecution', nameAr: 'النيابة العامة', nameEn: 'Public Prosecution', icon: '⚖️',
     incidentLabelAr: 'الواقعة',
     categories: [
       cat('prosecutor', 'وكيل نيابة', '🧑‍⚖️', 'مرحباً بك سعادة وكيل النيابة. تم تجهيز بيئة التحقيق والأدوات التي تساعدك في أداء مهامك بكفاءة وسرعة عالية.', prosecutionServices(), SPG.prosecutor),
