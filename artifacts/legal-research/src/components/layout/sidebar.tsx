@@ -96,8 +96,8 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
       items: [
         {
           href: '/',
-          labelAr: 'لوحة القيادة',
-          labelEn: 'Dashboard',
+          labelAr: 'الصفحة الرئيسية',
+          labelEn: 'Home',
           icon: <LayoutDashboard className="w-4.5 h-4.5" />,
           show: true,
         },
@@ -107,6 +107,20 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           labelEn: 'AI Assistant',
           icon: <Bot className="w-4.5 h-4.5" />,
           show: canUseAi,
+        },
+        {
+          href: '/nafe',
+          labelAr: 'خدمة نافع',
+          labelEn: 'Nafe Awareness',
+          icon: <Shield className="w-4.5 h-4.5" />,
+          show: true,
+        },
+        {
+          href: '/community',
+          labelAr: 'المجتمع المهني',
+          labelEn: 'Professional Community',
+          icon: <Users className="w-4.5 h-4.5" />,
+          show: true,
         },
       ],
     },

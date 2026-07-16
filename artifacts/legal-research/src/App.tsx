@@ -12,7 +12,21 @@ import { BetaFeedbackWidget } from '@/components/beta/FeedbackWidget';
 // ─── Pages ────────────────────────────────────────────────────────────────────
 import NotFound from '@/pages/not-found';
 import Dashboard from '@/pages/dashboard';
+import JourneyHome from '@/pages/journey-home';
 const LegalSearchHub = React.lazy(() => import('@/pages/legal-search-hub'));
+
+// رحلة مرصد الموجهة (قوالب المرفق ١ — الشاشات ٢ إلى ٨)
+const MarsadServicesPage = React.lazy(() =>
+  import('@/pages/journey-home').then((m) => ({ default: m.MarsadServicesPage })),
+);
+const JourneyCategory      = React.lazy(() => import('@/pages/journey-category'));
+const JourneyServices      = React.lazy(() => import('@/pages/journey-services'));
+const JourneyServiceDetail = React.lazy(() => import('@/pages/journey-service-detail'));
+const JourneyIncident      = React.lazy(() => import('@/pages/journey-incident'));
+const JourneyCase          = React.lazy(() => import('@/pages/journey-case'));
+const JourneyResult        = React.lazy(() => import('@/pages/journey-result'));
+const NafePage             = React.lazy(() => import('@/pages/nafe'));
+const CommunityPage        = React.lazy(() => import('@/pages/community'));
 
 // Research Tools
 const LegalResearch = React.lazy(() => import('@/pages/legal-research'));
@@ -128,8 +142,22 @@ function Router() {
         }
       >
       <Switch>
-        {/* ── Main ─────────────────────────────────────────────────── */}
-        <Route path="/" component={Dashboard} />
+        {/* ── Main — الصفحة الرئيسية بقوالب المرفق ١ ────────────────── */}
+        <Route path="/" component={JourneyHome} />
+        <Route path="/dashboard" component={Dashboard} />
+
+        {/* ── رحلة مرصد الموجهة (الشاشات ٣ → ٨) ─────────────────────── */}
+        <Route path="/journey-services" component={MarsadServicesPage} />
+        <Route path="/journey/result/:sessionId" component={JourneyResult} />
+        <Route path="/journey/:pathId/:categoryId/:serviceId/incident/:incidentId" component={JourneyCase} />
+        <Route path="/journey/:pathId/:categoryId/:serviceId/incident" component={JourneyIncident} />
+        <Route path="/journey/:pathId/:categoryId/:serviceId" component={JourneyServiceDetail} />
+        <Route path="/journey/:pathId/:categoryId" component={JourneyServices} />
+        <Route path="/journey/:pathId" component={JourneyCategory} />
+
+        {/* ── خدمة نافع + المجتمع المهني ─────────────────────────────── */}
+        <Route path="/nafe" component={NafePage} />
+        <Route path="/community" component={CommunityPage} />
         <Route path="/shamsi-theory">
           <RouteGuard allow={canUseShamsiFramework}>
             <ShamsiTheory />
