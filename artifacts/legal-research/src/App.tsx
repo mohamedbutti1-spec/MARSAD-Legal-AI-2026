@@ -142,11 +142,14 @@ function Router() {
         }
       >
       <Switch>
-        {/* ── Main — الصفحة الرئيسية بقوالب المرفق ١ ────────────────── */}
-        <Route path="/" component={JourneyHome} />
-        <Route path="/dashboard" component={Dashboard} />
+        {/* ── Main — التخطيط التنفيذي المعتمد: لوحة القيادة مباشرة بعد الدخول ── */}
+        <Route path="/" component={Dashboard} />
+        <Route path="/dashboard">
+          <Redirect to="/" />
+        </Route>
 
-        {/* ── رحلة مرصد الموجهة (الشاشات ٣ → ٨) ─────────────────────── */}
+        {/* ── رحلة مرصد الموجهة (قوالب المرفق ١ — أداة ثانوية من القائمة الجانبية) ── */}
+        <Route path="/journey" component={JourneyHome} />
         <Route path="/journey-services" component={MarsadServicesPage} />
         <Route path="/journey/result/:sessionId" component={JourneyResult} />
         <Route path="/journey/:pathId/:categoryId/:serviceId/incident/:incidentId" component={JourneyCase} />

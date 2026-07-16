@@ -96,8 +96,8 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
       items: [
         {
           href: '/',
-          labelAr: 'الصفحة الرئيسية',
-          labelEn: 'Home',
+          labelAr: 'لوحة القيادة',
+          labelEn: 'Dashboard',
           icon: <LayoutDashboard className="w-4.5 h-4.5" />,
           show: true,
         },
@@ -107,6 +107,14 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           labelEn: 'AI Assistant',
           icon: <Bot className="w-4.5 h-4.5" />,
           show: canUseAi,
+        },
+        // الأدوات الثانوية — التخطيط التنفيذي المعتمد ينقلها إلى القائمة الجانبية
+        {
+          href: '/journey',
+          labelAr: 'رحلة مرصد الموجهة',
+          labelEn: 'Guided Journey',
+          icon: <Compass className="w-4.5 h-4.5" />,
+          show: true,
         },
         {
           href: '/nafe',
