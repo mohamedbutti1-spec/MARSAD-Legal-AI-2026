@@ -14,9 +14,9 @@ import {
 function PathTile({ icon, nameAr, href }: { icon: string; nameAr: string; href: string }) {
   return (
     <Link href={href}>
-      <div className="moj-card rounded-xl p-4 sm:p-5 flex flex-col items-center justify-center gap-2.5 text-center cursor-pointer border border-border hover:border-gold/50 hover:shadow-lg transition-all min-h-[110px] group">
-        <span className="text-3xl group-hover:scale-110 transition-transform" aria-hidden>{icon}</span>
-        <span className="text-sm font-bold text-heading leading-snug">{nameAr}</span>
+      <div className="moj-card rounded-2xl p-6 sm:p-7 flex flex-col items-center justify-center gap-3.5 text-center cursor-pointer border border-border hover:border-gold/50 hover:shadow-lg transition-all min-h-[150px] sm:min-h-[170px] group">
+        <span className="text-4xl sm:text-5xl group-hover:scale-110 transition-transform" aria-hidden>{icon}</span>
+        <span className="text-base sm:text-lg font-bold text-heading leading-snug">{nameAr}</span>
       </div>
     </Link>
   );
