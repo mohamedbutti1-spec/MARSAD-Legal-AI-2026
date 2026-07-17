@@ -31,6 +31,8 @@ import {
   Compass,
   UserCircle,
   GraduationCap,
+  MoreHorizontal,
+  Bell,
 } from 'lucide-react';
 import { useUserContext } from '@/lib/user-context';
 
@@ -59,6 +61,17 @@ interface NavSection {
   items: NavItem[];
 }
 
+// Sections relocated behind the "More" menu — only the Home section stays
+// permanently visible per the approved homepage review.
+const MORE_SECTION_IDS = new Set([
+  'legal-reference',
+  'research-knowledge',
+  'decisions-governance',
+  'training',
+  'services',
+  'private',
+]);
+
 export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: SidebarProps) {
   const [location] = useLocation();
   const search = useSearch();
@@ -66,6 +79,8 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
   // Sub-menu expand/collapse state, keyed by parent href (e.g. training scenarios).
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  // "More" menu — secondary sections are hidden behind this toggle (closed by default).
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const toggleSection = (id: string) => {
     setCollapsedSections((prev) => {
@@ -518,7 +533,8 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
 
       {/* ─── Navigation ──────────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto py-3 space-y-0.5">
-        {sections.map((section) => {
+        {(() => {
+        const renderSection = (section: NavSection) => {
           const visibleItems = section.items.filter((i) => i.show);
           if (visibleItems.length === 0) return null;
 
@@ -658,7 +674,68 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
               )}
             </div>
           );
-        })}
+        };
+
+        const mainSections = sections.filter((s) => !MORE_SECTION_IDS.has(s.id));
+        const moreSections = sections.filter((s) => MORE_SECTION_IDS.has(s.id));
+
+        return (
+          <>
+            {mainSections.map(renderSection)}
+
+            {/* ─── More menu — houses all secondary sections ─────────── */}
+            <div className="px-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setMoreOpen((o) => !o)}
+                title={collapsed ? (lang === 'ar' ? 'المزيد' : 'More') : undefined}
+                className={`
+                  w-full flex items-center gap-3 px-3 py-2.5 rounded-md transition-all duration-150 relative group
+                  ${moreOpen ? 'nav-item-active' : 'text-sidebar-foreground/60 hover:nav-item-hover'}
+                `}
+              >
+                <div className={`shrink-0 ${moreOpen ? 'text-white' : 'text-sidebar-foreground/50 group-hover:text-sidebar-foreground/80'}`}>
+                  <MoreHorizontal className="w-4.5 h-4.5" />
+                </div>
+                {!collapsed && (
+                  <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
+                    <span className={`text-sm font-medium truncate ${moreOpen ? 'text-white' : ''}`}>
+                      {lang === 'ar' ? 'المزيد' : 'More'}
+                    </span>
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${moreOpen ? '' : '-rotate-90'} text-sidebar-foreground/40`} />
+                  </div>
+                )}
+                {collapsed && (
+                  <div className="absolute start-full ms-2 px-2 py-1 bg-sidebar-primary text-sidebar-primary-foreground text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 shadow-lg border border-sidebar-border">
+                    {lang === 'ar' ? 'المزيد' : 'More'}
+                  </div>
+                )}
+              </button>
+            </div>
+
+            {moreOpen && (
+              <div className="px-2">
+                {/* Notifications — relocated from the header per the review */}
+                <div className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sidebar-foreground/45 cursor-default">
+                  <Bell className="w-4.5 h-4.5 shrink-0" />
+                  {!collapsed && (
+                    <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
+                      <span className="text-sm font-medium truncate">
+                        {lang === 'ar' ? 'الإشعارات' : 'Notifications'}
+                      </span>
+                      <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded border border-gold/30 bg-gold/10 text-gold">
+                        {lang === 'ar' ? 'قريبًا' : 'Soon'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {moreOpen && moreSections.map(renderSection)}
+          </>
+        );
+        })()}
       </div>
 
       {/* ─── User Info ───────────────────────────────────────────────── */}

@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
 import { useUserContext, type UserRole, ROLE_META } from '@/lib/user-context';
-import { Bell, Menu, Scale, Globe, LogOut, User } from 'lucide-react';
+import { Menu, Scale, Globe, LogOut, User } from 'lucide-react';
 
 interface HeaderProps {
   onMenuClick?: () => void;
 }
 
 const TIER_STYLES: Record<string, string> = {
-  legacy:    'bg-gold/10 text-gold/75 border-gold/25',
-  executive: 'bg-sky-50 text-sky-800 border-sky-200',
-  oversight: 'bg-violet-50 text-violet-800 border-violet-200',
-  judicial:  'bg-emerald-50 text-emerald-800 border-emerald-200',
-  public:    'bg-slate-50 text-slate-700 border-slate-200',
+  legacy:    'bg-gold/10 text-gold border-gold/30',
+  executive: 'bg-sky-400/10 text-sky-300 border-sky-400/30',
+  oversight: 'bg-violet-400/10 text-violet-300 border-violet-400/30',
+  judicial:  'bg-emerald-400/10 text-emerald-300 border-emerald-400/30',
+  public:    'bg-slate-400/10 text-slate-300 border-slate-400/30',
 };
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
@@ -39,7 +39,7 @@ export function Header({ onMenuClick }: HeaderProps) {
   };
 
   return (
-    <header className="h-14 bg-white border-b border-border flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20 shrink-0 shadow-xs">
+    <header className="h-14 bg-sidebar border-b border-sidebar-border flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20 shrink-0 shadow-xs">
       <div className="flex items-center gap-3">
         <button
           className="lg:hidden text-muted-foreground hover:text-foreground p-1.5 rounded-md hover:bg-muted/50 transition-colors"
@@ -55,7 +55,7 @@ export function Header({ onMenuClick }: HeaderProps) {
           <span className="font-bold text-foreground text-base">مرصد</span>
         </div>
         <div className="hidden lg:flex items-center gap-2 text-sm text-muted-foreground">
-          <Scale className="w-4 h-4 text-primary" />
+          <Scale className="w-4 h-4 text-gold" />
           <span className="font-semibold text-foreground">
             {isAr ? 'مرصد — منصة البحث القانوني' : 'Marsad — Legal Research Platform'}
           </span>
@@ -70,12 +70,6 @@ export function Header({ onMenuClick }: HeaderProps) {
         >
           <Globe className="w-3.5 h-3.5" />
           <span>{isAr ? 'EN' : 'ع'}</span>
-        </button>
-
-        {/* Notifications */}
-        <button className="relative p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors">
-          <Bell className="w-4 h-4" />
-          <span className="absolute top-1.5 end-1.5 w-1.5 h-1.5 bg-accent rounded-full" />
         </button>
 
         {/* User / role menu */}
@@ -93,7 +87,7 @@ export function Header({ onMenuClick }: HeaderProps) {
           {userMenuOpen && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setUserMenuOpen(false)} />
-              <div className="absolute end-0 top-full mt-2 w-64 bg-white border border-border rounded-xl shadow-xl z-20 overflow-hidden">
+              <div className="absolute end-0 top-full mt-2 w-64 bg-popover border border-border rounded-xl shadow-xl z-20 overflow-hidden">
                 {/* User info */}
                 <div className="px-4 py-3 border-b border-border bg-muted/30">
                   <div className="flex items-center gap-3">

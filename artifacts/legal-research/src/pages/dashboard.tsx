@@ -71,15 +71,6 @@ export default function Dashboard() {
             </button>
           </div>
         </div>
-
-        <div className="shrink-0 py-3 px-4 text-center border-t border-border/30">
-          <p className="text-[10px] text-muted-foreground/50 select-none tracking-wide">
-            {t(
-              'مرصد يعمل على بيانات محلية آمنة — لا تُرسل بياناتك خارج المنظومة',
-              'MARSAD operates on secure local data — your data never leaves the system',
-            )}
-          </p>
-        </div>
       </div>
     </AppLayout>
   );
