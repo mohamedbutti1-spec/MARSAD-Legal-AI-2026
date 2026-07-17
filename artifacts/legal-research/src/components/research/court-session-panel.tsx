@@ -9,12 +9,31 @@
 
 import React, { useState } from 'react';
 import {
-  Scale, Gavel, Shield, Users, FileText, Brain,
-  AlertTriangle, ChevronDown, ChevronUp, Loader2,
-  CheckCircle2, XCircle, TrendingUp, TrendingDown,
-  Star, RotateCcw, Activity, Eye, ArrowDown,
-  ClipboardCheck, Cpu, Lock, Search, Zap,
+  Scale,
+  Shield,
+  Users,
+  FileText,
+  Brain,
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+  TrendingUp,
+  TrendingDown,
+  Star,
+  RotateCcw,
+  Activity,
+  Eye,
+  ArrowDown,
+  ClipboardCheck,
+  Cpu,
+  Lock,
+  Search,
+  Zap,
 } from 'lucide-react';
+import { Gavel } from '@/components/icons/gavel';
 import type {
   CourtSessionData, CourtDefense, CourtShamsiPrinciple,
   CourtScores, ASEPReport,

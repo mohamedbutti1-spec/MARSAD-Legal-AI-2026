@@ -11,10 +11,20 @@ import { Link, useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import {
-  ShieldAlert, FileText, ChevronRight, Loader2, XCircle,
-  AlertTriangle, CheckCircle2, Gavel, Scale, Activity,
-  BarChart3, BookOpen, ArrowUpRight,
+  ShieldAlert,
+  FileText,
+  ChevronRight,
+  Loader2,
+  XCircle,
+  AlertTriangle,
+  CheckCircle2,
+  Scale,
+  Activity,
+  BarChart3,
+  BookOpen,
+  ArrowUpRight,
 } from 'lucide-react';
+import { Gavel } from '@/components/icons/gavel';
 import { useUserContext, useT } from '@/lib/user-context';
 
 // ─── Types ────────────────────────────────────────────────────────────────────

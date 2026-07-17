@@ -8,7 +8,8 @@
  */
 import React, { useState } from 'react';
 import { Link } from 'wouter';
-import { Scale, Search, ChevronRight, AlertTriangle, Shield, FileText, Gavel, PhoneCall, ArrowLeft, Hash, CheckCircle2, XCircle, Link2 } from 'lucide-react';
+import { Scale, Search, ChevronRight, AlertTriangle, Shield, FileText, PhoneCall, ArrowLeft, Hash, CheckCircle2, XCircle, Link2 } from 'lucide-react';
+import { Gavel } from '@/components/icons/gavel';
 
 // ─── API helper (no auth header needed for citizen endpoint) ──────────────────
 

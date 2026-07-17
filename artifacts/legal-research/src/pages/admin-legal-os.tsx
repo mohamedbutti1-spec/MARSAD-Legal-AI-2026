@@ -12,13 +12,39 @@ import { useT } from '@/lib/user-context';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import {
-  Plus, Pencil, Trash2, ChevronRight, Loader2, X,
-  GripVertical, UserCircle, Briefcase, Building2, Globe,
-  Scale, Gavel, Landmark, BookOpen, Users, Shield, Save,
-  ChevronDown, ChevronUp, AlertCircle, CheckCircle2,
-  Layers, HelpCircle, List, Type, Hash, ToggleLeft, Tag,
-  ArrowUp, ArrowDown, Copy,
+  Plus,
+  Pencil,
+  Trash2,
+  ChevronRight,
+  Loader2,
+  X,
+  GripVertical,
+  UserCircle,
+  Briefcase,
+  Building2,
+  Globe,
+  Scale,
+  Landmark,
+  BookOpen,
+  Users,
+  Shield,
+  Save,
+  ChevronDown,
+  ChevronUp,
+  AlertCircle,
+  CheckCircle2,
+  Layers,
+  HelpCircle,
+  List,
+  Type,
+  Hash,
+  ToggleLeft,
+  Tag,
+  ArrowUp,
+  ArrowDown,
+  Copy,
 } from 'lucide-react';
+import { Gavel } from '@/components/icons/gavel';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

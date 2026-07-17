@@ -12,11 +12,28 @@ import { Link } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import {
-  Scale, Shield, AlertTriangle, CheckCircle2, XCircle, Clock,
-  RefreshCw, ChevronRight, Loader2, Activity, Fingerprint,
-  FileText, Target, BarChart3, Eye, Gavel, Users,
-  TrendingUp, TrendingDown, ArrowUpRight, BookOpen,
+  Scale,
+  Shield,
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  RefreshCw,
+  ChevronRight,
+  Loader2,
+  Activity,
+  Fingerprint,
+  FileText,
+  Target,
+  BarChart3,
+  Eye,
+  Users,
+  TrendingUp,
+  TrendingDown,
+  ArrowUpRight,
+  BookOpen,
 } from 'lucide-react';
+import { Gavel } from '@/components/icons/gavel';
 import { useUserContext, useT } from '@/lib/user-context';
 
 // ─── Types ────────────────────────────────────────────────────────────────────

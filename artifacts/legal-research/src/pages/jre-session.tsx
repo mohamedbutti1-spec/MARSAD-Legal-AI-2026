@@ -2,10 +2,25 @@ import React, { useState } from 'react';
 import { useParams, useLocation } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import {
-  Gavel, ArrowRight, Loader2, AlertCircle, CheckCircle2, XCircle,
-  Bot, Sparkles, Scale, BookOpen, FileText, BarChart2, Shield,
-  ScrollText, Send, Info, ChevronDown, ChevronUp,
+  ArrowRight,
+  Loader2,
+  AlertCircle,
+  CheckCircle2,
+  XCircle,
+  Bot,
+  Sparkles,
+  Scale,
+  BookOpen,
+  FileText,
+  BarChart2,
+  Shield,
+  ScrollText,
+  Send,
+  Info,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
+import { Gavel } from '@/components/icons/gavel';
 import { apiFetch } from '@/lib/api-fetch';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

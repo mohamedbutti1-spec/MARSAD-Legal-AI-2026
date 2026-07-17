@@ -6,11 +6,26 @@
 
 import React, { useState, useRef } from 'react';
 import {
-  Brain, Gavel, Scale, FlaskConical, GitCompareArrows,
-  FileText, ShieldAlert, ChevronDown, ChevronUp,
-  Copy, CheckCheck, Loader2, AlertCircle, BookOpen,
-  CheckCircle2, XCircle, AlertTriangle, Info, Sparkles,
+  Brain,
+  Scale,
+  FlaskConical,
+  GitCompareArrows,
+  FileText,
+  ShieldAlert,
+  ChevronDown,
+  ChevronUp,
+  Copy,
+  CheckCheck,
+  Loader2,
+  AlertCircle,
+  BookOpen,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  Info,
+  Sparkles,
 } from 'lucide-react';
+import { Gavel } from '@/components/icons/gavel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button }   from '@/components/ui/button';
 import { Badge }    from '@/components/ui/badge';

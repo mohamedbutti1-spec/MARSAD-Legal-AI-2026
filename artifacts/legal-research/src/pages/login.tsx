@@ -3,8 +3,9 @@ import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Shield, Lock, User, AlertCircle, ChevronDown, Eye } from 'lucide-react';
+import { Lock, User, AlertCircle, ChevronDown, Eye } from 'lucide-react';
 import { useUserContext } from '@/lib/user-context';
+import { MarsadEmblem } from '@/components/icons/marsad-emblem';
 
 // True when built for production (Vite replaces this at compile time).
 const IS_PROD = import.meta.env.PROD;
@@ -63,6 +64,8 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [showDemo, setShowDemo] = useState(false);
   const [guestLoading, setGuestLoading] = useState(false);
+  const [registerNote, setRegisterNote] = useState(false);
+  const [socialNote, setSocialNote] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,15 +131,24 @@ export default function Login() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gold/10 border border-gold/20 mb-4">
-            <Shield className="w-8 h-8 text-gold" />
+            <MarsadEmblem className="w-10 h-10 text-gold" />
           </div>
-          <h1 className="text-2xl font-bold text-heading mb-1">MARSAD</h1>
+          <h1 className="text-2xl font-bold text-heading mb-1">مرصد — MARSAD</h1>
           <p className="text-sm text-muted-foreground">
             منصة القرارات الإدارية الذكية
           </p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Intelligent Administrative Decision Platform
+          <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed max-w-sm mx-auto" dir="rtl">
+            منصة قانونية ذكية تجمع بين التحليل القانوني والمحاكاة المهنية
+            والدراسات المقارنة ودعم القرار التنفيذي، لتمنحك أدق المخرجات
+            القانونية والمهنية بأعلى درجات الجودة والكفاءة.
           </p>
+          <div className="flex items-center justify-center gap-3 mt-3 text-[10px] text-muted-foreground" dir="rtl">
+            <span>🛡️ سرية وأمن عالي</span>
+            <span>·</span>
+            <span>📚 مصادر موثوقة</span>
+            <span>·</span>
+            <span>⚖️ معايير مهنية</span>
+          </div>
         </div>
 
         {/* Login card */}
@@ -238,6 +250,56 @@ export default function Login() {
             </Button>
           </div>
 
+          {/* تسجيل جديد — provisioning is admin-managed in Alpha; explain instead of faking a flow */}
+          <div className="mt-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setRegisterNote(!registerNote)}
+              className="w-full font-medium"
+            >
+              تسجيل جديد / New Registration
+            </Button>
+            {registerNote && (
+              <p className="text-[11px] text-muted-foreground mt-2 leading-relaxed text-center" dir="rtl">
+                إنشاء الحسابات الجديدة يتم حالياً عبر إدارة المنصة للجهات المعتمدة.
+                يمكنك تجربة المنصة كاملة عبر «دخول كمقيّم» أعلاه.
+              </p>
+            )}
+          </div>
+
+          {/* أو تسجيل الدخول عبر — social identity providers (قيد التفعيل) */}
+          <div className="mt-5">
+            <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+              <span className="flex-1 h-px bg-border" />
+              أو تسجيل الدخول عبر
+              <span className="flex-1 h-px bg-border" />
+            </div>
+            <div className="grid grid-cols-4 gap-2 mt-3">
+              {[
+                { id: 'google',    label: 'Google',   icon: 'G'  },
+                { id: 'microsoft', label: 'Microsoft', icon: '⊞' },
+                { id: 'apple',     label: 'Apple',    icon: ''  },
+                { id: 'uaepass',   label: 'UAE PASS', icon: '🇦🇪' },
+              ].map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setSocialNote(p.label)}
+                  className="flex flex-col items-center gap-1 rounded-xl border border-border py-2.5 hover:border-gold/40 transition-colors"
+                >
+                  <span className="text-base leading-none" aria-hidden>{p.icon}</span>
+                  <span className="text-[10px] text-muted-foreground">{p.label}</span>
+                </button>
+              ))}
+            </div>
+            {socialNote && (
+              <p className="text-[11px] text-muted-foreground mt-2 text-center" dir="rtl">
+                الدخول عبر {socialNote} قيد التفعيل — استخدم حسابك المعتمد أو «دخول كمقيّم».
+              </p>
+            )}
+          </div>
+
           {/* Demo accounts panel — hidden in production (accounts are blocked there) */}
           {!IS_PROD && (
           <div className="mt-6 pt-5 border-t border-border">
@@ -277,7 +339,10 @@ export default function Login() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-xs text-muted-foreground mt-6">
+        <p className="text-center text-xs text-gold/80 font-semibold mt-6" dir="rtl">
+          كن في مجتمع مرصد لحفظ الوطن 🇦🇪
+        </p>
+        <p className="text-center text-xs text-muted-foreground mt-1.5">
           دولة الإمارات العربية المتحدة — نظام إداري حكومي داخلي
         </p>
       </div>

@@ -9,11 +9,39 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useUserContext } from '@/lib/user-context';
 import {
-  Shield, CheckCircle2, XCircle, Clock, ChevronLeft, ChevronDown, ChevronUp,
-  Sparkles, Scale, AlertTriangle, Building2, FileText, Loader2, ArrowRight,
-  Lock, Check, Fingerprint, Gavel, BookOpen, Users, Link2, HelpCircle,
-  Download, Hash, RotateCcw, UserCheck, Activity, Eye, ChevronRight, Play, FileCheck, Brain,
+  Shield,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  ChevronLeft,
+  ChevronDown,
+  ChevronUp,
+  Sparkles,
+  Scale,
+  AlertTriangle,
+  Building2,
+  FileText,
+  Loader2,
+  ArrowRight,
+  Lock,
+  Check,
+  Fingerprint,
+  BookOpen,
+  Users,
+  Link2,
+  HelpCircle,
+  Download,
+  Hash,
+  RotateCcw,
+  UserCheck,
+  Activity,
+  Eye,
+  ChevronRight,
+  Play,
+  FileCheck,
+  Brain,
 } from 'lucide-react';
+import { Gavel } from '@/components/icons/gavel';
 import DecisionReplay from '@/components/decisions/DecisionReplay';
 import { RiskPanel } from '@/components/decisions/RiskPanel';
 

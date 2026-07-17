@@ -7,7 +7,6 @@ import {
   FolderOpen,
   Network,
   ScrollText,
-  Gavel,
   Landmark,
   Globe,
   BookOpenText,
@@ -34,6 +33,7 @@ import {
   MoreHorizontal,
   Bell,
 } from 'lucide-react';
+import { Gavel } from '@/components/icons/gavel';
 import { useUserContext } from '@/lib/user-context';
 
 interface SidebarProps {
@@ -109,10 +109,12 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
       titleAr: 'الرئيسية',
       titleEn: 'Home',
       items: [
+        // الصفحة الرئيسية هي بوابة سير العمل ذي الشاشات الثماني — المنتج نفسه.
+        // الرحلة ليست عنصر قائمة: المسار الطبيعي يبدأ من هنا ويتقدم شاشة بشاشة.
         {
           href: '/',
-          labelAr: 'لوحة القيادة',
-          labelEn: 'Dashboard',
+          labelAr: 'الصفحة الرئيسية',
+          labelEn: 'Home',
           icon: <LayoutDashboard className="w-4.5 h-4.5" />,
           show: true,
         },

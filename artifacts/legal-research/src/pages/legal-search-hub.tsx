@@ -7,7 +7,8 @@
 import React from 'react';
 import { useLocation } from 'wouter';
 import { AppLayout } from '@/components/layout/app-layout';
-import { ScrollText, Gavel, BookOpen, GitCompareArrows, Bot } from 'lucide-react';
+import { ScrollText, BookOpen, GitCompareArrows, Bot } from 'lucide-react';
+import { Gavel } from '@/components/icons/gavel';
 import { useT } from '@/lib/user-context';
 
 interface SearchTab {

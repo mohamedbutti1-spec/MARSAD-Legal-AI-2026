@@ -12,11 +12,29 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { AppLayout } from '@/components/layout/app-layout'
 import { useUserContext, useT } from '@/lib/user-context'
 import {
-  Scale, Shield, ShieldAlert, Gavel, AlertTriangle, CheckCircle2, XCircle,
-  AlertCircle, Loader2, RefreshCw, FileText, ChevronDown, ChevronRight,
-  ArrowLeft, Star, TrendingUp, TrendingDown, Lightbulb, ClipboardList,
-  Target, Minus, Brain,
-} from 'lucide-react'
+  Scale,
+  Shield,
+  ShieldAlert,
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  Loader2,
+  RefreshCw,
+  FileText,
+  ChevronDown,
+  ChevronRight,
+  ArrowLeft,
+  Star,
+  TrendingUp,
+  TrendingDown,
+  Lightbulb,
+  ClipboardList,
+  Target,
+  Minus,
+  Brain,
+} from 'lucide-react';
+import { Gavel } from '@/components/icons/gavel';
 
 // ─── Local Types ──────────────────────────────────────────────────────────────
 
