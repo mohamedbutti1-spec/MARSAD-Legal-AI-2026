@@ -8,6 +8,7 @@
  */
 import React, { useState } from 'react';
 import { Link } from 'wouter';
+import { Reveal } from '@/components/ui/reveal';
 import { Scale, Search, ChevronRight, AlertTriangle, Shield, FileText, Gavel, PhoneCall, ArrowLeft, Hash, CheckCircle2, XCircle, Link2 } from 'lucide-react';
 
 // ─── API helper (no auth header needed for citizen endpoint) ──────────────────
@@ -123,7 +124,7 @@ export default function CitizenPortal() {
       {/* ── Hero search area ────────────────────────────────────────────────── */}
       <div className="bg-card border-b border-gold/20 shadow-sm">
         <div className="max-w-3xl mx-auto px-6 py-10">
-          <div className="text-center mb-8">
+          <Reveal className="text-center mb-8">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-gold/10 text-gold text-xs font-bold rounded-full mb-4">
               <Shield className="w-3.5 h-3.5" />
               سجل المساءلة الدستورية
@@ -132,8 +133,9 @@ export default function CitizenPortal() {
             <p className="text-muted-foreground text-sm leading-relaxed max-w-xl mx-auto">
               يحق لكل مواطن متأثر بقرار إداري الاطلاع على مسوّغاته القانونية والدستورية وأدوار الذكاء الاصطناعي فيه، وفق إطار الشامسي للقرار الإداري الذكي.
             </p>
-          </div>
+          </Reveal>
 
+          <Reveal delay={130}>
           <form onSubmit={handleSearch} className="flex gap-3">
             <div className="flex-1 relative">
               <Search className="absolute end-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-foreground" />
@@ -164,6 +166,7 @@ export default function CitizenPortal() {
           <p className="text-center text-xs text-muted-foreground mt-3">
             رقم القضية يبدأ بـ MARSAD ويوجد في أعلى وثيقة القرار الرسمية
           </p>
+          </Reveal>
         </div>
       </div>
 
@@ -225,10 +228,12 @@ export default function CitizenPortal() {
               </div>
             </div>
 
-            {/* CAR sections */}
+            {/* CAR sections — staggered fade-up as the reader scrolls the record */}
             <div className="space-y-4">
-              {CAR_SECTIONS.map((section) => (
-                <CarSectionCard key={section.key} section={section} car={result.car} />
+              {CAR_SECTIONS.map((section, i) => (
+                <Reveal key={section.key} delay={Math.min(i * 60, 240)}>
+                  <CarSectionCard section={section} car={result.car} />
+                </Reveal>
               ))}
             </div>
 
@@ -300,13 +305,15 @@ export default function CitizenPortal() {
         {/* Initial empty state */}
         {!result && !error && !loading && (
           <div className="text-center py-12">
-            <div className="w-16 h-16 rounded-2xl bg-gold/10 flex items-center justify-center mx-auto mb-4">
-              <Scale className="w-8 h-8 text-gold" />
-            </div>
-            <h3 className="font-bold text-foreground text-lg mb-2">ابدأ بالبحث عن قرار</h3>
-            <p className="text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
-              أدخل رقم القضية للاطلاع على سجل المساءلة الدستورية. يتوفر السجل فقط للقرارات المُكتملة والمُختومة.
-            </p>
+            <Reveal delay={220}>
+              <div className="w-16 h-16 rounded-2xl bg-gold/10 flex items-center justify-center mx-auto mb-4">
+                <Scale className="w-8 h-8 text-gold" />
+              </div>
+              <h3 className="font-bold text-foreground text-lg mb-2">ابدأ بالبحث عن قرار</h3>
+              <p className="text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
+                أدخل رقم القضية للاطلاع على سجل المساءلة الدستورية. يتوفر السجل فقط للقرارات المُكتملة والمُختومة.
+              </p>
+            </Reveal>
 
             <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-xl mx-auto">
               {[
@@ -314,13 +321,13 @@ export default function CitizenPortal() {
                 { icon: <Shield className="w-5 h-5" />, title: 'اطلع على المسوّغات', desc: 'الأسباب والأساس القانوني' },
                 { icon: <Gavel className="w-5 h-5" />, title: 'حق الطعن', desc: 'معلومات الاعتراض والتظلم' },
               ].map((step, i) => (
-                <div key={i} className="p-4 rounded-xl bg-card border border-gold/20 text-center">
+                <Reveal key={i} delay={320 + i * 90} className="p-4 rounded-xl bg-card border border-gold/20 text-center">
                   <div className="w-10 h-10 rounded-xl bg-gold/10 flex items-center justify-center mx-auto mb-2 text-gold">
                     {step.icon}
                   </div>
                   <p className="font-bold text-foreground text-sm mb-1">{step.title}</p>
                   <p className="text-xs text-muted-foreground">{step.desc}</p>
-                </div>
+                </Reveal>
               ))}
             </div>
           </div>

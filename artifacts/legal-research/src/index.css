@@ -260,6 +260,56 @@
   }
 }
 
+/* ─── Scroll-reveal entrances ─────────────────────────────────────────
+   Subtle fade-up used across the platform (see components/ui/reveal.tsx).
+   Vertical motion only — direction-neutral, safe for RTL and LTR.
+   Honors prefers-reduced-motion: content appears instantly, no transform. */
+@layer utilities {
+  .reveal {
+    opacity: 0;
+    transform: translateY(14px);
+    transition:
+      opacity 550ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 550ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+  .reveal-visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Entrance for freshly-opened menus / popovers — one soft fade-up pass. */
+  .menu-item-in {
+    animation: menu-item-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: var(--reveal-delay, 0ms);
+  }
+  @keyframes menu-item-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal, .reveal-visible {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+    .menu-item-in {
+      animation: none;
+    }
+  }
+
+  /* Never let an unrevealed section print invisible (e.g. citizen-portal
+     record printing while below-the-fold sections haven't intersected). */
+  @media print {
+    .reveal, .reveal-visible {
+      opacity: 1 !important;
+      transform: none !important;
+      transition: none;
+    }
+  }
+}
+
 /* ─── Marsad custom utilities ────────────────────────────────────────── */
 @layer utilities {
   .nav-item-active {

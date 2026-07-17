@@ -82,7 +82,7 @@ export default function UaeFrance() {
               </Card>
 
               {/* France Panel */}
-              <Card className="border-t-4 border-t-blue-700">
+              <Card className="border-t-4 border-t-heading/50">
                 <CardHeader className="bg-muted/10 pb-4">
                   <CardTitle className="font-serif text-xl flex items-center justify-between">
                     French Law Application

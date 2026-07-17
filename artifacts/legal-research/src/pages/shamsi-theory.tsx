@@ -89,7 +89,7 @@ function SectionHeader({
       )}
       <div
         className={`mt-5 mx-auto w-20 h-0.5 bg-gradient-to-l from-transparent to-transparent ${
-          light ? 'via-white/40' : 'via-[#C9A84C]'
+          light ? 'via-white/40' : 'via-gold'
         }`}
       />
     </div>
@@ -390,7 +390,7 @@ export default function ShamsiTheory() {
           <div className="absolute inset-0 opacity-5 pointer-events-none"
                style={{ backgroundImage: 'repeating-linear-gradient(45deg, #C9A84C 0, #C9A84C 1px, transparent 0, transparent 50%)', backgroundSize: '30px 30px' }} />
           {/* Gold gradient overlay top */}
-          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#C9A84C] to-transparent opacity-60" />
+          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gold to-transparent opacity-60" />
 
           <div className="relative max-w-5xl mx-auto px-6 py-20 lg:py-28">
             <motion.div
@@ -592,11 +592,11 @@ export default function ShamsiTheory() {
 
               {/* Divider */}
               <div className="hidden lg:flex flex-col items-center justify-center absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 mt-10">
-                <div className="h-32 w-px bg-gradient-to-b from-transparent via-[#C9A84C] to-transparent" />
+                <div className="h-32 w-px bg-gradient-to-b from-transparent via-gold to-transparent" />
                 <div className="w-10 h-10 rounded-full bg-card border-2 border-gold/40 flex items-center justify-center text-gold text-xs font-bold my-2">
                   VS
                 </div>
-                <div className="h-32 w-px bg-gradient-to-b from-transparent via-[#C9A84C] to-transparent" />
+                <div className="h-32 w-px bg-gradient-to-b from-transparent via-gold to-transparent" />
               </div>
 
               {/* Digital Will */}
@@ -840,7 +840,7 @@ export default function ShamsiTheory() {
 
           <div className="relative">
             {/* Vertical spine */}
-            <div className="absolute right-7 top-4 bottom-4 w-0.5 bg-gradient-to-b from-gold via-[#C9A84C]/40 to-transparent hidden sm:block" />
+            <div className="absolute right-7 top-4 bottom-4 w-0.5 bg-gradient-to-b from-gold via-gold/40 to-transparent hidden sm:block" />
 
             <div className="space-y-5">
               {WORKFLOW_STEPS.map((step, idx) => {
@@ -875,7 +875,7 @@ export default function ShamsiTheory() {
             SECTION 7 — ASLI INDEX
         ══════════════════════════════════════════════════════════════ */}
         <section className="bg-card py-20 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#C9A84C]/3 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-gold/3 to-transparent pointer-events-none" />
           <div className="max-w-6xl mx-auto px-6 relative">
             <Section>
               <SectionHeader
@@ -965,7 +965,7 @@ export default function ShamsiTheory() {
           {/* Horizontal timeline */}
           <div className="relative">
             {/* Spine */}
-            <div className="hidden md:block absolute top-9 left-0 right-0 h-0.5 bg-gradient-to-l from-transparent via-[#C9A84C]/50 to-transparent" />
+            <div className="hidden md:block absolute top-9 left-0 right-0 h-0.5 bg-gradient-to-l from-transparent via-gold/50 to-transparent" />
 
             <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
               {VISION_MILESTONES.map((m, idx) => (
@@ -994,7 +994,7 @@ export default function ShamsiTheory() {
             <div className="relative rounded-3xl bg-gradient-to-l from-secondary to-card p-8 text-center text-white overflow-hidden">
               <div className="absolute inset-0 opacity-5"
                    style={{ backgroundImage: 'repeating-linear-gradient(45deg, #C9A84C 0, #C9A84C 1px, transparent 0, transparent 50%)', backgroundSize: '20px 20px' }} />
-              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#C9A84C] to-transparent opacity-60" />
+              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gold to-transparent opacity-60" />
               <div className="relative">
                 <Sparkles className="w-8 h-8 text-gold mx-auto mb-4" />
                 <h3 className="text-2xl font-black mb-3" style={{ fontFamily: "'Amiri', serif" }}>

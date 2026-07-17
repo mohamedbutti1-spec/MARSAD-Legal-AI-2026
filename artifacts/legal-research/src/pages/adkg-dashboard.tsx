@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
+import { Reveal } from '@/components/ui/reveal';
 import { apiFetch } from '@/lib/api-fetch';
 import { useT, useUserContext } from '@/lib/user-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -23,15 +24,17 @@ interface Decision {
   createdAt: string;
 }
 
-const STATUS_STYLES: Record<string, { bg: string; text: string; labelAr: string; labelEn: string }> = {
-  draft:      { bg: '#f1f5f9', text: '#475569', labelAr: 'مسودة',       labelEn: 'Draft' },
-  issued:     { bg: '#f0fdf4', text: '#15803d', labelAr: 'صادر',        labelEn: 'Issued' },
-  challenged: { bg: '#fffbeb', text: '#92400e', labelAr: 'مطعون فيه',   labelEn: 'Challenged' },
-  suspended:  { bg: '#fef2f2', text: '#991b1b', labelAr: 'موقوف',       labelEn: 'Suspended' },
-  amended:    { bg: '#faf5ff', text: '#6d28d9', labelAr: 'معدّل',        labelEn: 'Amended' },
-  revoked:    { bg: '#fef2f2', text: '#7f1d1d', labelAr: 'ملغى',        labelEn: 'Revoked' },
-  annulled:   { bg: '#fff1f2', text: '#450a0a', labelAr: 'مُبطل',       labelEn: 'Annulled' },
-  executed:   { bg: '#eff6ff', text: '#1e40af', labelAr: 'منفّذ',        labelEn: 'Executed' },
+// Brand palette only: blue (heading) = positive/info, gold = caution,
+// destructive = negative, muted = neutral.
+const STATUS_STYLES: Record<string, { cls: string; labelAr: string; labelEn: string }> = {
+  draft:      { cls: 'bg-muted/60 text-muted-foreground',   labelAr: 'مسودة',       labelEn: 'Draft' },
+  issued:     { cls: 'bg-heading/15 text-heading',          labelAr: 'صادر',        labelEn: 'Issued' },
+  challenged: { cls: 'bg-gold/15 text-gold',                labelAr: 'مطعون فيه',   labelEn: 'Challenged' },
+  suspended:  { cls: 'bg-destructive/15 text-destructive',  labelAr: 'موقوف',       labelEn: 'Suspended' },
+  amended:    { cls: 'bg-heading/15 text-heading',          labelAr: 'معدّل',        labelEn: 'Amended' },
+  revoked:    { cls: 'bg-destructive/15 text-destructive',  labelAr: 'ملغى',        labelEn: 'Revoked' },
+  annulled:   { cls: 'bg-destructive/20 text-destructive',  labelAr: 'مُبطل',       labelEn: 'Annulled' },
+  executed:   { cls: 'bg-heading/15 text-heading',          labelAr: 'منفّذ',        labelEn: 'Executed' },
 };
 
 const ALL_STATUSES = ['draft','issued','challenged','suspended','amended','revoked','annulled','executed'];
@@ -99,7 +102,7 @@ export default function AdkgDashboard() {
   function StatusBadge({ status }: { status: string }) {
     const s = STATUS_STYLES[status] ?? STATUS_STYLES.draft;
     return (
-      <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: s.bg, color: s.text }}>
+      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${s.cls}`}>
         {t(s.labelAr, s.labelEn)}
       </span>
     );
@@ -108,7 +111,7 @@ export default function AdkgDashboard() {
   return (
     <AppLayout>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+      <Reveal className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-heading flex items-center gap-2">
             <Network className="w-6 h-6" />
@@ -122,7 +125,7 @@ export default function AdkgDashboard() {
           <Plus className="w-4 h-4" />
           {t('قرار جديد', 'New Decision')}
         </Button>
-      </div>
+      </Reveal>
 
       {/* Search + Status Filter */}
       <div className="flex flex-wrap gap-3 mb-5">
@@ -168,6 +171,7 @@ export default function AdkgDashboard() {
       )}
 
       {decisions.length > 0 && (
+        <Reveal delay={120}>
         <div className="rounded-lg border overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-primary text-primary-foreground">
@@ -213,6 +217,7 @@ export default function AdkgDashboard() {
             </tbody>
           </table>
         </div>
+        </Reveal>
       )}
 
       <CreateDecisionDialog

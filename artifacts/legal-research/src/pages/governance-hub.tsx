@@ -6,6 +6,7 @@
  * Nothing here overrides or touches Module 1 decision logic.
  */
 import React, { useState } from 'react';
+import { Reveal } from '@/components/ui/reveal';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'wouter';
 import {
@@ -268,12 +269,12 @@ function MinisterDashboard() {
 
   return (
     <div className="space-y-8">
-      {/* KPI grid */}
+      {/* KPI grid — staggered fade-up */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard label="إجمالي القرارات" value={stats.totalDecisions} icon={<Scale className="w-5 h-5" />} />
-        <KpiCard label="قرارات هذا الشهر" value={stats.totalThisMonth} icon={<Clock className="w-5 h-5" />} />
-        <KpiCard label="معدل الاجتياز الدستوري" value={`${stats.constitutionalPassRate}%`} icon={<Shield className="w-5 h-5" />} sub="قرارات اجتازت التحقق" />
-        <KpiCard label="متوسط أيام الختم" value={stats.avgDaysToSeal === 0 ? '—' : `${stats.avgDaysToSeal} يوم`} icon={<Lock className="w-5 h-5" />} />
+        <Reveal><KpiCard label="إجمالي القرارات" value={stats.totalDecisions} icon={<Scale className="w-5 h-5" />} /></Reveal>
+        <Reveal delay={70}><KpiCard label="قرارات هذا الشهر" value={stats.totalThisMonth} icon={<Clock className="w-5 h-5" />} /></Reveal>
+        <Reveal delay={140}><KpiCard label="معدل الاجتياز الدستوري" value={`${stats.constitutionalPassRate}%`} icon={<Shield className="w-5 h-5" />} sub="قرارات اجتازت التحقق" /></Reveal>
+        <Reveal delay={210}><KpiCard label="متوسط أيام الختم" value={stats.avgDaysToSeal === 0 ? '—' : `${stats.avgDaysToSeal} يوم`} icon={<Lock className="w-5 h-5" />} /></Reveal>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

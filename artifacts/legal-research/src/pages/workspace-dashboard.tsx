@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
+import { Reveal } from '@/components/ui/reveal';
 import { apiFetch } from '@/lib/api-fetch';
 import { useT, useUserContext } from '@/lib/user-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -80,7 +81,7 @@ export default function WorkspaceDashboard() {
   return (
     <AppLayout>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <Reveal className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-heading">{t('مساحة البحث القانوني', 'Legal Research Workspace')}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
@@ -94,7 +95,7 @@ export default function WorkspaceDashboard() {
           <Plus className="w-4 h-4" />
           {t('مشروع جديد', 'New Project')}
         </Button>
-      </div>
+      </Reveal>
 
       {/* Search */}
       <div className="relative mb-6 max-w-sm">
@@ -127,11 +128,11 @@ export default function WorkspaceDashboard() {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {projects.map((project) => (
+        {projects.map((project, i) => (
+          <Reveal key={project.id} delay={Math.min(i, 8) * 60}>
           <Card
-            key={project.id}
             className={`cursor-pointer hover:shadow-md transition-shadow border-l-4 ${
-              project.status === 'archived' ? 'border-l-gray-300 opacity-70' : 'border-l-[#1e3a5f]'
+              project.status === 'archived' ? 'border-l-border opacity-70' : 'border-l-primary/60'
             }`}
             onClick={() => navigate(`/workspace/${project.id}`)}
           >
@@ -171,6 +172,7 @@ export default function WorkspaceDashboard() {
               </div>
             </CardContent>
           </Card>
+          </Reveal>
         ))}
       </div>
 

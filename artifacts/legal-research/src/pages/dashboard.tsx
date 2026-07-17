@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
+import { Reveal } from '@/components/ui/reveal';
 import {
   ArrowLeft,
   ArrowRight,
@@ -42,13 +43,7 @@ export default function Dashboard() {
   const { lang, canUseAi, canManageSettings } = useUserContext();
   const t = useT();
   const [, navigate] = useLocation();
-  const [visible, setVisible] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
-
-  useEffect(() => {
-    const raf = requestAnimationFrame(() => setVisible(true));
-    return () => cancelAnimationFrame(raf);
-  }, []);
 
   const greeting = getGreeting();
   const ArrowIcon = lang === 'ar' ? ArrowLeft : ArrowRight;
@@ -66,16 +61,9 @@ export default function Dashboard() {
   return (
     <AppLayout>
       <div className="flex h-full items-center justify-center overflow-y-auto bg-background px-4 py-12">
-        <div
-          className="w-full max-w-lg flex flex-col items-stretch"
-          style={{
-            opacity: visible ? 1 : 0,
-            transform: visible ? 'translateY(0)' : 'translateY(16px)',
-            transition: 'opacity 350ms ease-out, transform 350ms ease-out',
-          }}
-        >
+        <div className="w-full max-w-lg flex flex-col items-stretch">
           {/* ── Main command card ── */}
-          <div className="moj-card rounded-xl px-6 py-10 sm:px-10 sm:py-12 text-center">
+          <Reveal className="moj-card rounded-xl px-6 py-10 sm:px-10 sm:py-12 text-center">
             <div className="flex items-center justify-center gap-2 mb-4">
               <span className="text-[10px] font-mono font-bold tracking-widest text-gold/70 uppercase select-none">MLOS</span>
               <span className="text-border select-none">·</span>
@@ -91,20 +79,22 @@ export default function Dashboard() {
             <p className="text-sm sm:text-base text-muted-foreground font-medium">
               {t('منصة القرار الإداري الذكي', 'Intelligent Administrative Decision Platform')}
             </p>
-          </div>
+          </Reveal>
 
-          {/* ── Primary call to action — one large button below the card ── */}
-          <button
-            type="button"
-            onClick={() => navigate('/assistant')}
-            className="gold-hover-glow mt-6 w-full inline-flex items-center justify-center gap-3 px-8 py-4 sm:py-5 rounded-xl bg-gold text-background text-base sm:text-lg font-bold hover:opacity-90 transition-all"
-          >
-            {t('ابدأ الرحلة معنا من هنا', 'Start your journey here')}
-            <ArrowIcon className="w-5 h-5" aria-hidden />
-          </button>
+          {/* ── Primary call to action — soft staggered entrance after the card ── */}
+          <Reveal delay={140}>
+            <button
+              type="button"
+              onClick={() => navigate('/assistant')}
+              className="gold-hover-glow mt-6 w-full inline-flex items-center justify-center gap-3 px-8 py-4 sm:py-5 rounded-xl bg-gold text-background text-base sm:text-lg font-bold hover:opacity-90 transition-all"
+            >
+              {t('ابدأ الرحلة معنا من هنا', 'Start your journey here')}
+              <ArrowIcon className="w-5 h-5" aria-hidden />
+            </button>
+          </Reveal>
 
           {/* ── More menu — secondary options (inline panel, flows with layout) ── */}
-          <div className="mt-4 flex flex-col items-center">
+          <Reveal delay={260} className="mt-4 flex flex-col items-center">
             <button
               type="button"
               onClick={() => setMoreOpen((o) => !o)}
@@ -120,7 +110,7 @@ export default function Dashboard() {
 
             {moreOpen && (
               <div role="menu" className="mt-2 w-full max-w-xs moj-card rounded-xl overflow-hidden py-1.5">
-                {moreOptions.map((opt) => (
+                {moreOptions.map((opt, i) => (
                   <button
                     key={opt.href}
                     type="button"
@@ -129,7 +119,8 @@ export default function Dashboard() {
                       setMoreOpen(false);
                       navigate(opt.href);
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-foreground/80 hover:text-gold hover:bg-gold/5 transition-colors text-start"
+                    className="menu-item-in w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-foreground/80 hover:text-gold hover:bg-gold/5 transition-colors text-start"
+                    style={{ '--reveal-delay': `${i * 45}ms` } as React.CSSProperties}
                   >
                     <span className="text-gold/60 shrink-0">{opt.icon}</span>
                     <span className="truncate">{lang === 'ar' ? opt.labelAr : opt.labelEn}</span>
@@ -137,7 +128,7 @@ export default function Dashboard() {
                 ))}
               </div>
             )}
-          </div>
+          </Reveal>
         </div>
       </div>
     </AppLayout>

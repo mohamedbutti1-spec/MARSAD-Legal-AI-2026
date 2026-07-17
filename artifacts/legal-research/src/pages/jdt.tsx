@@ -252,7 +252,7 @@ function ReviewStageCard({
       : stage.outcome === 'partial'
       ? 'border-l-gold'
       : stage.outcome === 'fail'
-      ? 'border-l-red-500'
+      ? 'border-l-destructive'
       : 'border-l-border'
 
   return (
