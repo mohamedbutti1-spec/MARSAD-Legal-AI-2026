@@ -240,7 +240,7 @@ export default function UserManagement() {
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${user.isActive ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-muted text-muted-foreground border-border'}`}>
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${user.isActive ? 'bg-heading/10 text-heading border-heading/25' : 'bg-muted text-muted-foreground border-border'}`}>
                           {user.isActive ? t('نشط', 'Active') : t('معطّل', 'Inactive')}
                         </span>
                       </td>
@@ -265,7 +265,7 @@ export default function UserManagement() {
                               aria-label={user.isActive ? t('تعطيل', 'Deactivate') : t('تفعيل', 'Activate')}
                             >
                               {user.isActive
-                                ? <ToggleRight className="w-4 h-4 text-emerald-600" />
+                                ? <ToggleRight className="w-4 h-4 text-heading" />
                                 : <ToggleLeft className="w-4 h-4 text-muted-foreground" />}
                             </button>
                           </div>

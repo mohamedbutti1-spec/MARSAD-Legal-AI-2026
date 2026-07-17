@@ -83,12 +83,12 @@ function ChamberCard({ chamber, onDelete }: { chamber: JdcChamber; onDelete: (id
               </Badge>
             )}
             {chamber.hasAiDecision === 'true' && (
-              <Badge className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border-0 flex items-center gap-1">
+              <Badge className="text-xs bg-heading/15 text-heading dark:bg-heading/30 dark:text-heading border-0 flex items-center gap-1">
                 <Bot className="w-3 h-3" /> قرار رقمي
               </Badge>
             )}
             {chamber.theoryLensId && (
-              <Badge className="text-xs bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 border-0 flex items-center gap-1">
+              <Badge className="text-xs bg-heading/15 text-heading dark:bg-heading/30 dark:text-heading border-0 flex items-center gap-1">
                 <Sparkles className="w-3 h-3" /> نظري
               </Badge>
             )}
@@ -296,7 +296,7 @@ function CreateDialog({ open, onOpenChange, onSubmit, isLoading }: CreateDialogP
                 form.hasAiDecision ? 'bg-primary' : 'bg-muted'
               }`}
             >
-              <span className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg transform transition-transform ${
+              <span className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-card shadow-lg transform transition-transform ${
                 form.hasAiDecision ? 'translate-x-5' : 'translate-x-0'
               }`} />
             </button>

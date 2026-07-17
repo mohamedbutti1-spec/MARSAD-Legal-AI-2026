@@ -55,7 +55,7 @@ interface ModuleTileProps {
   statusColor?: string;
 }
 
-function ModuleTile({ icon, nameAr, nameEn, badge, href, subtitle, statusColor = 'bg-emerald-500' }: ModuleTileProps) {
+function ModuleTile({ icon, nameAr, nameEn, badge, href, subtitle, statusColor = 'bg-heading' }: ModuleTileProps) {
   const t = useT();
   return (
     <Link href={href}>
@@ -188,20 +188,20 @@ export default function NaipHome() {
 
         {/* ── Critical Alert Banner ───────────────────────────────────────────── */}
         {criticalWarnings > 0 && (
-          <div className="bg-red-50 dark:bg-red-950/30 border border-red-300 dark:border-red-800 rounded-xl p-4 flex items-center justify-between gap-4">
+          <div className="bg-destructive/10 dark:bg-destructive/30 border border-destructive/30 dark:border-destructive/40 rounded-xl p-4 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0" />
+              <AlertTriangle className="w-5 h-5 text-destructive shrink-0" />
               <div>
-                <span className="text-sm font-bold text-red-700 dark:text-red-300">
+                <span className="text-sm font-bold text-destructive">
                   {t('تحذيرات دستورية حرجة', 'Critical Constitutional Warnings')}
                 </span>
-                <span className="text-sm text-red-600 dark:text-red-400 ms-2">
+                <span className="text-sm text-destructive ms-2">
                   — {criticalWarnings} {t('تحذير نشط', 'active warnings')}
                 </span>
               </div>
             </div>
             <Link href="/constitutional-intelligence">
-              <button className="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg transition-colors shrink-0">
+              <button className="text-xs bg-destructive hover:bg-destructive text-white px-3 py-1.5 rounded-lg transition-colors shrink-0">
                 {t('عرض التحذيرات', 'View Warnings')}
               </button>
             </Link>
@@ -236,7 +236,7 @@ export default function NaipHome() {
               value={fmt(overview?.avgComplianceScore, '%')}
               label="متوسط الامتثال الدستوري"
               labelEn="Avg Compliance Score"
-              colorClass="text-emerald-600"
+              colorClass="text-heading"
             />
           </div>
         )}
@@ -254,14 +254,14 @@ export default function NaipHome() {
               nameEn="Intelligent Decision"
               badge="الوحدة 1"
               href="/decisions"
-              statusColor="bg-emerald-500"
+              statusColor="bg-heading"
             />
             <ModuleTile
               icon={<Shield className="w-5 h-5" />}
               nameAr="مركز الحوكمة التنفيذية"
               nameEn="Executive Governance"
               href="/governance"
-              statusColor="bg-emerald-500"
+              statusColor="bg-heading"
             />
             <ModuleTile
               icon={<ShieldAlert className="w-5 h-5" />}
@@ -277,7 +277,7 @@ export default function NaipHome() {
               nameEn="Constitutional Review"
               href="/constitutional-intelligence"
               subtitle={overview?.avgComplianceScore !== null && overview?.avgComplianceScore !== undefined ? `CCS: ${overview.avgComplianceScore}%` : undefined}
-              statusColor="bg-blue-500"
+              statusColor="bg-heading"
             />
             <ModuleTile
               icon={<RefreshCw className="w-5 h-5" />}
@@ -285,7 +285,7 @@ export default function NaipHome() {
               nameEn="Decision Replay Engine"
               badge="Replay"
               href="/decisions"
-              statusColor="bg-purple-500"
+              statusColor="bg-heading"
             />
             <ModuleTile
               icon={<Sparkles className="w-5 h-5" />}
@@ -301,7 +301,7 @@ export default function NaipHome() {
               nameEn="Constitutional Principles"
               badge="دستوري"
               href="/constitutional-principles"
-              statusColor="bg-emerald-500"
+              statusColor="bg-heading"
             />
           </div>
         </div>
@@ -317,7 +317,7 @@ export default function NaipHome() {
             <div className="bg-card border border-border rounded-xl p-5 flex flex-col gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-gold/15 dark:bg-gold/40 flex items-center justify-center">
-                  <Users className="w-4 h-4 text-gold dark:text-gold/80" />
+                  <Users className="w-4 h-4 text-gold/80" />
                 </div>
                 <div>
                   <div className="text-sm font-bold text-foreground">{t('طابور المراجعة البشرية', 'Human Oversight Queue')}</div>
@@ -339,8 +339,8 @@ export default function NaipHome() {
             {/* Active Decisions */}
             <div className="bg-card border border-border rounded-xl p-5 flex flex-col gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-950/40 flex items-center justify-center">
-                  <Scale className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <div className="w-9 h-9 rounded-xl bg-heading/15 dark:bg-heading/40 flex items-center justify-center">
+                  <Scale className="w-4 h-4 text-heading" />
                 </div>
                 <div>
                   <div className="text-sm font-bold text-foreground">{t('القرارات النشطة', 'Active Decisions')}</div>
@@ -348,7 +348,7 @@ export default function NaipHome() {
                 </div>
               </div>
               <div className="flex items-end justify-between">
-                <div className="text-4xl font-bold tabular-nums text-blue-600">
+                <div className="text-4xl font-bold tabular-nums text-heading">
                   {isLoading ? <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /> : fmt(overview?.activeDecisions)}
                 </div>
                 <Link href="/decisions">

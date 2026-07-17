@@ -80,22 +80,22 @@ interface ContextChainResponse {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const REL_LABELS: Record<string, { label: string; color: string }> = {
-  implements:     { label: 'Implements →',    color: 'text-blue-600 bg-blue-50' },
+  implements:     { label: 'Implements →',    color: 'text-heading bg-heading/10' },
   amends:         { label: 'Amends →',        color: 'text-gold bg-gold/10' },
-  repeals:        { label: 'Repeals',          color: 'text-red-600 bg-red-50' },
-  cites:          { label: 'Cited in',         color: 'text-purple-600 bg-purple-50' },
-  interpreted_by: { label: 'Interpreted by',  color: 'text-teal-600 bg-teal-50' },
+  repeals:        { label: 'Repeals',          color: 'text-destructive bg-destructive/10' },
+  cites:          { label: 'Cited in',         color: 'text-heading bg-heading/10' },
+  interpreted_by: { label: 'Interpreted by',  color: 'text-heading bg-heading/10' },
   supplements:    { label: 'Supplements',      color: 'text-heading bg-heading/10' },
-  related:        { label: 'Related',          color: 'text-gray-600 bg-gray-100' },
+  related:        { label: 'Related',          color: 'text-muted-foreground bg-muted/60' },
   appealed_from:  { label: 'Appealed from',   color: 'text-gold bg-gold/10' },
 };
 
 const BINDING_BADGE: Record<string, string> = {
   constitutional: 'bg-gold/15 text-gold/75 border border-gold/40',
   binding:        'bg-heading/15 text-heading/75 border border-heading/40',
-  persuasive:     'bg-blue-100 text-blue-800 border border-blue-300',
-  advisory:       'bg-slate-100 text-slate-700 border border-slate-300',
-  informational:  'bg-slate-100 text-slate-700 border border-slate-300',
+  persuasive:     'bg-heading/15 text-heading border border-heading/30',
+  advisory:       'bg-muted/60 text-muted-foreground border border-border',
+  informational:  'bg-muted/60 text-muted-foreground border border-border',
 };
 
 const LEVEL_LABEL: Record<string, string> = {
@@ -172,7 +172,7 @@ function LegalContextPanel({ documentId }: { documentId: number }) {
 
       {/* Cross-reference neighbours grouped by type */}
       {Object.entries(contextChain.byRelationshipType).map(([relType, neighbours]) => {
-        const meta = REL_LABELS[relType] ?? { label: relType, color: 'text-gray-600 bg-gray-100' };
+        const meta = REL_LABELS[relType] ?? { label: relType, color: 'text-muted-foreground bg-muted/60' };
         return (
           <div key={relType}>
             <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full mb-1.5 ${meta.color}`}>
@@ -199,11 +199,11 @@ function LegalContextPanel({ documentId }: { documentId: number }) {
                           {LEVEL_LABEL[n.hierarchyLevel] ?? `Level ${n.hierarchyLevel}`}
                         </span>
                         <span className="text-muted-foreground">·</span>
-                        <span className={`px-1 py-0.5 rounded text-[10px] font-medium ${BINDING_BADGE[n.bindingStatus] ?? 'bg-gray-100 text-gray-600'}`}>
+                        <span className={`px-1 py-0.5 rounded text-[10px] font-medium ${BINDING_BADGE[n.bindingStatus] ?? 'bg-muted/60 text-muted-foreground'}`}>
                           {n.bindingStatus}
                         </span>
                         {n.isRepealed && (
-                          <span className="px-1 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700">
+                          <span className="px-1 py-0.5 rounded text-[10px] font-medium bg-destructive/15 text-destructive">
                             Repealed
                           </span>
                         )}
@@ -236,7 +236,7 @@ function ResultCard({ hit }: { hit: KbHit }) {
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-1">
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${BINDING_BADGE[hit.bindingStatus] ?? 'bg-gray-100 text-gray-600'}`}>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${BINDING_BADGE[hit.bindingStatus] ?? 'bg-muted/60 text-muted-foreground'}`}>
                 {hit.bindingStatus === 'constitutional' && <Star className="w-3 h-3 inline mr-0.5" />}
                 {hit.bindingStatus}
               </span>
@@ -244,7 +244,7 @@ function ResultCard({ hit }: { hit: KbHit }) {
                 {LEVEL_LABEL[hit.hierarchyLevel] ?? `Level ${hit.hierarchyLevel}`}
               </span>
               {hit.isRepealed && (
-                <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-red-100 text-red-700 border border-red-200">
+                <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-destructive/15 text-destructive border border-destructive/25">
                   Repealed
                 </span>
               )}

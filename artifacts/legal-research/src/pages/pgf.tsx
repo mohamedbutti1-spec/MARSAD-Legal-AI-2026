@@ -40,10 +40,10 @@ interface PgfSessionListItem {
 // ─── Status helpers ───────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<string, { label: string; icon: React.ReactNode; className: string }> = {
-  draft:      { label: 'جارٍ الاستبيان', icon: <Clock className="w-3 h-3" />,           className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
+  draft:      { label: 'جارٍ الاستبيان', icon: <Clock className="w-3 h-3" />,           className: 'bg-heading/15 text-heading dark:bg-heading/30 dark:text-heading' },
   finalizing: { label: 'جارٍ التقييم',   icon: <Loader2 className="w-3 h-3 animate-spin" />, className: 'bg-gold/15 text-gold dark:bg-gold/30 dark:text-gold/80' },
-  complete:   { label: 'مكتمل',          icon: <CheckCircle2 className="w-3 h-3" />,    className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' },
-  error:      { label: 'خطأ',            icon: <XCircle className="w-3 h-3" />,         className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
+  complete:   { label: 'مكتمل',          icon: <CheckCircle2 className="w-3 h-3" />,    className: 'bg-heading/15 text-heading dark:bg-heading/30 dark:text-heading' },
+  error:      { label: 'خطأ',            icon: <XCircle className="w-3 h-3" />,         className: 'bg-destructive/15 text-destructive dark:bg-destructive/30 dark:text-destructive' },
 };
 
 function formatDate(iso: string) {
@@ -238,7 +238,7 @@ export default function PgfPage() {
         </div>
 
         {/* Disclaimer */}
-        <div className="bg-gold/10 dark:bg-gold/10 border border-gold/25 dark:border-gold/75 rounded-xl p-4 text-sm text-gold/75 dark:text-gold/40">
+        <div className="bg-gold/10 border border-gold/25 dark:border-gold/75 rounded-xl p-4 text-sm text-gold/75 dark:text-gold/40">
           <strong>تنبيه: </strong>
           هذا الإطار يُقدم إرشاداً مهنياً استرشادياً فقط. لا يُصدر قرارات ملزمة ولا يحلّ محل الجهة المختصة.
         </div>

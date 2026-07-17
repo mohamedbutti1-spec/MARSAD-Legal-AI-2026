@@ -6,12 +6,14 @@ interface HeaderProps {
   onMenuClick?: () => void;
 }
 
+// Dark judicial palette — blue (heading) = executive/judicial tiers, gold =
+// legacy/oversight, muted = public. No light-theme chip backgrounds.
 const TIER_STYLES: Record<string, string> = {
   legacy:    'bg-gold/10 text-gold/75 border-gold/25',
-  executive: 'bg-sky-50 text-sky-800 border-sky-200',
-  oversight: 'bg-violet-50 text-violet-800 border-violet-200',
-  judicial:  'bg-emerald-50 text-emerald-800 border-emerald-200',
-  public:    'bg-slate-50 text-slate-700 border-slate-200',
+  executive: 'bg-heading/10 text-heading border-heading/25',
+  oversight: 'bg-gold/10 text-gold border-gold/25',
+  judicial:  'bg-heading/10 text-heading border-heading/25',
+  public:    'bg-muted/40 text-muted-foreground border-border',
 };
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
@@ -39,7 +41,7 @@ export function Header({ onMenuClick }: HeaderProps) {
   };
 
   return (
-    <header className="h-14 bg-white border-b border-border flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20 shrink-0 shadow-xs">
+    <header className="h-14 bg-background/95 backdrop-blur border-b border-border flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20 shrink-0">
       <div className="flex items-center gap-3">
         <button
           className="lg:hidden text-muted-foreground hover:text-foreground p-1.5 rounded-md hover:bg-muted/50 transition-colors"
@@ -50,7 +52,7 @@ export function Header({ onMenuClick }: HeaderProps) {
         </button>
         <div className="lg:hidden flex items-center gap-2">
           <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
-            <Scale className="w-4 h-4 text-white" />
+            <Scale className="w-4 h-4 text-primary-foreground" />
           </div>
           <span className="font-bold text-foreground text-base">مرصد</span>
         </div>
@@ -93,7 +95,7 @@ export function Header({ onMenuClick }: HeaderProps) {
           {userMenuOpen && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setUserMenuOpen(false)} />
-              <div className="absolute end-0 top-full mt-2 w-64 bg-white border border-border rounded-xl shadow-xl z-20 overflow-hidden">
+              <div className="absolute end-0 top-full mt-2 w-64 bg-popover border border-border rounded-xl shadow-xl z-20 overflow-hidden">
                 {/* User info */}
                 <div className="px-4 py-3 border-b border-border bg-muted/30">
                   <div className="flex items-center gap-3">

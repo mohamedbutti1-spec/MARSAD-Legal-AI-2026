@@ -60,14 +60,14 @@ function CarSectionCard({ section, car }: { section: CarSection; car: Record<str
   const value = car[section.key] as string | undefined;
   if (!value) return null;
   return (
-    <div className={`rounded-2xl border p-5 ${section.highlight ? 'border-[#00563F]/30 bg-[#00563F]/5' : 'border-[#C4A24E]/20 bg-white'}`}>
+    <div className={`rounded-2xl border p-5 ${section.highlight ? 'border-gold/30 bg-gold/5' : 'border-gold/20 bg-card'}`}>
       <div className="flex items-center gap-3 mb-3">
-        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${section.highlight ? 'bg-[#00563F] text-white' : 'bg-[#C4A24E]/20 text-[#C4A24E]'}`}>
+        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${section.highlight ? 'bg-gold text-background' : 'bg-gold/20 text-gold'}`}>
           {section.icon}
         </div>
-        <h3 className="font-bold text-[#1A1A2E] text-base">{section.label}</h3>
+        <h3 className="font-bold text-foreground text-base">{section.label}</h3>
       </div>
-      <p className="text-[#3D3D5C] leading-[1.9] text-[15px]">{value}</p>
+      <p className="text-foreground/80 leading-[1.9] text-[15px]">{value}</p>
     </div>
   );
 }
@@ -98,14 +98,9 @@ export default function CitizenPortal() {
   };
 
   return (
-    <div
-      className="min-h-screen"
-      style={{ background: 'linear-gradient(135deg, #F8F6F0 0%, #FDFCF8 50%, #F0F4F8 100%)' }}
-      dir="rtl"
-      lang="ar"
-    >
+    <div className="min-h-screen bg-background" dir="rtl" lang="ar">
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <header className="bg-[#00563F] text-white px-6 py-4 shadow-lg">
+      <header className="bg-gold text-background px-6 py-4 shadow-lg">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center">
@@ -126,35 +121,35 @@ export default function CitizenPortal() {
       </header>
 
       {/* ── Hero search area ────────────────────────────────────────────────── */}
-      <div className="bg-white border-b border-[#C4A24E]/20 shadow-sm">
+      <div className="bg-card border-b border-gold/20 shadow-sm">
         <div className="max-w-3xl mx-auto px-6 py-10">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#00563F]/10 text-[#00563F] text-xs font-bold rounded-full mb-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-gold/10 text-gold text-xs font-bold rounded-full mb-4">
               <Shield className="w-3.5 h-3.5" />
               سجل المساءلة الدستورية
             </div>
-            <h2 className="text-2xl font-black text-[#1A1A2E] mb-2">حقك في معرفة أسباب القرار</h2>
-            <p className="text-[#5C5C7A] text-sm leading-relaxed max-w-xl mx-auto">
+            <h2 className="text-2xl font-black text-foreground mb-2">حقك في معرفة أسباب القرار</h2>
+            <p className="text-muted-foreground text-sm leading-relaxed max-w-xl mx-auto">
               يحق لكل مواطن متأثر بقرار إداري الاطلاع على مسوّغاته القانونية والدستورية وأدوار الذكاء الاصطناعي فيه، وفق إطار الشامسي للقرار الإداري الذكي.
             </p>
           </div>
 
           <form onSubmit={handleSearch} className="flex gap-3">
             <div className="flex-1 relative">
-              <Search className="absolute end-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-[#9B9BB4]" />
+              <Search className="absolute end-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-foreground" />
               <input
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="أدخل رقم القضية — مثال: MARSAD-2026-0147"
-                className="w-full pe-11 ps-4 py-3.5 rounded-xl border-2 border-[#C4A24E]/30 bg-[#FAFAF8] text-[#1A1A2E] placeholder-[#9B9BB4] text-sm focus:outline-none focus:border-[#00563F] transition-colors font-mono"
+                className="w-full pe-11 ps-4 py-3.5 rounded-xl border-2 border-gold/30 bg-background text-foreground placeholder-muted-foreground text-sm focus:outline-none focus:border-gold transition-colors font-mono"
                 dir="ltr"
               />
             </div>
             <button
               type="submit"
               disabled={loading || !query.trim()}
-              className="flex items-center gap-2 px-6 py-3.5 rounded-xl bg-[#00563F] text-white font-bold text-sm hover:bg-[#004834] disabled:opacity-50 transition-colors shadow-sm"
+              className="flex items-center gap-2 px-6 py-3.5 rounded-xl bg-gold text-background font-bold text-sm hover:opacity-90 disabled:opacity-50 transition-colors shadow-sm"
             >
               {loading ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -166,7 +161,7 @@ export default function CitizenPortal() {
           </form>
 
           {/* Example hint */}
-          <p className="text-center text-xs text-[#9B9BB4] mt-3">
+          <p className="text-center text-xs text-muted-foreground mt-3">
             رقم القضية يبدأ بـ MARSAD ويوجد في أعلى وثيقة القرار الرسمية
           </p>
         </div>
@@ -176,11 +171,11 @@ export default function CitizenPortal() {
       <div className="max-w-3xl mx-auto px-6 py-8">
         {/* Error state */}
         {error && !loading && (
-          <div className="rounded-2xl border-2 border-red-200 bg-red-50 p-6 text-center">
-            <AlertTriangle className="w-8 h-8 text-red-400 mx-auto mb-3" />
-            <p className="font-bold text-red-700 text-base mb-1">لم يُعثر على سجل</p>
-            <p className="text-red-600 text-sm">{error}</p>
-            <div className="mt-4 p-3 rounded-xl bg-red-100/50 text-xs text-red-600">
+          <div className="rounded-2xl border-2 border-destructive/25 bg-destructive/10 p-6 text-center">
+            <AlertTriangle className="w-8 h-8 text-destructive mx-auto mb-3" />
+            <p className="font-bold text-destructive text-base mb-1">لم يُعثر على سجل</p>
+            <p className="text-destructive text-sm">{error}</p>
+            <div className="mt-4 p-3 rounded-xl bg-destructive/10 text-xs text-destructive">
               <p className="font-semibold mb-1">أسباب محتملة:</p>
               <ul className="space-y-1 list-disc list-inside">
                 <li>رقم القضية غير صحيح أو يحتوي على خطأ إملائي</li>
@@ -194,8 +189,8 @@ export default function CitizenPortal() {
         {/* Loading state */}
         {loading && (
           <div className="flex flex-col items-center justify-center py-12 gap-3">
-            <div className="w-8 h-8 border-2 border-[#00563F]/20 border-t-[#00563F] rounded-full animate-spin" />
-            <p className="text-sm text-[#5C5C7A]">جارٍ البحث في سجلات القرارات المختومة…</p>
+            <div className="w-8 h-8 border-2 border-gold/20 border-t-gold rounded-full animate-spin" />
+            <p className="text-sm text-muted-foreground">جارٍ البحث في سجلات القرارات المختومة…</p>
           </div>
         )}
 
@@ -203,7 +198,7 @@ export default function CitizenPortal() {
         {result && !loading && (
           <div className="space-y-6 animate-in fade-in duration-300">
             {/* Decision identity banner */}
-            <div className="rounded-2xl bg-[#00563F] text-white p-5 shadow-lg">
+            <div className="rounded-2xl bg-gold text-background p-5 shadow-lg">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
                   <Scale className="w-6 h-6 text-white" />
@@ -211,7 +206,7 @@ export default function CitizenPortal() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xs font-mono bg-white/15 px-2 py-0.5 rounded-full">{result.decision.caseNumber}</span>
-                    <span className="text-xs bg-[#C4A24E] px-2 py-0.5 rounded-full font-semibold">مُختوم ومنشور</span>
+                    <span className="text-xs bg-gold px-2 py-0.5 rounded-full font-semibold">مُختوم ومنشور</span>
                   </div>
                   <h3 className="font-bold text-lg leading-snug">{result.decision.titleAr}</h3>
                   <p className="text-xs text-white/70 mt-1">سجل المساءلة الدستورية — متاح للعموم بموجب مبدأ الشفافية</p>
@@ -220,11 +215,11 @@ export default function CitizenPortal() {
             </div>
 
             {/* AI disclosure banner */}
-            <div className="rounded-2xl border border-[#C4A24E]/30 bg-[#C4A24E]/5 p-4 flex items-start gap-3">
-              <Shield className="w-5 h-5 text-[#C4A24E] shrink-0 mt-0.5" />
+            <div className="rounded-2xl border border-gold/30 bg-gold/5 p-4 flex items-start gap-3">
+              <Shield className="w-5 h-5 text-gold shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-bold text-[#7A5C00]">إفصاح عن دور الذكاء الاصطناعي</p>
-                <p className="text-xs text-[#7A5C00]/80 mt-0.5 leading-relaxed">
+                <p className="text-sm font-bold text-gold">إفصاح عن دور الذكاء الاصطناعي</p>
+                <p className="text-xs text-gold/70 mt-0.5 leading-relaxed">
                   هذا القرار أُعدَّ بمساعدة منظومة الذكاء الاصطناعي التابعة لمنصة مرصد. جميع القرارات النهائية اتخذها مسؤولون بشريون معيّنون قانونياً. يُرجى الاطلاع على بند "دور الذكاء الاصطناعي" أدناه.
                 </p>
               </div>
@@ -238,46 +233,46 @@ export default function CitizenPortal() {
             </div>
 
             {/* Integrity stamp */}
-            <div className="rounded-2xl border border-[#00563F]/20 bg-[#00563F]/5 p-5 text-center">
+            <div className="rounded-2xl border border-gold/20 bg-gold/5 p-5 text-center">
               <div className="flex items-center justify-center gap-2 mb-2">
-                <Shield className="w-5 h-5 text-[#00563F]" />
-                <span className="font-bold text-[#00563F]">قرار مُعتمد دستورياً</span>
+                <Shield className="w-5 h-5 text-gold" />
+                <span className="font-bold text-gold">قرار مُعتمد دستورياً</span>
               </div>
-              <p className="text-xs text-[#3D3D5C] leading-relaxed">
+              <p className="text-xs text-foreground/80 leading-relaxed">
                 تم التحقق من هذا القرار واعتماده وفق إطار الشامسي للقرار الإداري الذكي.
                 رقم السجل المرجعي: <span className="font-mono font-semibold">{result.decision.caseNumber}</span>
               </p>
-              <p className="text-[11px] text-[#9B9BB4] mt-2">Powered by the M. Al-Shamsi Framework™</p>
+              <p className="text-[11px] text-muted-foreground mt-2">Powered by the M. Al-Shamsi Framework™</p>
             </div>
 
             {/* Phase 3 — Chain of Custody Attestation */}
             {result.custodySummary ? (
-              <div className={`rounded-2xl border p-4 ${result.custodySummary.valid ? 'border-[#00563F]/30 bg-[#00563F]/5' : 'border-red-200 bg-red-50'}`}>
+              <div className={`rounded-2xl border p-4 ${result.custodySummary.valid ? 'border-gold/30 bg-gold/5' : 'border-destructive/25 bg-destructive/10'}`}>
                 <div className="flex items-center gap-2 mb-2">
-                  <Hash className="w-4 h-4 text-[#00563F] shrink-0" />
-                  <span className="text-sm font-bold text-[#1A1A2E]">سلسلة الحيازة القانونية — المرحلة 3</span>
+                  <Hash className="w-4 h-4 text-gold shrink-0" />
+                  <span className="text-sm font-bold text-foreground">سلسلة الحيازة القانونية — المرحلة 3</span>
                   {result.custodySummary.valid ? (
-                    <span className="mr-auto flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                    <span className="mr-auto flex items-center gap-1 text-[11px] font-bold text-heading bg-heading/15 px-2 py-0.5 rounded-full">
                       <CheckCircle2 className="w-3 h-3" />سلسلة سليمة
                     </span>
                   ) : (
-                    <span className="mr-auto flex items-center gap-1 text-[11px] font-bold text-red-700 bg-red-100 px-2 py-0.5 rounded-full">
+                    <span className="mr-auto flex items-center gap-1 text-[11px] font-bold text-destructive bg-destructive/15 px-2 py-0.5 rounded-full">
                       <XCircle className="w-3 h-3" />تحذير: عُبث كُشف
                     </span>
                   )}
                 </div>
-                <div className="grid grid-cols-2 gap-2 text-[11px] text-[#5C5C7A]">
-                  <span>عدد سجلات الحيازة: <span className="font-bold text-[#1A1A2E]">{result.custodySummary.recordCount}</span></span>
+                <div className="grid grid-cols-2 gap-2 text-[11px] text-muted-foreground">
+                  <span>عدد سجلات الحيازة: <span className="font-bold text-foreground">{result.custodySummary.recordCount}</span></span>
                   {result.custodySummary.latestChainHash && (
                     <span className="truncate">هاش السلسلة: <span className="font-mono">{result.custodySummary.latestChainHash}</span></span>
                   )}
                 </div>
-                <p className="text-[10px] text-[#9B9BB4] mt-2 leading-relaxed">
+                <p className="text-[10px] text-muted-foreground mt-2 leading-relaxed">
                   كل إجراء على هذا القرار مُسجَّل في سلسلة حيازة مُشفَّرة وغير قابلة للتعديل، مع تحقق SHA-256 وتوقيع رقمي HMAC-SHA-256 لكل سجل.
                 </p>
                 <div className="flex items-center gap-1.5 mt-2">
-                  <Link2 className="w-3 h-3 text-[#9B9BB4]" />
-                  <span className="text-[10px] text-[#9B9BB4]">مُلحق فقط — لا حذف ولا تعديل ممكن بموجب إطار الشامسي™</span>
+                  <Link2 className="w-3 h-3 text-muted-foreground" />
+                  <span className="text-[10px] text-muted-foreground">مُلحق فقط — لا حذف ولا تعديل ممكن بموجب إطار الشامسي™</span>
                 </div>
               </div>
             ) : null}
@@ -286,14 +281,14 @@ export default function CitizenPortal() {
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={() => window.print()}
-                className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl border-2 border-[#00563F] text-[#00563F] font-bold text-sm hover:bg-[#00563F] hover:text-white transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl border-2 border-gold text-gold font-bold text-sm hover:bg-gold hover:text-white transition-colors"
               >
                 <FileText className="w-4 h-4" />
                 طباعة السجل
               </button>
               <button
                 onClick={() => { setResult(null); setQuery(''); setError(null); }}
-                className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-[#C4A24E]/40 text-[#5C5C7A] font-semibold text-sm hover:bg-[#C4A24E]/10 transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-gold/40 text-muted-foreground font-semibold text-sm hover:bg-gold/10 transition-colors"
               >
                 <Search className="w-4 h-4" />
                 بحث جديد
@@ -305,11 +300,11 @@ export default function CitizenPortal() {
         {/* Initial empty state */}
         {!result && !error && !loading && (
           <div className="text-center py-12">
-            <div className="w-16 h-16 rounded-2xl bg-[#00563F]/10 flex items-center justify-center mx-auto mb-4">
-              <Scale className="w-8 h-8 text-[#00563F]" />
+            <div className="w-16 h-16 rounded-2xl bg-gold/10 flex items-center justify-center mx-auto mb-4">
+              <Scale className="w-8 h-8 text-gold" />
             </div>
-            <h3 className="font-bold text-[#1A1A2E] text-lg mb-2">ابدأ بالبحث عن قرار</h3>
-            <p className="text-sm text-[#5C5C7A] max-w-sm mx-auto leading-relaxed">
+            <h3 className="font-bold text-foreground text-lg mb-2">ابدأ بالبحث عن قرار</h3>
+            <p className="text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
               أدخل رقم القضية للاطلاع على سجل المساءلة الدستورية. يتوفر السجل فقط للقرارات المُكتملة والمُختومة.
             </p>
 
@@ -319,12 +314,12 @@ export default function CitizenPortal() {
                 { icon: <Shield className="w-5 h-5" />, title: 'اطلع على المسوّغات', desc: 'الأسباب والأساس القانوني' },
                 { icon: <Gavel className="w-5 h-5" />, title: 'حق الطعن', desc: 'معلومات الاعتراض والتظلم' },
               ].map((step, i) => (
-                <div key={i} className="p-4 rounded-xl bg-white border border-[#C4A24E]/20 text-center">
-                  <div className="w-10 h-10 rounded-xl bg-[#00563F]/10 flex items-center justify-center mx-auto mb-2 text-[#00563F]">
+                <div key={i} className="p-4 rounded-xl bg-card border border-gold/20 text-center">
+                  <div className="w-10 h-10 rounded-xl bg-gold/10 flex items-center justify-center mx-auto mb-2 text-gold">
                     {step.icon}
                   </div>
-                  <p className="font-bold text-[#1A1A2E] text-sm mb-1">{step.title}</p>
-                  <p className="text-xs text-[#5C5C7A]">{step.desc}</p>
+                  <p className="font-bold text-foreground text-sm mb-1">{step.title}</p>
+                  <p className="text-xs text-muted-foreground">{step.desc}</p>
                 </div>
               ))}
             </div>
@@ -333,13 +328,13 @@ export default function CitizenPortal() {
       </div>
 
       {/* ── Footer ─────────────────────────────────────────────────────────── */}
-      <footer className="border-t border-[#C4A24E]/20 bg-white mt-auto">
+      <footer className="border-t border-gold/20 bg-card mt-auto">
         <div className="max-w-3xl mx-auto px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <Scale className="w-4 h-4 text-[#00563F]" />
-            <span className="text-xs font-bold text-[#1A1A2E]">منصة مرصد القانونية</span>
+            <Scale className="w-4 h-4 text-gold" />
+            <span className="text-xs font-bold text-foreground">منصة مرصد القانونية</span>
           </div>
-          <p className="text-[11px] text-[#9B9BB4]">Powered by the M. Al-Shamsi Framework™ — بوابة المواطن</p>
+          <p className="text-[11px] text-muted-foreground">Powered by the M. Al-Shamsi Framework™ — بوابة المواطن</p>
         </div>
       </footer>
     </div>

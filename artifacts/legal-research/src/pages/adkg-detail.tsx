@@ -84,8 +84,8 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; labelAr: string;
 
 const AUTH_COLORS: Record<string, string> = {
   binding:'bg-heading/15 text-heading/75',
-  persuasive:'bg-blue-100 text-blue-800',
-  non_binding:'bg-gray-100 text-gray-700',
+  persuasive:'bg-heading/15 text-heading',
+  non_binding:'bg-muted/60 text-muted-foreground',
 };
 const LINK_LABELS: Record<string, string> = {
   legislation:'تشريع', exec_regulation:'لائحة تنفيذية', cabinet_decision:'قرار مجلس الوزراء',
@@ -101,10 +101,10 @@ const REL_TYPES = ['amends','challenged_by','suspended_by','revoked_by','annulle
 function ScoreBar({ score, colorClass }: { score: number; colorClass: string }) {
   return (
     <div className="flex items-center gap-2">
-      <div className="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+      <div className="flex-1 h-1.5 rounded-full bg-muted/60 overflow-hidden">
         <div className={`h-full rounded-full transition-all ${colorClass}`} style={{ width: `${score}%` }} />
       </div>
-      <span className="text-xs font-mono text-gray-600 w-8 text-right">{score}</span>
+      <span className="text-xs font-mono text-muted-foreground w-8 text-right">{score}</span>
     </div>
   );
 }
@@ -128,41 +128,41 @@ function PillarCard({ pillar, result, t }: { pillar: PillarMeta; result: PillarR
   const style = PILLAR_STATUS_COLORS[result.status] ?? PILLAR_STATUS_COLORS.unknown;
   const barColor = result.status === 'compliant' ? 'bg-heading'
     : result.status === 'partial' ? 'bg-gold/80'
-    : result.status === 'non-compliant' ? 'bg-red-500'
-    : 'bg-gray-300';
+    : result.status === 'non-compliant' ? 'bg-destructive'
+    : 'bg-muted';
 
   return (
     <div className="rounded-lg border overflow-hidden" style={{ borderColor: style.border }}>
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full px-4 py-3 flex items-start gap-3 text-right hover:bg-gray-50/50 transition-colors"
+        className="w-full px-4 py-3 flex items-start gap-3 text-right hover:bg-muted/40 transition-colors"
       >
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span className="text-sm font-semibold text-gray-800">{t(pillar.labelAr, pillar.labelEn)}</span>
+            <span className="text-sm font-semibold text-foreground">{t(pillar.labelAr, pillar.labelEn)}</span>
             <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded border"
               style={{ background: style.bg, color: style.text, borderColor: style.border }}>
               {t(style.labelAr, style.label)}
             </span>
-            <span className="text-[10px] text-gray-400">{pillar.weight}%</span>
+            <span className="text-[10px] text-muted-foreground">{pillar.weight}%</span>
           </div>
           <ScoreBar score={result.score} colorClass={barColor} />
         </div>
-        <span className="text-gray-400 text-xs mt-1 shrink-0">{expanded ? '▲' : '▼'}</span>
+        <span className="text-muted-foreground text-xs mt-1 shrink-0">{expanded ? '▲' : '▼'}</span>
       </button>
 
       {expanded && (
-        <div className="px-4 pb-4 space-y-3 border-t bg-white">
-          <p className="text-sm text-gray-700 mt-3 leading-relaxed" dir="rtl">{result.explanationAr}</p>
-          <p className="text-xs text-gray-500 italic">{result.explanationEn}</p>
+        <div className="px-4 pb-4 space-y-3 border-t bg-card">
+          <p className="text-sm text-muted-foreground mt-3 leading-relaxed" dir="rtl">{result.explanationAr}</p>
+          <p className="text-xs text-muted-foreground italic">{result.explanationEn}</p>
 
           {result.applicableLaw.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-gray-500 mb-1.5">{t('الأسس القانونية', 'Legal Basis')}</p>
+              <p className="text-xs font-semibold text-muted-foreground mb-1.5">{t('الأسس القانونية', 'Legal Basis')}</p>
               <ul className="space-y-1">
                 {result.applicableLaw.map((law, i) => (
-                  <li key={i} className="text-xs text-gray-700 flex items-start gap-2">
-                    <span className="text-blue-400 shrink-0 mt-0.5">•</span>
+                  <li key={i} className="text-xs text-muted-foreground flex items-start gap-2">
+                    <span className="text-heading shrink-0 mt-0.5">•</span>
                     <span className="flex-1">{law.replace(/\[(UAE Binding|Comparative Persuasive)\]/g, '').trim()}</span>
                     <AuthorityLabel text={law} />
                   </li>
@@ -173,10 +173,10 @@ function PillarCard({ pillar, result, t }: { pillar: PillarMeta; result: PillarR
 
           {result.missingRequirements.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-red-600 mb-1.5">{t('متطلبات مفقودة', 'Missing Requirements')}</p>
+              <p className="text-xs font-semibold text-destructive mb-1.5">{t('متطلبات مفقودة', 'Missing Requirements')}</p>
               <ul className="space-y-1">
                 {result.missingRequirements.map((req, i) => (
-                  <li key={i} className="text-xs text-red-700 flex items-start gap-1.5">
+                  <li key={i} className="text-xs text-destructive flex items-start gap-1.5">
                     <span className="shrink-0 mt-0.5">⚠</span>{req}
                   </li>
                 ))}
@@ -318,12 +318,12 @@ export default function AdkgDetail() {
     <AppLayout>
       <div className="max-w-4xl mx-auto">
         {/* Back */}
-        <button onClick={() => navigate('/adkg')} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-[#1e3a5f] transition-colors mb-4">
+        <button onClick={() => navigate('/adkg')} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-heading transition-colors mb-4">
           <ChevronLeft className="w-4 h-4" />{t('القرارات الإدارية', 'Administrative Decisions')}
         </button>
 
         {/* Header */}
-        <div className="rounded-xl border bg-gradient-to-r from-[#0f172a] to-[#1e3a5f] text-white p-5 mb-5">
+        <div className="rounded-xl border bg-gradient-to-r from-secondary to-card text-white p-5 mb-5">
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-2 flex-wrap">
@@ -371,10 +371,10 @@ export default function AdkgDetail() {
         <div className="flex gap-1 mb-5 border-b overflow-x-auto">
           {TABS.map((tab) => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === tab.id ? 'border-[#1e3a5f] text-[#1e3a5f]' : 'border-transparent text-muted-foreground hover:text-gray-700'}`}>
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === tab.id ? 'border-primary/50 text-heading' : 'border-transparent text-muted-foreground hover:text-muted-foreground'}`}>
               {tab.icon}{t(tab.labelAr, tab.labelEn)}
-              {tab.id === 'relationships' && links.length > 0 && <span className="text-xs bg-blue-100 text-blue-700 rounded-full px-1.5 py-0.5">{links.length}</span>}
-              {tab.id === 'timeline' && timeline.length > 0 && <span className="text-xs bg-blue-100 text-blue-700 rounded-full px-1.5 py-0.5">{timeline.length}</span>}
+              {tab.id === 'relationships' && links.length > 0 && <span className="text-xs bg-heading/15 text-heading rounded-full px-1.5 py-0.5">{links.length}</span>}
+              {tab.id === 'timeline' && timeline.length > 0 && <span className="text-xs bg-heading/15 text-heading rounded-full px-1.5 py-0.5">{timeline.length}</span>}
               {tab.id === 'analysis' && cachedAnalysis && (
                 <span className="text-xs bg-heading/15 text-heading rounded-full px-1.5 py-0.5">✓</span>
               )}
@@ -387,8 +387,8 @@ export default function AdkgDetail() {
           <div className="space-y-4">
             {body ? (
               <div className="rounded-lg border p-4">
-                <h3 className="text-sm font-semibold text-gray-700 mb-3">{t('نص القرار', 'Decision Body')}</h3>
-                <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap" dir="auto">{body}</p>
+                <h3 className="text-sm font-semibold text-muted-foreground mb-3">{t('نص القرار', 'Decision Body')}</h3>
+                <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap" dir="auto">{body}</p>
               </div>
             ) : (
               <div className="rounded-lg border bg-muted/10 p-6 text-center text-sm text-muted-foreground">
@@ -397,14 +397,14 @@ export default function AdkgDetail() {
             )}
             {Array.isArray(authorities) && authorities.length > 0 && (
               <div className="rounded-lg border p-4">
-                <h3 className="text-sm font-semibold text-blue-900 mb-3">{t('مصادر الاستشهاد الآلية', 'AI-Verified Cited Authorities')}</h3>
+                <h3 className="text-sm font-semibold text-heading mb-3">{t('مصادر الاستشهاد الآلية', 'AI-Verified Cited Authorities')}</h3>
                 <ul className="space-y-1.5">
                   {authorities.map((a, i) => {
                     const cls = (a as Record<string, unknown>).authorityClass as string ?? 'persuasive';
                     const conf = typeof (a as Record<string, unknown>).confidenceScore === 'number' ? `${Math.round(((a as Record<string, unknown>).confidenceScore as number) * 100)}%` : '—';
                     return (
                       <li key={i} className="flex items-center gap-2 text-xs">
-                        <span className="flex-1 text-gray-800">{(a as Record<string, unknown>).titleAr as string}</span>
+                        <span className="flex-1 text-foreground">{(a as Record<string, unknown>).titleAr as string}</span>
                         <span className={`text-xs px-1.5 py-0.5 rounded border ${AUTH_COLORS[cls] ?? AUTH_COLORS.persuasive}`}>{cls}</span>
                         <span className="text-muted-foreground">{conf}</span>
                       </li>
@@ -420,12 +420,12 @@ export default function AdkgDetail() {
         {activeTab === 'relationships' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-gray-700">{t('الروابط القانونية', 'Legal Links')}</h3>
+              <h3 className="text-sm font-semibold text-muted-foreground">{t('الروابط القانونية', 'Legal Links')}</h3>
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" onClick={() => setShowAddEdge(true)}>
                   <Plus className="w-3.5 h-3.5 ml-1" />{t('ربط قرار', 'Link Decision')}
                 </Button>
-                <Button size="sm" onClick={() => setShowAddLink(true)} className="bg-[#1e3a5f] hover:bg-[#2d5a8f] text-white gap-1">
+                <Button size="sm" onClick={() => setShowAddLink(true)} className="bg-primary hover:opacity-90 text-white gap-1">
                   <Plus className="w-3.5 h-3.5" />{t('إضافة رابط', 'Add Link')}
                 </Button>
               </div>
@@ -438,17 +438,17 @@ export default function AdkgDetail() {
             ) : (
               <div className="rounded-lg border overflow-hidden">
                 <table className="w-full text-sm">
-                  <thead className="bg-slate-50 border-b">
+                  <thead className="bg-muted/40 border-b">
                     <tr>
-                      <th className="text-right px-4 py-2.5 font-semibold text-gray-600 text-xs">{t('العنوان', 'Title')}</th>
-                      <th className="text-right px-4 py-2.5 font-semibold text-gray-600 text-xs">{t('النوع', 'Type')}</th>
-                      <th className="text-center px-4 py-2.5 font-semibold text-gray-600 text-xs">{t('الطبيعة', 'Class')}</th>
+                      <th className="text-right px-4 py-2.5 font-semibold text-muted-foreground text-xs">{t('العنوان', 'Title')}</th>
+                      <th className="text-right px-4 py-2.5 font-semibold text-muted-foreground text-xs">{t('النوع', 'Type')}</th>
+                      <th className="text-center px-4 py-2.5 font-semibold text-muted-foreground text-xs">{t('الطبيعة', 'Class')}</th>
                       <th className="w-10"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
                     {links.map((lnk) => (
-                      <tr key={lnk.id} className="hover:bg-slate-50/50">
+                      <tr key={lnk.id} className="hover:bg-muted/40">
                         <td className="px-4 py-2.5">
                           <p className="font-medium">{lnk.titleAr ?? lnk.titleEn ?? lnk.linkedEntityRef ?? '—'}</p>
                           {lnk.notes && <p className="text-xs text-muted-foreground mt-0.5">{lnk.notes}</p>}
@@ -458,7 +458,7 @@ export default function AdkgDetail() {
                           <span className={`text-xs px-1.5 py-0.5 rounded border ${AUTH_COLORS[lnk.authorityClass] ?? AUTH_COLORS.persuasive}`}>{lnk.authorityClass}</span>
                         </td>
                         <td className="px-4 py-2.5">
-                          <button onClick={() => deleteLinkMut.mutate(lnk.id)} className="text-muted-foreground hover:text-red-600 transition-colors">
+                          <button onClick={() => deleteLinkMut.mutate(lnk.id)} className="text-muted-foreground hover:text-destructive transition-colors">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </td>
@@ -471,7 +471,7 @@ export default function AdkgDetail() {
 
             {graphData && (graphData.nodes.length > 1 || graphData.edges.length > 0) && (
               <div className="mt-4">
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">{t('مخطط العلاقات', 'Relationship Map')}</h3>
+                <h3 className="text-sm font-semibold text-muted-foreground mb-2">{t('مخطط العلاقات', 'Relationship Map')}</h3>
                 <DecisionGraph nodes={graphData.nodes} edges={graphData.edges} centralId={decisionId} />
               </div>
             )}
@@ -492,7 +492,7 @@ export default function AdkgDetail() {
         {activeTab === 'graph' && (
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-gray-700">{t('مخطط المعرفة', 'Knowledge Graph')}</h3>
+              <h3 className="text-sm font-semibold text-muted-foreground">{t('مخطط المعرفة', 'Knowledge Graph')}</h3>
               <Button size="sm" variant="outline" onClick={() => setShowAddEdge(true)}>
                 <Plus className="w-3.5 h-3.5 ml-1" />{t('ربط قرار', 'Link Decision')}
               </Button>
@@ -542,7 +542,7 @@ export default function AdkgDetail() {
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setShowAddEvent(false)} disabled={evSaving}>{t('إلغاء', 'Cancel')}</Button>
-            <Button onClick={handleAddEvent} disabled={evSaving || !evDate} className="bg-[#1e3a5f] hover:bg-[#2d5a8f] text-white">
+            <Button onClick={handleAddEvent} disabled={evSaving || !evDate} className="bg-primary hover:opacity-90 text-white">
               {evSaving && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}{t('إضافة', 'Add')}
             </Button>
           </DialogFooter>
@@ -571,7 +571,7 @@ export default function AdkgDetail() {
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setShowAddEdge(false)} disabled={edgeSaving}>{t('إلغاء', 'Cancel')}</Button>
-            <Button onClick={handleAddEdge} disabled={edgeSaving || !edgeTo || !edgeRel} className="bg-[#1e3a5f] hover:bg-[#2d5a8f] text-white">
+            <Button onClick={handleAddEdge} disabled={edgeSaving || !edgeTo || !edgeRel} className="bg-primary hover:opacity-90 text-white">
               {edgeSaving && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}{t('ربط', 'Link')}
             </Button>
           </DialogFooter>
@@ -609,7 +609,7 @@ function PillarAnalysisTab({
       {/* Header / action row */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h3 className="text-sm font-semibold text-gray-800">
+          <h3 className="text-sm font-semibold text-foreground">
             {t('تحليل الأعمدة القانونية الستة عشر', '16-Pillar Legal Analysis')}
           </h3>
           {analysis?.analyzedAt && (
@@ -621,7 +621,7 @@ function PillarAnalysisTab({
         <Button
           onClick={onRunAnalysis}
           disabled={analyzing}
-          className="bg-[#1e3a5f] hover:bg-[#2d5a8f] text-white gap-2"
+          className="bg-primary hover:opacity-90 text-white gap-2"
           size="sm"
         >
           {analyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
@@ -637,7 +637,7 @@ function PillarAnalysisTab({
       {!analysis && !analyzing && (
         <div className="rounded-xl border bg-muted/10 p-10 text-center space-y-3">
           <ShieldCheck className="w-10 h-10 text-muted-foreground/40 mx-auto" />
-          <p className="text-sm font-medium text-gray-700">
+          <p className="text-sm font-medium text-muted-foreground">
             {t('لم يتم تحليل هذا القرار بعد', 'This decision has not been analyzed yet')}
           </p>
           <p className="text-xs text-muted-foreground max-w-sm mx-auto">
@@ -651,9 +651,9 @@ function PillarAnalysisTab({
 
       {/* Loading state */}
       {analyzing && (
-        <div className="rounded-xl border bg-blue-50/50 p-10 text-center space-y-3">
-          <Loader2 className="w-8 h-8 text-blue-400 mx-auto animate-spin" />
-          <p className="text-sm font-medium text-gray-700">{t('جارٍ تقييم الأعمدة القانونية…', 'Evaluating legal pillars…')}</p>
+        <div className="rounded-xl border bg-heading/10 p-10 text-center space-y-3">
+          <Loader2 className="w-8 h-8 text-heading mx-auto animate-spin" />
+          <p className="text-sm font-medium text-muted-foreground">{t('جارٍ تقييم الأعمدة القانونية…', 'Evaluating legal pillars…')}</p>
           <p className="text-xs text-muted-foreground">{t('قد يستغرق التحليل دقيقة واحدة.', 'Analysis may take about a minute.')}</p>
         </div>
       )}
@@ -684,14 +684,14 @@ function PillarAnalysisTab({
           <div className="grid grid-cols-3 gap-3">
             <div className="rounded-lg border p-4 text-center">
               <p className="text-xs text-muted-foreground mb-1">{t('درجة المشروعية', 'Legality Score')}</p>
-              <p className={`text-3xl font-bold ${analysis.legalityScore >= 70 ? 'text-heading' : analysis.legalityScore >= 50 ? 'text-gold' : 'text-red-600'}`}>
+              <p className={`text-3xl font-bold ${analysis.legalityScore >= 70 ? 'text-heading' : analysis.legalityScore >= 50 ? 'text-gold' : 'text-destructive'}`}>
                 {analysis.legalityScore}
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">/100</p>
             </div>
             <div className="rounded-lg border p-4 text-center">
               <p className="text-xs text-muted-foreground mb-1">{t('درجة الخطر', 'Risk Score')}</p>
-              <p className={`text-3xl font-bold ${analysis.riskScore <= 30 ? 'text-heading' : analysis.riskScore <= 60 ? 'text-gold' : 'text-red-600'}`}>
+              <p className={`text-3xl font-bold ${analysis.riskScore <= 30 ? 'text-heading' : analysis.riskScore <= 60 ? 'text-gold' : 'text-destructive'}`}>
                 {analysis.riskScore}
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">/100</p>
@@ -706,17 +706,17 @@ function PillarAnalysisTab({
           </div>
 
           {analysis.canIssueTodayRationale && (
-            <div className="rounded-lg border p-4 bg-slate-50">
-              <p className="text-xs font-semibold text-gray-500 mb-1">{t('المبرر القانوني', 'Legal Rationale')}</p>
-              <p className="text-sm text-gray-800 leading-relaxed" dir="rtl">{analysis.canIssueTodayRationale as string}</p>
+            <div className="rounded-lg border p-4 bg-muted/40">
+              <p className="text-xs font-semibold text-muted-foreground mb-1">{t('المبرر القانوني', 'Legal Rationale')}</p>
+              <p className="text-sm text-foreground leading-relaxed" dir="rtl">{analysis.canIssueTodayRationale as string}</p>
             </div>
           )}
 
           {/* Traditional pillars */}
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-3 h-3 rounded-full bg-[#1e3a5f]" />
-              <h4 className="text-sm font-semibold text-gray-800">
+              <div className="w-3 h-3 rounded-full bg-primary" />
+              <h4 className="text-sm font-semibold text-foreground">
                 {t('الأعمدة التقليدية للقانون الإداري', 'Traditional Administrative Law Pillars')}
                 <span className="ml-2 text-xs font-normal text-muted-foreground">(6 {t('أعمدة', 'pillars')} • 55%)</span>
               </h4>
@@ -733,8 +733,8 @@ function PillarAnalysisTab({
           {/* AI/Digital pillars */}
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-3 h-3 rounded-full bg-purple-600" />
-              <h4 className="text-sm font-semibold text-gray-800">
+              <div className="w-3 h-3 rounded-full bg-heading" />
+              <h4 className="text-sm font-semibold text-foreground">
                 {t('أعمدة القرارات الرقمية والذكاء الاصطناعي', 'AI & Digital Decision Pillars')}
                 <span className="ml-2 text-xs font-normal text-muted-foreground">(10 {t('أعمدة', 'pillars')} • 45%)</span>
               </h4>

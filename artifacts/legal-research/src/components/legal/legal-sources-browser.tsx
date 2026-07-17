@@ -48,16 +48,16 @@ interface Props {
 }
 
 const DOC_TYPE_COLORS: Record<string, string> = {
-  law:        'bg-blue-50 text-blue-700 border-blue-200',
+  law:        'bg-heading/10 text-heading border-heading/25',
   decree:     'bg-gold/10 text-gold border-gold/25',
-  regulation: 'bg-purple-50 text-purple-700 border-purple-200',
-  code:       'bg-emerald-50 text-emerald-700 border-emerald-200',
-  directive:  'bg-rose-50 text-rose-700 border-rose-200',
+  regulation: 'bg-heading/10 text-heading border-heading/25',
+  code:       'bg-heading/10 text-heading border-heading/25',
+  directive:  'bg-destructive/10 text-destructive border-destructive/25',
   judgment:   'bg-gold/10 text-gold border-gold/25',
-  decision:   'bg-sky-50 text-sky-700 border-sky-200',
-  ruling:     'bg-teal-50 text-teal-700 border-teal-200',
-  circular:   'bg-gray-50 text-gray-700 border-gray-200',
-  resolution: 'bg-violet-50 text-violet-700 border-violet-200',
+  decision:   'bg-heading/10 text-heading border-heading/25',
+  ruling:     'bg-heading/10 text-heading border-heading/25',
+  circular:   'bg-muted/40 text-muted-foreground border-border',
+  resolution: 'bg-heading/10 text-heading border-heading/25',
 };
 
 export function LegalSourcesBrowser({
@@ -455,7 +455,7 @@ export function LegalSourcesBrowser({
                       <Button
                         size="sm"
                         variant="outline"
-                        className="gap-1.5 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                        className="gap-1.5 border-heading/30 text-heading hover:bg-heading/10"
                         onClick={() => handleAnalyse(selected, 'relevance-uae')}
                         disabled={analysing}
                       >
@@ -469,7 +469,7 @@ export function LegalSourcesBrowser({
                       <Button
                         size="sm"
                         variant="outline"
-                        className="gap-1.5 border-blue-300 text-blue-700 hover:bg-blue-50"
+                        className="gap-1.5 border-heading/30 text-heading hover:bg-heading/10"
                         onClick={() => handleCompareWithUae(selected)}
                       >
                         <Scale className="w-3.5 h-3.5" />
@@ -510,12 +510,12 @@ export function LegalSourcesBrowser({
                 )}
 
                 {analysis && (
-                  <div className={`p-3 rounded-lg border ${showKeyFindings ? 'bg-gold/10 border-gold/25' : 'bg-emerald-50 border-emerald-200'}`}>
+                  <div className={`p-3 rounded-lg border ${showKeyFindings ? 'bg-gold/10 border-gold/25' : 'bg-heading/10 border-heading/25'}`}>
                     <div className="flex items-center gap-1.5 mb-2">
                       {showKeyFindings
                         ? <FileSearch className="w-3.5 h-3.5 text-gold" aria-hidden />
-                        : <Globe2 className="w-3.5 h-3.5 text-emerald-600" aria-hidden />}
-                      <span className={`text-xs font-semibold ${showKeyFindings ? 'text-gold' : 'text-emerald-700'}`}>
+                        : <Globe2 className="w-3.5 h-3.5 text-heading" aria-hidden />}
+                      <span className={`text-xs font-semibold ${showKeyFindings ? 'text-gold' : 'text-heading'}`}>
                         {showKeyFindings ? t('المبادئ والاجتهادات القانونية', 'Key Legal Principles') : t('الصلة بالقانون الإماراتي', 'Relevance to UAE Law')}
                       </span>
                       {analysisMeta && (

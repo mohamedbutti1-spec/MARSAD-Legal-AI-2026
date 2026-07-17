@@ -67,9 +67,9 @@ const WIZARD_STEPS: Array<{
 // ─── Priority badge ───────────────────────────────────────────────────────────
 
 const PRIORITY_CONF = {
-  high:   { label: 'عالية',  className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
+  high:   { label: 'عالية',  className: 'bg-destructive/15 text-destructive dark:bg-destructive/30 dark:text-destructive' },
   medium: { label: 'متوسطة', className: 'bg-gold/15 text-gold dark:bg-gold/30 dark:text-gold/80' },
-  low:    { label: 'منخفضة', className: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400' },
+  low:    { label: 'منخفضة', className: 'bg-muted/60 text-muted-foreground dark:bg-card dark:text-muted-foreground' },
 };
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -87,14 +87,14 @@ function LegalRefCard({ ref: r }: { ref: SpgLegalReference }) {
   return (
     <div className={`p-3 rounded-lg border text-sm ${
       r.binding
-        ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/10'
-        : 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/10'
+        ? 'border-heading/25 bg-heading/10 dark:border-heading/40 dark:bg-heading/10'
+        : 'border-heading/25 bg-heading/10 dark:border-heading/40 dark:bg-heading/10'
     }`}>
       <div className="flex items-start justify-between gap-2 mb-1">
         <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${
           r.binding
-            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
-            : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400'
+            ? 'bg-heading/15 text-heading dark:bg-heading/40 dark:text-heading'
+            : 'bg-heading/15 text-heading dark:bg-heading/40 dark:text-heading'
         }`}>
           {r.binding ? '⚖️ ملزم قانوناً' : '💡 ممارسة فضلى'}
         </span>
@@ -112,12 +112,12 @@ function ChecklistItemRow({ item }: { item: SpgChecklistItem }) {
   return (
     <div
       className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
-        done ? 'bg-emerald-50/50 dark:bg-emerald-900/5 border-emerald-200 dark:border-emerald-800' : 'bg-card border-border hover:bg-muted/30'
+        done ? 'bg-heading/10 dark:bg-heading/5 border-heading/25 dark:border-heading/40' : 'bg-card border-border hover:bg-muted/30'
       }`}
       onClick={() => setDone(!done)}
     >
       <div className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
-        done ? 'bg-emerald-500 border-emerald-500' : 'border-muted-foreground/40'
+        done ? 'bg-heading border-heading/40' : 'border-muted-foreground/40'
       }`}>
         {done && <CheckCircle2 className="w-3 h-3 text-white" />}
       </div>
@@ -128,7 +128,7 @@ function ChecklistItemRow({ item }: { item: SpgChecklistItem }) {
         <div className="flex items-center gap-2 mt-1">
           <span className={`text-xs px-1.5 py-0.5 rounded ${pc.className}`}>{pc.label}</span>
           {item.mandatory && (
-            <span className="text-xs text-red-600 dark:text-red-400">إلزامي</span>
+            <span className="text-xs text-destructive">إلزامي</span>
           )}
         </div>
       </div>
@@ -146,8 +146,8 @@ function GuidanceView({ output, roleNameAr, sectorNameAr }: {
   return (
     <div className="space-y-6" dir="rtl">
       {/* Disclaimer */}
-      <div className="flex items-start gap-2 p-4 bg-gold/10 dark:bg-gold/10 border border-gold/25 dark:border-gold/75 rounded-xl">
-        <Info className="w-4 h-4 text-gold dark:text-gold/80 mt-0.5 shrink-0" />
+      <div className="flex items-start gap-2 p-4 bg-gold/10 border border-gold/25 dark:border-gold/75 rounded-xl">
+        <Info className="w-4 h-4 text-gold/80 mt-0.5 shrink-0" />
         <p className="text-sm text-gold/75 dark:text-gold/40">{output.disclaimer}</p>
       </div>
 
@@ -168,13 +168,13 @@ function GuidanceView({ output, roleNameAr, sectorNameAr }: {
       {/* Required actions */}
       {output.requiredActions?.length > 0 && (
         <section>
-          <SectionTitle icon={<ClipboardList className="w-4.5 h-4.5 text-blue-500" />}>
+          <SectionTitle icon={<ClipboardList className="w-4.5 h-4.5 text-heading" />}>
             الإجراءات المطلوبة
           </SectionTitle>
           <ul className="space-y-2">
             {output.requiredActions.map((a, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm p-3 bg-blue-50/60 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/40 rounded-lg">
-                <span className="text-blue-500 font-bold shrink-0 text-xs mt-0.5">{i + 1}.</span>
+              <li key={i} className="flex items-start gap-2 text-sm p-3 bg-heading/10 border border-heading/25 dark:border-heading/40 rounded-lg">
+                <span className="text-heading font-bold shrink-0 text-xs mt-0.5">{i + 1}.</span>
                 {a}
               </li>
             ))}
@@ -185,13 +185,13 @@ function GuidanceView({ output, roleNameAr, sectorNameAr }: {
       {/* Required documents */}
       {output.requiredDocuments?.length > 0 && (
         <section>
-          <SectionTitle icon={<BookOpen className="w-4.5 h-4.5 text-violet-500" />}>
+          <SectionTitle icon={<BookOpen className="w-4.5 h-4.5 text-heading" />}>
             المستندات المطلوبة
           </SectionTitle>
           <ul className="space-y-1.5">
             {output.requiredDocuments.map((d, i) => (
-              <li key={i} className="flex items-center gap-2 text-sm p-2.5 bg-violet-50/60 dark:bg-violet-900/10 border border-violet-100 dark:border-violet-900/40 rounded-lg">
-                <FileWarning className="w-3.5 h-3.5 text-violet-500 shrink-0" />
+              <li key={i} className="flex items-center gap-2 text-sm p-2.5 bg-heading/10 border border-heading/25 dark:border-heading/40 rounded-lg">
+                <FileWarning className="w-3.5 h-3.5 text-heading shrink-0" />
                 {d}
               </li>
             ))}
@@ -202,7 +202,7 @@ function GuidanceView({ output, roleNameAr, sectorNameAr }: {
       {/* Legal references */}
       {output.legalReferences?.length > 0 && (
         <section>
-          <SectionTitle icon={<Shield className="w-4.5 h-4.5 text-emerald-500" />}>
+          <SectionTitle icon={<Shield className="w-4.5 h-4.5 text-heading" />}>
             المراجع القانونية والتنظيمية
           </SectionTitle>
           <div className="grid gap-2 sm:grid-cols-2">
@@ -211,8 +211,8 @@ function GuidanceView({ output, roleNameAr, sectorNameAr }: {
             ))}
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            <span className="text-emerald-600 font-medium">⚖️ ملزم قانوناً</span> = متطلب قانوني إلزامي &nbsp;|&nbsp;
-            <span className="text-blue-600 font-medium">💡 ممارسة فضلى</span> = موصى به مهنياً
+            <span className="text-heading font-medium">⚖️ ملزم قانوناً</span> = متطلب قانوني إلزامي &nbsp;|&nbsp;
+            <span className="text-heading font-medium">💡 ممارسة فضلى</span> = موصى به مهنياً
           </p>
         </section>
       )}
@@ -237,13 +237,13 @@ function GuidanceView({ output, roleNameAr, sectorNameAr }: {
       {/* Common mistakes */}
       {output.commonMistakes?.length > 0 && (
         <section>
-          <SectionTitle icon={<XCircle className="w-4.5 h-4.5 text-red-500" />}>
+          <SectionTitle icon={<XCircle className="w-4.5 h-4.5 text-destructive" />}>
             الأخطاء الشائعة
           </SectionTitle>
           <ul className="space-y-2">
             {output.commonMistakes.map((m, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm p-3 bg-red-50/60 dark:bg-red-900/10 border border-red-100 dark:border-red-900/40 rounded-lg">
-                <XCircle className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" />
+              <li key={i} className="flex items-start gap-2 text-sm p-3 bg-destructive/10 border border-destructive/25 dark:border-destructive/40 rounded-lg">
+                <XCircle className="w-3.5 h-3.5 text-destructive shrink-0 mt-0.5" />
                 {m}
               </li>
             ))}
@@ -254,7 +254,7 @@ function GuidanceView({ output, roleNameAr, sectorNameAr }: {
       {/* Next-step checklist */}
       {output.nextStepChecklist?.length > 0 && (
         <section>
-          <SectionTitle icon={<CheckCircle2 className="w-4.5 h-4.5 text-emerald-500" />}>
+          <SectionTitle icon={<CheckCircle2 className="w-4.5 h-4.5 text-heading" />}>
             قائمة الخطوات التالية
           </SectionTitle>
           <p className="text-xs text-muted-foreground mb-3">اضغط على الخطوة لتعليمها كمنجزة</p>

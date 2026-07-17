@@ -179,9 +179,9 @@ export default function NaipRiskOfficer() {
 
   // NRI color: high NRI = red (risk is bad)
   const nriColor = kpi?.avgNationalRiskIndex == null ? 'text-muted-foreground' :
-    kpi.avgNationalRiskIndex >= 75 ? 'text-red-500' :
+    kpi.avgNationalRiskIndex >= 75 ? 'text-destructive' :
     kpi.avgNationalRiskIndex >= 50 ? 'text-gold' :
-    kpi.avgNationalRiskIndex >= 35 ? 'text-gold' : 'text-emerald-500';
+    kpi.avgNationalRiskIndex >= 35 ? 'text-gold' : 'text-heading';
 
   return (
     <AppLayout>
@@ -190,7 +190,7 @@ export default function NaipRiskOfficer() {
         {/* ── Header ─────────────────────────────────────────────────────── */}
         <div className="space-y-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <Activity className="w-6 h-6 text-red-500" />
+            <Activity className="w-6 h-6 text-destructive" />
             <h1 className="text-xl font-bold text-foreground">
               {t('لوحة مسؤول المخاطر الوطني', 'National Risk Officer Dashboard')}
             </h1>
@@ -207,7 +207,7 @@ export default function NaipRiskOfficer() {
         )}
 
         {isError && (
-          <div className="flex items-center gap-3 p-4 rounded-lg border border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-950/20 text-sm text-red-700 dark:text-red-400">
+          <div className="flex items-center gap-3 p-4 rounded-lg border border-destructive/25 dark:border-destructive/40 bg-destructive/10 dark:bg-destructive/20 text-sm text-destructive">
             <XCircle className="w-4 h-4 shrink-0" />
             {t('تعذر تحميل بيانات المخاطر', 'Failed to load risk data')}
           </div>
@@ -228,8 +228,8 @@ export default function NaipRiskOfficer() {
             value={kpi?.avgAdministrativeLegitimacyIndex}
             description={t('أعلى = شرعية أفضل', 'Higher = better legitimacy')}
             colorClass={
-              (kpi?.avgAdministrativeLegitimacyIndex ?? 0) >= 70 ? 'text-emerald-500' :
-              (kpi?.avgAdministrativeLegitimacyIndex ?? 0) >= 50 ? 'text-gold' : 'text-red-500'
+              (kpi?.avgAdministrativeLegitimacyIndex ?? 0) >= 70 ? 'text-heading' :
+              (kpi?.avgAdministrativeLegitimacyIndex ?? 0) >= 50 ? 'text-gold' : 'text-destructive'
             }
           />
           <GaugeCard
@@ -238,7 +238,7 @@ export default function NaipRiskOfficer() {
             value={kpi?.avgDecisionConfidenceScore}
             description={t('أعلى = ثقة أفضل', 'Higher = better confidence')}
             colorClass={
-              (kpi?.avgDecisionConfidenceScore ?? 0) >= 70 ? 'text-blue-500' :
+              (kpi?.avgDecisionConfidenceScore ?? 0) >= 70 ? 'text-heading' :
               (kpi?.avgDecisionConfidenceScore ?? 0) >= 50 ? 'text-gold' : 'text-gold'
             }
           />
@@ -255,13 +255,13 @@ export default function NaipRiskOfficer() {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <QuadrantCard label="حرج" count={kpi?.criticalCount ?? 0} total={total}
-              colorClass="text-red-600 dark:text-red-400" bgClass="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/40" />
+              colorClass="text-destructive" bgClass="bg-destructive/10 dark:bg-destructive/20 border border-destructive/25 dark:border-destructive/40" />
             <QuadrantCard label="عالٍ" count={kpi?.highCount ?? 0} total={total}
-              colorClass="text-gold dark:text-gold/80" bgClass="bg-gold/10 dark:bg-gold/20 border border-gold/25 dark:border-gold/40" />
+              colorClass="text-gold/80" bgClass="bg-gold/10 dark:bg-gold/20 border border-gold/25 dark:border-gold/40" />
             <QuadrantCard label="متوسط" count={kpi?.moderateCount ?? 0} total={total}
-              colorClass="text-gold dark:text-gold/80" bgClass="bg-gold/10 dark:bg-gold/20 border border-gold/25 dark:border-gold/40" />
+              colorClass="text-gold/80" bgClass="bg-gold/10 dark:bg-gold/20 border border-gold/25 dark:border-gold/40" />
             <QuadrantCard label="منخفض" count={kpi?.lowCount ?? 0} total={total}
-              colorClass="text-emerald-600 dark:text-emerald-400" bgClass="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40" />
+              colorClass="text-heading" bgClass="bg-heading/10 dark:bg-heading/20 border border-heading/25 dark:border-heading/40" />
           </div>
         </div>
 
@@ -282,18 +282,18 @@ export default function NaipRiskOfficer() {
                 </div>
                 <div className="h-3 bg-muted/40 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-emerald-500 transition-all duration-700"
+                    className="h-full bg-heading transition-all duration-700"
                     style={{ width: `${kpi.treatmentRate ?? 0}%` }}
                   />
                 </div>
               </div>
               <div className="flex gap-3 shrink-0">
                 <div className="flex flex-col items-center">
-                  <span className="text-lg font-bold text-emerald-500 tabular-nums">{kpi.criticalWithTreatment ?? 0}</span>
+                  <span className="text-lg font-bold text-heading tabular-nums">{kpi.criticalWithTreatment ?? 0}</span>
                   <span className="text-[10px] text-muted-foreground">{t('معالج', 'treated')}</span>
                 </div>
                 <div className="flex flex-col items-center">
-                  <span className="text-lg font-bold text-red-500 tabular-nums">{kpi.criticalWithoutTreatment ?? 0}</span>
+                  <span className="text-lg font-bold text-destructive tabular-nums">{kpi.criticalWithoutTreatment ?? 0}</span>
                   <span className="text-[10px] text-muted-foreground">{t('غير معالج', 'untreated')}</span>
                 </div>
               </div>
@@ -303,14 +303,14 @@ export default function NaipRiskOfficer() {
 
         {/* ── Critical Risk Decisions ──────────────────────────────────────── */}
         {criticalDecisions.length > 0 && (
-          <div className="bg-card border border-red-200 dark:border-red-800/40 rounded-xl overflow-hidden">
-            <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-red-200 dark:border-red-800/40 bg-red-50/50 dark:bg-red-950/10">
+          <div className="bg-card border border-destructive/25 dark:border-destructive/40 rounded-xl overflow-hidden">
+            <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-destructive/25 dark:border-destructive/40 bg-destructive/10">
               <div className="flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-red-500" />
-                <h2 className="text-sm font-bold text-red-700 dark:text-red-400">
+                <AlertTriangle className="w-4 h-4 text-destructive" />
+                <h2 className="text-sm font-bold text-destructive">
                   {t('القرارات ذات المخاطر الحرجة', 'Critical Risk Decisions')}
                 </h2>
-                <span className="text-xs bg-red-500 text-white rounded-full px-2 py-0.5 font-bold">
+                <span className="text-xs bg-destructive text-white rounded-full px-2 py-0.5 font-bold">
                   {criticalDecisions.length}
                 </span>
               </div>
@@ -326,8 +326,8 @@ export default function NaipRiskOfficer() {
                   onClick={() => navigate(`/decisions/${d.decisionId}`)}
                 >
                   {/* NRI Score Badge */}
-                  <div className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold border bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/40">
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                  <div className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold border bg-destructive/15 dark:bg-destructive/40 text-destructive border-destructive/25 dark:border-destructive/40">
+                    <span className="w-1.5 h-1.5 rounded-full bg-destructive" />
                     {Math.round(d.nationalRiskIndex)}
                   </div>
                   {/* Info */}
@@ -353,9 +353,9 @@ export default function NaipRiskOfficer() {
         {/* ── Quick Links ──────────────────────────────────────────────────── */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {[
-            { href: '/risk-engine', icon: <Activity className="w-5 h-5" />, label: 'تقييم المخاطر', labelEn: 'Risk Assessment', color: 'text-red-500' },
-            { href: '/constitutional-intelligence', icon: <Scale className="w-5 h-5" />, label: 'المراجعة الدستورية', labelEn: 'Constitutional Review', color: 'text-purple-500' },
-            { href: '/decisions', icon: <FileText className="w-5 h-5" />, label: 'جميع القرارات', labelEn: 'All Decisions', color: 'text-blue-500' },
+            { href: '/risk-engine', icon: <Activity className="w-5 h-5" />, label: 'تقييم المخاطر', labelEn: 'Risk Assessment', color: 'text-destructive' },
+            { href: '/constitutional-intelligence', icon: <Scale className="w-5 h-5" />, label: 'المراجعة الدستورية', labelEn: 'Constitutional Review', color: 'text-heading' },
+            { href: '/decisions', icon: <FileText className="w-5 h-5" />, label: 'جميع القرارات', labelEn: 'All Decisions', color: 'text-heading' },
           ].map((a) => (
             <Link key={a.href} href={a.href}>
               <div className="bg-card border border-border rounded-xl p-4 flex flex-col items-center gap-2 hover:border-foreground/30 hover:bg-muted/30 cursor-pointer transition-colors text-center">

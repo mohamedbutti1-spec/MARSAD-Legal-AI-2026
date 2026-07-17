@@ -446,8 +446,8 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
 
   const ROLE_CONFIG: Record<string, { labelAr: string; labelEn: string; color: string }> = {
     owner: { labelAr: 'مالك', labelEn: 'Owner', color: 'bg-gold/20 text-gold/40 border-gold/30' },
-    supervisor: { labelAr: 'مشرف', labelEn: 'Supervisor', color: 'bg-sky-400/20 text-sky-300 border-sky-400/30' },
-    viewer: { labelAr: 'مشاهد', labelEn: 'Viewer', color: 'bg-slate-400/20 text-slate-300 border-slate-400/30' },
+    supervisor: { labelAr: 'مشرف', labelEn: 'Supervisor', color: 'bg-heading/20 text-heading border-heading/30' },
+    viewer: { labelAr: 'مشاهد', labelEn: 'Viewer', color: 'bg-muted-foreground/20 text-foreground border-border' },
   };
 
   const roleConf = ROLE_CONFIG[role] ?? ROLE_CONFIG.viewer;

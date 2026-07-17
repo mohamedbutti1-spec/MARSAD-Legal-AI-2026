@@ -86,9 +86,9 @@ function getHeaders(role: string, userId: number, org: string) {
 
 function statusConfig(status: DecisionStatus) {
   switch (status) {
-    case 'sealed':   return { label: 'مختوم', bg: 'bg-blue-100 dark:bg-blue-950/40', text: 'text-blue-700 dark:text-blue-400' };
-    case 'active':   return { label: 'نشط', bg: 'bg-emerald-100 dark:bg-emerald-950/40', text: 'text-emerald-700 dark:text-emerald-400' };
-    case 'draft':    return { label: 'مسودة', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80' };
+    case 'sealed':   return { label: 'مختوم', bg: 'bg-heading/15 dark:bg-heading/40', text: 'text-heading' };
+    case 'active':   return { label: 'نشط', bg: 'bg-heading/15 dark:bg-heading/40', text: 'text-heading' };
+    case 'draft':    return { label: 'مسودة', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold/80' };
     case 'archived': return { label: 'مؤرشف', bg: 'bg-muted', text: 'text-muted-foreground' };
     default:         return { label: status, bg: 'bg-muted', text: 'text-muted-foreground' };
   }
@@ -96,10 +96,10 @@ function statusConfig(status: DecisionStatus) {
 
 function riskConfig(level: RiskLevel | null | undefined) {
   switch (level) {
-    case 'critical': return { label: 'حرج', bg: 'bg-red-100 dark:bg-red-950/40', text: 'text-red-700 dark:text-red-400' };
-    case 'high':     return { label: 'عالٍ', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80' };
-    case 'moderate': return { label: 'متوسط', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80' };
-    case 'low':      return { label: 'منخفض', bg: 'bg-emerald-100 dark:bg-emerald-950/40', text: 'text-emerald-700 dark:text-emerald-400' };
+    case 'critical': return { label: 'حرج', bg: 'bg-destructive/15 dark:bg-destructive/40', text: 'text-destructive' };
+    case 'high':     return { label: 'عالٍ', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold/80' };
+    case 'moderate': return { label: 'متوسط', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold/80' };
+    case 'low':      return { label: 'منخفض', bg: 'bg-heading/15 dark:bg-heading/40', text: 'text-heading' };
     default:         return { label: '—', bg: 'bg-muted', text: 'text-muted-foreground' };
   }
 }
@@ -111,23 +111,23 @@ function truncate(str: string, max: number) {
 
 function jspColor(score: number | null) {
   if (score == null) return 'text-muted-foreground';
-  if (score >= 70) return 'text-emerald-600 dark:text-emerald-400';
-  if (score >= 40) return 'text-gold dark:text-gold/80';
-  return 'text-red-600 dark:text-red-400';
+  if (score >= 70) return 'text-heading';
+  if (score >= 40) return 'text-gold/80';
+  return 'text-destructive';
 }
 
 function jspGaugeColor(score: number | null) {
   if (score == null) return 'text-muted-foreground';
-  if (score >= 70) return 'text-emerald-500';
+  if (score >= 70) return 'text-heading';
   if (score >= 40) return 'text-gold';
-  return 'text-red-500';
+  return 'text-destructive';
 }
 
 function ccsColor(score: number | null) {
   if (score == null) return 'text-muted-foreground';
-  if (score >= 75) return 'text-emerald-600 dark:text-emerald-400';
-  if (score >= 50) return 'text-gold dark:text-gold/80';
-  return 'text-red-600 dark:text-red-400';
+  if (score >= 75) return 'text-heading';
+  if (score >= 50) return 'text-gold/80';
+  return 'text-destructive';
 }
 
 // ─── JSP Gauge ────────────────────────────────────────────────────────────────
@@ -252,11 +252,11 @@ export default function NaipJudge() {
         {/* ── Header ─────────────────────────────────────────────────────── */}
         <div className="space-y-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <Gavel className="w-6 h-6 text-violet-500" />
+            <Gavel className="w-6 h-6 text-heading" />
             <h1 className="text-xl font-bold text-foreground">
               {t('لوحة القاضي', 'Judge Dashboard')}
             </h1>
-            <span className="text-[10px] font-bold tracking-widest text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-950/40 px-2 py-0.5 rounded-full border border-violet-200 dark:border-violet-800/40">
+            <span className="text-[10px] font-bold tracking-widest text-heading bg-heading/15 dark:bg-heading/40 px-2 py-0.5 rounded-full border border-heading/25 dark:border-heading/40">
               قضائي
             </span>
           </div>
@@ -272,7 +272,7 @@ export default function NaipJudge() {
         )}
 
         {isError && (
-          <div className="flex items-center gap-3 p-4 rounded-lg border border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-950/20 text-sm text-red-700 dark:text-red-400">
+          <div className="flex items-center gap-3 p-4 rounded-lg border border-destructive/25 dark:border-destructive/40 bg-destructive/10 dark:bg-destructive/20 text-sm text-destructive">
             <XCircle className="w-4 h-4 shrink-0" />
             {t('تعذر تحميل البيانات القضائية', 'Failed to load judicial data')}
           </div>
@@ -287,28 +287,28 @@ export default function NaipJudge() {
               labelAr="القرارات المختومة"
               labelEn="Sealed Decisions"
               value={kpi?.sealedCount}
-              colorClass="text-blue-600 dark:text-blue-400"
+              colorClass="text-heading"
               icon={<FileText className="w-4 h-4" />}
             />
             <StatTile
               labelAr="تقييمات دستورية مكتملة"
               labelEn="Completed Constitutional Assessments"
               value={kpi?.completedCilCount}
-              colorClass="text-emerald-600 dark:text-emerald-400"
+              colorClass="text-heading"
               icon={<CheckCircle2 className="w-4 h-4" />}
             />
             <StatTile
               labelAr="متوسط الامتثال الدستوري"
               labelEn="Avg Constitutional Compliance"
               value={kpi?.avgConstitutionalComplianceScore != null ? Math.round(kpi.avgConstitutionalComplianceScore) : null}
-              colorClass="text-violet-600 dark:text-violet-400"
+              colorClass="text-heading"
               icon={<Scale className="w-4 h-4" />}
             />
             <StatTile
               labelAr="تحذيرات حرجة"
               labelEn="Critical Warnings"
               value={kpi?.criticalWarningCount}
-              colorClass="text-red-600 dark:text-red-400"
+              colorClass="text-destructive"
               icon={<AlertTriangle className="w-4 h-4" />}
             />
           </div>
@@ -319,7 +319,7 @@ export default function NaipJudge() {
           <div className="bg-card border border-border rounded-xl overflow-hidden">
             <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-border/60">
               <div className="flex items-center gap-2">
-                <Scale className="w-4 h-4 text-violet-500" />
+                <Scale className="w-4 h-4 text-heading" />
                 <h2 className="text-sm font-bold text-foreground">{t('التقييمات الدستورية المكتملة', 'Completed Constitutional Assessments')}</h2>
               </div>
               <Link href="/constitutional-intelligence" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
@@ -350,7 +350,7 @@ export default function NaipJudge() {
                       </span>
                     </div>
                     {a.hasCriticalWarning && (
-                      <AlertTriangle className="w-3.5 h-3.5 text-red-500 shrink-0" />
+                      <AlertTriangle className="w-3.5 h-3.5 text-destructive shrink-0" />
                     )}
                     <span className={`text-xs px-2 py-0.5 rounded-full font-bold shrink-0 ${rc.bg} ${rc.text}`}>{rc.label}</span>
                     <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0" />
@@ -423,13 +423,13 @@ export default function NaipJudge() {
 
         {/* ── CIL Warnings for Judicial Review ────────────────────────────── */}
         {criticalWarnings.length > 0 && (
-          <div className="bg-card border border-red-200 dark:border-red-800/40 rounded-xl overflow-hidden">
-            <div className="flex items-center gap-2 px-5 py-4 border-b border-red-200 dark:border-red-800/40 bg-red-50/50 dark:bg-red-950/10">
-              <AlertTriangle className="w-4 h-4 text-red-500" />
-              <h2 className="text-sm font-bold text-red-700 dark:text-red-400">
+          <div className="bg-card border border-destructive/25 dark:border-destructive/40 rounded-xl overflow-hidden">
+            <div className="flex items-center gap-2 px-5 py-4 border-b border-destructive/25 dark:border-destructive/40 bg-destructive/10">
+              <AlertTriangle className="w-4 h-4 text-destructive" />
+              <h2 className="text-sm font-bold text-destructive">
                 {t('تحذيرات دستورية تؤثر على المراجعة القضائية', 'Constitutional Warnings Affecting Judicial Review')}
               </h2>
-              <span className="text-xs bg-red-500 text-white rounded-full px-2 py-0.5 font-bold ml-auto">
+              <span className="text-xs bg-destructive text-white rounded-full px-2 py-0.5 font-bold ml-auto">
                 {criticalWarnings.length}
               </span>
             </div>
@@ -437,7 +437,7 @@ export default function NaipJudge() {
               {criticalWarnings.map((w) => (
                 <Link key={w.id} href={`/decisions/${w.decisionId}`}>
                   <div className="flex items-start gap-3 px-5 py-3 hover:bg-muted/40 cursor-pointer transition-colors">
-                    <span className="text-[10px] font-mono text-red-500 font-bold shrink-0 mt-0.5">{w.warningCode}</span>
+                    <span className="text-[10px] font-mono text-destructive font-bold shrink-0 mt-0.5">{w.warningCode}</span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-foreground truncate">{w.titleAr}</p>
                       {w.constitutionalRef && (
@@ -445,7 +445,7 @@ export default function NaipJudge() {
                       )}
                     </div>
                     <span className="text-xs text-muted-foreground shrink-0">{w.caseNumber}</span>
-                    <ArrowUpRight className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                    <ArrowUpRight className="w-3.5 h-3.5 text-destructive shrink-0" />
                   </div>
                 </Link>
               ))}
@@ -456,9 +456,9 @@ export default function NaipJudge() {
         {/* ── Quick Links ──────────────────────────────────────────────────── */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {[
-            { href: '/constitutional-intelligence', icon: <Scale className="w-5 h-5" />, label: 'المراجعة الدستورية', labelEn: 'Constitutional Review', color: 'text-violet-500' },
-            { href: '/decisions', icon: <FileText className="w-5 h-5" />, label: 'جميع القرارات', labelEn: 'All Decisions', color: 'text-blue-500' },
-            { href: '/governance', icon: <BarChart3 className="w-5 h-5" />, label: 'مركز الحوكمة', labelEn: 'Governance Hub', color: 'text-emerald-500' },
+            { href: '/constitutional-intelligence', icon: <Scale className="w-5 h-5" />, label: 'المراجعة الدستورية', labelEn: 'Constitutional Review', color: 'text-heading' },
+            { href: '/decisions', icon: <FileText className="w-5 h-5" />, label: 'جميع القرارات', labelEn: 'All Decisions', color: 'text-heading' },
+            { href: '/governance', icon: <BarChart3 className="w-5 h-5" />, label: 'مركز الحوكمة', labelEn: 'Governance Hub', color: 'text-heading' },
           ].map((a) => (
             <Link key={a.href} href={a.href}>
               <div className="bg-card border border-border rounded-xl p-4 flex flex-col items-center gap-2 hover:border-foreground/30 hover:bg-muted/30 cursor-pointer transition-colors text-center">

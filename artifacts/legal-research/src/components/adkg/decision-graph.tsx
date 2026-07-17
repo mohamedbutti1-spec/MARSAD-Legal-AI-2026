@@ -95,7 +95,7 @@ export function DecisionGraph({ nodes, edges, centralId }: DecisionGraphProps) {
   }
 
   return (
-    <div className="rounded-lg border bg-slate-50 overflow-hidden">
+    <div className="rounded-lg border bg-muted/40 overflow-hidden">
       <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ maxHeight: 520, display: 'block' }}>
         <defs>
           <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">

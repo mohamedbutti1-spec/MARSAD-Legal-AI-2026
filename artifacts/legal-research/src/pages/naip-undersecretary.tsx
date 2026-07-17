@@ -83,9 +83,9 @@ function getHeaders(role: string, userId: number, org: string) {
 
 function statusConfig(status: DecisionStatus) {
   switch (status) {
-    case 'sealed':   return { label: 'مختوم', bg: 'bg-blue-100 dark:bg-blue-950/40', text: 'text-blue-700 dark:text-blue-400' };
-    case 'active':   return { label: 'نشط', bg: 'bg-emerald-100 dark:bg-emerald-950/40', text: 'text-emerald-700 dark:text-emerald-400' };
-    case 'draft':    return { label: 'مسودة', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80' };
+    case 'sealed':   return { label: 'مختوم', bg: 'bg-heading/15 dark:bg-heading/40', text: 'text-heading' };
+    case 'active':   return { label: 'نشط', bg: 'bg-heading/15 dark:bg-heading/40', text: 'text-heading' };
+    case 'draft':    return { label: 'مسودة', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold/80' };
     case 'archived': return { label: 'مؤرشف', bg: 'bg-muted', text: 'text-muted-foreground' };
     default:         return { label: status, bg: 'bg-muted', text: 'text-muted-foreground' };
   }
@@ -93,10 +93,10 @@ function statusConfig(status: DecisionStatus) {
 
 function riskConfig(level: RiskLevel | null | undefined) {
   switch (level) {
-    case 'critical': return { label: 'حرج', dot: 'bg-red-500', bg: 'bg-red-100 dark:bg-red-950/40', text: 'text-red-700 dark:text-red-400' };
-    case 'high':     return { label: 'عالٍ', dot: 'bg-gold', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80' };
-    case 'moderate': return { label: 'متوسط', dot: 'bg-gold', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80' };
-    case 'low':      return { label: 'منخفض', dot: 'bg-emerald-500', bg: 'bg-emerald-100 dark:bg-emerald-950/40', text: 'text-emerald-700 dark:text-emerald-400' };
+    case 'critical': return { label: 'حرج', dot: 'bg-destructive', bg: 'bg-destructive/15 dark:bg-destructive/40', text: 'text-destructive' };
+    case 'high':     return { label: 'عالٍ', dot: 'bg-gold', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold/80' };
+    case 'moderate': return { label: 'متوسط', dot: 'bg-gold', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold/80' };
+    case 'low':      return { label: 'منخفض', dot: 'bg-heading', bg: 'bg-heading/15 dark:bg-heading/40', text: 'text-heading' };
     default:         return { label: '—', dot: 'bg-muted-foreground', bg: 'bg-muted', text: 'text-muted-foreground' };
   }
 }
@@ -194,11 +194,11 @@ export default function NaipUndersecretary() {
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="space-y-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <Scale className="w-6 h-6 text-indigo-500" />
+              <Scale className="w-6 h-6 text-heading" />
               <h1 className="text-xl font-bold text-foreground">
                 {t('لوحة وكيل الوزارة', 'Undersecretary Dashboard')}
               </h1>
-              <span className="text-[10px] font-bold tracking-widest text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-950/40 px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800/40">
+              <span className="text-[10px] font-bold tracking-widest text-heading bg-heading/15 dark:bg-heading/40 px-2 py-0.5 rounded-full border border-heading/25 dark:border-heading/40">
                 وكيل الوزارة
               </span>
             </div>
@@ -215,7 +215,7 @@ export default function NaipUndersecretary() {
         )}
 
         {isError && (
-          <div className="flex items-center gap-3 p-4 rounded-lg border border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-950/20 text-sm text-red-700 dark:text-red-400">
+          <div className="flex items-center gap-3 p-4 rounded-lg border border-destructive/25 dark:border-destructive/40 bg-destructive/10 dark:bg-destructive/20 text-sm text-destructive">
             <XCircle className="w-4 h-4 shrink-0" />
             {t('تعذر تحميل البيانات', 'Failed to load data')}
           </div>
@@ -228,23 +228,23 @@ export default function NaipUndersecretary() {
             <h2 className="text-sm font-bold text-foreground">{t('المؤشرات التنفيذية', 'Executive KPIs')}</h2>
           </div>
           <div className="flex flex-wrap gap-6 justify-around">
-            <MiniGauge value={kpi?.avgNationalRiskIndex} colorClass="text-red-500" label="مؤشر المخاطر الوطني" />
-            <MiniGauge value={kpi?.avgConstitutionalCompliance} colorClass="text-emerald-500" label="الامتثال الدستوري" />
+            <MiniGauge value={kpi?.avgNationalRiskIndex} colorClass="text-destructive" label="مؤشر المخاطر الوطني" />
+            <MiniGauge value={kpi?.avgConstitutionalCompliance} colorClass="text-heading" label="الامتثال الدستوري" />
             <div className="flex flex-col items-center gap-1">
-              <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-950/40 flex items-center justify-center">
-                <span className="text-lg font-bold text-blue-600 dark:text-blue-400 tabular-nums">{kpi?.totalDecisions ?? '—'}</span>
+              <div className="w-16 h-16 rounded-full bg-heading/15 dark:bg-heading/40 flex items-center justify-center">
+                <span className="text-lg font-bold text-heading tabular-nums">{kpi?.totalDecisions ?? '—'}</span>
               </div>
               <span className="text-[10px] text-muted-foreground text-center">إجمالي القرارات</span>
             </div>
             <div className="flex flex-col items-center gap-1">
               <div className="w-16 h-16 rounded-full bg-gold/15 dark:bg-gold/40 flex items-center justify-center">
-                <span className="text-lg font-bold text-gold dark:text-gold/80 tabular-nums">{kpi?.activeWarnings ?? '—'}</span>
+                <span className="text-lg font-bold text-gold/80 tabular-nums">{kpi?.activeWarnings ?? '—'}</span>
               </div>
               <span className="text-[10px] text-muted-foreground text-center">تحذيرات نشطة</span>
             </div>
             <div className="flex flex-col items-center gap-1">
-              <div className="w-16 h-16 rounded-full bg-purple-100 dark:bg-purple-950/40 flex items-center justify-center">
-                <span className="text-lg font-bold text-purple-600 dark:text-purple-400 tabular-nums">{kpi?.pendingReviews ?? '—'}</span>
+              <div className="w-16 h-16 rounded-full bg-heading/15 dark:bg-heading/40 flex items-center justify-center">
+                <span className="text-lg font-bold text-heading tabular-nums">{kpi?.pendingReviews ?? '—'}</span>
               </div>
               <span className="text-[10px] text-muted-foreground text-center">مراجعات معلقة</span>
             </div>
@@ -318,7 +318,7 @@ export default function NaipUndersecretary() {
                       <tr key={i} className="hover:bg-muted/40 transition-colors">
                         <td className="px-5 py-3 text-foreground text-xs max-w-[200px] truncate">{o.org || '—'}</td>
                         <td className="px-4 py-3 text-center font-bold text-foreground tabular-nums">{o.decisionCount}</td>
-                        <td className="px-4 py-3 text-center font-bold text-red-500 tabular-nums">{o.criticalCount}</td>
+                        <td className="px-4 py-3 text-center font-bold text-destructive tabular-nums">{o.criticalCount}</td>
                         <td className="px-4 py-3 text-center text-foreground tabular-nums">{o.avgRisk != null ? Math.round(o.avgRisk) : '—'}</td>
                         <td className="px-4 py-3 text-center">
                           <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${rc.bg} ${rc.text}`}>{rc.label}</span>
@@ -358,9 +358,9 @@ export default function NaipUndersecretary() {
         {/* ── Quick Access ────────────────────────────────────────────────── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { href: '/governance', icon: <Scale className="w-5 h-5" />, label: 'مركز الحوكمة', labelEn: 'Governance Hub', color: 'text-blue-500' },
+            { href: '/governance', icon: <Scale className="w-5 h-5" />, label: 'مركز الحوكمة', labelEn: 'Governance Hub', color: 'text-heading' },
             { href: '/risk-engine', icon: <BarChart3 className="w-5 h-5" />, label: 'محرك المخاطر', labelEn: 'Risk Engine', color: 'text-gold' },
-            { href: '/constitutional-intelligence', icon: <ShieldAlert className="w-5 h-5" />, label: 'المراجعة الدستورية', labelEn: 'Constitutional Review', color: 'text-purple-500' },
+            { href: '/constitutional-intelligence', icon: <ShieldAlert className="w-5 h-5" />, label: 'المراجعة الدستورية', labelEn: 'Constitutional Review', color: 'text-heading' },
           ].map((a) => (
             <Link key={a.href} href={a.href}>
               <div className="bg-card border border-border rounded-xl p-4 flex flex-col items-center gap-2 hover:border-foreground/30 hover:bg-muted/30 cursor-pointer transition-colors text-center">

@@ -61,7 +61,7 @@ function InlineJudgeTheory({ stageTheory, lensName, chamberLensId }: {
 
   return (
     <div className="mt-4 pt-3 border-t border-dashed border-gold/25 dark:border-gold/60 space-y-2">
-      <p className="text-xs font-medium text-gold dark:text-gold/80 flex items-center gap-1.5">
+      <p className="text-xs font-medium text-gold/80 flex items-center gap-1.5">
         <Sparkles className="w-3.5 h-3.5 shrink-0" />
         {lens} — التحليل النظري [غير مُلزِم]
       </p>
@@ -76,31 +76,31 @@ function InlineJudgeTheory({ stageTheory, lensName, chamberLensId }: {
           </button>
           {openStage === s.stageId && (
             <div className="px-3 pb-3 space-y-2 text-xs border-t border-gold/15 dark:border-gold/40">
-              <div className="border-r-2 border-emerald-500 pr-2 pt-2">
-                <p className="font-semibold text-emerald-700 dark:text-emerald-400 mb-0.5">القانون الإماراتي الملزم</p>
+              <div className="border-r-2 border-heading/40 pr-2 pt-2">
+                <p className="font-semibold text-heading mb-0.5">القانون الإماراتي الملزم</p>
                 <p className="leading-relaxed">{s.uaeBindingAnalysis}</p>
               </div>
               {s.theoryLensAnalysis && (
                 <div className="border-r-2 border-gold/80 pr-2">
-                  <p className="font-semibold text-gold dark:text-gold/80 mb-0.5">{lens} [غير مُلزِم]</p>
+                  <p className="font-semibold text-gold/80 mb-0.5">{lens} [غير مُلزِم]</p>
                   <p className="leading-relaxed">{s.theoryLensAnalysis}</p>
                 </div>
               )}
               {s.frenchComparative && (
-                <div className="border-r-2 border-blue-400 pr-2">
-                  <p className="font-semibold text-blue-600 dark:text-blue-400 mb-0.5">القانون الفرنسي المقارن [غير مُلزِم]</p>
+                <div className="border-r-2 border-heading/40 pr-2">
+                  <p className="font-semibold text-heading mb-0.5">القانون الفرنسي المقارن [غير مُلزِم]</p>
                   <p className="leading-relaxed">{s.frenchComparative}</p>
                 </div>
               )}
               <div className="grid grid-cols-3 gap-1.5 pt-1">
-                <div className="bg-emerald-50 dark:bg-emerald-900/10 rounded p-1.5">
-                  <span className="font-semibold text-emerald-700 dark:text-emerald-400">توافق: </span>{s.agreement}
+                <div className="bg-heading/10 rounded p-1.5">
+                  <span className="font-semibold text-heading">توافق: </span>{s.agreement}
                 </div>
-                <div className="bg-gold/10 dark:bg-gold/10 rounded p-1.5">
-                  <span className="font-semibold text-gold dark:text-gold/80">اختلاف: </span>{s.difference}
+                <div className="bg-gold/10 rounded p-1.5">
+                  <span className="font-semibold text-gold/80">اختلاف: </span>{s.difference}
                 </div>
-                <div className="bg-indigo-50 dark:bg-indigo-900/10 rounded p-1.5">
-                  <span className="font-semibold text-indigo-700 dark:text-indigo-400">قيمة: </span>{s.addedValue}
+                <div className="bg-heading/10 rounded p-1.5">
+                  <span className="font-semibold text-heading">قيمة: </span>{s.addedValue}
                 </div>
               </div>
             </div>
@@ -148,8 +148,8 @@ function JudgeCard({ judge, isMajority, chamberLensId, chamberLensName }: { judg
               <div className="flex items-center gap-2 shrink-0">
                 <div className="text-center">
                   <div className={`text-lg font-bold ${
-                    judge.legalityAssessment.score >= 70 ? 'text-emerald-600' :
-                    judge.legalityAssessment.score >= 40 ? 'text-gold' : 'text-red-600'
+                    judge.legalityAssessment.score >= 70 ? 'text-heading' :
+                    judge.legalityAssessment.score >= 40 ? 'text-gold' : 'text-destructive'
                   }`}>{judge.legalityAssessment.score}</div>
                   <div className="text-xs text-muted-foreground">مشروعية</div>
                 </div>
@@ -166,8 +166,8 @@ function JudgeCard({ judge, isMajority, chamberLensId, chamberLensName }: { judg
               <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">الاختصاص والقبول</h4>
               <div className="flex items-start gap-2">
                 {judge.jurisdictionFinding.admissible
-                  ? <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
-                  : <XCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
+                  ? <CheckCircle2 className="w-4 h-4 text-heading mt-0.5 shrink-0" />
+                  : <XCircle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
                 }
                 <p className="text-sm text-foreground leading-relaxed">{judge.jurisdictionFinding.admissibilityGrounds}</p>
               </div>
@@ -218,10 +218,10 @@ function JudgeCard({ judge, isMajority, chamberLensId, chamberLensName }: { judg
                 <div className="flex items-center gap-2">
                   <Badge className={`text-xs border-0 ${
                     judge.proportionality.overallFinding === 'proportionate'
-                      ? 'bg-emerald-100 text-emerald-700'
+                      ? 'bg-heading/15 text-heading'
                       : judge.proportionality.overallFinding === 'disproportionate'
-                      ? 'bg-red-100 text-red-700'
-                      : 'bg-gray-100 text-gray-600'
+                      ? 'bg-destructive/15 text-destructive'
+                      : 'bg-muted/60 text-muted-foreground'
                   }`}>
                     {judge.proportionality.overallFinding === 'proportionate' ? 'متناسب' :
                      judge.proportionality.overallFinding === 'disproportionate' ? 'غير متناسب' : 'لا ينطبق'}
@@ -240,8 +240,8 @@ function JudgeCard({ judge, isMajority, chamberLensId, chamberLensName }: { judg
                   {judge.aiDecisionAnalysis!.dimensions!.map((d, i) => (
                     <div key={i} className="flex items-center gap-1.5 text-xs">
                       {d.compliant
-                        ? <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
-                        : <XCircle className="w-3 h-3 text-red-500 shrink-0" />}
+                        ? <CheckCircle2 className="w-3 h-3 text-heading shrink-0" />
+                        : <XCircle className="w-3 h-3 text-destructive shrink-0" />}
                       <span>{d.dimensionAr}</span>
                     </div>
                   ))}
@@ -253,11 +253,11 @@ function JudgeCard({ judge, isMajority, chamberLensId, chamberLensName }: { judg
             {judge.stageTheory && judge.stageTheory.length > 0 ? (
               <InlineJudgeTheory stageTheory={judge.stageTheory} lensName={chamberLensName ?? undefined} chamberLensId={chamberLensId} />
             ) : judge.theoryNote ? (
-              <div className="bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800 rounded-lg p-3">
-                <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-400 mb-1 flex items-center gap-1">
+              <div className="bg-heading/10 dark:bg-heading/20 border border-heading/25 dark:border-heading/40 rounded-lg p-3">
+                <p className="text-xs font-semibold text-heading mb-1 flex items-center gap-1">
                   <Sparkles className="w-3 h-3" /> ملاحظة نظرية — غير مُلزِمة
                 </p>
-                <p className="text-xs text-indigo-800 dark:text-indigo-300 leading-relaxed">
+                <p className="text-xs text-heading leading-relaxed">
                   {judge.theoryNote.slice(0, 300)}{judge.theoryNote.length > 300 ? '...' : ''}
                 </p>
               </div>
@@ -281,7 +281,7 @@ function JudgeCard({ judge, isMajority, chamberLensId, chamberLensName }: { judg
             {/* Verification */}
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               {judge.verificationStatus.allAuthoritiesVerified
-                ? <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                ? <CheckCircle2 className="w-3 h-3 text-heading" />
                 : <AlertCircle className="w-3 h-3 text-gold" />}
               {judge.verificationStatus.message}
             </div>
@@ -309,9 +309,9 @@ function AuthorityHierarchy({ hierarchy }: { hierarchy: import('@/types/jre').Jr
     non_binding: 'غير مُلزِم — Non-Binding',
   };
   const classColors: Record<string, string> = {
-    binding:     'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400',
-    persuasive:  'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400',
-    non_binding: 'bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400',
+    binding:     'bg-heading/15 text-heading border-heading/25 dark:bg-heading/20 dark:text-heading',
+    persuasive:  'bg-heading/15 text-heading border-heading/25 dark:bg-heading/20 dark:text-heading',
+    non_binding: 'bg-muted/60 text-muted-foreground border-border dark:bg-card dark:text-muted-foreground',
   };
 
   return (
@@ -428,7 +428,7 @@ export default function JdcChamberPage() {
                 </Badge>
               )}
               {chamber.hasAiDecision === 'true' && (
-                <Badge className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border-0">
+                <Badge className="text-xs bg-heading/15 text-heading dark:bg-heading/30 dark:text-heading border-0">
                   <Bot className="w-3 h-3 ml-1" /> قرار رقمي
                 </Badge>
               )}
@@ -478,9 +478,9 @@ export default function JdcChamberPage() {
           <TabsContent value="panel" className="space-y-3">
             <div className="grid grid-cols-3 gap-3 mb-4">
               {[
-                { label: 'الأغلبية', count: majorityJudges.length, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/10' },
-                { label: 'المعارضون', count: dissentingJudges.length, color: 'text-red-600', bg: 'bg-red-50 dark:bg-red-900/10' },
-                { label: 'الموافقون بأسباب مختلفة', count: concurringJudges.length, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/10' },
+                { label: 'الأغلبية', count: majorityJudges.length, color: 'text-heading', bg: 'bg-heading/10' },
+                { label: 'المعارضون', count: dissentingJudges.length, color: 'text-destructive', bg: 'bg-destructive/10' },
+                { label: 'الموافقون بأسباب مختلفة', count: concurringJudges.length, color: 'text-heading', bg: 'bg-heading/10' },
               ].map((item) => (
                 <div key={item.label} className={`${item.bg} rounded-lg p-3 text-center`}>
                   <div className={`text-2xl font-bold ${item.color}`}>{item.count}</div>
@@ -502,15 +502,15 @@ export default function JdcChamberPage() {
           {/* ── Majority Opinion Tab ───────────────────────────────────────────── */}
           <TabsContent value="majority" className="space-y-4">
             <div className="flex items-center gap-2 mb-4">
-              <Award className="w-5 h-5 text-emerald-600" />
+              <Award className="w-5 h-5 text-heading" />
               <h2 className="font-semibold text-lg">رأي الأغلبية</h2>
-              <Badge className="bg-emerald-100 text-emerald-700 border-0 text-xs">
+              <Badge className="bg-heading/15 text-heading border-0 text-xs">
                 {majorityJudges.map((j: JudgeAnalysis) => j.nameAr).join(' • ')}
               </Badge>
             </div>
 
-            <div className="bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800 rounded-xl p-5">
-              <h3 className="text-sm font-semibold text-emerald-800 dark:text-emerald-300 mb-2">موقف الأغلبية</h3>
+            <div className="bg-heading/10 border border-heading/25 dark:border-heading/40 rounded-xl p-5">
+              <h3 className="text-sm font-semibold text-heading mb-2">موقف الأغلبية</h3>
               <p className="text-foreground leading-relaxed">{del.majorityOpinionAr}</p>
               {del.majorityOpinionEn && (
                 <p className="text-sm text-muted-foreground italic mt-2" dir="ltr">{del.majorityOpinionEn}</p>
@@ -538,13 +538,13 @@ export default function JdcChamberPage() {
             {del.dissentingOpinionAr && (
               <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <XCircle className="w-5 h-5 text-red-500" />
+                  <XCircle className="w-5 h-5 text-destructive" />
                   <h2 className="font-semibold">الرأي المخالف</h2>
-                  <Badge className="bg-red-100 text-red-700 border-0 text-xs">
+                  <Badge className="bg-destructive/15 text-destructive border-0 text-xs">
                     {dissentingJudges.map((j) => j.nameAr).join(' • ')}
                   </Badge>
                 </div>
-                <div className="bg-red-50/50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-xl p-5">
+                <div className="bg-destructive/10 border border-destructive/25 dark:border-destructive/40 rounded-xl p-5">
                   <p className="text-foreground leading-relaxed whitespace-pre-line">{del.dissentingOpinionAr}</p>
                   {del.dissentingOpinionEn && (
                     <p className="text-sm text-muted-foreground italic mt-3" dir="ltr">{del.dissentingOpinionEn}</p>
@@ -556,13 +556,13 @@ export default function JdcChamberPage() {
             {del.concurringOpinionAr && (
               <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <CheckCircle2 className="w-5 h-5 text-blue-500" />
+                  <CheckCircle2 className="w-5 h-5 text-heading" />
                   <h2 className="font-semibold">الرأي الموافق (بأسباب مختلفة)</h2>
-                  <Badge className="bg-blue-100 text-blue-700 border-0 text-xs">
+                  <Badge className="bg-heading/15 text-heading border-0 text-xs">
                     {concurringJudges.map((j) => j.nameAr).join(' • ')}
                   </Badge>
                 </div>
-                <div className="bg-blue-50/50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-xl p-5">
+                <div className="bg-heading/10 border border-heading/25 dark:border-heading/40 rounded-xl p-5">
                   <p className="text-foreground leading-relaxed whitespace-pre-line">{del.concurringOpinionAr}</p>
                   {del.concurringOpinionEn && (
                     <p className="text-sm text-muted-foreground italic mt-3" dir="ltr">{del.concurringOpinionEn}</p>
@@ -573,7 +573,7 @@ export default function JdcChamberPage() {
 
             {!del.dissentingOpinionAr && !del.concurringOpinionAr && (
               <div className="text-center py-10 text-muted-foreground">
-                <CheckCircle2 className="w-10 h-10 mx-auto mb-3 text-emerald-500" />
+                <CheckCircle2 className="w-10 h-10 mx-auto mb-3 text-heading" />
                 <p>إجماع الهيئة — لا توجد آراء مخالفة أو موافقة بأسباب مختلفة</p>
               </div>
             )}
@@ -607,7 +607,7 @@ export default function JdcChamberPage() {
               <p className="text-foreground text-base leading-loose whitespace-pre-line font-medium">{del.operativeOrderAr}</p>
               {del.operativeOrderEn && (
                 <div className="mt-4 pt-3 border-t border-gold/25 dark:border-gold">
-                  <p className="text-xs font-semibold text-gold dark:text-gold/80 mb-1">Operative Order (English)</p>
+                  <p className="text-xs font-semibold text-gold/80 mb-1">Operative Order (English)</p>
                   <p className="text-sm text-foreground italic leading-relaxed" dir="ltr">{del.operativeOrderEn}</p>
                 </div>
               )}
@@ -658,21 +658,21 @@ export default function JdcChamberPage() {
               </h3>
               <div className="flex items-center gap-2 mb-3">
                 {del.verificationReport.allAuthoritiesVerified
-                  ? <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                  ? <CheckCircle2 className="w-5 h-5 text-heading" />
                   : <AlertCircle className="w-5 h-5 text-gold" />}
                 <p className="text-sm text-foreground">{del.verificationReport.overallMessage}</p>
               </div>
               <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
-                <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-2 text-center">
-                  <div className="text-xl font-bold text-emerald-600">{del.verificationReport.totalVerified}</div>
+                <div className="bg-heading/10 dark:bg-heading/20 rounded-lg p-2 text-center">
+                  <div className="text-xl font-bold text-heading">{del.verificationReport.totalVerified}</div>
                   <div className="text-xs text-muted-foreground">استشهاد موثَّق</div>
                 </div>
                 <div className={`rounded-lg p-2 text-center ${
                   del.verificationReport.totalFabricated > 0
-                    ? 'bg-red-50 dark:bg-red-900/20'
+                    ? 'bg-destructive/10 dark:bg-destructive/20'
                     : 'bg-muted/30'
                 }`}>
-                  <div className={`text-xl font-bold ${del.verificationReport.totalFabricated > 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
+                  <div className={`text-xl font-bold ${del.verificationReport.totalFabricated > 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
                     {del.verificationReport.totalFabricated}
                   </div>
                   <div className="text-xs text-muted-foreground">تمَّ حذفه</div>
@@ -687,8 +687,8 @@ export default function JdcChamberPage() {
                       return (
                         <div key={pj.judgeId} className="flex items-center gap-2 text-xs text-muted-foreground">
                           <span className="font-medium text-foreground">{judge?.nameAr ?? `قاضٍ ${pj.judgeId}`}:</span>
-                          <span className="text-emerald-600">{pj.verified} موثَّق</span>
-                          {pj.fabricated > 0 && <span className="text-red-500">{pj.fabricated} محذوف</span>}
+                          <span className="text-heading">{pj.verified} موثَّق</span>
+                          {pj.fabricated > 0 && <span className="text-destructive">{pj.fabricated} محذوف</span>}
                         </div>
                       );
                     })}

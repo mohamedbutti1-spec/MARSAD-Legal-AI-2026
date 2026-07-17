@@ -23,14 +23,14 @@ interface Folder  { id: number; projectId: number; parentFolderId: number | null
 interface Item    { id: number; projectId: number; folderId: number | null; itemType: string; title: string; versionNumber: number; createdAt: string; updatedAt: string }
 
 const ITEM_TYPE_COLORS: Record<string, string> = {
-  question:       'bg-purple-100 text-purple-800',
-  answer:         'bg-blue-100 text-blue-800',
+  question:       'bg-heading/15 text-heading',
+  answer:         'bg-heading/15 text-heading',
   authority:      'bg-heading/15 text-heading/75',
   document:       'bg-gold/15 text-gold/75',
-  note:           'bg-gray-100 text-gray-800',
+  note:           'bg-muted/60 text-foreground',
   highlight:      'bg-gold/15 text-gold/75',
-  bookmark:       'bg-red-100 text-red-800',
-  timeline_entry: 'bg-indigo-100 text-indigo-800',
+  bookmark:       'bg-destructive/15 text-destructive',
+  timeline_entry: 'bg-heading/15 text-heading',
 };
 const ITEM_TYPE_AR: Record<string, string> = {
   question: 'سؤال', answer: 'جواب', authority: 'سلطة', document: 'وثيقة',
@@ -146,13 +146,13 @@ export default function WorkspaceProject() {
       <div className="flex items-center gap-3 mb-6 flex-wrap">
         <button
           onClick={() => navigate('/workspace')}
-          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-[#1e3a5f] transition-colors"
+          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-heading transition-colors"
         >
           <ChevronLeft className="w-4 h-4" />
           {t('مساحة البحث', 'Workspace')}
         </button>
         <span className="text-muted-foreground">/</span>
-        <h1 className="text-lg font-bold text-[#1e3a5f] flex-1 min-w-0 truncate">{project.title}</h1>
+        <h1 className="text-lg font-bold text-heading flex-1 min-w-0 truncate">{project.title}</h1>
         <div className="flex items-center gap-2 shrink-0">
           <Button variant="outline" size="sm" onClick={() => setShowSearch((s) => !s)}>
             {t('بحث', 'Search')}
@@ -161,7 +161,7 @@ export default function WorkspaceProject() {
             <Download className="w-4 h-4 ml-1" />
             {t('تصدير', 'Export')}
           </Button>
-          <Button size="sm" onClick={() => setShowNewItem(true)} className="bg-[#1e3a5f] hover:bg-[#2d5a8f] text-white gap-1">
+          <Button size="sm" onClick={() => setShowNewItem(true)} className="bg-primary hover:opacity-90 text-white gap-1">
             <Plus className="w-4 h-4" />
             {t('عنصر جديد', 'New Item')}
           </Button>
@@ -182,7 +182,7 @@ export default function WorkspaceProject() {
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               {t('المجلدات', 'Folders')}
             </span>
-            <button onClick={() => setShowNewFolder(true)} className="text-muted-foreground hover:text-[#1e3a5f] transition-colors" title={t('مجلد جديد', 'New Folder')}>
+            <button onClick={() => setShowNewFolder(true)} className="text-muted-foreground hover:text-heading transition-colors" title={t('مجلد جديد', 'New Folder')}>
               <FolderPlus className="w-4 h-4" />
             </button>
           </div>
@@ -191,7 +191,7 @@ export default function WorkspaceProject() {
             <li>
               <button
                 onClick={() => setActiveFolderId('all')}
-                className={`w-full text-start text-sm px-2 py-1.5 rounded flex items-center gap-2 transition-colors ${activeFolderId === 'all' ? 'bg-[#1e3a5f] text-white' : 'hover:bg-muted text-gray-700'}`}
+                className={`w-full text-start text-sm px-2 py-1.5 rounded flex items-center gap-2 transition-colors ${activeFolderId === 'all' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted text-muted-foreground'}`}
               >
                 <FolderOpen className="w-3.5 h-3.5 shrink-0" />
                 <span className="truncate">{t('الكل', 'All')}</span>
@@ -201,7 +201,7 @@ export default function WorkspaceProject() {
             <li>
               <button
                 onClick={() => setActiveFolderId(null)}
-                className={`w-full text-start text-sm px-2 py-1.5 rounded flex items-center gap-2 transition-colors ${activeFolderId === null ? 'bg-[#1e3a5f] text-white' : 'hover:bg-muted text-gray-700'}`}
+                className={`w-full text-start text-sm px-2 py-1.5 rounded flex items-center gap-2 transition-colors ${activeFolderId === null ? 'bg-primary text-primary-foreground' : 'hover:bg-muted text-muted-foreground'}`}
               >
                 <FileText className="w-3.5 h-3.5 shrink-0" />
                 <span className="truncate">{t('الجذر', 'Root')}</span>
@@ -212,7 +212,7 @@ export default function WorkspaceProject() {
               <li key={folder.id}>
                 <button
                   onClick={() => setActiveFolderId(folder.id)}
-                  className={`w-full text-start text-sm px-2 py-1.5 rounded flex items-center gap-2 transition-colors ${activeFolderId === folder.id ? 'bg-[#1e3a5f] text-white' : 'hover:bg-muted text-gray-700'}`}
+                  className={`w-full text-start text-sm px-2 py-1.5 rounded flex items-center gap-2 transition-colors ${activeFolderId === folder.id ? 'bg-primary text-primary-foreground' : 'hover:bg-muted text-muted-foreground'}`}
                 >
                   <FolderOpen className="w-3.5 h-3.5 shrink-0" />
                   <span className="truncate">{folder.name}</span>
@@ -244,19 +244,19 @@ export default function WorkspaceProject() {
                   className="flex items-center gap-3 border rounded-lg px-3 py-2.5 hover:bg-muted/40 cursor-pointer transition-colors group"
                   onClick={() => navigate(`/workspace/${projectId}/items/${item.id}`)}
                 >
-                  <FileText className="w-4 h-4 text-blue-600 shrink-0" />
+                  <FileText className="w-4 h-4 text-heading shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{item.title}</p>
+                    <p className="text-sm font-medium text-foreground truncate">{item.title}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {t('النسخة', 'v')}{item.versionNumber} · {new Date(item.updatedAt).toLocaleDateString('ar-AE')}
                     </p>
                   </div>
-                  <Badge className={`text-xs shrink-0 ${ITEM_TYPE_COLORS[item.itemType] ?? 'bg-gray-100 text-gray-700'}`}>
+                  <Badge className={`text-xs shrink-0 ${ITEM_TYPE_COLORS[item.itemType] ?? 'bg-muted/60 text-muted-foreground'}`}>
                     {t(ITEM_TYPE_AR[item.itemType] ?? item.itemType, item.itemType)}
                   </Badge>
                   <button
                     onClick={(e) => { e.stopPropagation(); if (confirm(t('حذف هذا العنصر؟', 'Delete this item?'))) deleteItemMut.mutate(item.id); }}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-red-600"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                     title={t('حذف', 'Delete')}
                   >
                     <Trash2 className="w-4 h-4" />
@@ -291,7 +291,7 @@ export default function WorkspaceProject() {
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => { setShowNewFolder(false); setNewFolderName(''); }} disabled={folderCreating}>{t('إلغاء', 'Cancel')}</Button>
-            <Button onClick={handleNewFolder} disabled={folderCreating} className="bg-[#1e3a5f] hover:bg-[#2d5a8f] text-white">
+            <Button onClick={handleNewFolder} disabled={folderCreating} className="bg-primary hover:opacity-90 text-white">
               {folderCreating && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
               {t('إنشاء', 'Create')}
             </Button>
@@ -311,7 +311,7 @@ export default function WorkspaceProject() {
                 disabled={exportLoading}
                 className="w-full text-start px-4 py-3 rounded-lg border hover:bg-muted transition-colors flex items-center gap-3 disabled:opacity-50"
               >
-                <Download className="w-4 h-4 text-[#1e3a5f]" />
+                <Download className="w-4 h-4 text-heading" />
                 <div>
                   <p className="text-sm font-medium">{fmt.toUpperCase()}</p>
                   <p className="text-xs text-muted-foreground">

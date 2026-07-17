@@ -20,21 +20,21 @@ interface AuditEntry {
 }
 
 const ACTION_COLORS: Record<string, string> = {
-  'document.upload': 'bg-blue-100 text-blue-800',
-  'document.delete': 'bg-red-100 text-red-800',
-  'ai.search': 'bg-purple-100 text-purple-800',
-  'ai.literature-review': 'bg-indigo-100 text-indigo-800',
-  'ai.uae-france-compare': 'bg-violet-100 text-violet-800',
+  'document.upload': 'bg-heading/15 text-heading',
+  'document.delete': 'bg-destructive/15 text-destructive',
+  'ai.search': 'bg-heading/15 text-heading',
+  'ai.literature-review': 'bg-heading/15 text-heading',
+  'ai.uae-france-compare': 'bg-heading/15 text-heading',
   'backup.create': 'bg-heading/15 text-heading/75',
   'post:/comparisons': 'bg-gold/15 text-gold/75',
-  'delete:/comparisons/:id': 'bg-red-100 text-red-800',
-  'post:/users': 'bg-teal-100 text-teal-800',
-  'delete:/users/:id': 'bg-red-100 text-red-800',
+  'delete:/comparisons/:id': 'bg-destructive/15 text-destructive',
+  'post:/users': 'bg-heading/15 text-heading',
+  'delete:/users/:id': 'bg-destructive/15 text-destructive',
   'patch:/settings': 'bg-gold/15 text-gold/75',
 };
 
 function getActionColor(action: string): string {
-  return ACTION_COLORS[action] ?? 'bg-gray-100 text-gray-700';
+  return ACTION_COLORS[action] ?? 'bg-muted/60 text-muted-foreground';
 }
 
 function getActionLabel(action: string): string {

@@ -65,15 +65,15 @@ function SectionHeader({
         className={`inline-flex items-center gap-2 mb-3 px-4 py-1.5 rounded-full text-sm font-medium border ${
           light
             ? 'bg-white/10 border-white/20 text-white/80'
-            : 'bg-[#C9A84C]/10 border-[#C9A84C]/25 text-[#C9A84C]'
+            : 'bg-gold/10 border-gold/25 text-gold'
         }`}
       >
-        <div className={`w-1.5 h-1.5 rounded-full ${light ? 'bg-white/60' : 'bg-[#C9A84C]'}`} />
+        <div className={`w-1.5 h-1.5 rounded-full ${light ? 'bg-white/60' : 'bg-gold'}`} />
         {badge}
       </div>
       <h2
         className={`text-3xl lg:text-4xl font-black mb-3 tracking-tight ${
-          light ? 'text-white' : 'text-[#1B2A4A]'
+          light ? 'text-white' : 'text-heading'
         }`}
       >
         {titleAr}
@@ -222,18 +222,18 @@ const DIMENSIONS = [
 ];
 
 const HUE_CLASSES: Record<string, { bg: string; icon: string; ring: string; badge: string }> = {
-  blue:    { bg: 'bg-blue-50',    icon: 'text-blue-600',    ring: 'border-blue-200',   badge: 'bg-blue-100 text-blue-700' },
-  violet:  { bg: 'bg-violet-50',  icon: 'text-violet-600',  ring: 'border-violet-200', badge: 'bg-violet-100 text-violet-700' },
-  sky:     { bg: 'bg-sky-50',     icon: 'text-sky-600',     ring: 'border-sky-200',    badge: 'bg-sky-100 text-sky-700' },
-  teal:    { bg: 'bg-teal-50',    icon: 'text-teal-600',    ring: 'border-teal-200',   badge: 'bg-teal-100 text-teal-700' },
+  blue:    { bg: 'bg-heading/10',    icon: 'text-heading',    ring: 'border-heading/25',   badge: 'bg-heading/15 text-heading' },
+  violet:  { bg: 'bg-heading/10',  icon: 'text-heading',  ring: 'border-heading/25', badge: 'bg-heading/15 text-heading' },
+  sky:     { bg: 'bg-heading/10',     icon: 'text-heading',     ring: 'border-heading/25',    badge: 'bg-heading/15 text-heading' },
+  teal:    { bg: 'bg-heading/10',    icon: 'text-heading',    ring: 'border-heading/25',   badge: 'bg-heading/15 text-heading' },
   amber:   { bg: 'bg-gold/10',   icon: 'text-gold',   ring: 'border-gold/25',  badge: 'bg-gold/15 text-gold' },
-  rose:    { bg: 'bg-rose-50',    icon: 'text-rose-600',    ring: 'border-rose-200',   badge: 'bg-rose-100 text-rose-700' },
-  emerald: { bg: 'bg-emerald-50', icon: 'text-emerald-600', ring: 'border-emerald-200',badge: 'bg-emerald-100 text-emerald-700' },
-  indigo:  { bg: 'bg-indigo-50',  icon: 'text-indigo-600',  ring: 'border-indigo-200', badge: 'bg-indigo-100 text-indigo-700' },
-  purple:  { bg: 'bg-purple-50',  icon: 'text-purple-600',  ring: 'border-purple-200', badge: 'bg-purple-100 text-purple-700' },
-  cyan:    { bg: 'bg-cyan-50',    icon: 'text-cyan-600',    ring: 'border-cyan-200',   badge: 'bg-cyan-100 text-cyan-700' },
+  rose:    { bg: 'bg-destructive/10',    icon: 'text-destructive',    ring: 'border-destructive/25',   badge: 'bg-destructive/15 text-destructive' },
+  emerald: { bg: 'bg-heading/10', icon: 'text-heading', ring: 'border-heading/25',badge: 'bg-heading/15 text-heading' },
+  indigo:  { bg: 'bg-heading/10',  icon: 'text-heading',  ring: 'border-heading/25', badge: 'bg-heading/15 text-heading' },
+  purple:  { bg: 'bg-heading/10',  icon: 'text-heading',  ring: 'border-heading/25', badge: 'bg-heading/15 text-heading' },
+  cyan:    { bg: 'bg-heading/10',    icon: 'text-heading',    ring: 'border-heading/25',   badge: 'bg-heading/15 text-heading' },
   orange:  { bg: 'bg-gold/10',  icon: 'text-gold',  ring: 'border-gold/25', badge: 'bg-gold/15 text-gold' },
-  lime:    { bg: 'bg-lime-50',    icon: 'text-lime-600',    ring: 'border-lime-200',   badge: 'bg-lime-100 text-lime-700' },
+  lime:    { bg: 'bg-heading/10',    icon: 'text-heading',    ring: 'border-heading/25',   badge: 'bg-heading/15 text-heading' },
 };
 
 // ─── ASLI Gauge (SVG) ─────────────────────────────────────────────────────────
@@ -335,15 +335,15 @@ function AsliGauge({ score = 78 }: { score?: number }) {
       {/* Legend */}
       <div className="grid grid-cols-2 gap-2 text-xs w-full max-w-xs" dir="rtl">
         {[
-          { label: 'خطر شديد', range: '0 – 40', color: 'bg-red-500' },
+          { label: 'خطر شديد', range: '0 – 40', color: 'bg-destructive' },
           { label: 'امتثال جزئي', range: '41 – 70', color: 'bg-gold' },
-          { label: 'مشروع مشروط', range: '71 – 85', color: 'bg-lime-500' },
+          { label: 'مشروع مشروط', range: '71 – 85', color: 'bg-heading' },
           { label: 'مشروع تام', range: '86 – 100', color: 'bg-heading' },
         ].map((item) => (
           <div key={item.label} className="flex items-center gap-1.5">
             <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${item.color}`} />
             <span className="text-muted-foreground">{item.label}</span>
-            <span className="text-[#1B2A4A] font-semibold ms-auto">{item.range}</span>
+            <span className="text-heading font-semibold ms-auto">{item.range}</span>
           </div>
         ))}
       </div>
@@ -380,12 +380,12 @@ export default function ShamsiTheory() {
 
   return (
     <AppLayout>
-      <div dir="rtl" className="min-h-screen bg-[#F5F6FA] overflow-x-hidden">
+      <div dir="rtl" className="min-h-screen bg-background overflow-x-hidden">
 
         {/* ══════════════════════════════════════════════════════════════
             SECTION 1 — HERO
         ══════════════════════════════════════════════════════════════ */}
-        <section className="relative overflow-hidden bg-[#1B2A4A] text-white">
+        <section className="relative overflow-hidden bg-card text-foreground">
           {/* Geometric background pattern */}
           <div className="absolute inset-0 opacity-5 pointer-events-none"
                style={{ backgroundImage: 'repeating-linear-gradient(45deg, #C9A84C 0, #C9A84C 1px, transparent 0, transparent 50%)', backgroundSize: '30px 30px' }} />
@@ -404,7 +404,7 @@ export default function ShamsiTheory() {
                 initial={{ opacity: 0, scale: 0.85 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.2, duration: 0.5 }}
-                className="inline-flex items-center gap-2 mb-6 px-5 py-2 rounded-full bg-[#C9A84C]/15 border border-[#C9A84C]/30 text-[#C9A84C] text-sm font-semibold"
+                className="inline-flex items-center gap-2 mb-6 px-5 py-2 rounded-full bg-gold/15 border border-gold/30 text-gold text-sm font-semibold"
               >
                 <Star className="w-3.5 h-3.5" />
                 المرجع العلمي الرسمي · منصة مرصد
@@ -420,14 +420,14 @@ export default function ShamsiTheory() {
                 style={{ fontFamily: "'Amiri', 'IBM Plex Sans Arabic', serif" }}
               >
                 نظرية{' '}
-                <span className="text-[#C9A84C]">الشامسي</span>
+                <span className="text-gold">الشامسي</span>
               </motion.h1>
 
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5, duration: 0.7 }}
-                className="text-base text-[#C9A84C]/80 font-medium tracking-widest mb-8 uppercase"
+                className="text-base text-gold/80 font-medium tracking-widest mb-8 uppercase"
               >
                 Al-Shamsi Theory of Administrative Decision Legitimacy
               </motion.p>
@@ -441,7 +441,7 @@ export default function ShamsiTheory() {
                 إطار قانوني أكاديمي متكامل لتقييم مشروعية القرارات الإدارية في عصر الذكاء الاصطناعي،
                 يجمع بين مبادئ القانون الإداري الإماراتي والفرنسي عبر اثني عشر بعداً تحليلياً
                 مترابطاً تُقيسها خوارزمية مؤشر الشرعية الإدارية الرقمية{' '}
-                <span className="text-[#C9A84C] font-semibold">(ASLI)</span>.
+                <span className="text-gold font-semibold">(ASLI)</span>.
               </motion.div>
 
               {/* Stats row */}
@@ -457,7 +457,7 @@ export default function ShamsiTheory() {
                   { value: 'ASLI', label: 'مؤشر الشرعية' },
                 ].map((stat) => (
                   <div key={stat.label} className="text-center">
-                    <div className="text-3xl font-black text-[#C9A84C]">{stat.value}</div>
+                    <div className="text-3xl font-black text-gold">{stat.value}</div>
                     <div className="text-xs text-white/50 mt-1">{stat.label}</div>
                   </div>
                 ))}
@@ -466,7 +466,7 @@ export default function ShamsiTheory() {
           </div>
 
           {/* Bottom wave */}
-          <div className="absolute bottom-0 inset-x-0 h-12 bg-[#F5F6FA]"
+          <div className="absolute bottom-0 inset-x-0 h-12 bg-background"
                style={{ clipPath: 'ellipse(55% 100% at 50% 100%)' }} />
         </section>
 
@@ -501,22 +501,22 @@ export default function ShamsiTheory() {
                 icon: AlertTriangle,
                 titleAr: 'غياب معيار قياس الإرادة',
                 descAr: 'لا يوجد في التشريع التقليدي معيار قانوني واضح يحدد متى تكون الإرادة في القرار الإداري بشرية كافية مقارنةً بما تنتجه الخوارزميات.',
-                color: 'border-red-300 bg-red-50',
-                iconColor: 'text-red-600 bg-red-100',
+                color: 'border-destructive/30 bg-destructive/10',
+                iconColor: 'text-destructive bg-destructive/15',
               },
               {
                 icon: Eye,
                 titleAr: 'ضعف قابلية المراجعة القضائية',
                 descAr: 'المحاكم الإدارية التقليدية لا تملك أدوات تقنية لفحص القرارات المُنتجة رقمياً والتحقق من سلامة النموذج الخوارزمي الذي أنتجها.',
-                color: 'border-blue-300 bg-blue-50',
-                iconColor: 'text-blue-600 bg-blue-100',
+                color: 'border-heading/30 bg-heading/10',
+                iconColor: 'text-heading bg-heading/15',
               },
               {
                 icon: Clock,
                 titleAr: 'تأخر التشريع عن التقنية',
                 descAr: 'دورة إصدار التشريعات تقاس بالسنوات، في حين تتطور قدرات الذكاء الاصطناعي بمعدلات أسية، مما يخلق فجوة تنظيمية تتسع باستمرار.',
-                color: 'border-violet-300 bg-violet-50',
-                iconColor: 'text-violet-600 bg-violet-100',
+                color: 'border-heading/30 bg-heading/10',
+                iconColor: 'text-heading bg-heading/15',
               },
             ].map((card) => {
               const Icon = card.icon;
@@ -530,7 +530,7 @@ export default function ShamsiTheory() {
                     <Icon className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-[#1B2A4A] text-base mb-1.5">{card.titleAr}</h3>
+                    <h3 className="font-bold text-heading text-base mb-1.5">{card.titleAr}</h3>
                     <p className="text-muted-foreground text-sm leading-relaxed">{card.descAr}</p>
                   </div>
                 </motion.div>
@@ -542,7 +542,7 @@ export default function ShamsiTheory() {
         {/* ══════════════════════════════════════════════════════════════
             SECTION 3 — HUMAN WILL vs DIGITAL WILL
         ══════════════════════════════════════════════════════════════ */}
-        <section className="bg-[#1B2A4A] py-20 relative overflow-hidden">
+        <section className="bg-card py-20 relative overflow-hidden">
           <div className="absolute inset-0 opacity-5 pointer-events-none"
                style={{ backgroundImage: 'radial-gradient(circle at 30% 50%, #C9A84C 0, transparent 60%), radial-gradient(circle at 70% 50%, #C9A84C 0, transparent 60%)' }} />
 
@@ -566,8 +566,8 @@ export default function ShamsiTheory() {
                 className="bg-white/8 border border-white/15 rounded-2xl p-7 backdrop-blur-sm"
               >
                 <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-10 rounded-xl bg-[#C9A84C]/20 border border-[#C9A84C]/30 flex items-center justify-center">
-                    <Users className="w-5 h-5 text-[#C9A84C]" />
+                  <div className="w-10 h-10 rounded-xl bg-gold/20 border border-gold/30 flex items-center justify-center">
+                    <Users className="w-5 h-5 text-gold" />
                   </div>
                   <div>
                     <h3 className="font-black text-white text-lg">الإرادة البشرية</h3>
@@ -583,7 +583,7 @@ export default function ShamsiTheory() {
                     'يمكن استجواب صاحبها قضائياً عن دوافعها وأسبابها',
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-2.5 text-sm text-white/70">
-                      <span className="mt-1 w-1.5 h-1.5 rounded-full bg-[#C9A84C] flex-shrink-0" />
+                      <span className="mt-1 w-1.5 h-1.5 rounded-full bg-gold flex-shrink-0" />
                       {item}
                     </li>
                   ))}
@@ -593,7 +593,7 @@ export default function ShamsiTheory() {
               {/* Divider */}
               <div className="hidden lg:flex flex-col items-center justify-center absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 mt-10">
                 <div className="h-32 w-px bg-gradient-to-b from-transparent via-[#C9A84C] to-transparent" />
-                <div className="w-10 h-10 rounded-full bg-[#1B2A4A] border-2 border-[#C9A84C] flex items-center justify-center text-[#C9A84C] text-xs font-bold my-2">
+                <div className="w-10 h-10 rounded-full bg-card border-2 border-gold/40 flex items-center justify-center text-gold text-xs font-bold my-2">
                   VS
                 </div>
                 <div className="h-32 w-px bg-gradient-to-b from-transparent via-[#C9A84C] to-transparent" />
@@ -608,8 +608,8 @@ export default function ShamsiTheory() {
                 className="bg-white/8 border border-white/15 rounded-2xl p-7 backdrop-blur-sm"
               >
                 <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center">
-                    <Brain className="w-5 h-5 text-blue-300" />
+                  <div className="w-10 h-10 rounded-xl bg-heading/20 border border-heading/30 flex items-center justify-center">
+                    <Brain className="w-5 h-5 text-heading" />
                   </div>
                   <div>
                     <h3 className="font-black text-white text-lg">الإرادة الرقمية</h3>
@@ -625,7 +625,7 @@ export default function ShamsiTheory() {
                     'صعبة المساءلة القضائية بسبب غموض الصندوق الأسود',
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-2.5 text-sm text-white/70">
-                      <span className="mt-1 w-1.5 h-1.5 rounded-full bg-blue-400 flex-shrink-0" />
+                      <span className="mt-1 w-1.5 h-1.5 rounded-full bg-heading flex-shrink-0" />
                       {item}
                     </li>
                   ))}
@@ -635,7 +635,7 @@ export default function ShamsiTheory() {
 
             {/* Bridge note */}
             <Section className="mt-8">
-              <div className="bg-[#C9A84C]/10 border border-[#C9A84C]/25 rounded-xl px-6 py-4 text-center text-[#C9A84C] text-sm leading-relaxed">
+              <div className="bg-gold/10 border border-gold/25 rounded-xl px-6 py-4 text-center text-gold text-sm leading-relaxed">
                 <span className="font-bold">مبدأ الشامسي في المزاوجة: </span>
                 تشترط النظرية أن لا يقل مؤشر الإرادة البشرية عن 40% في أي قرار إداري رقمي يمس حقوقاً أساسية،
                 وأن يتمتع المسؤول البشري بصلاحية التجاوز الفعلي لأي مخرجات خوارزمية.
@@ -654,7 +654,7 @@ export default function ShamsiTheory() {
               titleAr="أبعاد نظرية الشامسي — الإطار الستة عشر"
               subtitleAr="تُرسي النظرية اثني عشر بُعداً للمشروعية الإدارية. يُضيف محرك الذكاء القضائي الدستوري (CJI) أربعةً أبعاداً رقمية تكميلية، ليبلغ إجمالي الأبعاد القابلة للقياس في منصة مرصد ستةَ عشر بُعداً."
             />
-            <div className="mb-8 flex items-start gap-3 bg-[#C9A84C]/10 border border-[#C9A84C]/25 rounded-xl px-5 py-3.5 text-sm text-[#1B2A4A]" dir="rtl">
+            <div className="mb-8 flex items-start gap-3 bg-gold/10 border border-gold/25 rounded-xl px-5 py-3.5 text-sm text-heading" dir="rtl">
               <span className="shrink-0 mt-0.5">ℹ️</span>
               <div>
                 <strong>ملاحظة إصدار:</strong> الأبعاد 1–12 هي الأبعاد التأسيسية لنظرية الشامسي. أضاف محرك الذكاء القضائي الدستوري (CJI — الإصدار 5) أربعةً أبعاداً رقمية تكميلية: <em>التحيز الخوارزمي، والإجراءات القانونية الواجبة، والمساواة، والحقوق الأساسية</em> — وذلك لاستيعاب المتطلبات الخاصة بالقرارات المدعومة بالذكاء الاصطناعي وفق الإطار القانوني الإماراتي لعام 2026.
@@ -677,7 +677,7 @@ export default function ShamsiTheory() {
                 <motion.div
                   key={dim.id}
                   variants={fadeUp}
-                  className={`rounded-2xl border bg-white shadow-sm overflow-hidden cursor-pointer transition-shadow duration-200 hover:shadow-md ${hue.ring}`}
+                  className={`rounded-2xl border bg-card shadow-sm overflow-hidden cursor-pointer transition-shadow duration-200 hover:shadow-md ${hue.ring}`}
                   onClick={() => setOpenDimension(isOpen ? null : dim.id)}
                 >
                   <div className="p-5">
@@ -689,7 +689,7 @@ export default function ShamsiTheory() {
                         بُعد {dim.id}
                       </span>
                     </div>
-                    <h3 className="font-black text-[#1B2A4A] text-lg mb-1">{dim.nameAr}</h3>
+                    <h3 className="font-black text-heading text-lg mb-1">{dim.nameAr}</h3>
                     <p className="text-muted-foreground text-sm leading-relaxed line-clamp-2">
                       {dim.descAr}
                     </p>
@@ -711,7 +711,7 @@ export default function ShamsiTheory() {
                         className="overflow-hidden"
                       >
                         <div className={`px-5 pb-5 pt-2 border-t ${hue.ring} ${hue.bg}`}>
-                          <p className="text-xs text-[#1B2A4A] font-semibold mb-1.5">معايير التقييم:</p>
+                          <p className="text-xs text-heading font-semibold mb-1.5">معايير التقييم:</p>
                           <p className="text-xs text-muted-foreground leading-relaxed">{dim.criteriaAr}</p>
                         </div>
                       </motion.div>
@@ -723,7 +723,7 @@ export default function ShamsiTheory() {
           </motion.div>
 
           <Section className="mt-4">
-            <div className="bg-[#1B2A4A]/5 border border-[#1B2A4A]/10 rounded-xl px-6 py-4 text-center text-sm text-muted-foreground">
+            <div className="bg-card/5 border border-border/10 rounded-xl px-6 py-4 text-center text-sm text-muted-foreground">
               💡 انقر على أي بُعد لعرض معايير تقييمه التفصيلية. تُوزَّع الدرجة الكلية مئة نقطة وفق أوزان مرجَّحة تراعي طبيعة القرار. تُقيَّم الأبعاد 1–12 وفق منهجية الشامسي، وتُقيَّم الأبعاد 13–16 وفق محرك الذكاء القضائي الدستوري (CJI).
             </div>
           </Section>
@@ -732,7 +732,7 @@ export default function ShamsiTheory() {
         {/* ══════════════════════════════════════════════════════════════
             SECTION 5 — EMIRATI LAW & FRENCH ADMINISTRATIVE LAW
         ══════════════════════════════════════════════════════════════ */}
-        <section className="bg-white py-20 border-y border-border/40">
+        <section className="bg-card py-20 border-y border-border/40">
           <div className="max-w-6xl mx-auto px-6">
             <Section>
               <SectionHeader
@@ -748,8 +748,8 @@ export default function ShamsiTheory() {
                   flag: '🇦🇪',
                   titleAr: 'القانون الإداري الإماراتي',
                   subtitleAr: 'Federal Administrative Law',
-                  color: 'border-emerald-300 bg-emerald-50',
-                  headerColor: 'bg-emerald-600',
+                  color: 'border-heading/30 bg-heading/10',
+                  headerColor: 'bg-heading',
                   items: [
                     { ref: 'المرسوم بقانون اتحادي رقم 19 لسنة 2022', descAr: 'قانون المعاملات الإدارية ومعايير جودة الخدمات الحكومية' },
                     { ref: 'القانون الاتحادي رقم 15 لسنة 2023', descAr: 'تنظيم الذكاء الاصطناعي في القطاع العام' },
@@ -761,8 +761,8 @@ export default function ShamsiTheory() {
                   flag: '🇫🇷',
                   titleAr: 'القانون الإداري الفرنسي',
                   subtitleAr: 'Droit Administratif Français',
-                  color: 'border-blue-300 bg-blue-50',
-                  headerColor: 'bg-blue-700',
+                  color: 'border-heading/30 bg-heading/10',
+                  headerColor: 'bg-heading',
                   items: [
                     { ref: 'حكم Blanco 1873', descAr: 'أساس استقلالية القانون الإداري وقضاء مجلس الدولة' },
                     { ref: 'نظرية الانحراف بالسلطة (Détournement)', descAr: 'حظر استخدام السلطة لأغراض مغايرة للمصلحة العامة' },
@@ -789,7 +789,7 @@ export default function ShamsiTheory() {
                   <div className="p-5 space-y-3">
                     {col.items.map((item) => (
                       <div key={item.ref} className="bg-white/70 rounded-xl p-3.5 border border-white/60">
-                        <p className="font-bold text-[#1B2A4A] text-sm mb-1">{item.ref}</p>
+                        <p className="font-bold text-heading text-sm mb-1">{item.ref}</p>
                         <p className="text-muted-foreground text-xs">{item.descAr}</p>
                       </div>
                     ))}
@@ -800,8 +800,8 @@ export default function ShamsiTheory() {
 
             {/* Shared principles */}
             <Section>
-              <div className="rounded-2xl bg-gradient-to-l from-blue-50 via-white to-emerald-50 border border-border/40 p-6">
-                <h3 className="font-black text-[#1B2A4A] text-center text-base mb-5">
+              <div className="rounded-2xl bg-gradient-to-l from-heading/10 via-white to-heading/10 border border-border/40 p-6">
+                <h3 className="font-black text-heading text-center text-base mb-5">
                   المبادئ المشتركة التي تستمدها نظرية الشامسي من المنظومتين
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -816,7 +816,7 @@ export default function ShamsiTheory() {
                     'حماية الحقوق',
                   ].map((p) => (
                     <div key={p}
-                      className="flex items-center justify-center text-center text-xs font-semibold text-[#1B2A4A] py-2.5 px-3 rounded-lg bg-white border border-[#C9A84C]/30 shadow-sm">
+                      className="flex items-center justify-center text-center text-xs font-semibold text-heading py-2.5 px-3 rounded-lg bg-card border border-gold/30 shadow-sm">
                       {p}
                     </div>
                   ))}
@@ -840,7 +840,7 @@ export default function ShamsiTheory() {
 
           <div className="relative">
             {/* Vertical spine */}
-            <div className="absolute right-7 top-4 bottom-4 w-0.5 bg-gradient-to-b from-[#C9A84C] via-[#C9A84C]/40 to-transparent hidden sm:block" />
+            <div className="absolute right-7 top-4 bottom-4 w-0.5 bg-gradient-to-b from-gold via-[#C9A84C]/40 to-transparent hidden sm:block" />
 
             <div className="space-y-5">
               {WORKFLOW_STEPS.map((step, idx) => {
@@ -855,13 +855,13 @@ export default function ShamsiTheory() {
                     className="flex gap-5 items-start relative"
                   >
                     {/* Step circle */}
-                    <div className="relative z-10 flex-shrink-0 w-14 h-14 rounded-2xl bg-[#1B2A4A] border-2 border-[#C9A84C]/40 flex flex-col items-center justify-center shadow-sm">
-                      <Icon className="w-5 h-5 text-[#C9A84C]" />
+                    <div className="relative z-10 flex-shrink-0 w-14 h-14 rounded-2xl bg-card border-2 border-gold/40 flex flex-col items-center justify-center shadow-sm">
+                      <Icon className="w-5 h-5 text-gold" />
                       <span className="text-[9px] text-white/40 mt-0.5">{idx + 1}</span>
                     </div>
                     {/* Content */}
-                    <div className="flex-1 bg-white rounded-2xl border border-border/50 shadow-sm p-4 pt-3.5">
-                      <h3 className="font-bold text-[#1B2A4A] text-base mb-1">{step.titleAr}</h3>
+                    <div className="flex-1 bg-card rounded-2xl border border-border/50 shadow-sm p-4 pt-3.5">
+                      <h3 className="font-bold text-heading text-base mb-1">{step.titleAr}</h3>
                       <p className="text-muted-foreground text-sm leading-relaxed">{step.descAr}</p>
                     </div>
                   </motion.div>
@@ -874,7 +874,7 @@ export default function ShamsiTheory() {
         {/* ══════════════════════════════════════════════════════════════
             SECTION 7 — ASLI INDEX
         ══════════════════════════════════════════════════════════════ */}
-        <section className="bg-[#1B2A4A] py-20 relative overflow-hidden">
+        <section className="bg-card py-20 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#C9A84C]/3 to-transparent pointer-events-none" />
           <div className="max-w-6xl mx-auto px-6 relative">
             <Section>
@@ -893,14 +893,14 @@ export default function ShamsiTheory() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.7 }}
-                className="bg-white rounded-3xl p-8 flex flex-col items-center shadow-xl"
+                className="bg-card rounded-3xl p-8 flex flex-col items-center shadow-xl"
               >
-                <p className="text-[#1B2A4A] font-black text-base mb-1">نموذج توضيحي</p>
+                <p className="text-heading font-black text-base mb-1">نموذج توضيحي</p>
                 <p className="text-muted-foreground text-xs mb-6">درجة تمثيلية لقرار بدرجة عالية من الامتثال</p>
                 <AsliGauge score={78} />
                 <div className="mt-6 text-center">
-                  <span className="inline-flex items-center gap-2 bg-lime-100 text-lime-700 font-bold text-sm px-4 py-2 rounded-full">
-                    <span className="w-2 h-2 rounded-full bg-lime-500" />
+                  <span className="inline-flex items-center gap-2 bg-heading/15 text-heading font-bold text-sm px-4 py-2 rounded-full">
+                    <span className="w-2 h-2 rounded-full bg-heading" />
                     مشروع مشروط — يُصدَر بقيود تحسينية
                   </span>
                 </div>
@@ -935,8 +935,8 @@ export default function ShamsiTheory() {
                       transition={{ duration: 0.5 }}
                       className="flex gap-4 bg-white/8 border border-white/12 rounded-2xl p-5"
                     >
-                      <div className="w-9 h-9 rounded-xl bg-[#C9A84C]/15 flex items-center justify-center flex-shrink-0">
-                        <Icon className="w-4.5 h-4.5 text-[#C9A84C]" />
+                      <div className="w-9 h-9 rounded-xl bg-gold/15 flex items-center justify-center flex-shrink-0">
+                        <Icon className="w-4.5 h-4.5 text-gold" />
                       </div>
                       <div>
                         <h4 className="font-bold text-white text-sm mb-1.5">{item.titleAr}</h4>
@@ -978,11 +978,11 @@ export default function ShamsiTheory() {
                   className="flex flex-col items-center text-center"
                 >
                   {/* Year bubble */}
-                  <div className="relative z-10 w-[4.5rem] h-[4.5rem] rounded-full bg-[#1B2A4A] border-4 border-[#C9A84C]/40 flex flex-col items-center justify-center shadow-md mb-4">
-                    <Milestone className="w-3.5 h-3.5 text-[#C9A84C] mb-0.5" />
-                    <span className="text-[#C9A84C] font-black text-sm">{m.year}</span>
+                  <div className="relative z-10 w-[4.5rem] h-[4.5rem] rounded-full bg-card border-4 border-gold/40 flex flex-col items-center justify-center shadow-md mb-4">
+                    <Milestone className="w-3.5 h-3.5 text-gold mb-0.5" />
+                    <span className="text-gold font-black text-sm">{m.year}</span>
                   </div>
-                  <h4 className="font-black text-[#1B2A4A] text-sm mb-2 leading-snug">{m.titleAr}</h4>
+                  <h4 className="font-black text-heading text-sm mb-2 leading-snug">{m.titleAr}</h4>
                   <p className="text-muted-foreground text-xs leading-relaxed">{m.descAr}</p>
                 </motion.div>
               ))}
@@ -991,12 +991,12 @@ export default function ShamsiTheory() {
 
           {/* Closing statement */}
           <Section className="mt-16">
-            <div className="relative rounded-3xl bg-gradient-to-l from-[#1B2A4A] to-[#243b6a] p-8 text-center text-white overflow-hidden">
+            <div className="relative rounded-3xl bg-gradient-to-l from-secondary to-card p-8 text-center text-white overflow-hidden">
               <div className="absolute inset-0 opacity-5"
                    style={{ backgroundImage: 'repeating-linear-gradient(45deg, #C9A84C 0, #C9A84C 1px, transparent 0, transparent 50%)', backgroundSize: '20px 20px' }} />
               <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#C9A84C] to-transparent opacity-60" />
               <div className="relative">
-                <Sparkles className="w-8 h-8 text-[#C9A84C] mx-auto mb-4" />
+                <Sparkles className="w-8 h-8 text-gold mx-auto mb-4" />
                 <h3 className="text-2xl font-black mb-3" style={{ fontFamily: "'Amiri', serif" }}>
                   نحو إدارة عامة عادلة وشفافة ومساءلة
                 </h3>

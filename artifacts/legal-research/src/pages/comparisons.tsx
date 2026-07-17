@@ -124,7 +124,7 @@ export default function Comparisons() {
                               <p className="text-sm text-foreground whitespace-pre-wrap">{row.uae || '—'}</p>
                             </div>
                             <div>
-                              <p className="text-[10px] font-bold text-blue-700 uppercase mb-1">France</p>
+                              <p className="text-[10px] font-bold text-heading uppercase mb-1">France</p>
                               <p className="text-sm text-foreground whitespace-pre-wrap">{row.france || '—'}</p>
                             </div>
                           </div>

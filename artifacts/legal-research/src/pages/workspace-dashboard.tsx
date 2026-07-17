@@ -82,14 +82,14 @@ export default function WorkspaceDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#1e3a5f]">{t('مساحة البحث القانوني', 'Legal Research Workspace')}</h1>
+          <h1 className="text-2xl font-bold text-heading">{t('مساحة البحث القانوني', 'Legal Research Workspace')}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             {t('أنشئ مشاريع بحثية وتتبع الأدلة والمصادر القانونية', 'Create research projects and track evidence and legal sources')}
           </p>
         </div>
         <Button
           onClick={() => setShowNew(true)}
-          className="bg-[#1e3a5f] hover:bg-[#2d5a8f] text-white gap-2"
+          className="bg-primary hover:opacity-90 text-white gap-2"
         >
           <Plus className="w-4 h-4" />
           {t('مشروع جديد', 'New Project')}
@@ -137,7 +137,7 @@ export default function WorkspaceDashboard() {
           >
             <CardHeader className="pb-2">
               <div className="flex items-start justify-between gap-2">
-                <CardTitle className="text-base font-semibold text-[#1e3a5f] leading-tight line-clamp-2">
+                <CardTitle className="text-base font-semibold text-heading leading-tight line-clamp-2">
                   {project.title}
                 </CardTitle>
                 <Badge
@@ -162,7 +162,7 @@ export default function WorkspaceDashboard() {
                     e.stopPropagation();
                     archiveMut.mutate({ id: project.id, status: project.status === 'active' ? 'archived' : 'active' });
                   }}
-                  className="flex items-center gap-1 text-muted-foreground hover:text-gray-700 transition-colors"
+                  className="flex items-center gap-1 text-muted-foreground hover:text-muted-foreground transition-colors"
                   title={project.status === 'active' ? t('أرشفة', 'Archive') : t('إعادة تفعيل', 'Restore')}
                 >
                   <Archive className="w-3.5 h-3.5" />
@@ -202,13 +202,13 @@ export default function WorkspaceDashboard() {
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
               />
             </div>
-            {createErr && <p className="text-xs text-red-600">{createErr}</p>}
+            {createErr && <p className="text-xs text-destructive">{createErr}</p>}
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => { setShowNew(false); setNewTitle(''); setNewDesc(''); setCreateErr(null); }} disabled={creating}>
               {t('إلغاء', 'Cancel')}
             </Button>
-            <Button onClick={handleCreate} disabled={creating} className="bg-[#1e3a5f] hover:bg-[#2d5a8f] text-white">
+            <Button onClick={handleCreate} disabled={creating} className="bg-primary hover:opacity-90 text-white">
               {creating && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
               {t('إنشاء', 'Create')}
             </Button>

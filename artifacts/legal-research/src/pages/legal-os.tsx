@@ -85,8 +85,8 @@ const ROLE_ICONS: Record<string, React.ReactNode> = {
 const CATEGORY_CONFIG: Record<AnswerCategory, { label: string; color: string; dot: string }> = {
   mandatory:     { label: 'إلزامي',       color: 'bg-destructive/10 text-destructive border-destructive/30',         dot: '🔴' },
   opinion:       { label: 'رأي قانوني',   color: 'bg-gold/10 text-gold border-gold/25',   dot: '🟡' },
-  best_practice: { label: 'ممارسة مثلى', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30', dot: '🟢' },
-  optional:      { label: 'اختياري',      color: 'bg-slate-50 text-slate-600 border-slate-200',    dot: '⚪' },
+  best_practice: { label: 'ممارسة مثلى', color: 'bg-heading/10 text-heading border-heading/30', dot: '🟢' },
+  optional:      { label: 'اختياري',      color: 'bg-muted/40 text-muted-foreground border-border',    dot: '⚪' },
 };
 
 function CategoryPill({ category }: { category: AnswerCategory }) {
@@ -102,7 +102,7 @@ function CategoryPill({ category }: { category: AnswerCategory }) {
 // ─── Risk badge ───────────────────────────────────────────────────────────────
 
 const RISK_CONFIG: Record<RiskLevel, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
-  low:      { label: 'منخفض',    color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/30', icon: <CheckCircle2 className="w-5 h-5 text-emerald-400" /> },
+  low:      { label: 'منخفض',    color: 'text-heading', bg: 'bg-heading/10 border-heading/30', icon: <CheckCircle2 className="w-5 h-5 text-heading" /> },
   medium:   { label: 'متوسط',    color: 'text-gold',   bg: 'bg-gold/10 border-gold/25',     icon: <AlertTriangle className="w-5 h-5 text-gold" /> },
   high:     { label: 'مرتفع',    color: 'text-gold',  bg: 'bg-gold/10 border-gold/25',   icon: <AlertTriangle className="w-5 h-5 text-gold" /> },
   critical: { label: 'حرج جداً', color: 'text-destructive',     bg: 'bg-destructive/10 border-destructive/30',         icon: <XCircle className="w-5 h-5 text-destructive" /> },
@@ -124,7 +124,7 @@ function CanIssueBanner({ decision, explanation, conditions }: {
   decision: CanIssue; explanation: string; conditions: string[];
 }) {
   const configs = {
-    yes:         { icon: <CheckCircle2 className="w-7 h-7 text-emerald-400 shrink-0" />, label: 'يمكن اتخاذ القرار اليوم', bg: 'bg-emerald-500/10 border-emerald-500/30', text: 'text-emerald-400' },
+    yes:         { icon: <CheckCircle2 className="w-7 h-7 text-heading shrink-0" />, label: 'يمكن اتخاذ القرار اليوم', bg: 'bg-heading/10 border-heading/30', text: 'text-heading' },
     no:          { icon: <XCircle className="w-7 h-7 text-destructive shrink-0" />,          label: 'لا يمكن اتخاذ القرار اليوم', bg: 'bg-destructive/10 border-destructive/40',         text: 'text-destructive' },
     conditional: { icon: <AlertTriangle className="w-7 h-7 text-gold shrink-0" />, label: 'يمكن اتخاذ القرار بشروط',   bg: 'bg-gold/10 border-gold/40',       text: 'text-gold/75' },
   };
@@ -220,7 +220,7 @@ function MiniCitationChip({ token, citation }: { token: string; citation?: Citat
           <div className="bg-muted/40 rounded p-2 text-[11px] leading-relaxed whitespace-pre-wrap mb-2">{citation.formats[fmt]}</div>
           <button type="button" onClick={() => copy(citation.formats![fmt])}
             className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground">
-            {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+            {copied ? <Check className="w-3 h-3 text-heading" /> : <Copy className="w-3 h-3" />}
             {copied ? 'تم النسخ' : 'نسخ'}
           </button>
         </div>
@@ -529,7 +529,7 @@ function DecisionBriefView({ brief, scenario, role, sessionId, citations, isStre
             </div>
             <div className="flex gap-2">
               <Button size="sm" variant="outline" onClick={copyDraft} className="gap-1.5 text-xs">
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                {copied ? <Check className="w-3.5 h-3.5 text-heading" /> : <Copy className="w-3.5 h-3.5" />}
                 {copied ? 'تم النسخ' : 'نسخ النص'}
               </Button>
               <Button size="sm" variant="outline" onClick={downloadDraft} className="gap-1.5 text-xs">
@@ -882,7 +882,7 @@ function InterviewScreen({ scenario, answers, currentIndex, onAnswer, onBack, on
           )}
           {isLast && (
             <Button
-              className="flex-1 gap-2 bg-emerald-600 hover:bg-emerald-700"
+              className="flex-1 gap-2 bg-heading hover:bg-heading"
               disabled={!effectiveCurrent || assessing}
               onClick={() => { if (isTextBased) onAnswer(q.id, effectiveCurrent); onAssess(); }}
             >
@@ -891,7 +891,7 @@ function InterviewScreen({ scenario, answers, currentIndex, onAnswer, onBack, on
             </Button>
           )}
           {!isLast && (
-            <Button variant="outline" className="gap-2 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
+            <Button variant="outline" className="gap-2 text-heading border-heading/30 hover:bg-heading/10"
               disabled={assessing} onClick={() => { if (isTextBased) onAnswer(q.id, effectiveCurrent); onAssess(); }}>
               {assessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
               {assessing ? 'جارٍ...' : 'تقييم الآن'}
@@ -965,7 +965,7 @@ function HistoryDrawer({ open, sessions, onSelect, onDelete, onClose, t }: {
   t: (ar: string, en: string) => string;
 }) {
   const RISK_COLORS: Record<string, string> = {
-    low: 'text-emerald-400', medium: 'text-gold', high: 'text-gold', critical: 'text-destructive',
+    low: 'text-heading', medium: 'text-gold', high: 'text-gold', critical: 'text-destructive',
   };
   return (
     <>
@@ -1014,7 +1014,7 @@ function HistorySidebar({ sessions, onSelect, onDelete, currentId, t }: {
   t: (ar: string, en: string) => string;
 }) {
   const RISK_COLORS: Record<string, string> = {
-    low: 'text-emerald-400', medium: 'text-gold', high: 'text-gold', critical: 'text-destructive',
+    low: 'text-heading', medium: 'text-gold', high: 'text-gold', critical: 'text-destructive',
   };
   return (
     <div className="hidden md:flex flex-col w-60 border-s border-border shrink-0 bg-muted/10" dir="rtl">

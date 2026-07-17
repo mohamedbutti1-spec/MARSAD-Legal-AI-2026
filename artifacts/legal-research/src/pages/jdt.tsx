@@ -182,7 +182,7 @@ function OutcomeIcon({ outcome }: { outcome: JdtStageOutcome }) {
     case 'partial':
       return <Minus className="w-4 h-4 text-gold shrink-0" />
     case 'fail':
-      return <XCircle className="w-4 h-4 text-red-500 shrink-0" />
+      return <XCircle className="w-4 h-4 text-destructive shrink-0" />
     case 'not_assessed':
     default:
       return <AlertCircle className="w-4 h-4 text-muted-foreground shrink-0" />
@@ -202,7 +202,7 @@ function ScoreBadge({ score }: { score: number | null | undefined }) {
       ? 'bg-heading/15 text-heading dark:bg-heading/40 dark:text-heading/80'
       : score >= 60
       ? 'bg-gold/15 text-gold dark:bg-gold/40 dark:text-gold/80'
-      : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'
+      : 'bg-destructive/15 text-destructive dark:bg-destructive/40 dark:text-destructive'
   return (
     <span className={`text-xs px-2 py-0.5 rounded-full font-mono font-semibold ${cls}`}>
       {Math.round(score)}/100
@@ -213,7 +213,7 @@ function ScoreBadge({ score }: { score: number | null | undefined }) {
 function PriorityBadge({ priority }: { priority: string }) {
   const cfg: Record<string, { cls: string; label: string }> = {
     critical: {
-      cls: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400',
+      cls: 'bg-destructive/15 text-destructive dark:bg-destructive/40 dark:text-destructive',
       label: 'حرج',
     },
     high: {
@@ -225,7 +225,7 @@ function PriorityBadge({ priority }: { priority: string }) {
       label: 'متوسط',
     },
     low: {
-      cls: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400',
+      cls: 'bg-heading/15 text-heading dark:bg-heading/40 dark:text-heading',
       label: 'منخفض',
     },
   }
@@ -273,7 +273,7 @@ function ReviewStageCard({
               {stage.labelAr}
             </span>
             {stage.isBlockingAnnulment && (
-              <span className="text-[10px] bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 px-1.5 py-0.5 rounded font-bold shrink-0">
+              <span className="text-[10px] bg-destructive/15 text-destructive dark:bg-destructive/40 dark:text-destructive px-1.5 py-0.5 rounded font-bold shrink-0">
                 ⚠ أساس الإلغاء
               </span>
             )}
@@ -324,7 +324,7 @@ function ReviewStageCard({
                 {(stage.uaeLegalReferences ?? []).map((ref, i) => (
                   <span
                     key={i}
-                    className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 px-2 py-0.5 rounded font-mono"
+                    className="text-xs bg-heading/15 text-heading dark:bg-heading/30 dark:text-heading px-2 py-0.5 rounded font-mono"
                   >
                     {ref}
                   </span>
@@ -335,7 +335,7 @@ function ReviewStageCard({
 
           {stage.remedyAr && (
             <div className="bg-gold/10 dark:bg-gold/30 border border-gold/25 dark:border-gold/40 rounded-lg px-3 py-2">
-              <div className="text-xs font-bold text-gold dark:text-gold/80 mb-1">
+              <div className="text-xs font-bold text-gold/80 mb-1">
                 العلاج المقترح
               </div>
               <p className="text-gold/75 dark:text-gold/40 text-xs leading-relaxed">
@@ -378,13 +378,13 @@ function riskLevelLabel(level: JdtRiskLevel | null | undefined): string {
 function riskLevelColor(level: JdtRiskLevel | null | undefined): string {
   switch (level) {
     case 'critical':
-      return 'text-red-600 dark:text-red-400'
+      return 'text-destructive'
     case 'high':
-      return 'text-gold dark:text-gold/80'
+      return 'text-gold/80'
     case 'moderate':
-      return 'text-gold dark:text-gold/80'
+      return 'text-gold/80'
     case 'low':
-      return 'text-heading dark:text-heading/80'
+      return 'text-heading/80'
     default:
       return 'text-muted-foreground'
   }
@@ -411,7 +411,7 @@ function outcomeClass(outcome: JdtStageOutcome | null | undefined): string {
     case 'partial':
       return 'bg-gold/15 text-gold dark:bg-gold/40 dark:text-gold/80'
     case 'fail':
-      return 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'
+      return 'bg-destructive/15 text-destructive dark:bg-destructive/40 dark:text-destructive'
     default:
       return 'bg-muted text-muted-foreground'
   }
@@ -486,8 +486,8 @@ export default function JdtPage() {
     return (
       <AppLayout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center">
-          <div className="w-20 h-20 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-            <ShieldAlert className="w-10 h-10 text-red-500" />
+          <div className="w-20 h-20 rounded-full bg-destructive/15 dark:bg-destructive/30 flex items-center justify-center">
+            <ShieldAlert className="w-10 h-10 text-destructive" />
           </div>
           <div>
             <h2 className="text-2xl font-bold text-foreground mb-2">
@@ -534,7 +534,7 @@ export default function JdtPage() {
           {t('تشغيل التحليل', 'Run Analysis')}
         </button>
         {runMutation.isError && (
-          <div className="flex items-start gap-2 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/40 rounded-lg px-3 py-2">
+          <div className="flex items-start gap-2 text-xs text-destructive bg-destructive/10 dark:bg-destructive/30 border border-destructive/25 dark:border-destructive/40 rounded-lg px-3 py-2">
             <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>{runMutation.error?.message}</span>
           </div>
@@ -605,7 +605,7 @@ export default function JdtPage() {
                 </span>
               )}
               {status === 'failed' && (
-                <span className="text-xs px-3 py-1 rounded-full bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 font-medium flex items-center gap-1.5">
+                <span className="text-xs px-3 py-1 rounded-full bg-destructive/15 text-destructive dark:bg-destructive/40 dark:text-destructive font-medium flex items-center gap-1.5">
                   <XCircle className="w-3 h-3" />
                   {t('فشلت', 'Failed')}
                 </span>
@@ -659,14 +659,14 @@ export default function JdtPage() {
               <h2 className="text-xl font-bold text-gold/75 dark:text-gold/40 mb-2">
                 {t('جارٍ تشغيل المحاكاة القضائية…', 'Running judicial simulation…')}
               </h2>
-              <p className="text-gold dark:text-gold/80 text-sm max-w-md">
+              <p className="text-gold/80 text-sm max-w-md">
                 {t(
                   'يتم الآن تحليل القرار عبر المراحل الثماني وأبعاد نظرية الشامسي الستة عشر. ستُحدَّث الصفحة تلقائياً.',
                   'Analysing the decision across 8 stages and 16 Al-Shamsi dimensions. The page will refresh automatically.'
                 )}
               </p>
             </div>
-            <div className="flex flex-wrap gap-2 justify-center text-xs text-gold dark:text-gold/80">
+            <div className="flex flex-wrap gap-2 justify-center text-xs text-gold/80">
               {[
                 'القبول الشكلي',
                 'الاختصاص',
@@ -691,15 +691,15 @@ export default function JdtPage() {
 
         {/* ── SECTION 5 — Failed ───────────────────────────────────────── */}
         {!isLoading && status === 'failed' && (
-          <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/40 rounded-2xl p-8 flex flex-col gap-4">
+          <div className="bg-destructive/10 dark:bg-destructive/20 border border-destructive/25 dark:border-destructive/40 rounded-2xl p-8 flex flex-col gap-4">
             <div className="flex items-center gap-3">
-              <XCircle className="w-6 h-6 text-red-500 shrink-0" />
-              <h2 className="text-lg font-bold text-red-700 dark:text-red-400">
+              <XCircle className="w-6 h-6 text-destructive shrink-0" />
+              <h2 className="text-lg font-bold text-destructive">
                 {t('فشلت عملية المحاكاة', 'Simulation Failed')}
               </h2>
             </div>
             {sim?.errorMessage && (
-              <p className="text-sm text-red-600 dark:text-red-400 leading-relaxed bg-red-100 dark:bg-red-900/30 rounded-lg px-4 py-3 font-mono">
+              <p className="text-sm text-destructive leading-relaxed bg-destructive/15 dark:bg-destructive/30 rounded-lg px-4 py-3 font-mono">
                 {sim.errorMessage}
               </p>
             )}
@@ -747,7 +747,7 @@ export default function JdtPage() {
                       <span className="text-foreground font-medium">
                         {t('احتمال الإلغاء', 'Annulment Probability')}
                       </span>
-                      <span className="font-mono font-bold text-red-600 dark:text-red-400">
+                      <span className="font-mono font-bold text-destructive">
                         {sim?.probabilityAnnulment !== null &&
                         sim?.probabilityAnnulment !== undefined
                           ? `${Math.round(sim.probabilityAnnulment)}%`
@@ -756,7 +756,7 @@ export default function JdtPage() {
                     </div>
                     <div className="h-2 bg-muted rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-red-500 rounded-full transition-all duration-700"
+                        className="h-full bg-destructive rounded-full transition-all duration-700"
                         style={{
                           width: `${sim?.probabilityAnnulment ?? 0}%`,
                         }}
@@ -770,7 +770,7 @@ export default function JdtPage() {
                       <span className="text-foreground font-medium">
                         {t('احتمال رفض الطعن', 'Dismissal Probability')}
                       </span>
-                      <span className="font-mono font-bold text-heading dark:text-heading/80">
+                      <span className="font-mono font-bold text-heading/80">
                         {sim?.probabilityDismissal !== null &&
                         sim?.probabilityDismissal !== undefined
                           ? `${Math.round(sim.probabilityDismissal)}%`
@@ -793,7 +793,7 @@ export default function JdtPage() {
                       <span className="text-foreground font-medium">
                         {t('احتمال التصحيح', 'Correction Probability')}
                       </span>
-                      <span className="font-mono font-bold text-gold dark:text-gold/80">
+                      <span className="font-mono font-bold text-gold/80">
                         {sim?.probabilityCorrection !== null &&
                         sim?.probabilityCorrection !== undefined
                           ? `${Math.round(sim.probabilityCorrection)}%`
@@ -876,7 +876,7 @@ export default function JdtPage() {
                           : dim.reasoning}
                       </p>
                       {dim.constitutionalRef && (
-                        <span className="text-[10px] bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-1.5 py-0.5 rounded font-mono">
+                        <span className="text-[10px] bg-heading/15 dark:bg-heading/30 text-heading px-1.5 py-0.5 rounded font-mono">
                           {dim.constitutionalRef}
                         </span>
                       )}
@@ -898,7 +898,7 @@ export default function JdtPage() {
                 {/* Constitutional Compliance Card */}
                 <div className="bg-card border border-border rounded-xl p-4 space-y-3">
                   <div className="flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-blue-500" />
+                    <Shield className="w-4 h-4 text-heading" />
                     <span className="font-semibold text-sm text-foreground">
                       {t('درجة الامتثال الدستوري', 'Constitutional Compliance')}
                     </span>
@@ -984,7 +984,7 @@ export default function JdtPage() {
                 {/* Weaknesses */}
                 <div className="bg-card border border-border rounded-xl p-5 space-y-3">
                   <div className="flex items-center gap-2">
-                    <TrendingDown className="w-5 h-5 text-red-500" />
+                    <TrendingDown className="w-5 h-5 text-destructive" />
                     <h3 className="font-bold text-foreground">
                       {t('نقاط الضعف', 'Weaknesses')}
                     </h3>
@@ -993,7 +993,7 @@ export default function JdtPage() {
                     <ul className="space-y-2">
                       {sim!.weaknesses!.map((w, i) => (
                         <li key={i} className="flex items-start gap-2 text-sm">
-                          <XCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                          <XCircle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
                           <span className="text-foreground/80">{w}</span>
                         </li>
                       ))}
@@ -1019,7 +1019,7 @@ export default function JdtPage() {
                 </h3>
               </div>
               {(sim?.missingEvidence?.length ?? 0) === 0 ? (
-                <div className="flex items-center gap-2 text-sm text-heading dark:text-heading/80">
+                <div className="flex items-center gap-2 text-sm text-heading/80">
                   <CheckCircle2 className="w-4 h-4" />
                   {t('لا توجد أدلة مفقودة', 'No missing evidence identified')}
                 </div>
@@ -1116,7 +1116,7 @@ export default function JdtPage() {
                     {sim?.overallAssessment && (
                       <div className="bg-gold/10 dark:bg-gold/20 border border-gold/25 dark:border-gold/40 rounded-xl p-5">
                         <div className="flex items-center gap-2 mb-2">
-                          <Lightbulb className="w-4 h-4 text-gold dark:text-gold/80" />
+                          <Lightbulb className="w-4 h-4 text-gold/80" />
                           <span className="font-bold text-gold/75 dark:text-gold/40 text-sm">
                             {t('التقييم الشامل', 'Overall Assessment')}
                           </span>

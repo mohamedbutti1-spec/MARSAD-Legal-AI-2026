@@ -184,7 +184,7 @@ export default function Settings() {
 
                         {/* Live status badge */}
                         {isConfigured ? (
-                          <span className="flex items-center gap-1 text-xs font-medium text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 shrink-0">
+                          <span className="flex items-center gap-1 text-xs font-medium text-heading bg-heading/10 border border-heading/25 rounded-full px-2 py-0.5 shrink-0">
                             <CheckCircle2 className="w-3 h-3" /> Configured
                           </span>
                         ) : (

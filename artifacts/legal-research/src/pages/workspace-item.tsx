@@ -47,14 +47,14 @@ interface Version {
 }
 
 const ITEM_TYPE_COLORS: Record<string, string> = {
-  question:       'bg-purple-100 text-purple-800',
-  answer:         'bg-blue-100 text-blue-800',
+  question:       'bg-heading/15 text-heading',
+  answer:         'bg-heading/15 text-heading',
   authority:      'bg-heading/15 text-heading/75',
   document:       'bg-gold/15 text-gold/75',
-  note:           'bg-gray-100 text-gray-800',
+  note:           'bg-muted/60 text-foreground',
   highlight:      'bg-gold/15 text-gold/75',
-  bookmark:       'bg-red-100 text-red-800',
-  timeline_entry: 'bg-indigo-100 text-indigo-800',
+  bookmark:       'bg-destructive/15 text-destructive',
+  timeline_entry: 'bg-heading/15 text-heading',
 };
 const ITEM_TYPE_AR: Record<string, string> = {
   question: 'سؤال', answer: 'جواب', authority: 'سلطة قانونية', document: 'وثيقة',
@@ -148,7 +148,7 @@ export default function WorkspaceItem() {
         {/* Back navigation */}
         <button
           onClick={() => navigate(`/workspace/${projectId}`)}
-          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-[#1e3a5f] transition-colors mb-4"
+          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-heading transition-colors mb-4"
         >
           <ChevronLeft className="w-4 h-4" />
           {t('العودة إلى المشروع', 'Back to Project')}
@@ -174,14 +174,14 @@ export default function WorkspaceItem() {
               <input
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
-                className="w-full text-xl font-bold text-[#1e3a5f] border-b-2 border-blue-300 bg-transparent focus:outline-none pb-1"
+                className="w-full text-xl font-bold text-heading border-b-2 border-heading/30 bg-transparent focus:outline-none pb-1"
                 dir="auto"
               />
             ) : (
-              <h1 className="text-xl font-bold text-[#1e3a5f] leading-tight">{item.title}</h1>
+              <h1 className="text-xl font-bold text-heading leading-tight">{item.title}</h1>
             )}
             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-              <Badge className={`text-xs ${ITEM_TYPE_COLORS[item.itemType] ?? 'bg-gray-100 text-gray-700'}`}>
+              <Badge className={`text-xs ${ITEM_TYPE_COLORS[item.itemType] ?? 'bg-muted/60 text-muted-foreground'}`}>
                 {t(ITEM_TYPE_AR[item.itemType] ?? item.itemType, item.itemType)}
               </Badge>
               <span className="text-xs text-muted-foreground">
@@ -195,7 +195,7 @@ export default function WorkspaceItem() {
           <div className="flex items-center gap-2 shrink-0">
             {editing ? (
               <>
-                <Button size="sm" onClick={handleSave} disabled={saving} className="bg-[#1e3a5f] hover:bg-[#2d5a8f] text-white gap-1">
+                <Button size="sm" onClick={handleSave} disabled={saving} className="bg-primary hover:opacity-90 text-white gap-1">
                   {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
                   {t('حفظ', 'Save')}
                 </Button>
@@ -218,12 +218,12 @@ export default function WorkspaceItem() {
               value={editBody}
               onChange={(e) => setEditBody(e.target.value)}
               rows={10}
-              className="w-full text-sm text-gray-800 bg-transparent focus:outline-none resize-none leading-relaxed"
+              className="w-full text-sm text-foreground bg-transparent focus:outline-none resize-none leading-relaxed"
               dir="auto"
               placeholder={t('المحتوى…', 'Content…')}
             />
           ) : (
-            <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap" dir="auto">
+            <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap" dir="auto">
               {(item.content.text as string) || (item.content.body as string) || (
                 <span className="text-muted-foreground italic">{t('لا يوجد محتوى', 'No content')}</span>
               )}
@@ -249,7 +249,7 @@ export default function WorkspaceItem() {
         <div className="rounded-lg border bg-card">
           <button
             onClick={() => setShowHistory((h) => !h)}
-            className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-700 hover:bg-muted/40 transition-colors rounded-lg"
+            className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-muted/40 transition-colors rounded-lg"
           >
             <span className="flex items-center gap-2">
               <History className="w-4 h-4 text-muted-foreground" />
@@ -273,7 +273,7 @@ export default function WorkspaceItem() {
                   {versionsData.versions.map((v) => (
                     <li key={v.id} className="py-2.5">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-gray-700">
+                        <span className="text-xs font-medium text-muted-foreground">
                           {t('النسخة', 'Version')} {v.versionNumber}
                         </span>
                         <span className="text-xs text-muted-foreground">

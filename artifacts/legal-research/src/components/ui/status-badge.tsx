@@ -14,16 +14,16 @@ type StatusVariant =
   | 'viewer';
 
 const VARIANT_STYLES: Record<StatusVariant, string> = {
-  active:     'bg-emerald-50 text-emerald-700 border-emerald-200',
-  inactive:   'bg-slate-50   text-slate-600   border-slate-200',
+  active:     'bg-heading/10 text-heading border-heading/25',
+  inactive:   'bg-muted/40   text-muted-foreground   border-border',
   pending:    'bg-gold/10   text-gold   border-gold/25',
-  success:    'bg-emerald-50 text-emerald-700 border-emerald-200',
-  error:      'bg-red-50     text-red-700     border-red-200',
+  success:    'bg-heading/10 text-heading border-heading/25',
+  error:      'bg-destructive/10     text-destructive     border-destructive/25',
   gold:       'bg-gold/10   text-gold/75   border-gold/25',
   navy:       'bg-primary/8  text-primary     border-primary/20',
   owner:      'bg-gold/10   text-gold/75   border-gold/25',
-  supervisor: 'bg-sky-50     text-sky-800     border-sky-200',
-  viewer:     'bg-slate-50   text-slate-700   border-slate-200',
+  supervisor: 'bg-heading/10     text-heading     border-heading/25',
+  viewer:     'bg-muted/40   text-muted-foreground   border-border',
 };
 
 interface StatusBadgeProps {

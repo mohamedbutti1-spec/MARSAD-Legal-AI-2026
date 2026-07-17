@@ -34,11 +34,11 @@ export function StageProgress({ status }: StageProgressProps) {
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                     stageError
-                      ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                      ? 'bg-destructive/15 text-destructive dark:bg-destructive/30 dark:text-destructive'
                       : stageComplete
-                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                      ? 'bg-heading/15 text-heading dark:bg-heading/30 dark:text-heading'
                       : stageActive
-                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                      ? 'bg-heading/15 text-heading dark:bg-heading/30 dark:text-heading'
                       : 'bg-muted text-muted-foreground'
                   }`}
                 >
@@ -59,7 +59,7 @@ export function StageProgress({ status }: StageProgressProps) {
 
               {/* Connector */}
               {idx < STAGES.length - 1 && (
-                <div className={`flex-1 h-0.5 mb-4 ${stageComplete ? 'bg-emerald-400' : 'bg-border'}`} />
+                <div className={`flex-1 h-0.5 mb-4 ${stageComplete ? 'bg-heading' : 'bg-border'}`} />
               )}
             </React.Fragment>
           );

@@ -99,8 +99,8 @@ export function ItemEditorDialog({ open, onClose, onSave, folders, defaultType =
                   onClick={() => setItemType(it.value)}
                   className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
                     itemType === it.value
-                      ? 'bg-[#1e3a5f] text-white border-[#1e3a5f]'
-                      : 'bg-white text-gray-700 border-gray-300 hover:border-[#1e3a5f]'
+                      ? 'bg-primary text-primary-foreground border-primary/50'
+                      : 'bg-card text-muted-foreground border-border hover:border-primary/60'
                   }`}
                 >
                   {t(it.labelAr, it.labelEn)}
@@ -139,8 +139,8 @@ export function ItemEditorDialog({ open, onClose, onSave, folders, defaultType =
 
           {/* Answer-specific fields */}
           {itemType === 'answer' && (
-            <div className="space-y-3 rounded-lg bg-blue-50 p-3">
-              <p className="text-xs font-semibold text-blue-800">{t('بيانات الجواب', 'Answer Metadata')}</p>
+            <div className="space-y-3 rounded-lg bg-heading/10 p-3">
+              <p className="text-xs font-semibold text-heading">{t('بيانات الجواب', 'Answer Metadata')}</p>
               <div>
                 <label className="block text-xs font-medium mb-1 text-muted-foreground">
                   {t('إصدار النموذج', 'Model Version')}
@@ -189,14 +189,14 @@ export function ItemEditorDialog({ open, onClose, onSave, folders, defaultType =
             </div>
           )}
 
-          {error && <p className="text-xs text-red-600">{error}</p>}
+          {error && <p className="text-xs text-destructive">{error}</p>}
         </div>
 
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={() => { reset(); onClose(); }} disabled={saving}>
             {t('إلغاء', 'Cancel')}
           </Button>
-          <Button onClick={handleSave} disabled={saving} className="bg-[#1e3a5f] hover:bg-[#2d5a8f] text-white">
+          <Button onClick={handleSave} disabled={saving} className="bg-primary hover:opacity-90 text-white">
             {saving && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
             {t('حفظ', 'Save')}
           </Button>

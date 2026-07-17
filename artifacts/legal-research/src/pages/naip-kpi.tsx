@@ -73,10 +73,10 @@ function fmt(val: number | null | undefined, suffix = ''): string {
 
 function riskLevelConfig(level: GroupedRow['riskLevel']) {
   switch (level) {
-    case 'critical': return { label: 'حرج', labelEn: 'Critical', bg: 'bg-red-100 dark:bg-red-950/40', text: 'text-red-700 dark:text-red-400', border: 'border-red-200 dark:border-red-800/40' };
-    case 'high':     return { label: 'عالٍ',  labelEn: 'High',     bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80', border: 'border-gold/25 dark:border-gold/40' };
-    case 'moderate': return { label: 'متوسط', labelEn: 'Moderate', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80', border: 'border-gold/25 dark:border-gold/40' };
-    default:         return { label: 'منخفض', labelEn: 'Low',      bg: 'bg-emerald-100 dark:bg-emerald-950/40', text: 'text-emerald-700 dark:text-emerald-400', border: 'border-emerald-200 dark:border-emerald-800/40' };
+    case 'critical': return { label: 'حرج', labelEn: 'Critical', bg: 'bg-destructive/15 dark:bg-destructive/40', text: 'text-destructive', border: 'border-destructive/25 dark:border-destructive/40' };
+    case 'high':     return { label: 'عالٍ',  labelEn: 'High',     bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold/80', border: 'border-gold/25 dark:border-gold/40' };
+    case 'moderate': return { label: 'متوسط', labelEn: 'Moderate', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold/80', border: 'border-gold/25 dark:border-gold/40' };
+    default:         return { label: 'منخفض', labelEn: 'Low',      bg: 'bg-heading/15 dark:bg-heading/40', text: 'text-heading', border: 'border-heading/25 dark:border-heading/40' };
   }
 }
 
@@ -89,12 +89,12 @@ function KpiGauge({ labelAr, labelEn, value, isInverse = false }: {
   const pct = value ?? 0;
 
   const trackColor = isInverse
-    ? pct >= 70 ? 'stroke-red-500' : pct >= 40 ? 'stroke-gold' : 'stroke-emerald-500'
-    : pct >= 70 ? 'stroke-emerald-500' : pct >= 40 ? 'stroke-gold' : 'stroke-red-500';
+    ? pct >= 70 ? 'stroke-destructive' : pct >= 40 ? 'stroke-gold' : 'stroke-heading'
+    : pct >= 70 ? 'stroke-heading' : pct >= 40 ? 'stroke-gold' : 'stroke-destructive';
 
   const textColor = isInverse
-    ? pct >= 70 ? 'text-red-500' : pct >= 40 ? 'text-gold' : 'text-emerald-500'
-    : pct >= 70 ? 'text-emerald-500' : pct >= 40 ? 'text-gold' : 'text-red-500';
+    ? pct >= 70 ? 'text-destructive' : pct >= 40 ? 'text-gold' : 'text-heading'
+    : pct >= 70 ? 'text-heading' : pct >= 40 ? 'text-gold' : 'text-destructive';
 
   const r = 30;
   const circ = 2 * Math.PI * r;
@@ -162,7 +162,7 @@ function UaeWideTab({ headers }: { headers: Record<string, string> }) {
   );
 
   const riskColors: Record<string, string> = {
-    critical: 'bg-red-500', high: 'bg-gold', moderate: 'bg-gold', low: 'bg-emerald-500',
+    critical: 'bg-destructive', high: 'bg-gold', moderate: 'bg-gold', low: 'bg-heading',
   };
   const riskLabels: Record<string, string> = {
     critical: 'حرج', high: 'عالٍ', moderate: 'متوسط', low: 'منخفض',
@@ -171,8 +171,8 @@ function UaeWideTab({ headers }: { headers: Record<string, string> }) {
   const totalRisk = Object.values(safeRisk).reduce((a, b) => a + b, 0);
 
   const statusColors: Record<string, string> = {
-    draft: 'bg-slate-400', in_progress: 'bg-blue-500', completed: 'bg-emerald-500',
-    approved: 'bg-heading', rejected: 'bg-red-500', pending_review: 'bg-gold',
+    draft: 'bg-muted-foreground', in_progress: 'bg-heading', completed: 'bg-heading',
+    approved: 'bg-heading', rejected: 'bg-destructive', pending_review: 'bg-gold',
   };
   const statusLabels: Record<string, string> = {
     draft: 'مسودة', in_progress: 'قيد المعالجة', completed: 'مكتمل',
@@ -204,16 +204,16 @@ function UaeWideTab({ headers }: { headers: Record<string, string> }) {
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">{t('آخر 7 أيام', 'Last 7 days')}</span>
-              <span className="font-bold tabular-nums text-blue-600">{data.last7Days}</span>
+              <span className="font-bold tabular-nums text-heading">{data.last7Days}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">{t('آخر 30 يوماً', 'Last 30 days')}</span>
-              <span className="font-bold tabular-nums text-emerald-600">{data.last30Days}</span>
+              <span className="font-bold tabular-nums text-heading">{data.last30Days}</span>
             </div>
           </div>
           <div className="pt-2 border-t border-border space-y-2">
             {Object.entries(safeByStatus).map(([s, v]) => (
-              <CssBar key={s} label={statusLabels[s] ?? s} value={v} total={totalByStatus} color={statusColors[s] ?? 'bg-slate-400'} />
+              <CssBar key={s} label={statusLabels[s] ?? s} value={v} total={totalByStatus} color={statusColors[s] ?? 'bg-muted-foreground'} />
             ))}
           </div>
         </div>
@@ -243,11 +243,11 @@ function UaeWideTab({ headers }: { headers: Record<string, string> }) {
           <div className="space-y-3">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">{t('متوسط الامتثال', 'Avg Compliance')}</span>
-              <span className="font-bold tabular-nums text-emerald-600">{fmt(safeConstitutional.avgCcs, '%')}</span>
+              <span className="font-bold tabular-nums text-heading">{fmt(safeConstitutional.avgCcs, '%')}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">{t('تحذيرات حرجة', 'Critical Warnings')}</span>
-              <span className={`font-bold tabular-nums ${(safeConstitutional.criticalWarnings ?? 0) > 0 ? 'text-red-600' : 'text-foreground'}`}>
+              <span className={`font-bold tabular-nums ${(safeConstitutional.criticalWarnings ?? 0) > 0 ? 'text-destructive' : 'text-foreground'}`}>
                 {safeConstitutional.criticalWarnings ?? 0}
               </span>
             </div>
@@ -376,18 +376,18 @@ function GroupedTableTab({
                       <td className="px-4 py-3 text-sm font-medium text-foreground max-w-xs truncate">{row.name}</td>
                       <td className="px-4 py-3 text-sm tabular-nums text-foreground font-bold">{row.decisions}</td>
                       <td className="px-4 py-3 text-sm tabular-nums">
-                        <span className={row.avgNri !== null && row.avgNri >= 70 ? 'text-red-600' : row.avgNri !== null && row.avgNri >= 40 ? 'text-gold' : 'text-emerald-600'}>
+                        <span className={row.avgNri !== null && row.avgNri >= 70 ? 'text-destructive' : row.avgNri !== null && row.avgNri >= 40 ? 'text-gold' : 'text-heading'}>
                           {fmt(row.avgNri, '%')}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm tabular-nums">
-                        <span className={row.avgCcs !== null && row.avgCcs >= 70 ? 'text-emerald-600' : row.avgCcs !== null && row.avgCcs >= 40 ? 'text-gold' : 'text-red-600'}>
+                        <span className={row.avgCcs !== null && row.avgCcs >= 70 ? 'text-heading' : row.avgCcs !== null && row.avgCcs >= 40 ? 'text-gold' : 'text-destructive'}>
                           {fmt(row.avgCcs, '%')}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm tabular-nums">
                         {row.criticalWarnings > 0 ? (
-                          <span className="flex items-center gap-1 text-red-600">
+                          <span className="flex items-center gap-1 text-destructive">
                             <AlertTriangle className="w-3.5 h-3.5" />
                             {row.criticalWarnings}
                           </span>

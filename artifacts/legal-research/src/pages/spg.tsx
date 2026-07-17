@@ -20,10 +20,10 @@ import {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<string, { label: string; icon: React.ReactNode; className: string }> = {
-  draft:     { label: 'مسودة',       icon: <FileText className="w-3 h-3" />,   className: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400' },
-  analyzing: { label: 'جارٍ التحليل', icon: <Loader2 className="w-3 h-3 animate-spin" />, className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
-  complete:  { label: 'مكتمل',       icon: <CheckCircle2 className="w-3 h-3" />, className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' },
-  error:     { label: 'خطأ',         icon: <XCircle className="w-3 h-3" />,     className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
+  draft:     { label: 'مسودة',       icon: <FileText className="w-3 h-3" />,   className: 'bg-muted/60 text-muted-foreground dark:bg-card dark:text-muted-foreground' },
+  analyzing: { label: 'جارٍ التحليل', icon: <Loader2 className="w-3 h-3 animate-spin" />, className: 'bg-heading/15 text-heading dark:bg-heading/30 dark:text-heading' },
+  complete:  { label: 'مكتمل',       icon: <CheckCircle2 className="w-3 h-3" />, className: 'bg-heading/15 text-heading dark:bg-heading/30 dark:text-heading' },
+  error:     { label: 'خطأ',         icon: <XCircle className="w-3 h-3" />,     className: 'bg-destructive/15 text-destructive dark:bg-destructive/30 dark:text-destructive' },
 };
 
 function formatDate(iso: string) {
@@ -211,7 +211,7 @@ export default function SpgPage() {
         </div>
 
         {/* Disclaimer banner */}
-        <div className="bg-gold/10 dark:bg-gold/10 border border-gold/25 dark:border-gold/75 rounded-xl p-4 text-sm text-gold/75 dark:text-gold/40">
+        <div className="bg-gold/10 border border-gold/25 dark:border-gold/75 rounded-xl p-4 text-sm text-gold/75 dark:text-gold/40">
           <strong>تنبيه: </strong>
           هذه الأداة تُقدّم إرشاداً مهنياً استرشادياً فقط. لا تُصدر قرارات قانونية ملزمة ولا تحلّ محل الجهة المختصة أو المستشار القانوني المعتمد.
         </div>

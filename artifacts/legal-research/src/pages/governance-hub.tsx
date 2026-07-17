@@ -88,25 +88,25 @@ interface DashboardStats {
 
 function StatusChip({ status }: { status: string }) {
   const map: Record<string, { label: string; cls: string }> = {
-    complete:          { label: 'مكتمل', cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' },
+    complete:          { label: 'مكتمل', cls: 'bg-heading/10 text-heading border-heading/30' },
     in_progress:       { label: 'جارٍ', cls: 'bg-heading/10 text-heading border-heading/30' },
-    draft:             { label: 'مسودة', cls: 'bg-slate-50 text-slate-600 border-slate-200' },
+    draft:             { label: 'مسودة', cls: 'bg-muted/40 text-muted-foreground border-border' },
     validation_failed: { label: 'فشل التحقق', cls: 'bg-destructive/10 text-destructive border-destructive/30' },
     pending_review:    { label: 'قيد المراجعة', cls: 'bg-gold/10 text-gold border-gold/25' },
   };
-  const s = map[status] ?? { label: status, cls: 'bg-slate-50 text-slate-600 border-slate-200' };
+  const s = map[status] ?? { label: status, cls: 'bg-muted/40 text-muted-foreground border-border' };
   return <span className={`inline-flex items-center px-2 py-0.5 text-[11px] font-semibold rounded-full border ${s.cls}`}>{s.label}</span>;
 }
 
 function ComplianceChip({ value }: { value?: string }) {
   if (!value) return <span className="text-muted-foreground text-xs">—</span>;
   const map: Record<string, { label: string; cls: string }> = {
-    full:    { label: 'امتثال كامل', cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' },
+    full:    { label: 'امتثال كامل', cls: 'bg-heading/10 text-heading border-heading/30' },
     partial: { label: 'امتثال جزئي', cls: 'bg-gold/10 text-gold border-gold/25' },
     none:    { label: 'عدم امتثال', cls: 'bg-destructive/10 text-destructive border-destructive/30' },
-    pending: { label: 'قيد التقييم', cls: 'bg-slate-50 text-slate-600 border-slate-200' },
+    pending: { label: 'قيد التقييم', cls: 'bg-muted/40 text-muted-foreground border-border' },
   };
-  const s = map[value] ?? { label: value, cls: 'bg-slate-50 text-slate-600 border-slate-200' };
+  const s = map[value] ?? { label: value, cls: 'bg-muted/40 text-muted-foreground border-border' };
   return <span className={`inline-flex items-center px-2 py-0.5 text-[11px] font-semibold rounded-full border ${s.cls}`}>{s.label}</span>;
 }
 
@@ -114,23 +114,23 @@ function HiiChip({ value }: { value?: string }) {
   if (!value) return <span className="text-muted-foreground text-xs">—</span>;
   const map: Record<string, { label: string; cls: string }> = {
     human_will:      { label: 'الإرادة البشرية', cls: 'bg-heading/10 text-heading border-heading/30' },
-    ai_recommendation: { label: 'توصية الذكاء', cls: 'bg-violet-50 text-violet-700 border-violet-200' },
-    joint_decision:  { label: 'قرار مشترك', cls: 'bg-teal-50 text-teal-700 border-teal-200' },
-    pending:         { label: 'معلّق', cls: 'bg-slate-50 text-slate-600 border-slate-200' },
+    ai_recommendation: { label: 'توصية الذكاء', cls: 'bg-heading/10 text-heading border-heading/25' },
+    joint_decision:  { label: 'قرار مشترك', cls: 'bg-heading/10 text-heading border-heading/25' },
+    pending:         { label: 'معلّق', cls: 'bg-muted/40 text-muted-foreground border-border' },
   };
-  const s = map[value] ?? { label: value, cls: 'bg-slate-50 text-slate-600 border-slate-200' };
+  const s = map[value] ?? { label: value, cls: 'bg-muted/40 text-muted-foreground border-border' };
   return <span className={`inline-flex items-center px-2 py-0.5 text-[11px] font-semibold rounded-full border ${s.cls}`}>{s.label}</span>;
 }
 
 function SealChip({ isSealed }: { isSealed?: boolean }) {
   return isSealed
-    ? <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"><Lock className="w-3 h-3" />مختوم</span>
-    : <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-semibold rounded-full bg-slate-50 text-slate-500 border border-slate-200"><UnlockKeyhole className="w-3 h-3" />غير مختوم</span>;
+    ? <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-semibold rounded-full bg-heading/10 text-heading border border-heading/30"><Lock className="w-3 h-3" />مختوم</span>
+    : <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-semibold rounded-full bg-muted/40 text-muted-foreground border border-border"><UnlockKeyhole className="w-3 h-3" />غير مختوم</span>;
 }
 
 function KpiCard({ label, value, sub, icon, cls = '' }: { label: string; value: string | number; sub?: string; icon?: React.ReactNode; cls?: string }) {
   return (
-    <div className={`bg-white rounded-xl border border-border p-5 flex items-start gap-4 shadow-xs ${cls}`}>
+    <div className={`bg-card rounded-xl border border-border p-5 flex items-start gap-4 shadow-xs ${cls}`}>
       {icon && <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">{icon}</div>}
       <div>
         <div className="text-2xl font-bold text-foreground leading-none">{value}</div>
@@ -278,14 +278,14 @@ function MinisterDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Status distribution */}
-        <div className="bg-white rounded-xl border border-border p-5 shadow-xs">
+        <div className="bg-card rounded-xl border border-border p-5 shadow-xs">
           <SectionHeader icon={<BarChart3 className="w-4 h-4" />} title="توزيع القرارات حسب الحالة" />
           <div className="space-y-3">
             {[
-              { key: 'complete',          label: 'مكتملة',      color: 'bg-emerald-500' },
+              { key: 'complete',          label: 'مكتملة',      color: 'bg-heading' },
               { key: 'in_progress',       label: 'جارية',       color: 'bg-heading' },
-              { key: 'draft',             label: 'مسودات',      color: 'bg-slate-400' },
-              { key: 'validation_failed', label: 'فشل التحقق', color: 'bg-red-500' },
+              { key: 'draft',             label: 'مسودات',      color: 'bg-muted-foreground' },
+              { key: 'validation_failed', label: 'فشل التحقق', color: 'bg-destructive' },
             ].map(({ key, label, color }) => {
               const count = byStatus[key] ?? 0;
               const pct = Math.round((count / total) * 100);
@@ -306,14 +306,14 @@ function MinisterDashboard() {
 
         {/* HII distribution */}
         {Object.keys(hii).length > 0 && (
-          <div className="bg-white rounded-xl border border-border p-5 shadow-xs">
+          <div className="bg-card rounded-xl border border-border p-5 shadow-xs">
             <SectionHeader icon={<Users className="w-4 h-4" />} title="مؤشر تأثير الإنسان (HII)" sub="كيف يُتخذ القرار" />
             <div className="space-y-3">
               {[
-                { key: 'human_will',       label: 'الإرادة البشرية',   color: 'bg-blue-500' },
-                { key: 'joint_decision',   label: 'قرار مشترك',        color: 'bg-teal-500' },
-                { key: 'ai_recommendation', label: 'توصية الذكاء الاصطناعي', color: 'bg-violet-500' },
-                { key: 'pending',          label: 'معلّق',            color: 'bg-slate-400' },
+                { key: 'human_will',       label: 'الإرادة البشرية',   color: 'bg-heading' },
+                { key: 'joint_decision',   label: 'قرار مشترك',        color: 'bg-heading' },
+                { key: 'ai_recommendation', label: 'توصية الذكاء الاصطناعي', color: 'bg-heading' },
+                { key: 'pending',          label: 'معلّق',            color: 'bg-muted-foreground' },
               ].map(({ key, label, color }) => {
                 const count = hii[key] ?? 0;
                 const pct = Math.round((count / total) * 100);
@@ -334,10 +334,10 @@ function MinisterDashboard() {
         )}
 
         {/* Attention decisions */}
-        <div className="bg-white rounded-xl border border-border p-5 shadow-xs">
+        <div className="bg-card rounded-xl border border-border p-5 shadow-xs">
           <SectionHeader icon={<AlertTriangle className="w-4 h-4" />} title="قرارات تحتاج انتباهاً" sub="فشل التحقق أو متأخرة" />
           {stats.attentionDecisions.length === 0 ? (
-            <EmptyState icon={<CheckCircle2 className="w-5 h-5 text-emerald-400" />} title="لا توجد قرارات معلّقة" sub="جميع القرارات ضمن المعايير" />
+            <EmptyState icon={<CheckCircle2 className="w-5 h-5 text-heading" />} title="لا توجد قرارات معلّقة" sub="جميع القرارات ضمن المعايير" />
           ) : (
             <div className="space-y-2">
               {stats.attentionDecisions.map((d) => (
@@ -405,7 +405,7 @@ function UndersecretaryDashboard() {
         <KpiCard label="محالة للمراجعة" value={delegatedCount} icon={<Flag className="w-5 h-5" />} />
       </div>
 
-      <div className="bg-white rounded-xl border border-border shadow-xs">
+      <div className="bg-card rounded-xl border border-border shadow-xs">
         <div className="px-5 py-4 border-b border-border">
           <SectionHeader icon={<Scale className="w-4 h-4" />} title="قرارات الوزارة" sub="انقر على قرار لإحالته للمراجعة أو إلغاء الإحالة" />
         </div>
@@ -429,7 +429,7 @@ function UndersecretaryDashboard() {
 
       {/* DCI Summary for first decision */}
       {decisions.length > 0 && decisions[0].dci && (
-        <div className="bg-white rounded-xl border border-border shadow-xs p-5">
+        <div className="bg-card rounded-xl border border-border shadow-xs p-5">
           <SectionHeader icon={<Shield className="w-4 h-4" />} title="ملخص الهوية الدستورية (DCI) — آخر قرار" />
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
             {[
@@ -505,19 +505,19 @@ function AssistantUndersecretaryDashboard() {
         ) : detailQuery.isLoading ? <LoadingSpinner /> : (
           <div className="space-y-5">
             {/* Stages */}
-            <div className="bg-white rounded-xl border border-border shadow-xs p-5">
+            <div className="bg-card rounded-xl border border-border shadow-xs p-5">
               <SectionHeader icon={<GitMerge className="w-4 h-4" />} title="مراحل القرار" sub={`${stages.filter((s) => s.status === 'complete').length} / ${stages.length} مرحلة مكتملة`} />
               <div className="space-y-2">
                 {stages.map((s, i) => (
                   <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/30">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${s.status === 'complete' ? 'bg-emerald-500/10 text-emerald-400' : s.status === 'active' ? 'bg-heading/10 text-heading' : 'bg-slate-100 text-slate-500'}`}>
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${s.status === 'complete' ? 'bg-heading/10 text-heading' : s.status === 'active' ? 'bg-heading/10 text-heading' : 'bg-muted/60 text-muted-foreground'}`}>
                       {(s.stageNumber as number) + 1}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-foreground">{(s.titleAr as string) || (s.stageKey as string)}</p>
                       {s.aiAnalysis ? <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5">{s.aiAnalysis as string}</p> : null}
                     </div>
-                    <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${s.status === 'complete' ? 'bg-emerald-500/10 text-emerald-400' : s.status === 'active' ? 'bg-heading/10 text-heading' : 'bg-slate-50 text-slate-500'}`}>
+                    <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${s.status === 'complete' ? 'bg-heading/10 text-heading' : s.status === 'active' ? 'bg-heading/10 text-heading' : 'bg-muted/40 text-muted-foreground'}`}>
                       {s.status === 'complete' ? 'مكتمل' : s.status === 'active' ? 'جارٍ' : 'معلّق'}
                     </span>
                   </div>
@@ -528,7 +528,7 @@ function AssistantUndersecretaryDashboard() {
 
             {/* JDP */}
             {jdp && (
-              <div className="bg-white rounded-xl border border-border shadow-xs p-5">
+              <div className="bg-card rounded-xl border border-border shadow-xs p-5">
                 <SectionHeader icon={<BookOpen className="w-4 h-4" />} title="الحزمة الدفاعية القضائية (JDP)" />
                 <div className="grid grid-cols-1 gap-3">
                   {jdp.executiveSummary ? (
@@ -549,7 +549,7 @@ function AssistantUndersecretaryDashboard() {
 
             {/* DCI summary */}
             {dci && (
-              <div className="bg-white rounded-xl border border-border shadow-xs p-5">
+              <div className="bg-card rounded-xl border border-border shadow-xs p-5">
                 <SectionHeader icon={<Shield className="w-4 h-4" />} title="الهوية الدستورية (DCI)" />
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   {canUseShamsiFramework && <div><span className="text-xs text-muted-foreground block mb-1">الامتثال</span><ComplianceChip value={dci.alShamsiFrameworkCompliance as string} /></div>}
@@ -611,7 +611,7 @@ function DirectorGeneralDashboard() {
             <div className="space-y-5">
               {/* Constitutional gates */}
               {dci && (
-                <div className="bg-white rounded-xl border border-border shadow-xs p-5">
+                <div className="bg-card rounded-xl border border-border shadow-xs p-5">
                   <SectionHeader icon={<Shield className="w-4 h-4" />} title="التحقق الدستوري" />
                   <div className="grid grid-cols-2 gap-4">
                     {[
@@ -630,13 +630,13 @@ function DirectorGeneralDashboard() {
               )}
 
               {/* Stages (without AI analysis) */}
-              <div className="bg-white rounded-xl border border-border shadow-xs p-5">
+              <div className="bg-card rounded-xl border border-border shadow-xs p-5">
                 <SectionHeader icon={<GitMerge className="w-4 h-4" />} title="حالة المراحل" />
                 <div className="grid grid-cols-2 gap-2">
                   {stages.map((s, i) => (
                     <div key={i} className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/30">
-                      <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${s.status === 'complete' ? 'bg-emerald-500/10' : s.status === 'active' ? 'bg-heading/10' : 'bg-slate-100'}`}>
-                        {s.status === 'complete' ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : s.status === 'active' ? <Clock className="w-3 h-3 text-heading" /> : <XCircle className="w-3 h-3 text-slate-400" />}
+                      <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${s.status === 'complete' ? 'bg-heading/10' : s.status === 'active' ? 'bg-heading/10' : 'bg-muted/60'}`}>
+                        {s.status === 'complete' ? <CheckCircle2 className="w-3 h-3 text-heading" /> : s.status === 'active' ? <Clock className="w-3 h-3 text-heading" /> : <XCircle className="w-3 h-3 text-muted-foreground" />}
                       </div>
                       <span className="text-xs font-medium truncate">{(s.titleAr as string) || `مرحلة ${(s.stageNumber as number) + 1}`}</span>
                     </div>
@@ -692,26 +692,26 @@ function DepartmentDirectorDashboard() {
             <EmptyState icon={<Scale className="w-5 h-5" />} title="اختر قراراً لعرض تقدم مراحله" />
           </div>
         ) : detailQuery.isLoading ? <LoadingSpinner /> : (
-          <div className="bg-white rounded-xl border border-border shadow-xs p-5">
+          <div className="bg-card rounded-xl border border-border shadow-xs p-5">
             <SectionHeader icon={<GitMerge className="w-4 h-4" />} title="تقدم المراحل" sub={`${completedStages} / ${totalStages} مرحلة مكتملة`} />
             {totalStages > 0 && (
               <div className="mb-4">
                 <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${Math.round((completedStages / totalStages) * 100)}%` }} />
+                  <div className="h-full bg-heading rounded-full transition-all" style={{ width: `${Math.round((completedStages / totalStages) * 100)}%` }} />
                 </div>
               </div>
             )}
             <div className="space-y-2">
               {stages.map((s, i) => (
-                <div key={i} className={`flex items-center gap-3 p-3 rounded-lg ${s.status === 'complete' ? 'bg-emerald-500/60 border border-emerald-500/30' : s.status === 'active' ? 'bg-heading/60 border border-heading/30' : 'bg-muted/30 border border-transparent'}`}>
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${s.status === 'complete' ? 'bg-emerald-500/10 text-emerald-400' : s.status === 'active' ? 'bg-heading/10 text-heading' : 'bg-slate-100 text-slate-500'}`}>
+                <div key={i} className={`flex items-center gap-3 p-3 rounded-lg ${s.status === 'complete' ? 'bg-heading/60 border border-heading/30' : s.status === 'active' ? 'bg-heading/60 border border-heading/30' : 'bg-muted/30 border border-transparent'}`}>
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${s.status === 'complete' ? 'bg-heading/10 text-heading' : s.status === 'active' ? 'bg-heading/10 text-heading' : 'bg-muted/60 text-muted-foreground'}`}>
                     {(s.stageNumber as number) + 1}
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-medium">{(s.titleAr as string) || `مرحلة ${(s.stageNumber as number) + 1}`}</p>
                     {s.completedAt ? <p className="text-[11px] text-muted-foreground">{new Date(s.completedAt as string).toLocaleDateString('ar-AE')}</p> : null}
                   </div>
-                  <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${s.status === 'complete' ? 'bg-emerald-500/10 text-emerald-400' : s.status === 'active' ? 'bg-heading/10 text-heading' : 'bg-slate-100 text-slate-500'}`}>
+                  <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${s.status === 'complete' ? 'bg-heading/10 text-heading' : s.status === 'active' ? 'bg-heading/10 text-heading' : 'bg-muted/60 text-muted-foreground'}`}>
                     {s.status === 'complete' ? '✓ مكتمل' : s.status === 'active' ? 'جارٍ' : 'معلّق'}
                   </span>
                 </div>
@@ -767,7 +767,7 @@ function LegalDepartmentDashboard() {
         ) : detailQuery.isLoading ? <LoadingSpinner /> : (
           <div className="space-y-4">
             {jdp ? (
-              <div className="bg-white rounded-xl border border-border shadow-xs p-5 space-y-4">
+              <div className="bg-card rounded-xl border border-border shadow-xs p-5 space-y-4">
                 <SectionHeader icon={<Gavel className="w-4 h-4" />} title="الحزمة الدفاعية القضائية (JDP)" />
                 {[
                   { key: 'executiveSummary',       label: 'الملخص التنفيذي' },
@@ -789,7 +789,7 @@ function LegalDepartmentDashboard() {
             )}
 
             {dci && (
-              <div className="bg-white rounded-xl border border-border shadow-xs p-5">
+              <div className="bg-card rounded-xl border border-border shadow-xs p-5">
                 <SectionHeader icon={<Shield className="w-4 h-4" />} title="الهوية الدستورية" />
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   {canUseShamsiFramework && <div><span className="text-xs text-muted-foreground block mb-1">الامتثال</span><ComplianceChip value={dci.alShamsiFrameworkCompliance as string} /></div>}
@@ -841,7 +841,7 @@ function ConstitutionalReviewerDashboard() {
             <p className="text-sm font-medium line-clamp-1">{d.titleAr}</p>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               {d.dci?.constitutionalValidationStatus && (
-                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${d.dci.constitutionalValidationStatus === 'passed' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : d.dci.constitutionalValidationStatus === 'failed' ? 'bg-destructive/10 text-destructive border-destructive/30' : 'bg-slate-50 text-slate-500 border-slate-200'}`}>
+                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${d.dci.constitutionalValidationStatus === 'passed' ? 'bg-heading/10 text-heading border-heading/30' : d.dci.constitutionalValidationStatus === 'failed' ? 'bg-destructive/10 text-destructive border-destructive/30' : 'bg-muted/40 text-muted-foreground border-border'}`}>
                   {d.dci.constitutionalValidationStatus === 'passed' ? '✓ اجتاز' : d.dci.constitutionalValidationStatus === 'failed' ? '✗ فشل' : '— معلّق'}
                 </span>
               )}
@@ -860,12 +860,12 @@ function ConstitutionalReviewerDashboard() {
         ) : detailQuery.isLoading ? <LoadingSpinner /> : (
           <div className="space-y-4">
             {dci && (
-              <div className="bg-white rounded-xl border border-border shadow-xs p-5">
+              <div className="bg-card rounded-xl border border-border shadow-xs p-5">
                 <SectionHeader icon={<Shield className="w-4 h-4" />} title="الهوية الدستورية الكاملة (DCI)" />
                 <div className="grid grid-cols-2 gap-4">
                   {[
                     ...(canUseShamsiFramework ? [{ label: 'الامتثال لإطار الشامسي', value: <ComplianceChip value={dci.alShamsiFrameworkCompliance as string} /> }] : []),
-                    { label: 'حالة التحقق الدستوري', value: <span className={`text-sm font-semibold ${dci.constitutionalValidationStatus === 'passed' ? 'text-emerald-400' : dci.constitutionalValidationStatus === 'failed' ? 'text-destructive' : 'text-slate-500'}`}>{(dci.constitutionalValidationStatus as string) ?? '—'}</span> },
+                    { label: 'حالة التحقق الدستوري', value: <span className={`text-sm font-semibold ${dci.constitutionalValidationStatus === 'passed' ? 'text-heading' : dci.constitutionalValidationStatus === 'failed' ? 'text-destructive' : 'text-muted-foreground'}`}>{(dci.constitutionalValidationStatus as string) ?? '—'}</span> },
                     { label: 'مبدأ الشرعية (LSI)', value: (dci.lsiStatus as string) ?? '—' },
                     { label: 'مستوى تباين QVA', value: (dci.qvaVarianceLevel as string) ?? '—' },
                     { label: 'عدد جولات QVA', value: String(dci.qvaRunCount ?? '—') },
@@ -886,14 +886,14 @@ function ConstitutionalReviewerDashboard() {
 
             {/* Constitutional gates per stage */}
             {stages.length > 0 && (
-              <div className="bg-white rounded-xl border border-border shadow-xs p-5">
+              <div className="bg-card rounded-xl border border-border shadow-xs p-5">
                 <SectionHeader icon={<GitMerge className="w-4 h-4" />} title="بوابات الامتثال الدستوري لكل مرحلة" />
                 <div className="space-y-2">
                   {stages.map((s, i) => (
-                    <div key={i} className={`flex items-center gap-3 p-2.5 rounded-lg border ${s.status === 'complete' ? 'border-emerald-500/30 bg-emerald-500/40' : 'border-border bg-muted/20'}`}>
+                    <div key={i} className={`flex items-center gap-3 p-2.5 rounded-lg border ${s.status === 'complete' ? 'border-heading/30 bg-heading/40' : 'border-border bg-muted/20'}`}>
                       <span className="text-xs font-bold text-muted-foreground w-6 text-center">{(s.stageNumber as number) + 1}</span>
                       <span className="text-sm font-medium flex-1">{(s.titleAr as string) || `مرحلة ${(s.stageNumber as number) + 1}`}</span>
-                      <span className={`text-[11px] font-semibold ${s.status === 'complete' ? 'text-emerald-400' : 'text-muted-foreground'}`}>
+                      <span className={`text-[11px] font-semibold ${s.status === 'complete' ? 'text-heading' : 'text-muted-foreground'}`}>
                         {s.status === 'complete' ? '✓ اجتازت البوابة' : '—'}
                       </span>
                     </div>
@@ -953,7 +953,7 @@ function InternalAuditorDashboard() {
           <div className="space-y-4">
             {/* HII + DCI */}
             {dci && (
-              <div className="bg-white rounded-xl border border-border shadow-xs p-5">
+              <div className="bg-card rounded-xl border border-border shadow-xs p-5">
                 <SectionHeader icon={<Shield className="w-4 h-4" />} title="ملخص DCI" />
                 <div className="grid grid-cols-2 gap-3">
                   <div><span className="text-xs text-muted-foreground block mb-1">مؤشر تأثير الإنسان</span><HiiChip value={dci.humanInfluenceIndex as string} /></div>
@@ -966,7 +966,7 @@ function InternalAuditorDashboard() {
 
             {/* Stage hashes */}
             {stageHashes.length > 0 && (
-              <div className="bg-white rounded-xl border border-border shadow-xs p-5">
+              <div className="bg-card rounded-xl border border-border shadow-xs p-5">
                 <SectionHeader icon={<Hash className="w-4 h-4" />} title="هاشات مراحل التدقيق" />
                 <div className="space-y-2">
                   {stageHashes.map((sh, i) => (
@@ -979,8 +979,8 @@ function InternalAuditorDashboard() {
                           : <span className="text-[11px] text-destructive">هاش مفقود</span>}
                       </div>
                       {sh.auditHash
-                        ? <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                        : <XCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />}
+                        ? <CheckCircle2 className="w-4 h-4 text-heading shrink-0 mt-0.5" />
+                        : <XCircle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />}
                     </div>
                   ))}
                 </div>
@@ -989,14 +989,14 @@ function InternalAuditorDashboard() {
 
             {/* AI vs Human per stage */}
             {stages.length > 0 && (
-              <div className="bg-white rounded-xl border border-border shadow-xs p-5">
+              <div className="bg-card rounded-xl border border-border shadow-xs p-5">
                 <SectionHeader icon={<GitMerge className="w-4 h-4" />} title="مساهمة الذكاء الاصطناعي مقابل الإنسان" />
                 <div className="space-y-2">
                   {stages.map((s, i) => (
                     <div key={i} className="p-2.5 rounded-lg bg-muted/30">
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-xs font-medium">{(s.titleAr as string) || `مرحلة ${(s.stageNumber as number) + 1}`}</span>
-                        {s.aiContribution ? <span className="text-[11px] text-violet-600 font-semibold">AI: {s.aiContribution as string}</span> : null}
+                        {s.aiContribution ? <span className="text-[11px] text-heading font-semibold">AI: {s.aiContribution as string}</span> : null}
                       </div>
                       {s.aiAnalysis ? <p className="text-[11px] text-muted-foreground line-clamp-2">{s.aiAnalysis as string}</p> : null}
                     </div>
@@ -1007,7 +1007,7 @@ function InternalAuditorDashboard() {
 
             {/* Audit log */}
             {auditLog.length > 0 && (
-              <div className="bg-white rounded-xl border border-border shadow-xs p-5">
+              <div className="bg-card rounded-xl border border-border shadow-xs p-5">
                 <SectionHeader icon={<FileText className="w-4 h-4" />} title={`سجل التدقيق (${auditLog.length} إدخال)`} />
                 <div className="max-h-64 overflow-y-auto space-y-1.5">
                   {auditLog.map((log, i) => (
@@ -1101,7 +1101,7 @@ function ExternalAuditorDashboard() {
           <div className="space-y-4">
             {/* DCI hash panel */}
             {dci && (
-              <div className="bg-white rounded-xl border border-border shadow-xs p-5">
+              <div className="bg-card rounded-xl border border-border shadow-xs p-5">
                 <SectionHeader icon={<Shield className="w-4 h-4" />} title="بصمة الهوية الدستورية" />
                 {dci.completeAuditHash ? (
                   <div>
@@ -1119,7 +1119,7 @@ function ExternalAuditorDashboard() {
 
             {/* Stage hashes */}
             {stageHashes.length > 0 && (
-              <div className="bg-white rounded-xl border border-border shadow-xs p-5">
+              <div className="bg-card rounded-xl border border-border shadow-xs p-5">
                 <SectionHeader icon={<Hash className="w-4 h-4" />} title="هاشات المراحل" sub="SHA-256 لكل مرحلة على حدة" />
                 <div className="space-y-1.5">
                   {stageHashes.map((sh, i) => (
@@ -1129,7 +1129,7 @@ function ExternalAuditorDashboard() {
                         <p className="text-xs font-medium mb-0.5">{sh.stageKey as string}</p>
                         <code className="text-[10px] font-mono text-muted-foreground">{sh.auditHash ? `${(sh.auditHash as string).substring(0, 20)}…` : '(مفقود)'}</code>
                       </div>
-                      {sh.auditHash ? <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" /> : <XCircle className="w-4 h-4 text-red-400 shrink-0" />}
+                      {sh.auditHash ? <CheckCircle2 className="w-4 h-4 text-heading shrink-0" /> : <XCircle className="w-4 h-4 text-destructive shrink-0" />}
                     </div>
                   ))}
                 </div>
@@ -1137,7 +1137,7 @@ function ExternalAuditorDashboard() {
             )}
 
             {/* Hash verify button */}
-            <div className="bg-white rounded-xl border border-border shadow-xs p-5">
+            <div className="bg-card rounded-xl border border-border shadow-xs p-5">
               <SectionHeader icon={<RefreshCw className="w-4 h-4" />} title="التحقق من سلامة السلسلة" sub="يُعيد حساب SHA-256 من هاشات المراحل ويقارنها بالمخزّن في DCI" />
               <button
                 onClick={handleVerify}
@@ -1153,13 +1153,13 @@ function ExternalAuditorDashboard() {
               )}
 
               {verifyResult && (
-                <div className={`mt-4 p-4 rounded-xl border-2 ${verifyResult.verified ? 'border-emerald-500/30 bg-emerald-500/10' : 'border-destructive/40 bg-destructive/10'}`}>
+                <div className={`mt-4 p-4 rounded-xl border-2 ${verifyResult.verified ? 'border-heading/30 bg-heading/10' : 'border-destructive/40 bg-destructive/10'}`}>
                   <div className="flex items-center gap-3 mb-3">
                     {verifyResult.verified
-                      ? <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+                      ? <CheckCircle2 className="w-6 h-6 text-heading" />
                       : <XCircle className="w-6 h-6 text-destructive" />}
                     <div>
-                      <p className={`font-bold ${verifyResult.verified ? 'text-emerald-400' : 'text-destructive'}`}>
+                      <p className={`font-bold ${verifyResult.verified ? 'text-heading' : 'text-destructive'}`}>
                         {verifyResult.verified ? '✓ السلسلة سليمة — الهاشات متطابقة' : '✗ تحذير: الهاشات غير متطابقة'}
                       </p>
                       <p className="text-xs text-muted-foreground">{verifyResult.stagesChecked as number} مرحلة تم فحصها</p>
@@ -1211,13 +1211,13 @@ interface CustodyRecord {
 }
 
 const ACTION_CATEGORY_COLORS: Record<string, string> = {
-  decision:   'bg-heading/10 text-heading ring-blue-200',
-  stage:      'bg-heading/10 text-heading ring-purple-200',
+  decision:   'bg-heading/10 text-heading ring-heading/25',
+  stage:      'bg-heading/10 text-heading ring-heading/25',
   dci:        'bg-gold/15 text-gold/75 ring-gold/25',
-  qva:        'bg-indigo-100 text-indigo-800 ring-indigo-200',
-  car:        'bg-emerald-500/10 text-emerald-400 ring-emerald-200',
-  jdp:        'bg-teal-100 text-teal-800 ring-teal-200',
-  governance: 'bg-rose-100 text-rose-800 ring-rose-200',
+  qva:        'bg-heading/15 text-heading ring-heading/25',
+  car:        'bg-heading/10 text-heading ring-heading/25',
+  jdp:        'bg-heading/15 text-heading ring-heading/25',
+  governance: 'bg-destructive/15 text-destructive ring-destructive/25',
 };
 
 const ACTION_LABELS: Record<string, string> = {
@@ -1345,8 +1345,8 @@ function ConstitutionalMemoryTab({ decisionId }: { decisionId: number }) {
     : current;
 
   const statusColor = (s: string | null) => {
-    if (!s) return 'bg-slate-100 text-slate-500';
-    if (['compliant', 'valid', 'issued', 'none'].includes(s)) return 'bg-emerald-500/10 text-emerald-400';
+    if (!s) return 'bg-muted/60 text-muted-foreground';
+    if (['compliant', 'valid', 'issued', 'none'].includes(s)) return 'bg-heading/10 text-heading';
     if (['pending', 'draft', 'challenged'].includes(s)) return 'bg-gold/15 text-gold';
     return 'bg-destructive/15 text-destructive';
   };
@@ -1354,12 +1354,12 @@ function ConstitutionalMemoryTab({ decisionId }: { decisionId: number }) {
   return (
     <div className="space-y-4 text-right" dir="rtl">
       {/* Header card */}
-      <div className="rounded-xl border border-[#00563F]/20 bg-[#00563F]/5 p-4">
+      <div className="rounded-xl border border-gold/40/20 bg-gold/5 p-4">
         <div className="flex items-center gap-2 flex-wrap">
-          <BookMarked className="w-5 h-5 text-[#00563F] shrink-0" />
+          <BookMarked className="w-5 h-5 text-gold shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-[#1A1A2E]">الذاكرة الدستورية للقرار الإداري الذكي</p>
-            <p className="text-xs text-[#5C5C7A] font-mono">{data.constitutionalNumber}</p>
+            <p className="text-sm font-bold text-foreground">الذاكرة الدستورية للقرار الإداري الذكي</p>
+            <p className="text-xs text-muted-foreground font-mono">{data.constitutionalNumber}</p>
           </div>
           {current.sealed && (
             <span className="flex items-center gap-1 text-[10px] font-bold text-heading bg-heading/10 px-2 py-0.5 rounded-full">
@@ -1368,7 +1368,7 @@ function ConstitutionalMemoryTab({ decisionId }: { decisionId: number }) {
           )}
           {integrity && (
             integrity.valid
-              ? <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full"><ShieldCheck className="w-3 h-3" />سلسلة سليمة</span>
+              ? <span className="flex items-center gap-1 text-[10px] font-bold text-heading bg-heading/10 px-2 py-0.5 rounded-full"><ShieldCheck className="w-3 h-3" />سلسلة سليمة</span>
               : <span className="flex items-center gap-1 text-[10px] font-bold text-destructive bg-destructive/15 px-2 py-0.5 rounded-full"><ShieldAlert className="w-3 h-3" />تحذير: عُبث كُشف</span>
           )}
         </div>
@@ -1381,9 +1381,9 @@ function ConstitutionalMemoryTab({ decisionId }: { decisionId: number }) {
             { label: 'النسخ', value: String(data.totalVersions ?? 1) },
             { label: 'سجلات موثّقة', value: String(integrity?.versionsChecked ?? 0) },
           ].map(({ label, value }) => (
-            <div key={label} className="bg-white/70 rounded-lg p-2 border border-[#00563F]/10">
-              <p className="text-[11px] text-[#5C5C7A]">{label}</p>
-              <p className="text-sm font-bold text-[#1A1A2E]">{value}</p>
+            <div key={label} className="bg-white/70 rounded-lg p-2 border border-gold/40/10">
+              <p className="text-[11px] text-muted-foreground">{label}</p>
+              <p className="text-sm font-bold text-foreground">{value}</p>
             </div>
           ))}
         </div>
@@ -1406,10 +1406,10 @@ function ConstitutionalMemoryTab({ decisionId }: { decisionId: number }) {
 
       {/* Version tree */}
       {versions.length > 1 && (
-        <div className="rounded-xl border border-border p-3 bg-white">
+        <div className="rounded-xl border border-border p-3 bg-card">
           <div className="flex items-center gap-1.5 mb-2">
             <GitBranch className="w-3.5 h-3.5 text-muted-foreground" />
-            <p className="text-xs font-bold text-[#1A1A2E]">شجرة الإصدارات</p>
+            <p className="text-xs font-bold text-foreground">شجرة الإصدارات</p>
           </div>
           <div className="flex gap-1.5 flex-wrap">
             {versions.map((v) => (
@@ -1417,15 +1417,15 @@ function ConstitutionalMemoryTab({ decisionId }: { decisionId: number }) {
                 onClick={() => setActiveVersion(activeVersion === v.decisionVersion ? null : v.decisionVersion)}
                 className={`text-[11px] px-2.5 py-1 rounded-full border font-semibold transition-colors ${
                   (activeVersion ?? current.decisionVersion) === v.decisionVersion
-                    ? 'border-[#00563F] bg-[#00563F]/10 text-[#00563F]'
-                    : 'border-border text-muted-foreground hover:border-[#00563F]/40'
+                    ? 'border-gold/40 bg-gold/10 text-gold'
+                    : 'border-border text-muted-foreground hover:border-gold/40/40'
                 }`}>
                 v{v.decisionVersion}
               </button>
             ))}
           </div>
           {selectedVer && (
-            <div className="mt-2 text-[11px] text-[#5C5C7A] space-y-0.5">
+            <div className="mt-2 text-[11px] text-muted-foreground space-y-0.5">
               <p>الهاش: <span className="font-mono">{selectedVer.decisionHash.slice(0, 24)}…</span></p>
               <p>التدقيق: <span className="font-mono">{selectedVer.completeAuditHash.slice(0, 24)}…</span></p>
               <p>التاريخ: <span className="font-mono">{new Date(selectedVer.createdAt).toLocaleString('ar-AE')}</span></p>
@@ -1436,15 +1436,15 @@ function ConstitutionalMemoryTab({ decisionId }: { decisionId: number }) {
 
       {/* Integrity report */}
       {integrity && (
-        <div className={`rounded-xl border p-3 ${integrity.valid ? 'border-emerald-500/30 bg-emerald-500/50' : 'border-destructive/30 bg-destructive/50'}`}>
+        <div className={`rounded-xl border p-3 ${integrity.valid ? 'border-heading/30 bg-heading/50' : 'border-destructive/30 bg-destructive/50'}`}>
           <div className="flex items-center gap-1.5 mb-2">
-            {integrity.valid ? <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> : <ShieldAlert className="w-3.5 h-3.5 text-destructive" />}
-            <p className="text-xs font-bold text-[#1A1A2E]">تقرير سلامة الذاكرة الدستورية</p>
+            {integrity.valid ? <ShieldCheck className="w-3.5 h-3.5 text-heading" /> : <ShieldAlert className="w-3.5 h-3.5 text-destructive" />}
+            <p className="text-xs font-bold text-foreground">تقرير سلامة الذاكرة الدستورية</p>
           </div>
           <div className="grid grid-cols-3 gap-2 text-center text-[11px]">
             <div><p className="text-muted-foreground">النسخ المفحوصة</p><p className="font-bold">{integrity.versionsChecked}</p></div>
             <div><p className="text-muted-foreground">الأحداث المفحوصة</p><p className="font-bold">{integrity.timelineChecked}</p></div>
-            <div><p className="text-muted-foreground">الأخطاء</p><p className={`font-bold ${integrity.errors.length ? 'text-destructive' : 'text-emerald-400'}`}>{integrity.errors.length}</p></div>
+            <div><p className="text-muted-foreground">الأخطاء</p><p className={`font-bold ${integrity.errors.length ? 'text-destructive' : 'text-heading'}`}>{integrity.errors.length}</p></div>
           </div>
           {integrity.errors.length > 0 && (
             <div className="mt-2 space-y-1">
@@ -1460,7 +1460,7 @@ function ConstitutionalMemoryTab({ decisionId }: { decisionId: number }) {
                 {showHashes ? 'إخفاء هاش السلسلة' : 'عرض هاش السلسلة'}
               </button>
               {showHashes && (
-                <span className="text-[10px] font-mono text-[#3D3D5C] break-all mr-1">{integrity.latestChainHash}</span>
+                <span className="text-[10px] font-mono text-foreground/80 break-all mr-1">{integrity.latestChainHash}</span>
               )}
             </div>
           )}
@@ -1468,10 +1468,10 @@ function ConstitutionalMemoryTab({ decisionId }: { decisionId: number }) {
       )}
 
       {/* Timeline */}
-      <div className="rounded-xl border border-border bg-white p-3">
+      <div className="rounded-xl border border-border bg-card p-3">
         <div className="flex items-center gap-1.5 mb-3">
           <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-          <p className="text-xs font-bold text-[#1A1A2E]">الجدول الزمني الدستوري</p>
+          <p className="text-xs font-bold text-foreground">الجدول الزمني الدستوري</p>
           <span className="mr-auto text-[10px] text-muted-foreground">{timeline.length} حدث</span>
         </div>
         {timeline.length === 0 ? (
@@ -1485,17 +1485,17 @@ function ConstitutionalMemoryTab({ decisionId }: { decisionId: number }) {
                   <div className="absolute right-[17px] top-7 bottom-0 w-px bg-border" />
                 )}
                 {/* Icon */}
-                <div className="shrink-0 w-8 h-8 rounded-full border-2 border-border bg-white flex items-center justify-center text-[#00563F] z-10">
+                <div className="shrink-0 w-8 h-8 rounded-full border-2 border-border bg-card flex items-center justify-center text-gold z-10">
                   {EVENT_ICON[ev.eventType] ?? <FileText className="w-3.5 h-3.5" />}
                 </div>
                 {/* Content */}
                 <div className="pb-4 flex-1 min-w-0">
                   <div className="flex items-start gap-1.5 flex-wrap">
-                    <span className="text-xs font-bold text-[#1A1A2E]">
+                    <span className="text-xs font-bold text-foreground">
                       {MEMORY_EVENT_LABELS[ev.eventType] ?? ev.eventType}
                     </span>
                     {ev.actorRole && (
-                      <span className="text-[10px] font-semibold bg-[#F5F5FA] text-[#5C5C7A] px-1.5 py-0.5 rounded-full">
+                      <span className="text-[10px] font-semibold bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full">
                         {ev.actorRole}
                       </span>
                     )}
@@ -1504,7 +1504,7 @@ function ConstitutionalMemoryTab({ decisionId }: { decisionId: number }) {
                     </span>
                   </div>
                   {ev.eventSummaryAr && (
-                    <p className="text-[11px] text-[#5C5C7A] mt-0.5">{ev.eventSummaryAr}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">{ev.eventSummaryAr}</p>
                   )}
                   <p className="text-[10px] text-muted-foreground/70 mt-0.5">
                     {new Date(ev.recordedAt).toLocaleString('ar-AE')}
@@ -1523,16 +1523,16 @@ function ConstitutionalMemoryTab({ decisionId }: { decisionId: number }) {
 
       {/* Export + AI info footer */}
       <div className="rounded-xl border border-border bg-muted/30 p-3">
-        <div className="grid grid-cols-2 gap-3 text-[11px] text-[#5C5C7A]">
+        <div className="grid grid-cols-2 gap-3 text-[11px] text-muted-foreground">
           <div>
-            <p className="font-bold text-[#1A1A2E] mb-1">الذكاء الاصطناعي</p>
+            <p className="font-bold text-foreground mb-1">الذكاء الاصطناعي</p>
             <p>{current.archiveStatus === 'archived' ? '📦 مؤرشف' : '🟢 نشط'}</p>
             {current.qva != null && <p>QVA: <span className="font-bold">{current.qva.toFixed(1)}</span></p>}
             {current.lsi != null && <p>LSI: <span className="font-bold">{current.lsi.toFixed(1)}</span></p>}
             {current.humanInfluenceIndex != null && <p>HII: <span className="font-bold">{current.humanInfluenceIndex.toFixed(1)}</span></p>}
           </div>
           <div>
-            <p className="font-bold text-[#1A1A2E] mb-1">الإطار القانوني</p>
+            <p className="font-bold text-foreground mb-1">الإطار القانوني</p>
             <p>MARSAD-CM-v3.0</p>
             <p>UAE-Admin-Law-2026</p>
           </div>
@@ -1576,7 +1576,7 @@ function CustodyTimeline({ decisionId }: { decisionId: number }) {
         <SectionHeader icon={<Hash className="w-4 h-4" />} title="سلسلة الحيازة القانونية" sub={`${records.length} سجل · مُلحق فقط — لا حذف ولا تعديل`} />
         <div className="flex items-center gap-2 flex-wrap">
           {isValid === null ? (
-            <div className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-slate-100 text-slate-600">
+            <div className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-muted/60 text-muted-foreground">
               <RefreshCw className="w-3.5 h-3.5 animate-spin" />
               جارٍ التحقق من سلامة السلسلة…
             </div>
@@ -1606,7 +1606,7 @@ function CustodyTimeline({ decisionId }: { decisionId: number }) {
         {records.map((r, idx) => {
           const isLast = idx === records.length - 1;
           const cat = r.actionCategory ?? 'decision';
-          const catColor = ACTION_CATEGORY_COLORS[cat] ?? 'bg-slate-100 text-slate-700 ring-slate-200';
+          const catColor = ACTION_CATEGORY_COLORS[cat] ?? 'bg-muted/60 text-muted-foreground ring-border';
           const actionLabel = (() => {
             const base = r.action.startsWith('stage.completed.') ? `استكمال المرحلة: ${r.action.replace('stage.completed.', '')}` : (ACTION_LABELS[r.action] ?? r.action);
             return base;
@@ -1624,7 +1624,7 @@ function CustodyTimeline({ decisionId }: { decisionId: number }) {
               </div>
 
               {/* Card */}
-              <div className={`flex-1 rounded-lg border p-3 mb-3 text-sm ${idx === 0 ? 'bg-gold/60 border-gold/25' : 'bg-white border-border'}`}>
+              <div className={`flex-1 rounded-lg border p-3 mb-3 text-sm ${idx === 0 ? 'bg-gold/60 border-gold/25' : 'bg-card border-border'}`}>
                 <div className="flex items-start justify-between gap-2 flex-wrap mb-1.5">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="font-semibold text-foreground text-[13px]">{actionLabel}</span>
@@ -1646,7 +1646,7 @@ function CustodyTimeline({ decisionId }: { decisionId: number }) {
                 {(r.legalJustification || r.aiRecommendation || r.humanModification) && (
                   <div className="mt-2 pt-1.5 border-t border-border space-y-0.5 text-[11px]">
                     {r.legalJustification && <p><span className="font-semibold text-foreground">التبرير القانوني: </span>{r.legalJustification}</p>}
-                    {r.aiRecommendation && <p><span className="font-semibold text-violet-700">توصية الذكاء الاصطناعي: </span>{r.aiRecommendation}</p>}
+                    {r.aiRecommendation && <p><span className="font-semibold text-heading">توصية الذكاء الاصطناعي: </span>{r.aiRecommendation}</p>}
                     {r.humanModification && <p><span className="font-semibold text-heading">التعديل البشري: </span>{r.humanModification}</p>}
                   </div>
                 )}
@@ -1723,19 +1723,19 @@ interface EvidenceVerification {
 
 const EVENT_CATEGORY_COLORS: Record<string, string> = {
   creation:       'bg-heading/10 text-heading border-heading/30',
-  stage:          'bg-violet-100 text-violet-700 border-violet-200',
+  stage:          'bg-heading/15 text-heading border-heading/25',
   identity:       'bg-gold/15 text-gold border-gold/25',
-  governance:     'bg-teal-100 text-teal-700 border-teal-200',
-  validation:     'bg-indigo-100 text-indigo-700 border-indigo-200',
-  accountability: 'bg-rose-100 text-rose-700 border-rose-200',
-  judicial:       'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
-  archive:        'bg-slate-100 text-slate-600 border-slate-200',
+  governance:     'bg-heading/15 text-heading border-heading/25',
+  validation:     'bg-heading/15 text-heading border-heading/25',
+  accountability: 'bg-destructive/15 text-destructive border-destructive/25',
+  judicial:       'bg-heading/10 text-heading border-heading/30',
+  archive:        'bg-muted/60 text-muted-foreground border-border',
   default:        'bg-muted text-muted-foreground border-border',
 };
 
 function IntegrityScoreBadge({ score, valid }: { score: number; valid: boolean }) {
   const color = valid
-    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+    ? 'bg-heading/10 text-heading border-heading/30'
     : score >= 60
       ? 'bg-gold/10 text-gold border-gold/25'
       : 'bg-destructive/10 text-destructive border-destructive/30';
@@ -1800,7 +1800,7 @@ function EvidenceEventCard({ ev, expanded, onToggle }: {
           {new Date(ev.timestamp).toLocaleTimeString('ar-AE', { hour: '2-digit', minute: '2-digit', hour12: false })}
         </span>
         {/* Hash valid indicator */}
-        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+        <CheckCircle2 className="w-3.5 h-3.5 text-heading shrink-0" />
         {expanded ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" /> : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
       </button>
 
@@ -1833,7 +1833,7 @@ function EvidenceEventCard({ ev, expanded, onToggle }: {
             <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground pt-0.5">
               <Link2 className="w-3 h-3" />
               <span>مرتبط بالحدث السابق — السلسلة مستمرة</span>
-              <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+              <CheckCircle2 className="w-3 h-3 text-heading" />
             </div>
           )}
 
@@ -1948,11 +1948,11 @@ function EvidenceLedgerTab({ decisionId }: { decisionId: number }) {
 
       {/* Integrity detail panel */}
       {verification && (
-        <div className={`p-3 rounded-xl border text-xs space-y-1 ${verification.valid ? 'bg-emerald-500/60 border-emerald-500/30' : 'bg-destructive/60 border-destructive/30'}`}>
+        <div className={`p-3 rounded-xl border text-xs space-y-1 ${verification.valid ? 'bg-heading/60 border-heading/30' : 'bg-destructive/60 border-destructive/30'}`}>
           <div className="flex gap-4 flex-wrap">
             <span><span className="text-muted-foreground">الأحداث المفحوصة: </span><strong>{verification.eventsChecked}</strong></span>
-            <span><span className="text-muted-foreground">أخطاء الهاش: </span><strong className={verification.hashErrors ? 'text-destructive' : 'text-emerald-400'}>{verification.hashErrors}</strong></span>
-            <span><span className="text-muted-foreground">كسور الروابط: </span><strong className={verification.brokenLinks ? 'text-destructive' : 'text-emerald-400'}>{verification.brokenLinks}</strong></span>
+            <span><span className="text-muted-foreground">أخطاء الهاش: </span><strong className={verification.hashErrors ? 'text-destructive' : 'text-heading'}>{verification.hashErrors}</strong></span>
+            <span><span className="text-muted-foreground">كسور الروابط: </span><strong className={verification.brokenLinks ? 'text-destructive' : 'text-heading'}>{verification.brokenLinks}</strong></span>
           </div>
           {verification.genesisHash && (
             <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
@@ -1990,14 +1990,14 @@ function EvidenceLedgerTab({ decisionId }: { decisionId: number }) {
               {/* Node dot */}
               <div className="relative z-10 mt-3.5">
                 <div className={`w-3 h-3 rounded-full border-2 border-white ring-1 ${
-                  (EVENT_CATEGORY_COLORS[ev.eventCategory] ?? '').includes('sky')       ? 'bg-heading ring-sky-300' :
-                  (EVENT_CATEGORY_COLORS[ev.eventCategory] ?? '').includes('violet')    ? 'bg-violet-400 ring-violet-300' :
+                  (EVENT_CATEGORY_COLORS[ev.eventCategory] ?? '').includes('sky')       ? 'bg-heading ring-heading/30' :
+                  (EVENT_CATEGORY_COLORS[ev.eventCategory] ?? '').includes('violet')    ? 'bg-heading ring-heading/30' :
                   (EVENT_CATEGORY_COLORS[ev.eventCategory] ?? '').includes('amber')     ? 'bg-gold/80 ring-gold/40' :
-                  (EVENT_CATEGORY_COLORS[ev.eventCategory] ?? '').includes('teal')      ? 'bg-teal-400 ring-teal-300' :
-                  (EVENT_CATEGORY_COLORS[ev.eventCategory] ?? '').includes('indigo')    ? 'bg-indigo-400 ring-indigo-300' :
-                  (EVENT_CATEGORY_COLORS[ev.eventCategory] ?? '').includes('rose')      ? 'bg-rose-400 ring-rose-300' :
-                  (EVENT_CATEGORY_COLORS[ev.eventCategory] ?? '').includes('emerald')   ? 'bg-emerald-400 ring-emerald-300' :
-                  'bg-slate-400 ring-slate-300'
+                  (EVENT_CATEGORY_COLORS[ev.eventCategory] ?? '').includes('teal')      ? 'bg-heading ring-heading/30' :
+                  (EVENT_CATEGORY_COLORS[ev.eventCategory] ?? '').includes('indigo')    ? 'bg-heading ring-heading/30' :
+                  (EVENT_CATEGORY_COLORS[ev.eventCategory] ?? '').includes('rose')      ? 'bg-destructive ring-destructive/30' :
+                  (EVENT_CATEGORY_COLORS[ev.eventCategory] ?? '').includes('emerald')   ? 'bg-heading ring-heading/30' :
+                  'bg-muted-foreground ring-border'
                 }`} />
               </div>
               {/* Card */}
@@ -2132,11 +2132,11 @@ const DIMENSION_LABELS_AR: Record<string, string> = {
 };
 
 const DIMENSION_STATUS_COLORS: Record<JudicialDimensionStatus, string> = {
-  compliant:             'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+  compliant:             'bg-heading/10 text-heading border-heading/30',
   minor_concern:         'bg-gold/15 text-gold border-gold/25',
   significant_concern:   'bg-gold/15 text-gold border-gold/25',
   deficient:             'bg-destructive/15 text-destructive border-destructive/30',
-  not_assessed:          'bg-slate-100 text-slate-500 border-slate-200',
+  not_assessed:          'bg-muted/60 text-muted-foreground border-border',
 };
 
 const DIMENSION_STATUS_LABELS: Record<JudicialDimensionStatus, string> = {
@@ -2155,14 +2155,14 @@ const DEFECT_SEVERITY_COLORS: Record<string, string> = {
 };
 
 const OUTCOME_CONFIG: Record<string, { ar: string; color: string; icon: React.ReactNode }> = {
-  likely_lawful:             { ar: 'على الأرجح مشروع',          color: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400', icon: <CheckCircle2 className="w-5 h-5 text-emerald-400" /> },
+  likely_lawful:             { ar: 'على الأرجح مشروع',          color: 'bg-heading/10 border-heading/30 text-heading', icon: <CheckCircle2 className="w-5 h-5 text-heading" /> },
   likely_partially_unlawful: { ar: 'على الأرجح مشروع جزئياً',  color: 'bg-gold/10 border-gold/40 text-gold/75',   icon: <AlertTriangle className="w-5 h-5 text-gold" /> },
   likely_void:               { ar: 'على الأرجح باطل',           color: 'bg-destructive/10 border-destructive/40 text-destructive',            icon: <XCircle className="w-5 h-5 text-destructive" /> },
-  requires_further_review:   { ar: 'يستلزم مراجعة إضافية',     color: 'bg-violet-50 border-violet-300 text-violet-800',   icon: <Eye className="w-5 h-5 text-violet-600" /> },
+  requires_further_review:   { ar: 'يستلزم مراجعة إضافية',     color: 'bg-heading/10 border-heading/30 text-heading',   icon: <Eye className="w-5 h-5 text-heading" /> },
 };
 
 const REMEDY_CONFIG: Record<string, { ar: string; color: string }> = {
-  uphold:                    { ar: 'تأييد القرار',                    color: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' },
+  uphold:                    { ar: 'تأييد القرار',                    color: 'bg-heading/10 border-heading/30 text-heading' },
   annul:                     { ar: 'إلغاء القرار',                    color: 'bg-destructive/10 border-destructive/40 text-destructive' },
   partial_annulment:         { ar: 'إلغاء جزئي',                     color: 'bg-gold/10 border-gold/40 text-gold/75' },
   remit_for_reconsideration: { ar: 'إعادة للنظر',                   color: 'bg-gold/10 border-gold/40 text-gold/75' },
@@ -2177,9 +2177,9 @@ function DimensionCard({ dim, expanded, onToggle }: {
   const statusColor = DIMENSION_STATUS_COLORS[dim.status] ?? DIMENSION_STATUS_COLORS.not_assessed;
   const statusLabel = DIMENSION_STATUS_LABELS[dim.status] ?? dim.status;
   const riskBarColor =
-    dim.riskScore >= 75 ? 'bg-red-500' :
+    dim.riskScore >= 75 ? 'bg-destructive' :
     dim.riskScore >= 50 ? 'bg-gold/80' :
-    dim.riskScore >= 25 ? 'bg-gold/80' : 'bg-emerald-400';
+    dim.riskScore >= 25 ? 'bg-gold/80' : 'bg-heading';
 
   return (
     <div className={`border rounded-lg overflow-hidden transition-all ${expanded ? 'border-primary/30 shadow-sm' : 'border-border'}`}>
@@ -2434,8 +2434,8 @@ function JudicialIntelligenceTab({ decisionId }: { decisionId: number }) {
         <div className="space-y-2">
           {defects.length === 0 ? (
             <div className="flex flex-col items-center py-8 gap-2">
-              <CheckCircle2 className="w-8 h-8 text-emerald-400" />
-              <p className="text-sm font-semibold text-emerald-400">لا توجد عيوب دستورية مكتشفة</p>
+              <CheckCircle2 className="w-8 h-8 text-heading" />
+              <p className="text-sm font-semibold text-heading">لا توجد عيوب دستورية مكتشفة</p>
               <p className="text-xs text-muted-foreground">اجتاز القرار فحص العيوب الدستورية</p>
             </div>
           ) : (
@@ -2490,7 +2490,7 @@ function JudicialIntelligenceTab({ decisionId }: { decisionId: number }) {
               <ol className="space-y-1.5">
                 {(review.findingsOfLaw ?? []).map((f, i) => (
                   <li key={i} className="flex gap-2 text-xs">
-                    <span className="shrink-0 w-5 h-5 rounded-full bg-violet-100 text-violet-700 text-[10px] font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
+                    <span className="shrink-0 w-5 h-5 rounded-full bg-heading/15 text-heading text-[10px] font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
                     <span className="text-foreground leading-relaxed">{f}</span>
                   </li>
                 ))}
@@ -2536,7 +2536,7 @@ function JudicialIntelligenceTab({ decisionId }: { decisionId: number }) {
               <ul className="space-y-1">
                 {(review.humanOversightObservations ?? []).map((o, i) => (
                   <li key={i} className="flex gap-1.5 text-xs text-foreground">
-                    <CircleDot className="w-3 h-3 shrink-0 text-teal-500 mt-0.5" />{o}
+                    <CircleDot className="w-3 h-3 shrink-0 text-heading mt-0.5" />{o}
                   </li>
                 ))}
               </ul>
@@ -2710,7 +2710,7 @@ function JudgeDashboard() {
             <div className="flex gap-1 mb-4 bg-muted/40 p-1 rounded-xl">
               {TABS.map((t) => (
                 <button key={t.key} onClick={() => setTab(t.key)}
-                  className={`flex-1 text-xs py-2 px-1 rounded-lg font-semibold transition-colors ${tab === t.key ? 'bg-white shadow text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
+                  className={`flex-1 text-xs py-2 px-1 rounded-lg font-semibold transition-colors ${tab === t.key ? 'bg-card shadow text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
                   {t.label}
                 </button>
               ))}
@@ -2718,13 +2718,13 @@ function JudgeDashboard() {
 
             {/* Tab content */}
             {tab === 'stages' && (
-              <div className="bg-white rounded-xl border border-border shadow-xs p-5 space-y-2">
+              <div className="bg-card rounded-xl border border-border shadow-xs p-5 space-y-2">
                 {stages.map((s, i) => (
-                  <div key={i} className={`p-3 rounded-lg border ${s.status === 'complete' ? 'border-emerald-500/30 bg-emerald-500/40' : 'border-border bg-muted/20'}`}>
+                  <div key={i} className={`p-3 rounded-lg border ${s.status === 'complete' ? 'border-heading/30 bg-heading/40' : 'border-border bg-muted/20'}`}>
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-xs font-bold">{(s.stageNumber as number) + 1}.</span>
                       <span className="text-sm font-medium flex-1">{(s.titleAr as string) || (s.stageKey as string)}</span>
-                      <span className={`text-[11px] font-semibold ${s.status === 'complete' ? 'text-emerald-400' : s.status === 'active' ? 'text-heading' : 'text-slate-400'}`}>
+                      <span className={`text-[11px] font-semibold ${s.status === 'complete' ? 'text-heading' : s.status === 'active' ? 'text-heading' : 'text-muted-foreground'}`}>
                         {s.status === 'complete' ? '✓' : s.status === 'active' ? '⋯' : '○'}
                       </span>
                     </div>
@@ -2736,7 +2736,7 @@ function JudgeDashboard() {
             )}
 
             {tab === 'jdp' && (
-              <div className="bg-white rounded-xl border border-border shadow-xs p-5 space-y-4">
+              <div className="bg-card rounded-xl border border-border shadow-xs p-5 space-y-4">
                 {jdp ? (
                   [
                     { key: 'executiveSummary',       label: 'الملخص التنفيذي' },
@@ -2758,7 +2758,7 @@ function JudgeDashboard() {
             )}
 
             {tab === 'dci' && (
-              <div className="bg-white rounded-xl border border-border shadow-xs p-5">
+              <div className="bg-card rounded-xl border border-border shadow-xs p-5">
                 {dci ? (
                   <div className="grid grid-cols-2 gap-4">
                     {[
@@ -2793,7 +2793,7 @@ function JudgeDashboard() {
                               <span className="w-4 text-muted-foreground">{(sh.stageNumber as number) + 1}</span>
                               <span className="text-muted-foreground">{sh.stageKey as string}</span>
                               <span className="flex-1 truncate">{sh.auditHash ? `${(sh.auditHash as string).substring(0, 24)}…` : '(مفقود)'}</span>
-                              {sh.auditHash ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : <XCircle className="w-3 h-3 text-red-400" />}
+                              {sh.auditHash ? <CheckCircle2 className="w-3 h-3 text-heading" /> : <XCircle className="w-3 h-3 text-destructive" />}
                             </div>
                           ))}
                         </div>
@@ -2805,7 +2805,7 @@ function JudgeDashboard() {
             )}
 
             {tab === 'car' && (
-              <div className="bg-white rounded-xl border border-border shadow-xs p-5 space-y-4">
+              <div className="bg-card rounded-xl border border-border shadow-xs p-5 space-y-4">
                 {car ? (
                   [
                     { key: 'decisionSummary',       label: 'ملخص القرار' },
@@ -2829,7 +2829,7 @@ function JudgeDashboard() {
             )}
 
             {tab === 'audit' && (
-              <div className="bg-white rounded-xl border border-border shadow-xs p-5">
+              <div className="bg-card rounded-xl border border-border shadow-xs p-5">
                 {auditLog.length > 0 ? (
                   <div className="space-y-1.5 max-h-96 overflow-y-auto">
                     {auditLog.map((log, i) => (
@@ -2849,25 +2849,25 @@ function JudgeDashboard() {
             )}
 
             {tab === 'custody' && selectedId ? (
-              <div className="bg-white rounded-xl border border-border shadow-xs p-5">
+              <div className="bg-card rounded-xl border border-border shadow-xs p-5">
                 <CustodyTimeline decisionId={selectedId} />
               </div>
             ) : null}
 
             {tab === 'memory' && selectedId ? (
-              <div className="bg-white rounded-xl border border-border shadow-xs p-5">
+              <div className="bg-card rounded-xl border border-border shadow-xs p-5">
                 <ConstitutionalMemoryTab decisionId={selectedId} />
               </div>
             ) : null}
 
             {tab === 'evidence' && selectedId ? (
-              <div className="bg-white rounded-xl border border-border shadow-xs p-5">
+              <div className="bg-card rounded-xl border border-border shadow-xs p-5">
                 <EvidenceLedgerTab decisionId={selectedId} />
               </div>
             ) : null}
 
             {tab === 'judicial' && selectedId ? (
-              <div className="bg-white rounded-xl border border-border shadow-xs p-5">
+              <div className="bg-card rounded-xl border border-border shadow-xs p-5">
                 <JudicialIntelligenceTab decisionId={selectedId} />
               </div>
             ) : null}
@@ -2884,7 +2884,7 @@ function LegacyGovernanceView() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 bg-white rounded-xl border border-border p-6 shadow-xs">
+        <div className="lg:col-span-2 bg-card rounded-xl border border-border p-6 shadow-xs">
           <SectionHeader icon={<Scale className="w-4 h-4" />} title="مركز الحوكمة التنفيذية — المرحلة 2" sub="بوابة الحوكمة المتعددة الأدوار" />
           <p className="text-sm text-muted-foreground mb-4">
             أنت حالياً تستخدم دور منصة تقليدي. لعرض لوحة الحوكمة الخاصة بدور معين، استخدم محدد الأدوار في الرأس لتبديل إلى أحد الأدوار التنفيذية.
@@ -2905,7 +2905,7 @@ function LegacyGovernanceView() {
             ))}
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-border p-5 shadow-xs">
+        <div className="bg-card rounded-xl border border-border p-5 shadow-xs">
           <SectionHeader icon={<Shield className="w-4 h-4" />} title="قم بتبديل الدور" />
           <p className="text-sm text-muted-foreground">استخدم القائمة المنسدلة في أعلى الصفحة لتجربة أي من الأدوار الـ 11 الجديدة.</p>
           <div className="mt-4 p-3 rounded-lg bg-heading/10 border border-heading/30">
@@ -2926,9 +2926,9 @@ function RoleBanner({ role }: { role: string }) {
   const tierColors: Record<string, string> = {
     legacy:    'bg-gold/10 border-gold/25 text-gold/75',
     executive: 'bg-heading/10 border-heading/30 text-heading',
-    oversight: 'bg-violet-50 border-violet-200 text-violet-800',
-    judicial:  'bg-emerald-500/10 border-emerald-500/30 text-emerald-400',
-    public:    'bg-slate-50 border-slate-200 text-slate-700',
+    oversight: 'bg-heading/10 border-heading/25 text-heading',
+    judicial:  'bg-heading/10 border-heading/30 text-heading',
+    public:    'bg-muted/40 border-border text-muted-foreground',
   };
   return (
     <div className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border mb-6 ${tierColors[meta.tier] ?? 'bg-muted/40 border-border text-muted-foreground'}`}>
@@ -2975,7 +2975,7 @@ export default function GovernanceHub() {
     return (
       <div className="min-h-screen flex items-center justify-center p-8">
         <div className="text-center">
-          <Shield className="w-12 h-12 text-red-400 mx-auto mb-4" />
+          <Shield className="w-12 h-12 text-destructive mx-auto mb-4" />
           <h2 className="text-lg font-bold mb-2">غير مصرّح بالوصول</h2>
           <p className="text-sm text-muted-foreground">دورك الحالي لا يملك صلاحية الوصول إلى مركز الحوكمة.</p>
         </div>

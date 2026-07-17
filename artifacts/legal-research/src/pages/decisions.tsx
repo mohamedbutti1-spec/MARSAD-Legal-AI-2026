@@ -66,22 +66,22 @@ const STATUS_CONFIG: Record<string, { label: string; icon: React.ReactNode; clas
   validation_failed: {
     label: 'فشل التحقق',
     icon: <XCircle className="w-3.5 h-3.5" />,
-    className: 'text-red-600 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-950/30 dark:border-red-800/40',
+    className: 'text-destructive bg-destructive/10 border-destructive/25 dark:text-destructive dark:bg-destructive/30 dark:border-destructive/40',
   },
   complete: {
     label: 'مكتمل',
     icon: <CheckCircle2 className="w-3.5 h-3.5" />,
-    className: 'text-emerald-600 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-950/30 dark:border-emerald-800/40',
+    className: 'text-heading bg-heading/10 border-heading/25 dark:text-heading dark:bg-heading/30 dark:border-heading/40',
   },
   signed: {
     label: 'موقّع',
     icon: <CheckCircle2 className="w-3.5 h-3.5" />,
-    className: 'text-blue-600 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-950/30 dark:border-blue-800/40',
+    className: 'text-heading bg-heading/10 border-heading/25 dark:text-heading dark:bg-heading/30 dark:border-heading/40',
   },
   draft: {
     label: 'مسودة',
     icon: <FileText className="w-3.5 h-3.5" />,
-    className: 'text-slate-600 bg-slate-50 border-slate-200 dark:text-slate-400 dark:bg-slate-800/30 dark:border-slate-700/40',
+    className: 'text-muted-foreground bg-muted/40 border-border dark:text-muted-foreground dark:bg-card/30 dark:border-border',
   },
 };
 
@@ -191,7 +191,7 @@ export default function DecisionsPage() {
         )}
 
         {error && (
-          <div className="flex items-center gap-2 p-4 rounded-xl border border-red-200 bg-red-50 dark:border-red-800/40 dark:bg-red-950/20 text-sm text-red-700 dark:text-red-400">
+          <div className="flex items-center gap-2 p-4 rounded-xl border border-destructive/25 bg-destructive/10 dark:border-destructive/40 dark:bg-destructive/20 text-sm text-destructive">
             <AlertTriangle className="w-4 h-4 shrink-0" />
             <span>تعذّر تحميل القرارات. يرجى إعادة المحاولة.</span>
           </div>
@@ -283,9 +283,9 @@ export default function DecisionsPage() {
                               <div
                                 className={`h-full rounded-full transition-all duration-300 ${
                                   decision.status === 'validation_failed'
-                                    ? 'bg-red-500'
+                                    ? 'bg-destructive'
                                     : decision.status === 'complete' || decision.status === 'signed'
-                                      ? 'bg-emerald-500'
+                                      ? 'bg-heading'
                                       : 'bg-gold'
                                 }`}
                                 style={{ width: `${pct}%` }}

@@ -241,7 +241,7 @@ export default function Citations() {
                     className="gap-1.5 w-full"
                     onClick={() => copyToClipboard(result[activeFormat])}
                   >
-                    {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copied ? <Check className="w-3.5 h-3.5 text-heading" /> : <Copy className="w-3.5 h-3.5" />}
                     {copied ? t('تم النسخ!', 'Copied!') : t('نسخ', 'Copy')}
                   </Button>
                 </CardContent>

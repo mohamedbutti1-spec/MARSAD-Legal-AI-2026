@@ -165,14 +165,14 @@ export interface JreSession {
 
 // Dispute type display labels
 export const DISPUTE_TYPE_LABELS: Record<string, { ar: string; en: string; color: string }> = {
-  annulment:    { ar: 'إلغاء',         en: 'Annulment',       color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
+  annulment:    { ar: 'إلغاء',         en: 'Annulment',       color: 'bg-destructive/15 text-destructive dark:bg-destructive/30 dark:text-destructive' },
   compensation: { ar: 'تعويض',         en: 'Compensation',    color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
   disciplinary: { ar: 'تأديبي',        en: 'Disciplinary',    color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' },
-  licensing:    { ar: 'ترخيص',         en: 'Licensing',       color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
-  procurement:  { ar: 'مناقصات',       en: 'Procurement',     color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' },
-  civil_service:{ ar: 'وظيفة عامة',   en: 'Civil Service',   color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' },
-  expropriation:{ ar: 'نزع ملكية',    en: 'Expropriation',   color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400' },
-  other:        { ar: 'أخرى',          en: 'Other',           color: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400' },
+  licensing:    { ar: 'ترخيص',         en: 'Licensing',       color: 'bg-heading/15 text-heading dark:bg-heading/30 dark:text-heading' },
+  procurement:  { ar: 'مناقصات',       en: 'Procurement',     color: 'bg-heading/15 text-heading dark:bg-heading/30 dark:text-heading' },
+  civil_service:{ ar: 'وظيفة عامة',   en: 'Civil Service',   color: 'bg-heading/15 text-heading dark:bg-heading/30 dark:text-heading' },
+  expropriation:{ ar: 'نزع ملكية',    en: 'Expropriation',   color: 'bg-destructive/15 text-destructive dark:bg-destructive/30 dark:text-destructive' },
+  other:        { ar: 'أخرى',          en: 'Other',           color: 'bg-muted/60 text-muted-foreground dark:bg-card/30 dark:text-muted-foreground' },
 };
 
 export const THEORY_LENS_OPTIONS = [

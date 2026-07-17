@@ -34,11 +34,11 @@ export default function UaeFrance() {
         <div className="text-center max-w-2xl mx-auto mb-10">
           <div className="flex justify-center items-center gap-4 mb-6">
             <div className="w-12 h-8 rounded shadow-sm overflow-hidden flex">
-              <div className="w-1/3 bg-heading"></div><div className="w-1/3 bg-white"></div><div className="w-1/3 bg-black"></div>
+              <div className="w-1/3 bg-heading"></div><div className="w-1/3 bg-card"></div><div className="w-1/3 bg-black"></div>
             </div>
             <Scale className="w-8 h-8 text-primary" />
             <div className="w-12 h-8 rounded shadow-sm overflow-hidden flex">
-              <div className="w-1/3 bg-blue-700"></div><div className="w-1/3 bg-white"></div><div className="w-1/3 bg-red-600"></div>
+              <div className="w-1/3 bg-heading"></div><div className="w-1/3 bg-card"></div><div className="w-1/3 bg-destructive"></div>
             </div>
           </div>
           <h1 className="text-3xl font-serif font-bold text-foreground">UAE vs France Legal Analysis</h1>

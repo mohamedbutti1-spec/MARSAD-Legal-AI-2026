@@ -82,25 +82,25 @@ const INDEX_LABELS: Record<string, string> = {
 };
 
 function scoreColor(score: number): string {
-  if (score >= 75) return 'text-destructive dark:text-red-400';
-  if (score >= 55) return 'text-gold dark:text-gold/80';
-  if (score >= 35) return 'text-gold dark:text-gold/80';
-  return 'text-emerald-400 dark:text-emerald-400';
+  if (score >= 75) return 'text-destructive';
+  if (score >= 55) return 'text-gold/80';
+  if (score >= 35) return 'text-gold/80';
+  return 'text-heading';
 }
 
 function scoreBg(score: number): string {
-  if (score >= 75) return 'bg-red-500';
+  if (score >= 75) return 'bg-destructive';
   if (score >= 55) return 'bg-gold';
   if (score >= 35) return 'bg-gold';
-  return 'bg-emerald-500';
+  return 'bg-heading';
 }
 
 function riskLevelBadge(level: RiskLevel | null | undefined) {
   switch (level) {
-    case 'critical': return 'bg-destructive/15 dark:bg-red-950/40 text-destructive dark:text-red-400 border-destructive/30 dark:border-red-800/40';
-    case 'high':     return 'bg-gold/15 dark:bg-gold/40 text-gold dark:text-gold/80 border-gold/25 dark:border-gold/40';
-    case 'moderate': return 'bg-gold/15 dark:bg-gold/40 text-gold dark:text-gold/80 border-gold/25 dark:border-gold/40';
-    default:         return 'bg-emerald-500/10 dark:bg-emerald-950/40 text-emerald-400 dark:text-emerald-400 border-emerald-500/30 dark:border-emerald-800/40';
+    case 'critical': return 'bg-destructive/15 dark:bg-destructive/40 text-destructive border-destructive/30 dark:border-destructive/40';
+    case 'high':     return 'bg-gold/15 dark:bg-gold/40 text-gold/80 border-gold/25 dark:border-gold/40';
+    case 'moderate': return 'bg-gold/15 dark:bg-gold/40 text-gold/80 border-gold/25 dark:border-gold/40';
+    default:         return 'bg-heading/10 dark:bg-heading/40 text-heading border-heading/30 dark:border-heading/40';
   }
 }
 
@@ -116,8 +116,8 @@ function ScoreGauge({ label, value, inverted = false }: { label: string; value: 
   const circumference = 2 * Math.PI * 32;
   const offset = circumference - (score / 100) * circumference;
   const colorClass = inverted
-    ? (score >= 70 ? 'text-emerald-400' : score >= 50 ? 'text-gold' : 'text-destructive')
-    : (score >= 75 ? 'text-destructive' : score >= 55 ? 'text-gold' : score >= 35 ? 'text-gold' : 'text-emerald-400');
+    ? (score >= 70 ? 'text-heading' : score >= 50 ? 'text-gold' : 'text-destructive')
+    : (score >= 75 ? 'text-destructive' : score >= 55 ? 'text-gold' : score >= 35 ? 'text-gold' : 'text-heading');
   return (
     <div className="flex flex-col items-center gap-2 p-4 bg-card border border-border/60 rounded-xl">
       <div className="relative w-20 h-20">
@@ -248,7 +248,7 @@ export function RiskPanel({ decisionId }: { decisionId: number }) {
           <button
             onClick={() => recalcMutation.mutate()}
             disabled={recalcMutation.isPending || isPending}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gold/25 dark:border-gold/40 bg-gold/10 dark:bg-gold/20 text-gold dark:text-gold/80 text-xs font-semibold hover:bg-gold/15 dark:hover:bg-gold/40 transition-colors disabled:opacity-60"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gold/25 dark:border-gold/40 bg-gold/10 dark:bg-gold/20 text-gold/80 text-xs font-semibold hover:bg-gold/15 dark:hover:bg-gold/40 transition-colors disabled:opacity-60"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${(recalcMutation.isPending || isPending) ? 'animate-spin' : ''}`} />
             إعادة الاحتساب
@@ -263,13 +263,13 @@ export function RiskPanel({ decisionId }: { decisionId: number }) {
         </div>
       )}
       {isError && (
-        <div className="flex items-center gap-3 p-4 rounded-lg border border-destructive/30 dark:border-red-800/40 bg-destructive/10 dark:bg-red-950/20 text-sm text-destructive dark:text-red-400">
+        <div className="flex items-center gap-3 p-4 rounded-lg border border-destructive/30 dark:border-destructive/40 bg-destructive/10 dark:bg-destructive/20 text-sm text-destructive">
           <XCircle className="w-4 h-4 shrink-0" />
           تعذر تحميل بيانات تقييم المخاطر
         </div>
       )}
       {isPending && !isLoading && (
-        <div className="flex items-center gap-3 p-4 rounded-lg border border-gold/25 dark:border-gold/40 bg-gold/10 dark:bg-gold/20 text-sm text-gold dark:text-gold/80">
+        <div className="flex items-center gap-3 p-4 rounded-lg border border-gold/25 dark:border-gold/40 bg-gold/10 dark:bg-gold/20 text-sm text-gold/80">
           <Loader2 className="w-4 h-4 animate-spin shrink-0" />
           جارٍ احتساب مؤشرات المخاطر الوطنية...
         </div>
@@ -288,10 +288,10 @@ export function RiskPanel({ decisionId }: { decisionId: number }) {
           {assessment.executiveSummaryAr && (
             <div className="bg-gold/10 dark:bg-gold/20 border border-gold/25 dark:border-gold/40 rounded-xl p-4 space-y-2">
               <div className="flex items-center gap-2">
-                <Scale className="w-4 h-4 text-gold dark:text-gold/80" />
-                <p className="text-xs font-bold text-gold dark:text-gold/80">ملخص تنفيذي — تقييم المخاطر الدستورية</p>
+                <Scale className="w-4 h-4 text-gold/80" />
+                <p className="text-xs font-bold text-gold/80">ملخص تنفيذي — تقييم المخاطر الدستورية</p>
               </div>
-              <p className="text-xs text-gold/80 dark:text-gold/80 leading-relaxed">{assessment.executiveSummaryAr}</p>
+              <p className="text-xs text-gold/80 leading-relaxed">{assessment.executiveSummaryAr}</p>
             </div>
           )}
 
@@ -330,7 +330,7 @@ export function RiskPanel({ decisionId }: { decisionId: number }) {
                         {val.legalCitations.length > 0 && (
                           <div className="flex flex-wrap gap-1.5">
                             {val.legalCitations.map((c) => (
-                              <span key={c} className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-heading/10 dark:bg-blue-950/30 text-heading dark:text-heading border border-heading/30 dark:border-blue-800/40">
+                              <span key={c} className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-heading/10 dark:bg-heading/30 text-heading border border-heading/30 dark:border-heading/40">
                                 {c}
                               </span>
                             ))}
@@ -340,7 +340,7 @@ export function RiskPanel({ decisionId }: { decisionId: number }) {
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-[10px] text-muted-foreground">أبعاد الشامسي:</span>
                             {val.alShamsiDrivers.map((d) => (
-                              <span key={d} className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-gold/10 dark:bg-gold/30 text-gold dark:text-gold/80 border border-gold/25 dark:border-gold/40">
+                              <span key={d} className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-gold/10 dark:bg-gold/30 text-gold/80 border border-gold/25 dark:border-gold/40">
                                 {d}
                               </span>
                             ))}
@@ -380,9 +380,9 @@ export function RiskPanel({ decisionId }: { decisionId: number }) {
                       <p className="text-xs font-semibold text-foreground">{s.titleAr}</p>
                       {s.severity && (
                         <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
-                          s.severity === 'critical' ? 'bg-destructive/10 dark:bg-red-950/30 text-destructive dark:text-red-400 border-destructive/30 dark:border-red-800/40' :
-                          s.severity === 'high' ? 'bg-gold/10 dark:bg-gold/30 text-gold dark:text-gold/80 border-gold/25 dark:border-gold/40' :
-                          'bg-gold/10 dark:bg-gold/30 text-gold dark:text-gold/80 border-gold/25 dark:border-gold/40'
+                          s.severity === 'critical' ? 'bg-destructive/10 dark:bg-destructive/30 text-destructive border-destructive/30 dark:border-destructive/40' :
+                          s.severity === 'high' ? 'bg-gold/10 dark:bg-gold/30 text-gold/80 border-gold/25 dark:border-gold/40' :
+                          'bg-gold/10 dark:bg-gold/30 text-gold/80 border-gold/25 dark:border-gold/40'
                         }`}>
                           {s.probability != null ? `${Math.round(s.probability)}% ` : ''}{s.severity}
                         </span>
@@ -390,7 +390,7 @@ export function RiskPanel({ decisionId }: { decisionId: number }) {
                     </div>
                     {s.descriptionAr && <p className="text-xs text-muted-foreground">{s.descriptionAr}</p>}
                     {s.preventiveActionAr && (
-                      <div className="flex items-start gap-1.5 text-xs text-emerald-400 dark:text-emerald-400">
+                      <div className="flex items-start gap-1.5 text-xs text-heading">
                         <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                         {s.preventiveActionAr}
                       </div>
@@ -410,7 +410,7 @@ export function RiskPanel({ decisionId }: { decisionId: number }) {
               {canWriteRiskTreatment && (
                 <button
                   onClick={() => setShowAddTreatment(!showAddTreatment)}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-gold dark:text-gold/80 hover:text-gold dark:hover:text-gold/40 transition-colors"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-gold/80 hover:text-gold dark:hover:text-gold/40 transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   إضافة إجراء
@@ -486,8 +486,8 @@ export function RiskPanel({ decisionId }: { decisionId: number }) {
                       {t.treatmentType}
                     </span>
                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
-                      t.status === 'completed' ? 'bg-emerald-500/10 dark:bg-emerald-950/30 text-emerald-400 dark:text-emerald-400 border-emerald-500/30 dark:border-emerald-800/40' :
-                      t.status === 'in_progress' ? 'bg-heading/10 dark:bg-blue-950/30 text-heading dark:text-heading border-heading/30 dark:border-blue-800/40' :
+                      t.status === 'completed' ? 'bg-heading/10 dark:bg-heading/30 text-heading border-heading/30 dark:border-heading/40' :
+                      t.status === 'in_progress' ? 'bg-heading/10 dark:bg-heading/30 text-heading border-heading/30 dark:border-heading/40' :
                       'bg-muted/50 text-muted-foreground border-border/40'
                     }`}>
                       {t.status}
@@ -502,7 +502,7 @@ export function RiskPanel({ decisionId }: { decisionId: number }) {
                   <button
                     onClick={() => deleteTreatmentMutation.mutate(t.id)}
                     disabled={deleteTreatmentMutation.isPending}
-                    className="shrink-0 p-1 rounded hover:bg-destructive/10 dark:hover:bg-red-950/20 text-muted-foreground hover:text-destructive transition-colors"
+                    className="shrink-0 p-1 rounded hover:bg-destructive/10 dark:hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>

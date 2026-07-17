@@ -47,13 +47,13 @@ export function DecisionTimeline({ events, canEdit, onAddEvent, onDeleteEvent }:
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-gray-700">
+        <h3 className="text-sm font-semibold text-muted-foreground">
           {t('المسار الزمني للقرار', 'Decision Lifecycle Timeline')}
         </h3>
         {canEdit && onAddEvent && (
           <button
             onClick={onAddEvent}
-            className="flex items-center gap-1 text-xs text-[#1e3a5f] hover:underline"
+            className="flex items-center gap-1 text-xs text-heading hover:underline"
           >
             <Plus className="w-3.5 h-3.5" />
             {t('إضافة حدث', 'Add Event')}
@@ -98,7 +98,7 @@ export function DecisionTimeline({ events, canEdit, onAddEvent, onDeleteEvent }:
                     {canEdit && onDeleteEvent && (
                       <button
                         onClick={() => onDeleteEvent(ev.id)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-red-600"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                         title={t('حذف', 'Delete')}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -106,7 +106,7 @@ export function DecisionTimeline({ events, canEdit, onAddEvent, onDeleteEvent }:
                     )}
                   </div>
                   {desc && (
-                    <p className="text-sm text-gray-700 mt-1 leading-relaxed">{desc}</p>
+                    <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{desc}</p>
                   )}
                 </div>
               </li>

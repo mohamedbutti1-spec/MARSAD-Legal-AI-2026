@@ -36,7 +36,7 @@ const CLASSIFICATION_LABELS: Record<string, string> = {
 
 const AUTHORITY_BADGE = (cls: string) =>
   cls === 'binding'
-    ? <span className="text-[10px] px-1.5 py-0.5 rounded border bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800 font-medium">مُلزِم</span>
+    ? <span className="text-[10px] px-1.5 py-0.5 rounded border bg-heading/10 text-heading border-heading/25 dark:bg-heading/20 dark:text-heading dark:border-heading/40 font-medium">مُلزِم</span>
     : <span className="text-[10px] px-1.5 py-0.5 rounded border bg-gold/10 text-gold border-gold/25 dark:bg-gold/20 dark:text-gold/80 dark:border-gold/75 font-medium">مرجعي</span>;
 
 // ─── Inline Theory Section ────────────────────────────────────────────────────
@@ -49,7 +49,7 @@ function InlineTheorySection({ theory, lensName }: { theory: JreStageTheory; len
     <div className="mt-4 pt-3 border-t border-dashed border-gold/25 dark:border-gold/60" dir="rtl">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 text-xs w-full text-right text-gold dark:text-gold/80 hover:text-gold dark:hover:text-gold/40 transition-colors"
+        className="flex items-center gap-2 text-xs w-full text-right text-gold/80 hover:text-gold dark:hover:text-gold/40 transition-colors"
       >
         <Sparkles className="w-3.5 h-3.5 shrink-0" />
         <span className="font-medium">{lensName}</span>
@@ -60,15 +60,15 @@ function InlineTheorySection({ theory, lensName }: { theory: JreStageTheory; len
       {open && (
         <div className="mt-3 space-y-3 text-sm">
           {/* UAE binding — always first */}
-          <div className="border-r-2 border-emerald-500 pr-3 py-0.5">
-            <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 mb-1">القانون الإماراتي الملزم</p>
+          <div className="border-r-2 border-heading/40 pr-3 py-0.5">
+            <p className="text-xs font-semibold text-heading mb-1">القانون الإماراتي الملزم</p>
             <p className="leading-relaxed">{theory.uaeBindingAnalysis}</p>
           </div>
 
           {/* Theory lens */}
           {theory.theoryLensAnalysis && (
             <div className="border-r-2 border-gold/80 pr-3 py-0.5">
-              <p className="text-xs font-semibold text-gold dark:text-gold/80 mb-1">
+              <p className="text-xs font-semibold text-gold/80 mb-1">
                 {lensName} <span className="font-normal text-muted-foreground">[غير مُلزِم]</span>
               </p>
               <p className="leading-relaxed">{theory.theoryLensAnalysis}</p>
@@ -77,8 +77,8 @@ function InlineTheorySection({ theory, lensName }: { theory: JreStageTheory; len
 
           {/* French comparative (optional) */}
           {theory.frenchComparative && (
-            <div className="border-r-2 border-blue-400 pr-3 py-0.5">
-              <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 mb-1">
+            <div className="border-r-2 border-heading/40 pr-3 py-0.5">
+              <p className="text-xs font-semibold text-heading mb-1">
                 القانون الفرنسي المقارن <span className="font-normal text-muted-foreground">[غير مُلزِم]</span>
               </p>
               <p className="leading-relaxed">{theory.frenchComparative}</p>
@@ -87,16 +87,16 @@ function InlineTheorySection({ theory, lensName }: { theory: JreStageTheory; len
 
           {/* Agreement / Difference / Added value */}
           <div className="grid grid-cols-3 gap-2 text-xs pt-1">
-            <div className="bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/40 rounded-lg p-2">
-              <p className="font-semibold text-emerald-700 dark:text-emerald-400 mb-1">توافق</p>
+            <div className="bg-heading/10 border border-heading/25 dark:border-heading/40 rounded-lg p-2">
+              <p className="font-semibold text-heading mb-1">توافق</p>
               <p className="text-foreground/80">{theory.agreement}</p>
             </div>
-            <div className="bg-gold/10 dark:bg-gold/10 border border-gold/15 dark:border-gold/40 rounded-lg p-2">
-              <p className="font-semibold text-gold dark:text-gold/80 mb-1">اختلاف</p>
+            <div className="bg-gold/10 border border-gold/15 dark:border-gold/40 rounded-lg p-2">
+              <p className="font-semibold text-gold/80 mb-1">اختلاف</p>
               <p className="text-foreground/80">{theory.difference}</p>
             </div>
-            <div className="bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/40 rounded-lg p-2">
-              <p className="font-semibold text-indigo-700 dark:text-indigo-400 mb-1">قيمة مضافة</p>
+            <div className="bg-heading/10 border border-heading/25 dark:border-heading/40 rounded-lg p-2">
+              <p className="font-semibold text-heading mb-1">قيمة مضافة</p>
               <p className="text-foreground/80">{theory.addedValue}</p>
             </div>
           </div>
@@ -165,7 +165,7 @@ function FactsTab({ judgment }: { judgment: JudgmentOutput }) {
         </div>
       </div>
       {facts.hasAiSystemInvolved && (
-        <div className="flex items-center gap-2 p-3 bg-violet-50 dark:bg-violet-900/10 border border-violet-200 dark:border-violet-800 rounded-lg text-sm text-violet-700 dark:text-violet-400">
+        <div className="flex items-center gap-2 p-3 bg-heading/10 border border-heading/25 dark:border-heading/40 rounded-lg text-sm text-heading">
           <Bot className="w-4 h-4 shrink-0" />
           القرار المطعون فيه يتضمن نظاماً رقمياً أو خوارزمياً — تمَّ تفعيل المراجعة الرقمية
         </div>
@@ -221,7 +221,7 @@ function LegislationTab({ legislation, stageTheory, lensName }: { legislation: J
               </div>
             )}
             {leg.amendedBy && (
-              <div className="text-xs text-gold dark:text-gold/80">معدَّل بواسطة: {leg.amendedBy}</div>
+              <div className="text-xs text-gold/80">معدَّل بواسطة: {leg.amendedBy}</div>
             )}
             {leg.relevantArticles.length > 0 && (
               <div className="space-y-1">
@@ -303,15 +303,15 @@ function ProportionalityTab({ prop, stageTheory, lensName }: { prop: JreProporti
     <div className="space-y-4" dir="rtl">
       {/* Overall */}
       <div className={`p-4 rounded-lg border-2 ${
-        result === 'proportionate' ? 'bg-emerald-50 border-emerald-300 dark:bg-emerald-900/10 dark:border-emerald-700'
-        : result === 'disproportionate' ? 'bg-red-50 border-red-300 dark:bg-red-900/10 dark:border-red-700'
-        : 'bg-gray-50 border-gray-200 dark:bg-gray-900/10 dark:border-gray-700'
+        result === 'proportionate' ? 'bg-heading/10 border-heading/30 dark:bg-heading/10 dark:border-heading/50'
+        : result === 'disproportionate' ? 'bg-destructive/10 border-destructive/30 dark:bg-destructive/10 dark:border-destructive/50'
+        : 'bg-muted/40 border-border dark:bg-card/10 dark:border-border'
       }`}>
         <div className="font-semibold text-sm mb-1">النتيجة الإجمالية</div>
         <div className={`text-sm font-bold ${
-          result === 'proportionate' ? 'text-emerald-700 dark:text-emerald-400'
-          : result === 'disproportionate' ? 'text-red-700 dark:text-red-400'
-          : 'text-gray-600 dark:text-gray-400'
+          result === 'proportionate' ? 'text-heading'
+          : result === 'disproportionate' ? 'text-destructive'
+          : 'text-muted-foreground'
         }`}>
           {result === 'proportionate' ? 'القرار مُتناسِب' : result === 'disproportionate' ? 'القرار غير مُتناسِب' : 'لا ينطبق'}
         </div>
@@ -328,12 +328,12 @@ function ProportionalityTab({ prop, stageTheory, lensName }: { prop: JreProporti
         { label: 'الضرورة (Necessity)', data: prop.necessity },
         { label: 'التناسب بالمعنى الدقيق (Proportionality SS)', data: prop.proportionalitySS },
       ].map(({ label, data }) => data && (
-        <div key={label} className={`p-3 border rounded-lg ${data.compliant ? 'bg-emerald-50/50 dark:bg-emerald-900/5' : 'bg-red-50/50 dark:bg-red-900/5'}`}>
+        <div key={label} className={`p-3 border rounded-lg ${data.compliant ? 'bg-heading/10 dark:bg-heading/5' : 'bg-destructive/10 dark:bg-destructive/5'}`}>
           <div className="flex items-center justify-between mb-1">
             <span className="text-xs font-semibold text-muted-foreground">{label}</span>
             {data.compliant
-              ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-              : <XCircle className="w-3.5 h-3.5 text-red-600" />}
+              ? <CheckCircle2 className="w-3.5 h-3.5 text-heading" />
+              : <XCircle className="w-3.5 h-3.5 text-destructive" />}
           </div>
           <div className="text-sm">{data.finding}</div>
         </div>
@@ -358,15 +358,15 @@ function AiReviewTab({ review, visible, stageTheory, lensName }: { review: Judgm
         <div className="p-3 bg-muted/30 border rounded-lg text-sm">{review.overallNote}</div>
       )}
       {(review.dimensions ?? []).map((d, i) => (
-        <div key={i} className={`p-3 border rounded-lg ${d.compliant ? 'bg-emerald-50/50 dark:bg-emerald-900/5' : 'bg-red-50/50 dark:bg-red-900/5'}`}>
+        <div key={i} className={`p-3 border rounded-lg ${d.compliant ? 'bg-heading/10 dark:bg-heading/5' : 'bg-destructive/10 dark:bg-destructive/5'}`}>
           <div className="flex items-start justify-between gap-2 mb-1">
             <div>
               <span className="text-sm font-semibold">{d.dimensionAr}</span>
               <span className="text-xs text-muted-foreground ml-2 font-mono">({d.dimension})</span>
             </div>
             {d.compliant
-              ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              : <XCircle className="w-4 h-4 text-red-600 shrink-0" />}
+              ? <CheckCircle2 className="w-4 h-4 text-heading shrink-0" />
+              : <XCircle className="w-4 h-4 text-destructive shrink-0" />}
           </div>
           <p className="text-sm">{d.finding}</p>
           {d.basis && <p className="text-xs text-muted-foreground mt-1 border-t pt-1">{d.basis}</p>}
@@ -383,13 +383,13 @@ function TheoryTab({ theory, stageTheory }: { theory: JudgmentOutput['theoryAnal
   if (stageTheory && stageTheory.length > 0) {
     return (
       <div className="space-y-4" dir="rtl">
-        <div className="flex items-start gap-2 p-3 bg-gold/10 dark:bg-gold/10 border border-gold/25 dark:border-gold/75 rounded-lg">
-          <Info className="w-4 h-4 text-gold dark:text-gold/80 mt-0.5 shrink-0" />
+        <div className="flex items-start gap-2 p-3 bg-gold/10 border border-gold/25 dark:border-gold/75 rounded-lg">
+          <Info className="w-4 h-4 text-gold/80 mt-0.5 shrink-0" />
           <div>
             <p className="text-sm text-gold/75 dark:text-gold/40 font-medium mb-1">
               التحليل النظري مُدمَج الآن داخل كل قسم
             </p>
-            <p className="text-xs text-gold dark:text-gold/80">
+            <p className="text-xs text-gold/80">
               انقر على "▾ {theory.lensName} [غير مُلزِم]" أسفل أي قسم (التشريعات، السوابق، المبادئ، التناسب، القرار الرقمي) لعرض التحليل المقارن. هذا التحليل غير مُلزِم ولا يُعدِّل الحكم القانوني.
             </p>
           </div>
@@ -408,14 +408,14 @@ function TheoryTab({ theory, stageTheory }: { theory: JudgmentOutput['theoryAnal
                 {s.theoryLensAnalysis ?? s.uaeBindingAnalysis}
               </p>
               <div className="grid grid-cols-3 gap-2 text-xs pt-1">
-                <div className="bg-emerald-50 dark:bg-emerald-900/10 rounded p-1.5">
-                  <span className="font-medium text-emerald-700 dark:text-emerald-400">توافق: </span>{s.agreement}
+                <div className="bg-heading/10 rounded p-1.5">
+                  <span className="font-medium text-heading">توافق: </span>{s.agreement}
                 </div>
-                <div className="bg-gold/10 dark:bg-gold/10 rounded p-1.5">
-                  <span className="font-medium text-gold dark:text-gold/80">اختلاف: </span>{s.difference}
+                <div className="bg-gold/10 rounded p-1.5">
+                  <span className="font-medium text-gold/80">اختلاف: </span>{s.difference}
                 </div>
-                <div className="bg-indigo-50 dark:bg-indigo-900/10 rounded p-1.5">
-                  <span className="font-medium text-indigo-700 dark:text-indigo-400">قيمة: </span>{s.addedValue}
+                <div className="bg-heading/10 rounded p-1.5">
+                  <span className="font-medium text-heading">قيمة: </span>{s.addedValue}
                 </div>
               </div>
             </div>
@@ -428,8 +428,8 @@ function TheoryTab({ theory, stageTheory }: { theory: JudgmentOutput['theoryAnal
   // Backward compat: legacy single-block view
   return (
     <div className="space-y-4" dir="rtl">
-      <div className="flex items-start gap-2 p-3 bg-gold/10 dark:bg-gold/10 border border-gold/25 dark:border-gold/75 rounded-lg">
-        <Info className="w-4 h-4 text-gold dark:text-gold/80 mt-0.5 shrink-0" />
+      <div className="flex items-start gap-2 p-3 bg-gold/10 border border-gold/25 dark:border-gold/75 rounded-lg">
+        <Info className="w-4 h-4 text-gold/80 mt-0.5 shrink-0" />
         <p className="text-sm text-gold/75 dark:text-gold/40">
           {theory.disclaimer || 'هذا التحليل النظري غير مُلزِم قانونياً ولا يُشكِّل سلطة قضائية ملزمة. الأحكام القانونية الإماراتية الواردة في أسباب الحكم تسود دائماً عند التعارض.'}
         </p>
@@ -545,7 +545,7 @@ export default function JreSessionPage() {
 
   if (error || !session) {
     return (
-      <div className="p-6 flex items-center gap-2 text-red-600">
+      <div className="p-6 flex items-center gap-2 text-destructive">
         <AlertCircle className="w-5 h-5" />
         تعذَّر تحميل الجلسة
       </div>
@@ -573,7 +573,7 @@ export default function JreSessionPage() {
           <div className="flex flex-wrap gap-2 shrink-0">
             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${dtConf.color}`}>{dtConf.ar}</span>
             {session.hasAiDecision === 'true' && (
-              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">
+              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-heading/15 text-heading dark:bg-heading/30 dark:text-heading">
                 <Bot className="w-3 h-3" /> قرار رقمي
               </span>
             )}
@@ -592,13 +592,13 @@ export default function JreSessionPage() {
 
       {/* ── Status banners ─────────────────────────────────────────────── */}
       {session.status === 'analyzing' && (
-        <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-lg text-sm text-blue-700 dark:text-blue-400">
+        <div className="flex items-center gap-2 p-3 bg-heading/10 border border-heading/25 dark:border-heading/40 rounded-lg text-sm text-heading">
           <Loader2 className="w-4 h-4 animate-spin shrink-0" />
           جارٍ تنفيذ التحليل القضائي… يرجى الانتظار (قد يستغرق 1-2 دقيقة)
         </div>
       )}
       {session.status === 'error' && (
-        <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
+        <div className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/25 dark:border-destructive/40 rounded-lg text-sm text-destructive">
           <AlertCircle className="w-4 h-4 shrink-0" />
           تعذَّر إكمال التحليل — يرجى إنشاء جلسة جديدة
         </div>

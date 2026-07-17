@@ -183,15 +183,15 @@ const DCI_VALUE_LABELS: Record<string, Record<string, string>> = {
 };
 
 function dciChipClass(value: string): string {
-  if (value === 'pending') return 'text-slate-500 bg-slate-50 border-slate-200 dark:text-slate-400 dark:bg-slate-900/40 dark:border-slate-700';
+  if (value === 'pending') return 'text-muted-foreground bg-muted/40 border-border dark:text-muted-foreground dark:bg-card/40 dark:border-border';
   if (['passed', 'confirmed', 'full', 'complete', 'comprehensive', 'human_will', 'stable', 'confirmed_human_direction', 'low'].includes(value))
-    return 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-950/30 dark:border-emerald-800/40';
+    return 'text-heading bg-heading/10 border-heading/25 dark:text-heading dark:bg-heading/30 dark:border-heading/40';
   if (['substantial', 'adequate', 'proportionate', 'high', 'joint_decision', 'variable', 'moderate', 'modified_human_direction'].includes(value))
     return 'text-gold bg-gold/10 border-gold/25 dark:text-gold/80 dark:bg-gold/30 dark:border-gold/40';
   if (['partial', 'marginally_proportionate', 'questionable', 'minimal', 'ai_recommendation'].includes(value))
     return 'text-gold bg-gold/10 border-gold/25 dark:text-gold/80 dark:bg-gold/30 dark:border-gold/40';
   // highly_variable, materially_changed_outcome, non_compliant, failed, violated → red
-  return 'text-red-700 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-950/30 dark:border-red-800/40';
+  return 'text-destructive bg-destructive/10 border-destructive/25 dark:text-destructive dark:bg-destructive/30 dark:border-destructive/40';
 }
 
 function DciChip({ field, value }: { field: string; value: string | null | undefined }) {
@@ -437,10 +437,10 @@ function QvaSection({ decisionId, dci }: { decisionId: number; dci: Dci }) {
   const qc = useQueryClient();
 
   const lsiColors: Record<string, string> = {
-    stable:          'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-950/30 dark:border-emerald-800/40',
+    stable:          'text-heading bg-heading/10 border-heading/25 dark:text-heading dark:bg-heading/30 dark:border-heading/40',
     variable:        'text-gold bg-gold/10 border-gold/25 dark:text-gold/80 dark:bg-gold/30 dark:border-gold/40',
-    highly_variable: 'text-red-700 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-950/30 dark:border-red-800/40',
-    pending:         'text-slate-500 bg-slate-50 border-slate-200 dark:text-slate-400 dark:bg-slate-900/40 dark:border-slate-700',
+    highly_variable: 'text-destructive bg-destructive/10 border-destructive/25 dark:text-destructive dark:bg-destructive/30 dark:border-destructive/40',
+    pending:         'text-muted-foreground bg-muted/40 border-border dark:text-muted-foreground dark:bg-card/40 dark:border-border',
   };
   const lsiLabels: Record<string, string> = {
     stable: 'مستقر', variable: 'متذبذب', highly_variable: 'عالي التذبذب', pending: 'لم يُحلَّل',
@@ -513,7 +513,7 @@ function QvaSection({ decisionId, dci }: { decisionId: number; dci: Dci }) {
       )}
 
       {runError && (
-        <p className="text-xs text-red-600 dark:text-red-400 font-mono">{runError}</p>
+        <p className="text-xs text-destructive font-mono">{runError}</p>
       )}
 
       <p className="text-[10px] text-muted-foreground/40 leading-relaxed">
@@ -580,7 +580,7 @@ function CarPanel({ decisionId, decision }: { decisionId: number; decision: Deci
     <div className="p-4 sm:p-6 lg:p-8 space-y-5 max-w-5xl pb-20">
 
       {/* ── Status Header ───────────────────────────────────── */}
-      <div className={`rounded-2xl border-2 p-5 sm:p-6 ${statusReady ? 'border-blue-300/70 bg-gradient-to-br from-blue-50/60 to-transparent dark:border-blue-700/40 dark:from-blue-950/20' : statusError ? 'border-red-300/60 bg-red-50/30 dark:border-red-800/40' : 'border-border bg-card'}`}>
+      <div className={`rounded-2xl border-2 p-5 sm:p-6 ${statusReady ? 'border-heading/70 bg-gradient-to-br from-heading/10 to-transparent dark:border-heading/40 dark:from-heading/20' : statusError ? 'border-destructive/60 bg-destructive/10 dark:border-destructive/40' : 'border-border bg-card'}`}>
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-[10px] font-mono font-bold tracking-widest text-muted-foreground/50 uppercase" dir="ltr">
@@ -594,15 +594,15 @@ function CarPanel({ decisionId, decision }: { decisionId: number; decision: Deci
           </div>
           <div className="flex flex-col items-end gap-2">
             {statusReady ? (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-100 dark:bg-blue-950/50 border border-blue-300 dark:border-blue-700 text-blue-800 dark:text-blue-300 text-xs font-bold">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-heading/15 dark:bg-heading/50 border border-heading/30 dark:border-heading/50 text-heading text-xs font-bold">
                 <CheckCircle2 className="w-3.5 h-3.5" /> جاهز للإفصاح
               </div>
             ) : statusGenerating ? (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-bold">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/60 dark:bg-card/50 border border-border text-muted-foreground dark:text-foreground text-xs font-bold">
                 <Loader2 className="w-3.5 h-3.5 animate-spin" /> جارٍ التوليد...
               </div>
             ) : statusError ? (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-100 dark:bg-red-950/40 border border-red-300 dark:border-red-700 text-red-800 dark:text-red-300 text-xs font-bold">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-destructive/15 dark:bg-destructive/40 border border-destructive/30 dark:border-destructive/50 text-destructive text-xs font-bold">
                 <XCircle className="w-3.5 h-3.5" /> فشل التوليد
               </div>
             ) : (
@@ -621,8 +621,8 @@ function CarPanel({ decisionId, decision }: { decisionId: number; decision: Deci
         </div>
 
         {statusError && car?.errorMessage && (
-          <div className="mt-4 p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/40">
-            <p className="text-xs text-red-700 dark:text-red-400 font-mono break-all">{car.errorMessage}</p>
+          <div className="mt-4 p-3 rounded-lg bg-destructive/10 dark:bg-destructive/30 border border-destructive/25 dark:border-destructive/40">
+            <p className="text-xs text-destructive font-mono break-all">{car.errorMessage}</p>
           </div>
         )}
 
@@ -644,8 +644,8 @@ function CarPanel({ decisionId, decision }: { decisionId: number; decision: Deci
       </div>
 
       {statusGenerating && (
-        <div className="rounded-xl border border-slate-200/60 dark:border-slate-700/40 bg-slate-50/40 dark:bg-slate-900/20 p-10 text-center space-y-3">
-          <Loader2 className="w-8 h-8 animate-spin text-slate-500 mx-auto" />
+        <div className="rounded-xl border border-border bg-muted/40 dark:bg-card/20 p-10 text-center space-y-3">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground mx-auto" />
           <p className="text-sm font-semibold text-foreground">جارٍ توليد سجل المساءلة الدستورية...</p>
           <p className="text-xs text-muted-foreground max-w-sm mx-auto">يُعدّ MARSAD وثيقة الشفافية المُخصَّصة للأطراف المتأثرة. قد يستغرق ذلك 20–40 ثانية.</p>
         </div>
@@ -656,11 +656,11 @@ function CarPanel({ decisionId, decision }: { decisionId: number; decision: Deci
 
           {/* AI Disclosure Banner — always first */}
           {car.aiSystemDisclosure && (
-            <div className="rounded-xl border border-blue-200/70 dark:border-blue-800/40 bg-blue-50/50 dark:bg-blue-950/10 p-4 flex items-start gap-3">
-              <Activity className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+            <div className="rounded-xl border border-heading/70 dark:border-heading/40 bg-heading/10 p-4 flex items-start gap-3">
+              <Activity className="w-4 h-4 text-heading shrink-0 mt-0.5" />
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wide text-blue-700 dark:text-blue-400 mb-1">إفصاح إلزامي — دور الذكاء الاصطناعي</p>
-                <p className="text-xs text-blue-800/80 dark:text-blue-300/80 leading-relaxed">{car.aiSystemDisclosure}</p>
+                <p className="text-[10px] font-bold uppercase tracking-wide text-heading mb-1">إفصاح إلزامي — دور الذكاء الاصطناعي</p>
+                <p className="text-xs text-heading/80 leading-relaxed">{car.aiSystemDisclosure}</p>
               </div>
             </div>
           )}
@@ -722,10 +722,10 @@ function CarPanel({ decisionId, decision }: { decisionId: number; decision: Deci
           )}
 
           {car.affectedPartyRights && (
-            <div className="rounded-xl border-2 border-emerald-300/70 dark:border-emerald-700/40 bg-gradient-to-br from-emerald-50/60 to-transparent dark:from-emerald-950/10 overflow-hidden">
-              <div className="flex items-center gap-2 px-5 py-3 border-b border-emerald-200/60 dark:border-emerald-800/30">
-                <Shield className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-400 leading-none">08 · حقوقك كطرف متأثر</h3>
+            <div className="rounded-xl border-2 border-heading/70 dark:border-heading/40 bg-gradient-to-br from-heading/10 to-transparent dark:from-heading/10 overflow-hidden">
+              <div className="flex items-center gap-2 px-5 py-3 border-b border-heading/60 dark:border-heading/30">
+                <Shield className="w-3.5 h-3.5 text-heading shrink-0" />
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-heading leading-none">08 · حقوقك كطرف متأثر</h3>
               </div>
               <div className="p-5">
                 <p className="text-sm text-foreground/80 leading-relaxed">{car.affectedPartyRights}</p>
@@ -736,8 +736,8 @@ function CarPanel({ decisionId, decision }: { decisionId: number; decision: Deci
           {car.appealInformation && (
             <div className="rounded-xl border-2 border-gold/70 dark:border-gold/40 bg-gradient-to-br from-gold/60 to-transparent dark:from-gold/10 overflow-hidden">
               <div className="flex items-center gap-2 px-5 py-3 border-b border-gold/60 dark:border-gold/30">
-                <Scale className="w-3.5 h-3.5 text-gold dark:text-gold/80 shrink-0" />
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-gold dark:text-gold/80 leading-none">09 · كيفية التظلم والطعن بالقرار</h3>
+                <Scale className="w-3.5 h-3.5 text-gold/80 shrink-0" />
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-gold/80 leading-none">09 · كيفية التظلم والطعن بالقرار</h3>
               </div>
               <div className="p-5">
                 <p className="text-sm text-foreground/80 leading-relaxed">{car.appealInformation}</p>
@@ -789,9 +789,9 @@ function JdpConclusion({ text }: { text: string }) {
 
 function TestChip({ result }: { result: string }) {
   const map: Record<string, { label: string; cls: string }> = {
-    passed:   { label: 'اجتاز', cls: 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-950/30 dark:border-emerald-800/40' },
+    passed:   { label: 'اجتاز', cls: 'text-heading bg-heading/10 border-heading/25 dark:text-heading dark:bg-heading/30 dark:border-heading/40' },
     marginal: { label: 'هامشي', cls: 'text-gold bg-gold/10 border-gold/25 dark:text-gold/80 dark:bg-gold/30 dark:border-gold/40' },
-    failed:   { label: 'لم يجتز', cls: 'text-red-700 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-950/30 dark:border-red-800/40' },
+    failed:   { label: 'لم يجتز', cls: 'text-destructive bg-destructive/10 border-destructive/25 dark:text-destructive dark:bg-destructive/30 dark:border-destructive/40' },
   };
   const { label, cls } = map[result] ?? { label: result, cls: 'text-muted-foreground bg-muted border-border' };
   return <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-bold ${cls}`}>{label}</span>;
@@ -845,7 +845,7 @@ function JdpPanel({ decisionId, decision }: { decisionId: number; decision: Deci
     <div className="p-4 sm:p-6 lg:p-8 space-y-5 max-w-5xl pb-20">
 
       {/* ── Status Header ───────────────────────────────────── */}
-      <div className={`rounded-2xl border-2 p-5 sm:p-6 ${statusReady ? 'border-emerald-300/70 bg-gradient-to-br from-emerald-50/60 to-transparent dark:border-emerald-700/40 dark:from-emerald-950/20' : statusError ? 'border-red-300/60 bg-red-50/30 dark:border-red-800/40 dark:bg-red-950/10' : 'border-border bg-card'}`}>
+      <div className={`rounded-2xl border-2 p-5 sm:p-6 ${statusReady ? 'border-heading/70 bg-gradient-to-br from-heading/10 to-transparent dark:border-heading/40 dark:from-heading/20' : statusError ? 'border-destructive/60 bg-destructive/10 dark:border-destructive/40 dark:bg-destructive/10' : 'border-border bg-card'}`}>
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-[10px] font-mono font-bold tracking-widest text-muted-foreground/50 uppercase" dir="ltr">
@@ -860,15 +860,15 @@ function JdpPanel({ decisionId, decision }: { decisionId: number; decision: Deci
           <div className="flex flex-col items-end gap-2">
             {/* Status badge */}
             {statusReady ? (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300 text-xs font-bold">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-heading/15 dark:bg-heading/50 border border-heading/30 dark:border-heading/50 text-heading text-xs font-bold">
                 <CheckCircle2 className="w-3.5 h-3.5" /> جاهزة للمحكمة
               </div>
             ) : statusGenerating ? (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-100 dark:bg-blue-950/40 border border-blue-300 dark:border-blue-700 text-blue-800 dark:text-blue-300 text-xs font-bold">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-heading/15 dark:bg-heading/40 border border-heading/30 dark:border-heading/50 text-heading text-xs font-bold">
                 <Loader2 className="w-3.5 h-3.5 animate-spin" /> جارٍ التوليد...
               </div>
             ) : statusError ? (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-100 dark:bg-red-950/40 border border-red-300 dark:border-red-700 text-red-800 dark:text-red-300 text-xs font-bold">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-destructive/15 dark:bg-destructive/40 border border-destructive/30 dark:border-destructive/50 text-destructive text-xs font-bold">
                 <XCircle className="w-3.5 h-3.5" /> فشل التوليد
               </div>
             ) : (
@@ -895,8 +895,8 @@ function JdpPanel({ decisionId, decision }: { decisionId: number; decision: Deci
         </div>
         {/* Error detail */}
         {statusError && jdp?.errorMessage && (
-          <div className="mt-4 p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/40">
-            <p className="text-xs text-red-700 dark:text-red-400 font-mono break-all">{jdp.errorMessage}</p>
+          <div className="mt-4 p-3 rounded-lg bg-destructive/10 dark:bg-destructive/30 border border-destructive/25 dark:border-destructive/40">
+            <p className="text-xs text-destructive font-mono break-all">{jdp.errorMessage}</p>
           </div>
         )}
         {/* Explanation when not yet generated */}
@@ -919,8 +919,8 @@ function JdpPanel({ decisionId, decision }: { decisionId: number; decision: Deci
 
       {/* ── Generating spinner ───────────────────────────────── */}
       {statusGenerating && (
-        <div className="rounded-xl border border-blue-200/60 dark:border-blue-800/40 bg-blue-50/40 dark:bg-blue-950/10 p-10 text-center space-y-3">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600 dark:text-blue-400 mx-auto" />
+        <div className="rounded-xl border border-heading/60 dark:border-heading/40 bg-heading/10 p-10 text-center space-y-3">
+          <Loader2 className="w-8 h-8 animate-spin text-heading mx-auto" />
           <p className="text-sm font-semibold text-foreground">جارٍ توليد حزمة الدفاع القضائي...</p>
           <p className="text-xs text-muted-foreground max-w-sm mx-auto leading-relaxed">
             يُحلّل نظام MARSAD كامل مراحل القرار ويُعدّ الحجج القانونية لكل قسم من الأقسام الدستورية الأربعة عشر. قد يستغرق ذلك 30–60 ثانية.
@@ -1017,7 +1017,7 @@ function JdpPanel({ decisionId, decision }: { decisionId: number; decision: Deci
                   {jdp.evidenceSummary.items.map((item, i) => (
                     <div key={i} className="flex gap-3 text-xs border-b border-border/30 pb-2 last:border-0 last:pb-0">
                       <div className="shrink-0 mt-0.5">
-                        <span className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-bold border ${item.weight === 'high' ? 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-950/30 dark:border-emerald-800/40' : item.weight === 'medium' ? 'text-gold bg-gold/10 border-gold/25 dark:text-gold/80 dark:bg-gold/30 dark:border-gold/40' : 'text-slate-600 bg-slate-50 border-slate-200 dark:text-slate-400 dark:bg-slate-900/30 dark:border-slate-700'}`}>{item.weight === 'high' ? 'عالي' : item.weight === 'medium' ? 'متوسط' : 'منخفض'}</span>
+                        <span className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-bold border ${item.weight === 'high' ? 'text-heading bg-heading/10 border-heading/25 dark:text-heading dark:bg-heading/30 dark:border-heading/40' : item.weight === 'medium' ? 'text-gold bg-gold/10 border-gold/25 dark:text-gold/80 dark:bg-gold/30 dark:border-gold/40' : 'text-muted-foreground bg-muted/40 border-border dark:text-muted-foreground dark:bg-card/30 dark:border-border'}`}>{item.weight === 'high' ? 'عالي' : item.weight === 'medium' ? 'متوسط' : 'منخفض'}</span>
                       </div>
                       <div className="flex-1">
                         <span className="font-semibold text-foreground">{item.type}</span>
@@ -1147,7 +1147,7 @@ function JdpPanel({ decisionId, decision }: { decisionId: number; decision: Deci
                     const gateLabel = pr.passed ? 'مستوفٍ' : 'غير مستوفٍ';
                     return (
                       <div key={i} className="flex items-start gap-3 text-xs border-b border-border/30 pb-2 last:border-0 last:pb-0">
-                        <span className={`shrink-0 mt-0.5 inline-flex items-center px-1.5 py-0.5 rounded border text-[9px] font-bold whitespace-nowrap ${pr.passed ? 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-950/30 dark:border-emerald-800/40' : 'text-red-700 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-950/30 dark:border-red-800/40'}`}>{gateLabel}</span>
+                        <span className={`shrink-0 mt-0.5 inline-flex items-center px-1.5 py-0.5 rounded border text-[9px] font-bold whitespace-nowrap ${pr.passed ? 'text-heading bg-heading/10 border-heading/25 dark:text-heading dark:bg-heading/30 dark:border-heading/40' : 'text-destructive bg-destructive/10 border-destructive/25 dark:text-destructive dark:bg-destructive/30 dark:border-destructive/40'}`}>{gateLabel}</span>
                         <div className="flex-1">
                           <span className="font-semibold text-foreground">{pr.principle}</span>
                           <p className="text-foreground/65 mt-0.5">{pr.notes}</p>
@@ -1193,7 +1193,7 @@ function JdpPanel({ decisionId, decision }: { decisionId: number; decision: Deci
             <JdpSection title="11 · سلسلة التدقيق" icon={Link2}>
               <p className="text-xs text-foreground/80 leading-relaxed mb-3">{jdp.auditChain.overview}</p>
               <div className="flex items-center gap-2 mb-3">
-                <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-bold ${jdp.auditChain.integrityStatus === 'verified' ? 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-950/30 dark:border-emerald-800/40' : 'text-red-700 bg-red-50 border-red-200'}`}>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-bold ${jdp.auditChain.integrityStatus === 'verified' ? 'text-heading bg-heading/10 border-heading/25 dark:text-heading dark:bg-heading/30 dark:border-heading/40' : 'text-destructive bg-destructive/10 border-destructive/25'}`}>
                   <Hash className="w-2.5 h-2.5 mr-1" />
                   {jdp.auditChain.integrityStatus === 'verified' ? 'سلامة البيانات مُتحقَّق منها' : 'تحذير: مشكلة في سلامة البيانات'}
                 </span>
@@ -1255,7 +1255,7 @@ function JdpPanel({ decisionId, decision }: { decisionId: number; decision: Deci
                     >
                       <div className="shrink-0 mt-0.5 flex items-center gap-2">
                         <span className="text-[9px] font-mono font-bold text-muted-foreground/40 w-5">{String(i + 1).padStart(2, '0')}</span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-gold/15 dark:bg-gold/40 border border-gold/25 dark:border-gold/40 text-gold dark:text-gold/80 font-bold shrink-0">{q.category}</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-gold/15 dark:bg-gold/40 border border-gold/25 dark:border-gold/40 text-gold/80 font-bold shrink-0">{q.category}</span>
                       </div>
                       <p className="flex-1 text-xs font-semibold text-foreground text-right">{q.question}</p>
                       {expandedQ === i ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />}
@@ -1377,17 +1377,17 @@ function apiFetch(method: string, path: string, body?: unknown) {
 
 function ValidationBadge({ status }: { status: string }) {
   if (status === 'passed') return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold text-emerald-600 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-950/30 dark:border-emerald-800/40">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold text-heading bg-heading/10 border-heading/25 dark:text-heading dark:bg-heading/30 dark:border-heading/40">
       <Check className="w-3 h-3" /> اجتاز التحقق
     </span>
   );
   if (status === 'failed') return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold text-red-600 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-950/30 dark:border-red-800/40">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold text-destructive bg-destructive/10 border-destructive/25 dark:text-destructive dark:bg-destructive/30 dark:border-destructive/40">
       <XCircle className="w-3 h-3" /> لم يجتز التحقق
     </span>
   );
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold text-slate-500 bg-slate-50 border-slate-200 dark:border-slate-700">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold text-muted-foreground bg-muted/40 border-border">
       <Clock className="w-3 h-3" /> في انتظار التحقق
     </span>
   );
@@ -1396,7 +1396,7 @@ function ValidationBadge({ status }: { status: string }) {
 function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
     <label className="block text-xs font-bold text-foreground/80 mb-1.5">
-      {children} {required && <span className="text-red-500">*</span>}
+      {children} {required && <span className="text-destructive">*</span>}
     </label>
   );
 }
@@ -1608,8 +1608,8 @@ function StageForm({ stageKey, data, onChange }: {
             ].map((factor) => {
               const key = `abuseRisk_${factor}`;
               return (
-                <label key={factor} className="flex items-center gap-1.5 cursor-pointer px-2 py-1 rounded-md border border-border/40 bg-background hover:border-red-200">
-                  <input type="checkbox" checked={b(key)} onChange={(e) => onChange(key, e.target.checked)} className="w-3.5 h-3.5 accent-red-500" />
+                <label key={factor} className="flex items-center gap-1.5 cursor-pointer px-2 py-1 rounded-md border border-border/40 bg-background hover:border-destructive/25">
+                  <input type="checkbox" checked={b(key)} onChange={(e) => onChange(key, e.target.checked)} className="w-3.5 h-3.5 accent-destructive" />
                   <span className="text-xs text-foreground/80">{factor}</span>
                 </label>
               );
@@ -1778,9 +1778,9 @@ function AIAnalysisPanel({ analysis, stageKey }: { analysis: Record<string, unkn
   const contribution = analysis.aiContribution as string;
 
   return (
-    <div className={`rounded-xl border ${passed ? 'border-emerald-200 dark:border-emerald-800/40' : 'border-gold/25 dark:border-gold/40'} overflow-hidden`}>
+    <div className={`rounded-xl border ${passed ? 'border-heading/25 dark:border-heading/40' : 'border-gold/25 dark:border-gold/40'} overflow-hidden`}>
       <button onClick={() => setExpanded(!expanded)}
-        className={`w-full flex items-center justify-between px-4 py-3 text-sm font-semibold ${passed ? 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-300' : 'bg-gold/10 dark:bg-gold/20 text-gold/75 dark:text-gold/40'}`}>
+        className={`w-full flex items-center justify-between px-4 py-3 text-sm font-semibold ${passed ? 'bg-heading/10 dark:bg-heading/20 text-heading' : 'bg-gold/10 dark:bg-gold/20 text-gold/75 dark:text-gold/40'}`}>
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4" />
           <span>تحليل الذكاء الاصطناعي — إطار الشامسي</span>
@@ -1807,8 +1807,8 @@ function AIAnalysisPanel({ analysis, stageKey }: { analysis: Record<string, unkn
                   const pr = result as { passed: boolean; gateStatus?: string; notes?: string };
                   const gateLabel = pr.passed ? 'مستوفٍ' : 'غير مستوفٍ';
                   return (
-                    <div key={key} className={`flex items-start gap-2 p-2 rounded-lg border text-xs ${pr.passed ? 'border-emerald-200/60 bg-emerald-50/50 dark:border-emerald-800/30' : 'border-red-200/60 bg-red-50/50 dark:border-red-800/30'}`}>
-                      <span className={`shrink-0 mt-0.5 inline-flex items-center px-1.5 py-0.5 rounded border text-[9px] font-bold whitespace-nowrap ${pr.passed ? 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-950/30 dark:border-emerald-800/40' : 'text-red-700 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-950/30 dark:border-red-800/40'}`}>{gateLabel}</span>
+                    <div key={key} className={`flex items-start gap-2 p-2 rounded-lg border text-xs ${pr.passed ? 'border-heading/60 bg-heading/10 dark:border-heading/30' : 'border-destructive/60 bg-destructive/10 dark:border-destructive/30'}`}>
+                      <span className={`shrink-0 mt-0.5 inline-flex items-center px-1.5 py-0.5 rounded border text-[9px] font-bold whitespace-nowrap ${pr.passed ? 'text-heading bg-heading/10 border-heading/25 dark:text-heading dark:bg-heading/30 dark:border-heading/40' : 'text-destructive bg-destructive/10 border-destructive/25 dark:text-destructive dark:bg-destructive/30 dark:border-destructive/40'}`}>{gateLabel}</span>
                       <div>
                         <span className="font-mono text-muted-foreground/60 text-[10px]">{key}</span>
                         {pr.notes && <p className="text-muted-foreground mt-0.5">{String(pr.notes)}</p>}
@@ -1840,7 +1840,7 @@ function AIAnalysisPanel({ analysis, stageKey }: { analysis: Record<string, unkn
               <ul className="space-y-1">
                 {recommendations.map((rec, i) => (
                   <li key={i} className="flex items-start gap-2 text-xs text-foreground/80">
-                    <Check className="w-3 h-3 text-emerald-500 shrink-0 mt-0.5" />
+                    <Check className="w-3 h-3 text-heading shrink-0 mt-0.5" />
                     <span>{rec}</span>
                   </li>
                 ))}
@@ -1917,7 +1917,7 @@ function CreateDecisionDialog({ onCreated }: { onCreated: (id: number) => void }
         </div>
 
         {error && (
-          <div className="flex items-center gap-2 p-3 rounded-lg border border-red-200 bg-red-50 dark:border-red-800/40 dark:bg-red-950/20 text-sm text-red-700 dark:text-red-400">
+          <div className="flex items-center gap-2 p-3 rounded-lg border border-destructive/25 bg-destructive/10 dark:border-destructive/40 dark:bg-destructive/20 text-sm text-destructive">
             <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
           </div>
         )}
@@ -1972,12 +1972,12 @@ function CilWarningsPanel({ decisionId }: { decisionId: number }) {
   return (
     <div className={`rounded-xl border p-4 ${
       hasCritical
-        ? 'border-red-300 dark:border-red-800 bg-red-50/80 dark:bg-red-950/20'
+        ? 'border-destructive/30 dark:border-destructive/40 bg-destructive/10 dark:bg-destructive/20'
         : 'border-gold/25 dark:border-gold/50 bg-gold/60 dark:bg-gold/20'
     }`}>
       <div className="flex items-center gap-2 mb-3">
-        <Scale className={`w-4 h-4 ${hasCritical ? 'text-red-600' : 'text-gold'}`} />
-        <span className={`text-sm font-bold ${hasCritical ? 'text-red-700 dark:text-red-400' : 'text-gold dark:text-gold/80'}`}>
+        <Scale className={`w-4 h-4 ${hasCritical ? 'text-destructive' : 'text-gold'}`} />
+        <span className={`text-sm font-bold ${hasCritical ? 'text-destructive' : 'text-gold/80'}`}>
           {hasCritical
             ? `تحذيرات دستورية حرجة — ${criticalWarnings.length} تحذير يعيق الإقرار`
             : `تحذيرات الذكاء الدستوري — ${activeWarnings.length} تحذير نشط`}
@@ -1988,7 +1988,7 @@ function CilWarningsPanel({ decisionId }: { decisionId: number }) {
       </div>
 
       {hasCritical && (
-        <div className="mb-3 text-xs text-red-700 dark:text-red-400 font-medium">
+        <div className="mb-3 text-xs text-destructive font-medium">
           ⚠ يجب معالجة التحذيرات الحرجة قبل الإقرار النهائي بالقرار. يُنصح بمراجعة صفحة الذكاء الدستوري.
         </div>
       )}
@@ -1998,9 +1998,9 @@ function CilWarningsPanel({ decisionId }: { decisionId: number }) {
           <div
             key={w.id}
             className={`flex items-start gap-2.5 text-xs ${
-              w.severity === 'critical' ? 'text-red-700 dark:text-red-400' :
-              w.severity === 'warning'  ? 'text-gold dark:text-gold/80' :
-              'text-gold dark:text-gold/80'
+              w.severity === 'critical' ? 'text-destructive' :
+              w.severity === 'warning'  ? 'text-gold/80' :
+              'text-gold/80'
             }`}
           >
             {w.severity === 'critical' ? <XCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" /> : <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />}
@@ -2263,7 +2263,7 @@ export default function DecisionWorkspace() {
                 aria-controls="panel-dci"
                 id="tab-dci"
                 onClick={() => setActiveView('dci')}
-                className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors -mb-px whitespace-nowrap ${activeView === 'dci' ? 'border-gold text-gold dark:text-gold/80' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+                className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors -mb-px whitespace-nowrap ${activeView === 'dci' ? 'border-gold text-gold/80' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
               >
                 <Fingerprint className="w-3.5 h-3.5" /> الهوية الدستورية DCI
               </button>
@@ -2273,7 +2273,7 @@ export default function DecisionWorkspace() {
                 aria-controls="panel-jdp"
                 id="tab-jdp"
                 onClick={() => setActiveView('jdp')}
-                className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors -mb-px whitespace-nowrap ${activeView === 'jdp' ? 'border-emerald-500 text-emerald-700 dark:text-emerald-400' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+                className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors -mb-px whitespace-nowrap ${activeView === 'jdp' ? 'border-heading/40 text-heading' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
               >
                 <Gavel className="w-3.5 h-3.5" /> الدفاع القضائي JDP
               </button>
@@ -2283,7 +2283,7 @@ export default function DecisionWorkspace() {
                 aria-controls="panel-car"
                 id="tab-car"
                 onClick={() => setActiveView('car')}
-                className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors -mb-px whitespace-nowrap ${activeView === 'car' ? 'border-blue-500 text-blue-700 dark:text-blue-400' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+                className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors -mb-px whitespace-nowrap ${activeView === 'car' ? 'border-heading/40 text-heading' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
               >
                 <Eye className="w-3.5 h-3.5" /> المساءلة الدستورية CAR
               </button>
@@ -2293,7 +2293,7 @@ export default function DecisionWorkspace() {
                 aria-controls="panel-replay"
                 id="tab-replay"
                 onClick={() => setActiveView('replay')}
-                className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors -mb-px whitespace-nowrap ${activeView === 'replay' ? 'border-violet-500 text-violet-700 dark:text-violet-400' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+                className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors -mb-px whitespace-nowrap ${activeView === 'replay' ? 'border-heading/40 text-heading' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
               >
                 <Play className="w-3.5 h-3.5" /> إعادة التشغيل
               </button>
@@ -2303,7 +2303,7 @@ export default function DecisionWorkspace() {
                 aria-controls="panel-risk"
                 id="tab-risk"
                 onClick={() => setActiveView('risk')}
-                className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors -mb-px whitespace-nowrap ${activeView === 'risk' ? 'border-gold text-gold dark:text-gold/80' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+                className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors -mb-px whitespace-nowrap ${activeView === 'risk' ? 'border-gold text-gold/80' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
               >
                 <Activity className="w-3.5 h-3.5" /> مؤشرات المخاطر
               </button>
@@ -2358,8 +2358,8 @@ export default function DecisionWorkspace() {
                         >
                           {/* Stage number / status icon */}
                           <div className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                            isCompleted ? 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40' :
-                            hasFailed ? 'bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/40' :
+                            isCompleted ? 'bg-heading/15 dark:bg-heading/40 text-heading border border-heading/25 dark:border-heading/40' :
+                            hasFailed ? 'bg-destructive/15 dark:bg-destructive/40 text-destructive border border-destructive/25 dark:border-destructive/40' :
                             isActive ? 'bg-foreground/15 border border-foreground/30 text-foreground' :
                             isLocked ? 'bg-muted border border-border/40 text-muted-foreground/30' :
                             'bg-muted/60 border border-border/40 text-muted-foreground'
@@ -2376,7 +2376,7 @@ export default function DecisionWorkspace() {
                               {cfg.nameAr}
                             </p>
                             {cfg.isGate && (
-                              <p className="text-[9px] text-gold dark:text-gold/80 font-bold">بوابة دستورية</p>
+                              <p className="text-[9px] text-gold/80 font-bold">بوابة دستورية</p>
                             )}
                           </div>
                         </button>
@@ -2412,7 +2412,7 @@ export default function DecisionWorkspace() {
                         <button
                           onClick={handleExportAdp}
                           disabled={isExportingAdp}
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0A1628] text-[#C8A951] text-xs font-bold border border-[#C8A951]/30 hover:bg-[#1e3a5f] transition-colors disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary text-gold text-xs font-bold border border-gold/30 hover:bg-primary transition-colors disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
                         >
                           {isExportingAdp
                             ? <><Loader2 className="w-4 h-4 animate-spin" /> جارٍ إنشاء الجواز...</>
@@ -2420,7 +2420,7 @@ export default function DecisionWorkspace() {
                           }
                         </button>
                         {adpExportError && (
-                          <p className="text-xs text-red-500 max-w-xs text-left" dir="ltr">{adpExportError}</p>
+                          <p className="text-xs text-destructive max-w-xs text-left" dir="ltr">{adpExportError}</p>
                         )}
                       </div>
                     </div>
@@ -2465,11 +2465,11 @@ export default function DecisionWorkspace() {
 
                   {/* Validation result (if failed) */}
                   {currentValidation && !currentValidation.passed && (
-                    <div className="flex items-start gap-3 p-4 rounded-xl border border-red-200 dark:border-red-800/40 bg-red-50/60 dark:bg-red-950/20">
-                      <XCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                    <div className="flex items-start gap-3 p-4 rounded-xl border border-destructive/25 dark:border-destructive/40 bg-destructive/10 dark:bg-destructive/20">
+                      <XCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-sm font-bold text-red-700 dark:text-red-400">لم يجتز هذا القرار التحقق الدستوري</p>
-                        <p className="text-xs text-red-600/80 dark:text-red-400/70 mt-0.5">راجع ملاحظات الذكاء الاصطناعي أعلاه وعالج المشكلات المُحددة، ثم أعد التحقق.</p>
+                        <p className="text-sm font-bold text-destructive">لم يجتز هذا القرار التحقق الدستوري</p>
+                        <p className="text-xs text-destructive/80 dark:text-destructive/70 mt-0.5">راجع ملاحظات الذكاء الاصطناعي أعلاه وعالج المشكلات المُحددة، ثم أعد التحقق.</p>
                       </div>
                     </div>
                   )}

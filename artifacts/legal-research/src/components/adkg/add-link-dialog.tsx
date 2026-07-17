@@ -48,8 +48,8 @@ const ENTITY_TYPES = [
 
 const AUTHORITY_CLASSES = [
   { value: 'binding',     labelAr: 'ملزم',     labelEn: 'Binding', color: 'bg-heading/15 text-heading/75' },
-  { value: 'persuasive',  labelAr: 'إرشادي',  labelEn: 'Persuasive', color: 'bg-blue-100 text-blue-800' },
-  { value: 'non_binding', labelAr: 'غير ملزم', labelEn: 'Non-binding', color: 'bg-gray-100 text-gray-700' },
+  { value: 'persuasive',  labelAr: 'إرشادي',  labelEn: 'Persuasive', color: 'bg-heading/15 text-heading' },
+  { value: 'non_binding', labelAr: 'غير ملزم', labelEn: 'Non-binding', color: 'bg-muted/60 text-muted-foreground' },
 ];
 
 export function AddLinkDialog({ open, onClose, onSave }: AddLinkDialogProps) {
@@ -95,7 +95,7 @@ export function AddLinkDialog({ open, onClose, onSave }: AddLinkDialogProps) {
                 <button
                   key={lt.value}
                   onClick={() => setForm((f) => ({ ...f, linkType: lt.value }))}
-                  className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${form.linkType === lt.value ? 'bg-[#1e3a5f] text-white border-[#1e3a5f]' : 'bg-white text-gray-700 border-gray-300 hover:border-[#1e3a5f]'}`}
+                  className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${form.linkType === lt.value ? 'bg-primary text-primary-foreground border-primary/50' : 'bg-card text-muted-foreground border-border hover:border-primary/60'}`}
                 >
                   {t(lt.labelAr, lt.labelEn)}
                 </button>
@@ -157,7 +157,7 @@ export function AddLinkDialog({ open, onClose, onSave }: AddLinkDialogProps) {
                 <button
                   key={ac.value}
                   onClick={() => setForm((f) => ({ ...f, authorityClass: ac.value }))}
-                  className={`flex-1 text-xs py-1.5 rounded-md border-2 transition-colors ${form.authorityClass === ac.value ? `${ac.color} border-current font-semibold` : 'border-gray-200 text-gray-600 hover:border-gray-400'}`}
+                  className={`flex-1 text-xs py-1.5 rounded-md border-2 transition-colors ${form.authorityClass === ac.value ? `${ac.color} border-current font-semibold` : 'border-border text-muted-foreground hover:border-border'}`}
                 >
                   {t(ac.labelAr, ac.labelEn)}
                 </button>
@@ -176,12 +176,12 @@ export function AddLinkDialog({ open, onClose, onSave }: AddLinkDialogProps) {
             />
           </div>
 
-          {error && <p className="text-xs text-red-600">{error}</p>}
+          {error && <p className="text-xs text-destructive">{error}</p>}
         </div>
 
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={() => { reset(); onClose(); }} disabled={saving}>{t('إلغاء', 'Cancel')}</Button>
-          <Button onClick={handleSave} disabled={saving} className="bg-[#1e3a5f] hover:bg-[#2d5a8f] text-white">
+          <Button onClick={handleSave} disabled={saving} className="bg-primary hover:opacity-90 text-white">
             {saving && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
             {t('إضافة', 'Add')}
           </Button>

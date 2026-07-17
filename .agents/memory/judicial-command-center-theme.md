@@ -11,3 +11,8 @@ Full UX/visual rebuild to a fixed dark "federal judicial command center" theme (
 - Semantic mapping used: success/positive → heading-blue token, warning/caution → gold token, destructive/critical → existing danger-red token (left untouched).
 - Owner-only page gating (`/naip`, `/naip/kpi`, `/constitutional-intelligence`) was changed from broader permission flags to an explicit `role === 'owner'` check at both nav-visibility and page-guard level — a deliberate access-narrowing change, not just a nav-hide.
 - Assistant page's guided config (role / jurisdiction / answer-mode selectors) already existed via `PreAnalysisPanel` (shown pre-session) and `SessionConfigBar` (compact summary once committed) — reused instead of building a new toolbar; only had to add an "answer mode" chip section since role+jurisdiction already existed.
+
+## Completion pass (July 2026)
+- Second sweep converted the families the first pass skipped — red/rose→destructive, blue/sky/indigo/cyan/violet/purple/emerald/teal/lime→heading, slate/gray/zinc→muted/card/border/foreground, solid `bg-white`→`bg-card` — plus the header (was still `bg-white` with light tier chips).
+- Arbitrary-value hex classes (`bg-[#00563F]`, `bg-[#1e3a5f]`, `text-[#C9A84C]`, light `#F5F6FA`/gradient page backgrounds) existed on citizen-portal, ADKG, workspace, governance-hub, shamsi-theory and dialogs — regex sweeps for Tailwind families miss these; grep `\[#` too.
+- `.dark` is never applied to the DOM (only `<meta color-scheme>`), so `dark:` variant classes are dead code; base classes always win.

@@ -82,12 +82,12 @@ function NaipGauge({
   const pct = value ?? 0;
 
   const colorClass = isInverse
-    ? pct >= 70 ? 'text-red-500' : pct >= 40 ? 'text-gold' : 'text-emerald-500'
-    : pct >= 70 ? 'text-emerald-500' : pct >= 40 ? 'text-gold' : 'text-red-500';
+    ? pct >= 70 ? 'text-destructive' : pct >= 40 ? 'text-gold' : 'text-heading'
+    : pct >= 70 ? 'text-heading' : pct >= 40 ? 'text-gold' : 'text-destructive';
 
   const trackColor = isInverse
-    ? pct >= 70 ? 'stroke-red-500' : pct >= 40 ? 'stroke-gold' : 'stroke-emerald-500'
-    : pct >= 70 ? 'stroke-emerald-500' : pct >= 40 ? 'stroke-gold' : 'stroke-red-500';
+    ? pct >= 70 ? 'stroke-destructive' : pct >= 40 ? 'stroke-gold' : 'stroke-heading'
+    : pct >= 70 ? 'stroke-heading' : pct >= 40 ? 'stroke-gold' : 'stroke-destructive';
 
   const r = 30;
   const circ = 2 * Math.PI * r;
@@ -140,13 +140,13 @@ function ModuleStatus({ icon, label, active }: { icon: React.ReactNode; label: s
   return (
     <div className={`rounded-xl border p-3 flex items-center gap-2 text-xs font-medium transition-colors ${
       active
-        ? 'border-emerald-200 dark:border-emerald-800/40 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400'
+        ? 'border-heading/25 dark:border-heading/40 bg-heading/10 dark:bg-heading/20 text-heading'
         : 'border-border bg-muted/20 text-muted-foreground'
     }`}>
-      <span className={active ? 'text-emerald-500' : 'text-muted-foreground/50'}>{icon}</span>
+      <span className={active ? 'text-heading' : 'text-muted-foreground/50'}>{icon}</span>
       <span className="flex-1 truncate">{label}</span>
       {active
-        ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+        ? <CheckCircle2 className="w-3.5 h-3.5 text-heading shrink-0" />
         : <XCircle className="w-3.5 h-3.5 text-muted-foreground/40 shrink-0" />
       }
     </div>
@@ -157,10 +157,10 @@ function ModuleStatus({ icon, label, active }: { icon: React.ReactNode; label: s
 
 function RiskBlock({ level, count, total }: { level: string; count: number; total: number }) {
   const configs: Record<string, { bg: string; text: string; border: string; label: string }> = {
-    critical: { bg: 'bg-red-100 dark:bg-red-950/40', text: 'text-red-700 dark:text-red-400', border: 'border-red-200 dark:border-red-800', label: 'حرج' },
-    high:     { bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80', border: 'border-gold/25 dark:border-gold/75', label: 'عالٍ' },
-    moderate: { bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80', border: 'border-gold/25 dark:border-gold/75', label: 'متوسط' },
-    low:      { bg: 'bg-emerald-100 dark:bg-emerald-950/40', text: 'text-emerald-700 dark:text-emerald-400', border: 'border-emerald-200 dark:border-emerald-800', label: 'منخفض' },
+    critical: { bg: 'bg-destructive/15 dark:bg-destructive/40', text: 'text-destructive', border: 'border-destructive/25 dark:border-destructive/40', label: 'حرج' },
+    high:     { bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold/80', border: 'border-gold/25 dark:border-gold/75', label: 'عالٍ' },
+    moderate: { bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold/80', border: 'border-gold/25 dark:border-gold/75', label: 'متوسط' },
+    low:      { bg: 'bg-heading/15 dark:bg-heading/40', text: 'text-heading', border: 'border-heading/25 dark:border-heading/40', label: 'منخفض' },
   };
   const c = configs[level] ?? configs.low;
   const pct = total > 0 ? Math.round((count / total) * 100) : 0;
@@ -216,11 +216,11 @@ export default function NaipDashboard() {
     : 0;
 
   const statusColors: Record<string, string> = {
-    draft: 'bg-slate-400',
-    in_progress: 'bg-blue-500',
-    completed: 'bg-emerald-500',
+    draft: 'bg-muted-foreground',
+    in_progress: 'bg-heading',
+    completed: 'bg-heading',
     approved: 'bg-heading',
-    rejected: 'bg-red-500',
+    rejected: 'bg-destructive',
     pending_review: 'bg-gold',
   };
 
@@ -318,7 +318,7 @@ export default function NaipDashboard() {
                     label={statusLabels[status] ?? status}
                     value={count}
                     total={totalDecisionsByStatus}
-                    color={statusColors[status] ?? 'bg-slate-400'}
+                    color={statusColors[status] ?? 'bg-muted-foreground'}
                   />
                 ))}
               </div>
@@ -330,12 +330,12 @@ export default function NaipDashboard() {
             {decisions && (
               <div className="flex items-center gap-6 pt-2 border-t border-border">
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
+                  <TrendingUp className="w-3.5 h-3.5 text-heading" />
                   <span>{t('آخر 7 أيام', 'Last 7 days')}:</span>
                   <span className="font-bold text-foreground tabular-nums">{decisions.last7Days}</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Activity className="w-3.5 h-3.5 text-blue-500" />
+                  <Activity className="w-3.5 h-3.5 text-heading" />
                   <span>{t('آخر 30 يوماً', 'Last 30 days')}:</span>
                   <span className="font-bold text-foreground tabular-nums">{decisions.last30Days}</span>
                 </div>
@@ -376,7 +376,7 @@ export default function NaipDashboard() {
                 <div className="text-xs text-muted-foreground mt-1">{t('متوسط الامتثال', 'Avg Compliance Score')}</div>
               </div>
               <div className="bg-muted/30 rounded-xl p-4">
-                <div className={`text-2xl font-bold tabular-nums ${constitutional.criticalWarnings > 0 ? 'text-red-600' : 'text-foreground'}`}>
+                <div className={`text-2xl font-bold tabular-nums ${constitutional.criticalWarnings > 0 ? 'text-destructive' : 'text-foreground'}`}>
                   {constitutional.criticalWarnings}
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">{t('تحذيرات حرجة', 'Critical Warnings')}</div>

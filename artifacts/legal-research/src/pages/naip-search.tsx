@@ -54,11 +54,11 @@ function typeConfig(type: SearchResult['type']) {
         icon: <Scale className="w-4 h-4" />,
         badge: 'قرار',
         badgeEn: 'Decision',
-        bg: 'bg-blue-100 dark:bg-blue-950/40',
-        text: 'text-blue-700 dark:text-blue-400',
-        border: 'border-blue-200 dark:border-blue-800/40',
-        iconBg: 'bg-blue-100 dark:bg-blue-950/40',
-        iconColor: 'text-blue-600 dark:text-blue-400',
+        bg: 'bg-heading/15 dark:bg-heading/40',
+        text: 'text-heading',
+        border: 'border-heading/25 dark:border-heading/40',
+        iconBg: 'bg-heading/15 dark:bg-heading/40',
+        iconColor: 'text-heading',
       };
     case 'risk':
       return {
@@ -66,32 +66,32 @@ function typeConfig(type: SearchResult['type']) {
         badge: 'مخاطر',
         badgeEn: 'Risk',
         bg: 'bg-gold/15 dark:bg-gold/40',
-        text: 'text-gold dark:text-gold/80',
+        text: 'text-gold/80',
         border: 'border-gold/25 dark:border-gold/40',
         iconBg: 'bg-gold/15 dark:bg-gold/40',
-        iconColor: 'text-gold dark:text-gold/80',
+        iconColor: 'text-gold/80',
       };
     case 'constitutional':
       return {
         icon: <Shield className="w-4 h-4" />,
         badge: 'دستوري',
         badgeEn: 'Constitutional',
-        bg: 'bg-purple-100 dark:bg-purple-950/40',
-        text: 'text-purple-700 dark:text-purple-400',
-        border: 'border-purple-200 dark:border-purple-800/40',
-        iconBg: 'bg-purple-100 dark:bg-purple-950/40',
-        iconColor: 'text-purple-600 dark:text-purple-400',
+        bg: 'bg-heading/15 dark:bg-heading/40',
+        text: 'text-heading',
+        border: 'border-heading/25 dark:border-heading/40',
+        iconBg: 'bg-heading/15 dark:bg-heading/40',
+        iconColor: 'text-heading',
       };
     case 'replay':
       return {
         icon: <RefreshCw className="w-4 h-4" />,
         badge: 'إعادة تشغيل',
         badgeEn: 'Replay',
-        bg: 'bg-slate-100 dark:bg-slate-800/40',
-        text: 'text-slate-600 dark:text-slate-400',
-        border: 'border-slate-200 dark:border-slate-700',
-        iconBg: 'bg-slate-100 dark:bg-slate-800/40',
-        iconColor: 'text-slate-600 dark:text-slate-400',
+        bg: 'bg-muted/60 dark:bg-card/40',
+        text: 'text-muted-foreground',
+        border: 'border-border',
+        iconBg: 'bg-muted/60 dark:bg-card/40',
+        iconColor: 'text-muted-foreground',
       };
   }
 }
@@ -342,7 +342,7 @@ export default function NaipSearch() {
         )}
 
         {isError && (
-          <div className="flex items-center gap-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-red-700 dark:text-red-400">
+          <div className="flex items-center gap-3 bg-destructive/10 dark:bg-destructive/20 border border-destructive/25 dark:border-destructive/40 rounded-xl p-4 text-destructive">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span className="text-sm">{t('حدث خطأ أثناء البحث، يرجى المحاولة مجدداً', 'An error occurred during search, please try again')}</span>
           </div>

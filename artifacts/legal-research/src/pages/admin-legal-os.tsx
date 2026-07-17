@@ -158,9 +158,9 @@ function FieldRow({
 }: { label: string; children: React.ReactNode; required?: boolean }) {
   return (
     <div className="space-y-1.5">
-      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
+      <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">
         {label}
-        {required && <span className="text-red-400 ms-1">*</span>}
+        {required && <span className="text-destructive ms-1">*</span>}
       </label>
       {children}
     </div>
@@ -181,7 +181,7 @@ function TextInput({
       placeholder={placeholder}
       disabled={disabled}
       dir={dir}
-      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-gold/40 focus:border-gold/50 disabled:opacity-50"
+      className="w-full bg-card border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-gold/40 focus:border-gold/50 disabled:opacity-50"
     />
   );
 }
@@ -199,7 +199,7 @@ function TextArea({
       placeholder={placeholder}
       dir={dir}
       rows={rows}
-      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-gold/40 focus:border-gold/50 resize-none"
+      className="w-full bg-card border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-gold/40 focus:border-gold/50 resize-none"
     />
   );
 }
@@ -217,9 +217,9 @@ function NumberInput({
         min={min}
         max={max}
         onChange={(e) => onChange(parseInt(e.target.value) || 0)}
-        className="w-20 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-gold/40 focus:border-gold/50"
+        className="w-20 bg-card border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-gold/40 focus:border-gold/50"
       />
-      {label && <span className="text-sm text-slate-400">{label}</span>}
+      {label && <span className="text-sm text-muted-foreground">{label}</span>}
     </div>
   );
 }
@@ -249,12 +249,12 @@ function RoleFormModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700">
-          <h2 className="font-bold text-slate-100">
+      <div className="bg-card border border-border rounded-2xl w-full max-w-lg shadow-2xl">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <h2 className="font-bold text-foreground">
             {initial.roleKey ? 'تعديل دور' : 'إضافة دور جديد'}
           </h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-200 p-1">
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-1">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -277,7 +277,7 @@ function RoleFormModal({
               dir="ltr"
               disabled={!!initial.roleKey}
             />
-            <p className="text-[11px] text-slate-500 mt-1">أحرف صغيرة وأرقام وشُرَط فقط، لا يمكن تغييره لاحقاً</p>
+            <p className="text-[11px] text-muted-foreground mt-1">أحرف صغيرة وأرقام وشُرَط فقط، لا يمكن تغييره لاحقاً</p>
           </FieldRow>
 
           <FieldRow label="وصف الدور">
@@ -293,7 +293,7 @@ function RoleFormModal({
                   className={`p-2 rounded-lg border transition-all ${
                     form.icon === icon
                       ? 'border-gold/60 bg-gold/10 text-gold'
-                      : 'border-slate-700 bg-slate-800 text-slate-400 hover:border-slate-500'
+                      : 'border-border bg-card text-muted-foreground hover:border-border'
                   }`}
                   title={icon}
                 >
@@ -304,12 +304,12 @@ function RoleFormModal({
           </FieldRow>
         </div>
 
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-700">
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border">
           <Button variant="ghost" onClick={onClose} disabled={saving}>إلغاء</Button>
           <Button
             onClick={() => onSave(form)}
             disabled={saving || !valid}
-            className="bg-gold text-slate-900 hover:bg-gold/90"
+            className="bg-gold text-foreground hover:bg-gold/90"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin me-2" /> : <Save className="w-4 h-4 me-2" />}
             حفظ
@@ -368,40 +368,40 @@ function QuestionEditor({
   };
 
   return (
-    <div className="border border-slate-700 rounded-xl bg-slate-800/50 overflow-hidden">
+    <div className="border border-border rounded-xl bg-card/50 overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-2 px-4 py-3">
-        <GripVertical className="w-4 h-4 text-slate-600 shrink-0" />
-        <span className="text-xs font-bold text-slate-500 bg-slate-700 rounded px-1.5 py-0.5 shrink-0">
+        <GripVertical className="w-4 h-4 text-muted-foreground shrink-0" />
+        <span className="text-xs font-bold text-muted-foreground bg-card rounded px-1.5 py-0.5 shrink-0">
           {index + 1}
         </span>
-        <span className="flex-1 text-sm text-slate-300 truncate font-medium">
+        <span className="flex-1 text-sm text-foreground truncate font-medium">
           {question.questionAr || question.questionEn || 'سؤال جديد'}
         </span>
         <div className="flex items-center gap-1 shrink-0">
           <button
             onClick={onMoveUp}
             disabled={index === 0}
-            className="p-1 rounded text-slate-500 hover:text-slate-200 disabled:opacity-30"
+            className="p-1 rounded text-muted-foreground hover:text-foreground disabled:opacity-30"
           >
             <ArrowUp className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={onMoveDown}
             disabled={index === total - 1}
-            className="p-1 rounded text-slate-500 hover:text-slate-200 disabled:opacity-30"
+            className="p-1 rounded text-muted-foreground hover:text-foreground disabled:opacity-30"
           >
             <ArrowDown className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => setExpanded((v) => !v)}
-            className="p-1 rounded text-slate-500 hover:text-slate-200"
+            className="p-1 rounded text-muted-foreground hover:text-foreground"
           >
             {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
           <button
             onClick={onDelete}
-            className="p-1 rounded text-red-500/60 hover:text-red-400"
+            className="p-1 rounded text-destructive/60 hover:text-destructive"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -409,7 +409,7 @@ function QuestionEditor({
       </div>
 
       {expanded && (
-        <div className="border-t border-slate-700 px-4 py-4 space-y-4">
+        <div className="border-t border-border px-4 py-4 space-y-4">
           {/* Answer type */}
           <FieldRow label="نوع الإجابة" required>
             <div className="flex flex-wrap gap-2">
@@ -420,7 +420,7 @@ function QuestionEditor({
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
                     question.answerType === opt.value
                       ? 'border-gold/60 bg-gold/10 text-gold'
-                      : 'border-slate-600 bg-slate-700 text-slate-400 hover:border-slate-500'
+                      : 'border-border bg-card text-muted-foreground hover:border-border'
                   }`}
                 >
                   {opt.icon}
@@ -483,7 +483,7 @@ function QuestionEditor({
                     </div>
                     <button
                       onClick={() => removeOption(oi)}
-                      className="p-1.5 rounded text-red-500/60 hover:text-red-400 shrink-0"
+                      className="p-1.5 rounded text-destructive/60 hover:text-destructive shrink-0"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -575,19 +575,19 @@ function ScenarioFormModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-3xl shadow-2xl flex flex-col max-h-[90vh]">
+      <div className="bg-card border border-border rounded-2xl w-full max-w-3xl shadow-2xl flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700 shrink-0">
-          <h2 className="font-bold text-slate-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
+          <h2 className="font-bold text-foreground">
             {initial.scenarioKey ? 'تعديل سيناريو' : 'إضافة سيناريو جديد'}
           </h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-200 p-1">
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-1">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-slate-700 shrink-0">
+        <div className="flex border-b border-border shrink-0">
           {(['details', 'questions'] as const).map((tab) => (
             <button
               key={tab}
@@ -595,7 +595,7 @@ function ScenarioFormModal({
               className={`flex-1 py-3 text-sm font-semibold transition-colors ${
                 activeTab === tab
                   ? 'text-gold border-b-2 border-gold'
-                  : 'text-slate-500 hover:text-slate-300'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               {tab === 'details' ? 'التفاصيل الأساسية' : `شجرة الأسئلة (${form.questions.length})`}
@@ -624,7 +624,7 @@ function ScenarioFormModal({
                   dir="ltr"
                   disabled={!!initial.scenarioKey}
                 />
-                <p className="text-[11px] text-slate-500 mt-1">لا يمكن تغييره بعد الحفظ</p>
+                <p className="text-[11px] text-muted-foreground mt-1">لا يمكن تغييره بعد الحفظ</p>
               </FieldRow>
 
               <FieldRow label="وصف السيناريو">
@@ -641,7 +641,7 @@ function ScenarioFormModal({
                         className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all ${
                           form.jurisdictions.includes(j)
                             ? 'border-gold/60 bg-gold/10 text-gold'
-                            : 'border-slate-700 bg-slate-800 text-slate-400 hover:border-slate-600'
+                            : 'border-border bg-card text-muted-foreground hover:border-border'
                         }`}
                       >
                         {j}
@@ -666,8 +666,8 @@ function ScenarioFormModal({
                   onClick={() => set('isActive')(!form.isActive)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-semibold transition-all ${
                     form.isActive
-                      ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400'
-                      : 'border-slate-700 bg-slate-800 text-slate-400'
+                      ? 'border-heading/40 bg-heading/10 text-heading'
+                      : 'border-border bg-card text-muted-foreground'
                   }`}
                 >
                   <CheckCircle2 className="w-4 h-4" />
@@ -680,7 +680,7 @@ function ScenarioFormModal({
           {activeTab === 'questions' && (
             <div className="space-y-3">
               {form.questions.length === 0 && (
-                <div className="text-center py-12 text-slate-500">
+                <div className="text-center py-12 text-muted-foreground">
                   <HelpCircle className="w-10 h-10 mx-auto mb-3 opacity-30" />
                   <p className="text-sm">لم تُضَف أسئلة بعد</p>
                   <p className="text-xs mt-1">اضغط "إضافة سؤال" لبناء شجرة الأسئلة</p>
@@ -700,7 +700,7 @@ function ScenarioFormModal({
               ))}
               <button
                 onClick={addQuestion}
-                className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-slate-700 rounded-xl text-sm text-slate-400 hover:text-gold hover:border-gold/40 transition-colors"
+                className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-border rounded-xl text-sm text-muted-foreground hover:text-gold hover:border-gold/40 transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 إضافة سؤال
@@ -710,8 +710,8 @@ function ScenarioFormModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-700 shrink-0">
-          <div className="text-xs text-slate-500">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-border shrink-0">
+          <div className="text-xs text-muted-foreground">
             {form.questions.length} سؤال
           </div>
           <div className="flex items-center gap-3">
@@ -719,7 +719,7 @@ function ScenarioFormModal({
             <Button
               onClick={() => onSave(form)}
               disabled={saving || !valid}
-              className="bg-gold text-slate-900 hover:bg-gold/90"
+              className="bg-gold text-foreground hover:bg-gold/90"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin me-2" /> : <Save className="w-4 h-4 me-2" />}
               حفظ
@@ -903,17 +903,17 @@ export default function AdminLegalOS() {
 
       <div className="flex h-full min-h-0">
         {/* ── Left panel: Roles ──────────────────────────────────────────────── */}
-        <div className="w-72 shrink-0 border-e border-slate-700/60 flex flex-col bg-slate-900/50">
+        <div className="w-72 shrink-0 border-e border-border flex flex-col bg-card/50">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-4 border-b border-slate-700/60">
+          <div className="flex items-center justify-between px-4 py-4 border-b border-border">
             <div>
-              <h2 className="font-bold text-slate-100 text-sm">الأدوار المخصصة</h2>
-              <p className="text-[11px] text-slate-500 mt-0.5">{roles.length} دور مضاف</p>
+              <h2 className="font-bold text-foreground text-sm">الأدوار المخصصة</h2>
+              <p className="text-[11px] text-muted-foreground mt-0.5">{roles.length} دور مضاف</p>
             </div>
             <Button
               size="sm"
               onClick={openCreateRole}
-              className="bg-gold text-slate-900 hover:bg-gold/90 h-8 px-3 text-xs"
+              className="bg-gold text-foreground hover:bg-gold/90 h-8 px-3 text-xs"
             >
               <Plus className="w-3.5 h-3.5 me-1" />
               دور جديد
@@ -921,7 +921,7 @@ export default function AdminLegalOS() {
           </div>
 
           {/* Info banner */}
-          <div className="mx-3 mt-3 p-3 rounded-lg bg-sky-500/10 border border-sky-500/20 text-[11px] text-sky-300 leading-relaxed">
+          <div className="mx-3 mt-3 p-3 rounded-lg bg-heading/10 border border-heading/20 text-[11px] text-heading leading-relaxed">
             <AlertCircle className="w-3.5 h-3.5 inline me-1 -mt-0.5" />
             الأدوار المُدمجة (مواطن، محامي...) مخزّنة في الكود — لا تظهر هنا.
           </div>
@@ -930,10 +930,10 @@ export default function AdminLegalOS() {
           <div className="flex-1 overflow-y-auto py-2">
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-slate-500" />
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
               </div>
             ) : roles.length === 0 ? (
-              <div className="text-center py-12 text-slate-500 px-4">
+              <div className="text-center py-12 text-muted-foreground px-4">
                 <Users className="w-8 h-8 mx-auto mb-2 opacity-30" />
                 <p className="text-sm">لا توجد أدوار مخصصة</p>
                 <p className="text-xs mt-1">اضغط "دور جديد" للبدء</p>
@@ -947,25 +947,25 @@ export default function AdminLegalOS() {
                     key={role.id}
                     onClick={() => setSelectedRoleKey(role.roleKey)}
                     className={`w-full flex items-center gap-3 px-4 py-3 text-start transition-all ${
-                      isSelected ? 'bg-gold/10 border-e-2 border-gold' : 'hover:bg-slate-800/50'
+                      isSelected ? 'bg-gold/10 border-e-2 border-gold' : 'hover:bg-card/50'
                     }`}
                   >
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                      isSelected ? 'bg-gold/20 text-gold' : 'bg-slate-800 text-slate-400'
+                      isSelected ? 'bg-gold/20 text-gold' : 'bg-card text-muted-foreground'
                     }`}>
                       {IconComponent[role.icon] ?? <UserCircle className="w-5 h-5" />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-semibold truncate ${isSelected ? 'text-gold' : 'text-slate-200'}`}>
+                      <p className={`text-sm font-semibold truncate ${isSelected ? 'text-gold' : 'text-foreground'}`}>
                         {role.titleAr}
                       </p>
-                      <p className="text-[11px] text-slate-500 truncate">{role.titleEn}</p>
+                      <p className="text-[11px] text-muted-foreground truncate">{role.titleEn}</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-[10px] bg-slate-800 text-slate-400 rounded-full px-2 py-0.5">
+                      <span className="text-[10px] bg-card text-muted-foreground rounded-full px-2 py-0.5">
                         {count}
                       </span>
-                      <ChevronRight className="w-3.5 h-3.5 text-slate-600" />
+                      <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
                     </div>
                   </button>
                 );
@@ -977,24 +977,24 @@ export default function AdminLegalOS() {
         {/* ── Right panel: Scenarios ─────────────────────────────────────────── */}
         <div className="flex-1 flex flex-col min-w-0">
           {!selectedRole ? (
-            <div className="flex-1 flex items-center justify-center text-slate-500">
+            <div className="flex-1 flex items-center justify-center text-muted-foreground">
               <div className="text-center">
                 <Layers className="w-12 h-12 mx-auto mb-3 opacity-20" />
                 <p className="text-base font-semibold">اختر دوراً من القائمة</p>
-                <p className="text-sm mt-1 text-slate-600">سيتم عرض السيناريوهات هنا</p>
+                <p className="text-sm mt-1 text-muted-foreground">سيتم عرض السيناريوهات هنا</p>
               </div>
             </div>
           ) : (
             <>
               {/* Scenarios header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700/60 bg-slate-900/30 shrink-0">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-card/30 shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-gold/10 border border-gold/20 flex items-center justify-center text-gold">
                     {IconComponent[selectedRole.icon] ?? <UserCircle className="w-5 h-5" />}
                   </div>
                   <div>
-                    <h2 className="font-bold text-slate-100">{selectedRole.titleAr}</h2>
-                    <p className="text-[11px] text-slate-400">{selectedRole.titleEn} · {roleScenarios.length} سيناريو</p>
+                    <h2 className="font-bold text-foreground">{selectedRole.titleAr}</h2>
+                    <p className="text-[11px] text-muted-foreground">{selectedRole.titleEn} · {roleScenarios.length} سيناريو</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -1002,7 +1002,7 @@ export default function AdminLegalOS() {
                     size="sm"
                     variant="outline"
                     onClick={() => openEditRole(selectedRole)}
-                    className="h-8 px-3 text-xs border-slate-700 text-slate-300 hover:bg-slate-800"
+                    className="h-8 px-3 text-xs border-border text-foreground hover:bg-card"
                   >
                     <Pencil className="w-3.5 h-3.5 me-1" />
                     تعديل الدور
@@ -1012,7 +1012,7 @@ export default function AdminLegalOS() {
                     variant="outline"
                     onClick={() => deleteRole(selectedRole)}
                     disabled={deleting === selectedRole.id}
-                    className="h-8 px-3 text-xs border-red-900/50 text-red-400 hover:bg-red-900/20"
+                    className="h-8 px-3 text-xs border-destructive/50 text-destructive hover:bg-destructive/20"
                   >
                     {deleting === selectedRole.id
                       ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -1023,7 +1023,7 @@ export default function AdminLegalOS() {
                   <Button
                     size="sm"
                     onClick={openCreateScenario}
-                    className="bg-gold text-slate-900 hover:bg-gold/90 h-8 px-3 text-xs"
+                    className="bg-gold text-foreground hover:bg-gold/90 h-8 px-3 text-xs"
                   >
                     <Plus className="w-3.5 h-3.5 me-1" />
                     سيناريو جديد
@@ -1034,7 +1034,7 @@ export default function AdminLegalOS() {
               {/* Scenario cards */}
               <div className="flex-1 overflow-y-auto p-6">
                 {roleScenarios.length === 0 ? (
-                  <div className="text-center py-16 text-slate-500">
+                  <div className="text-center py-16 text-muted-foreground">
                     <HelpCircle className="w-10 h-10 mx-auto mb-3 opacity-20" />
                     <p className="text-sm">لا توجد سيناريوهات لهذا الدور</p>
                     <p className="text-xs mt-1">اضغط "سيناريو جديد" لإضافة أول سيناريو</p>
@@ -1044,24 +1044,24 @@ export default function AdminLegalOS() {
                     {roleScenarios.map((s) => (
                       <div
                         key={s.id}
-                        className="bg-slate-800/50 border border-slate-700 rounded-xl p-5 hover:border-slate-600 transition-colors"
+                        className="bg-card/50 border border-border rounded-xl p-5 hover:border-border transition-colors"
                       >
                         <div className="flex items-start justify-between gap-3 mb-3">
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-bold text-slate-100 text-sm">{s.titleAr}</h3>
-                            <p className="text-xs text-slate-400 mt-0.5">{s.titleEn}</p>
+                            <h3 className="font-bold text-foreground text-sm">{s.titleAr}</h3>
+                            <p className="text-xs text-muted-foreground mt-0.5">{s.titleEn}</p>
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
                             <button
                               onClick={() => openEditScenario(s)}
-                              className="p-1.5 rounded-lg text-slate-500 hover:text-gold hover:bg-gold/10 transition-all"
+                              className="p-1.5 rounded-lg text-muted-foreground hover:text-gold hover:bg-gold/10 transition-all"
                             >
                               <Pencil className="w-3.5 h-3.5" />
                             </button>
                             <button
                               onClick={() => deleteScenario(s)}
                               disabled={deleting === s.id}
-                              className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-900/20 transition-all"
+                              className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/20 transition-all"
                             >
                               {deleting === s.id
                                 ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -1072,23 +1072,23 @@ export default function AdminLegalOS() {
                         </div>
 
                         {s.descriptionAr && (
-                          <p className="text-xs text-slate-400 mb-3 line-clamp-2">{s.descriptionAr}</p>
+                          <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{s.descriptionAr}</p>
                         )}
 
                         <div className="flex flex-wrap items-center gap-2 text-[11px]">
                           {s.jurisdictions.map((j) => (
-                            <span key={j} className="bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full">
+                            <span key={j} className="bg-card text-foreground px-2 py-0.5 rounded-full">
                               {j}
                             </span>
                           ))}
-                          <span className="text-slate-500 flex items-center gap-1">
+                          <span className="text-muted-foreground flex items-center gap-1">
                             <HelpCircle className="w-3 h-3" />
                             {s.questions.length} سؤال
                           </span>
-                          <span className="text-slate-500">·</span>
-                          <span className="text-slate-500">{s.estimatedMinutes} دقيقة</span>
+                          <span className="text-muted-foreground">·</span>
+                          <span className="text-muted-foreground">{s.estimatedMinutes} دقيقة</span>
                           {!s.isActive && (
-                            <span className="bg-red-900/30 text-red-400 border border-red-900/40 px-2 py-0.5 rounded-full">
+                            <span className="bg-destructive/30 text-destructive border border-destructive/40 px-2 py-0.5 rounded-full">
                               معطّل
                             </span>
                           )}

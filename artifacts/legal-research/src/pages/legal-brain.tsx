@@ -103,37 +103,37 @@ function t(ar: string, en: string) {
 }
 
 const RISK_COLOR: Record<string, string> = {
-  'حرج':    'text-red-700 bg-red-50 border-red-200',
+  'حرج':    'text-destructive bg-destructive/10 border-destructive/25',
   'مرتفع':  'text-gold bg-gold/10 border-gold/25',
   'متوسط':  'text-gold bg-gold/10 border-gold/25',
-  'منخفض':  'text-emerald-700 bg-emerald-50 border-emerald-200',
+  'منخفض':  'text-heading bg-heading/10 border-heading/25',
 };
 const RISK_BAR_COLOR: Record<string, string> = {
-  'حرج':    'bg-red-500',
+  'حرج':    'bg-destructive',
   'مرتفع':  'bg-gold',
   'متوسط':  'bg-gold',
-  'منخفض':  'bg-emerald-500',
+  'منخفض':  'bg-heading',
 };
 const STATUS_ICON: Record<string, React.ReactNode> = {
-  'سليم':        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />,
-  'ممتثل':       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />,
+  'سليم':        <CheckCircle2 className="w-3.5 h-3.5 text-heading shrink-0" />,
+  'ممتثل':       <CheckCircle2 className="w-3.5 h-3.5 text-heading shrink-0" />,
   'معيب':        <AlertTriangle className="w-3.5 h-3.5 text-gold shrink-0" />,
   'ممتثل جزئياً': <AlertTriangle className="w-3.5 h-3.5 text-gold shrink-0" />,
-  'باطل':        <XCircle className="w-3.5 h-3.5 text-red-500 shrink-0" />,
-  'غير ممتثل':   <XCircle className="w-3.5 h-3.5 text-red-500 shrink-0" />,
+  'باطل':        <XCircle className="w-3.5 h-3.5 text-destructive shrink-0" />,
+  'غير ممتثل':   <XCircle className="w-3.5 h-3.5 text-destructive shrink-0" />,
 };
 const SIMILARITY_COLOR: Record<string, string> = {
-  'تطابق':          'text-emerald-700 bg-emerald-50',
-  'تقارب':          'text-blue-700 bg-blue-50',
+  'تطابق':          'text-heading bg-heading/10',
+  'تقارب':          'text-heading bg-heading/10',
   'اختلاف جوهري':  'text-gold bg-gold/10',
-  'تعارض':          'text-red-700 bg-red-50',
+  'تعارض':          'text-destructive bg-destructive/10',
 };
 
 // ─── Shared sub-components ────────────────────────────────────────────────────
 
 function ConfidenceBar({ value, label = 'الثقة' }: { value: number; label?: string }) {
-  const color = value >= 85 ? 'text-emerald-700' : value >= 70 ? 'text-gold' : 'text-red-700';
-  const barColor = value >= 85 ? '[&>div]:bg-emerald-500' : value >= 70 ? '[&>div]:bg-gold' : '[&>div]:bg-red-500';
+  const color = value >= 85 ? 'text-heading' : value >= 70 ? 'text-gold' : 'text-destructive';
+  const barColor = value >= 85 ? '[&>div]:bg-heading' : value >= 70 ? '[&>div]:bg-gold' : '[&>div]:bg-destructive';
   return (
     <div className="flex items-center gap-3" dir="rtl">
       <span className="text-[11px] text-muted-foreground shrink-0">{label}</span>
@@ -145,7 +145,7 @@ function ConfidenceBar({ value, label = 'الثقة' }: { value: number; label?:
 
 function RiskBadge({ level }: { level: string }) {
   return (
-    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${RISK_COLOR[level] ?? 'text-gray-600 bg-gray-50 border-gray-200'}`}>
+    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${RISK_COLOR[level] ?? 'text-muted-foreground bg-muted/40 border-border'}`}>
       {level}
     </span>
   );
@@ -154,20 +154,20 @@ function RiskBadge({ level }: { level: string }) {
 function ExplainabilityCard({ data }: { data: Explainability }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="mt-3 border border-violet-200 rounded-xl overflow-hidden" dir="rtl">
+    <div className="mt-3 border border-heading/25 rounded-xl overflow-hidden" dir="rtl">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-3 py-2 bg-violet-50 hover:bg-violet-100 transition-colors text-[11px] font-bold text-violet-800"
+        className="w-full flex items-center justify-between px-3 py-2 bg-heading/10 hover:bg-heading/15 transition-colors text-[11px] font-bold text-heading"
       >
         <span className="flex items-center gap-1.5"><Info className="w-3.5 h-3.5" />طبقة التفسيرية — لماذا هذا الحكم؟</span>
         {open ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
       </button>
       {open && (
-        <div className="p-3 space-y-2.5 bg-white text-sm">
-          <div><span className="font-semibold text-emerald-700 text-[11px]">✅ لماذا هذا الحكم:</span><p className="text-muted-foreground mt-0.5 text-[12px]">{data.why}</p></div>
+        <div className="p-3 space-y-2.5 bg-card text-sm">
+          <div><span className="font-semibold text-heading text-[11px]">✅ لماذا هذا الحكم:</span><p className="text-muted-foreground mt-0.5 text-[12px]">{data.why}</p></div>
           <Separator />
-          <div><span className="font-semibold text-red-700 text-[11px]">❌ لماذا ليس حكماً آخر:</span><p className="text-muted-foreground mt-0.5 text-[12px]">{data.whyNot}</p></div>
+          <div><span className="font-semibold text-destructive text-[11px]">❌ لماذا ليس حكماً آخر:</span><p className="text-muted-foreground mt-0.5 text-[12px]">{data.whyNot}</p></div>
           <Separator />
           <div><span className="font-semibold text-primary text-[11px]">⚖️ الأساس القانوني:</span><p className="text-muted-foreground mt-0.5 text-[12px]">{data.legalBasis}</p></div>
           {data.counterArguments?.length > 0 && (
@@ -183,7 +183,7 @@ function ExplainabilityCard({ data }: { data: Explainability }) {
             <>
               <Separator />
               <div>
-                <span className="font-semibold text-blue-700 text-[11px]">💡 آراء بديلة:</span>
+                <span className="font-semibold text-heading text-[11px]">💡 آراء بديلة:</span>
                 <ul className="mt-1 space-y-0.5">{data.alternativeViews.map((v, i) => <li key={i} className="text-[12px] text-muted-foreground">• {v}</li>)}</ul>
               </div>
             </>
@@ -241,7 +241,7 @@ function CopyButton({ text }: { text: string }) {
     <button type="button" onClick={doCopy}
       className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground border border-border rounded-lg px-2 py-1 hover:bg-muted/30 transition-colors"
     >
-      {copied ? <CheckCheck className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+      {copied ? <CheckCheck className="w-3 h-3 text-heading" /> : <Copy className="w-3 h-3" />}
       {copied ? 'تم النسخ' : 'نسخ'}
     </button>
   );
@@ -276,8 +276,8 @@ function JudicialReasoningTab() {
   }
 
   const RULING_COLOR: Record<string, string> = {
-    'قبول': 'border-emerald-500 bg-emerald-50 text-emerald-800',
-    'رفض':  'border-red-500 bg-red-50 text-red-800',
+    'قبول': 'border-heading/40 bg-heading/10 text-heading',
+    'رفض':  'border-destructive/40 bg-destructive/10 text-destructive',
     'قبول جزئي': 'border-gold bg-gold/10 text-gold/75',
   };
   const rulingClass = result ? (RULING_COLOR[result.rulingType] ?? 'border-primary bg-primary/5 text-primary') : '';
@@ -401,14 +401,14 @@ function AdminLegalityTab() {
   }
 
   const VALIDITY_STYLE: Record<string, string> = {
-    'صحيح':           'border-emerald-500 bg-emerald-50 text-emerald-800',
+    'صحيح':           'border-heading/40 bg-heading/10 text-heading',
     'قابل للإبطال':   'border-gold bg-gold/10 text-gold/75',
-    'باطل':           'border-red-500 bg-red-50 text-red-800',
+    'باطل':           'border-destructive/40 bg-destructive/10 text-destructive',
   };
   const STATUS_BG: Record<string, string> = {
-    'سليم': 'bg-emerald-50 border-emerald-200',
+    'سليم': 'bg-heading/10 border-heading/25',
     'معيب': 'bg-gold/10 border-gold/25',
-    'باطل': 'bg-red-50 border-red-200',
+    'باطل': 'bg-destructive/10 border-destructive/25',
   };
 
   return (
@@ -442,7 +442,7 @@ function AdminLegalityTab() {
       {result && (
         <div className="space-y-3">
           {/* Verdict */}
-          <div className={`rounded-xl border-2 p-4 ${VALIDITY_STYLE[result.overallValidity] ?? 'border-gray-300 bg-gray-50 text-gray-800'}`} dir="rtl">
+          <div className={`rounded-xl border-2 p-4 ${VALIDITY_STYLE[result.overallValidity] ?? 'border-border bg-muted/40 text-foreground'}`} dir="rtl">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider opacity-70">الحكم الكلي على مشروعية القرار</p>
@@ -466,7 +466,7 @@ function AdminLegalityTab() {
                 </div>
                 <Progress value={c.score} className="h-1 mb-2" />
                 <p className="text-[11px] text-muted-foreground line-clamp-3 leading-relaxed">{c.analysis}</p>
-                {c.gap && <p className="text-[10px] text-red-600 mt-1">⚠ {c.gap}</p>}
+                {c.gap && <p className="text-[10px] text-destructive mt-1">⚠ {c.gap}</p>}
                 {c.legalBasis && <p className="text-[10px] text-primary mt-1">📌 {c.legalBasis}</p>}
               </div>
             ))}
@@ -475,8 +475,8 @@ function AdminLegalityTab() {
           {/* Annulment grounds & recommendations */}
           {result.annulmentGrounds?.length > 0 && (
             <SectionCard>
-              <p className="text-[11px] font-bold text-red-700 mb-2">أسباب الإبطال / أوجه الطعن</p>
-              <ul className="space-y-1">{result.annulmentGrounds.map((g, i) => <li key={i} className="text-sm text-foreground flex gap-2"><XCircle className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" />{g}</li>)}</ul>
+              <p className="text-[11px] font-bold text-destructive mb-2">أسباب الإبطال / أوجه الطعن</p>
+              <ul className="space-y-1">{result.annulmentGrounds.map((g, i) => <li key={i} className="text-sm text-foreground flex gap-2"><XCircle className="w-3.5 h-3.5 text-destructive shrink-0 mt-0.5" />{g}</li>)}</ul>
             </SectionCard>
           )}
           {result.recommendations?.length > 0 && (
@@ -523,15 +523,15 @@ function ShamsiTheoryTab() {
   }
 
   const COMPLIANCE_COLOR: Record<string, string> = {
-    'عالٍ':  'border-emerald-500 bg-emerald-50 text-emerald-800',
+    'عالٍ':  'border-heading/40 bg-heading/10 text-heading',
     'متوسط': 'border-gold bg-gold/10 text-gold/75',
     'منخفض': 'border-gold bg-gold/10 text-gold/75',
-    'حرج':   'border-red-500 bg-red-50 text-red-800',
+    'حرج':   'border-destructive/40 bg-destructive/10 text-destructive',
   };
   const STATUS_BG_SHAMSI: Record<string, string> = {
-    'ممتثل':         'bg-emerald-50 border-emerald-200',
+    'ممتثل':         'bg-heading/10 border-heading/25',
     'ممتثل جزئياً': 'bg-gold/10 border-gold/25',
-    'غير ممتثل':    'bg-red-50 border-red-200',
+    'غير ممتثل':    'bg-destructive/10 border-destructive/25',
   };
 
   return (
@@ -594,7 +594,7 @@ function ShamsiTheoryTab() {
                 </div>
                 <Progress value={p.score} className="h-1.5 mb-2" />
                 <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-3">{p.analysis}</p>
-                {p.gaps?.length > 0 && <p className="text-[10px] text-red-600 mt-1">⚠ {p.gaps[0]}</p>}
+                {p.gaps?.length > 0 && <p className="text-[10px] text-destructive mt-1">⚠ {p.gaps[0]}</p>}
               </div>
             ))}
           </div>
@@ -602,8 +602,8 @@ function ShamsiTheoryTab() {
           {/* Critical gaps + recommendations */}
           {result.criticalGaps?.length > 0 && (
             <SectionCard>
-              <p className="text-[11px] font-bold text-red-700 mb-2">الثغرات الحرجة</p>
-              <ul className="space-y-1">{result.criticalGaps.map((g, i) => <li key={i} className="text-sm text-foreground flex gap-2"><XCircle className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" />{g}</li>)}</ul>
+              <p className="text-[11px] font-bold text-destructive mb-2">الثغرات الحرجة</p>
+              <ul className="space-y-1">{result.criticalGaps.map((g, i) => <li key={i} className="text-sm text-foreground flex gap-2"><XCircle className="w-3.5 h-3.5 text-destructive shrink-0 mt-0.5" />{g}</li>)}</ul>
             </SectionCard>
           )}
           {result.recommendations?.length > 0 && (
@@ -651,7 +651,7 @@ function ComparativeAnalysisTab() {
   return (
     <div className="space-y-4" dir="rtl">
       <SectionCard>
-        <h3 className="font-bold text-sm mb-3 flex items-center gap-2"><GitCompareArrows className="w-4 h-4 text-indigo-600" />محرك القانون المقارن — 🇦🇪 الإمارات ↔ 🇫🇷 فرنسا{includeEu ? ' ↔ 🇪🇺 الاتحاد الأوروبي' : ''}</h3>
+        <h3 className="font-bold text-sm mb-3 flex items-center gap-2"><GitCompareArrows className="w-4 h-4 text-heading" />محرك القانون المقارن — 🇦🇪 الإمارات ↔ 🇫🇷 فرنسا{includeEu ? ' ↔ 🇪🇺 الاتحاد الأوروبي' : ''}</h3>
         <div className="mb-3">
           <Label className="text-[11px]">الموضوع القانوني</Label>
           <Input value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="مثال: القرارات الإدارية الخوارزمية · حق الطعن · مبدأ التناسب..." className="mt-1 text-sm" dir="rtl" />
@@ -661,10 +661,10 @@ function ComparativeAnalysisTab() {
           <Textarea value={context} onChange={(e) => setContext(e.target.value)} rows={3} placeholder="أي معلومات إضافية تساعد في توجيه المقارنة..." className="mt-1 text-sm" dir="rtl" />
         </div>
         <label className="flex items-center gap-2 cursor-pointer mb-3">
-          <input type="checkbox" checked={includeEu} onChange={(e) => setIncludeEu(e.target.checked)} className="accent-indigo-600" />
-          <span className="text-[11px] font-medium text-indigo-700">تضمين قانون الذكاء الاصطناعي الأوروبي (EU AI Act 2024/1689)</span>
+          <input type="checkbox" checked={includeEu} onChange={(e) => setIncludeEu(e.target.checked)} className="accent-heading" />
+          <span className="text-[11px] font-medium text-heading">تضمين قانون الذكاء الاصطناعي الأوروبي (EU AI Act 2024/1689)</span>
         </label>
-        <Button onClick={run} disabled={loading} className="gap-2 bg-indigo-700 hover:bg-indigo-800">
+        <Button onClick={run} disabled={loading} className="gap-2 bg-heading hover:bg-heading/20">
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <GitCompareArrows className="w-4 h-4" />}
           {loading ? 'جارٍ المقارنة...' : 'تشغيل المقارنة القانونية'}
         </Button>
@@ -689,21 +689,21 @@ function ComparativeAnalysisTab() {
                 <thead className="bg-muted/50 border-b border-border">
                   <tr>
                     <th className="text-right p-2.5 font-bold w-[22%]">وجه المقارنة</th>
-                    <th className="text-right p-2.5 font-bold text-emerald-700 w-[25%]">🇦🇪 الإمارات</th>
-                    <th className="text-right p-2.5 font-bold text-blue-700 w-[25%]">🇫🇷 فرنسا</th>
-                    {includeEu && <th className="text-right p-2.5 font-bold text-indigo-700 w-[20%]">🇪🇺 الاتحاد الأوروبي</th>}
+                    <th className="text-right p-2.5 font-bold text-heading w-[25%]">🇦🇪 الإمارات</th>
+                    <th className="text-right p-2.5 font-bold text-heading w-[25%]">🇫🇷 فرنسا</th>
+                    {includeEu && <th className="text-right p-2.5 font-bold text-heading w-[20%]">🇪🇺 الاتحاد الأوروبي</th>}
                     <th className="text-right p-2.5 font-bold w-[8%]">التقارب</th>
                   </tr>
                 </thead>
                 <tbody>
                   {result.rows?.map((row, i) => (
-                    <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-muted/20'}>
+                    <tr key={i} className={i % 2 === 0 ? 'bg-card' : 'bg-muted/20'}>
                       <td className="p-2.5 font-semibold align-top">{row.aspect}</td>
                       <td className="p-2.5 text-muted-foreground align-top leading-relaxed">{row.uae}</td>
                       <td className="p-2.5 text-muted-foreground align-top leading-relaxed">{row.france}</td>
                       {includeEu && <td className="p-2.5 text-muted-foreground align-top leading-relaxed">{row.eu ?? '—'}</td>}
                       <td className="p-2.5 align-top">
-                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${SIMILARITY_COLOR[row.similarity] ?? 'text-gray-600 bg-gray-50'}`}>
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${SIMILARITY_COLOR[row.similarity] ?? 'text-muted-foreground bg-muted/40'}`}>
                           {row.similarity}
                         </span>
                       </td>
@@ -724,8 +724,8 @@ function ComparativeAnalysisTab() {
             )}
             {result.convergenceAreas?.length > 0 && (
               <SectionCard>
-                <p className="text-[11px] font-bold text-emerald-700 mb-2">نقاط التقارب</p>
-                <ul className="space-y-1">{result.convergenceAreas.map((c, i) => <li key={i} className="text-[12px] text-foreground flex gap-2"><span className="text-emerald-500">✓</span>{c}</li>)}</ul>
+                <p className="text-[11px] font-bold text-heading mb-2">نقاط التقارب</p>
+                <ul className="space-y-1">{result.convergenceAreas.map((c, i) => <li key={i} className="text-[12px] text-foreground flex gap-2"><span className="text-heading">✓</span>{c}</li>)}</ul>
               </SectionCard>
             )}
           </div>
@@ -952,7 +952,7 @@ function RiskAssessmentTab() {
       {result && (
         <div className="space-y-3">
           {/* Overall risk banner */}
-          <div className={`rounded-xl border-2 p-4 ${RISK_COLOR[result.overallRisk] ? `border-current ${RISK_COLOR[result.overallRisk]}` : 'border-gray-300 bg-gray-50'}`} dir="rtl">
+          <div className={`rounded-xl border-2 p-4 ${RISK_COLOR[result.overallRisk] ? `border-current ${RISK_COLOR[result.overallRisk]}` : 'border-border bg-muted/40'}`} dir="rtl">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider opacity-70">المخاطرة الإجمالية</p>
@@ -982,7 +982,7 @@ function RiskAssessmentTab() {
                 </div>
                 <div className="flex items-center gap-2 mb-3">
                   <div className={`h-2 rounded-full flex-1 bg-muted overflow-hidden`}>
-                    <div className={`h-full rounded-full transition-all ${RISK_BAR_COLOR[dim.level] ?? 'bg-gray-400'}`} style={{ width: `${dim.score}%` }} />
+                    <div className={`h-full rounded-full transition-all ${RISK_BAR_COLOR[dim.level] ?? 'bg-muted-foreground'}`} style={{ width: `${dim.score}%` }} />
                   </div>
                   <span className="text-[12px] font-bold shrink-0">{dim.score}%</span>
                 </div>
@@ -994,8 +994,8 @@ function RiskAssessmentTab() {
                 )}
                 {dim.mitigations?.length > 0 && (
                   <div>
-                    <p className="text-[10px] font-bold text-emerald-700 mb-1">إجراءات التخفيف:</p>
-                    <ul className="space-y-0.5">{dim.mitigations.map((m, i) => <li key={i} className="text-[11px] text-foreground flex gap-1.5"><CheckCircle2 className="w-2.5 h-2.5 text-emerald-500 shrink-0 mt-0.5" />{m}</li>)}</ul>
+                    <p className="text-[10px] font-bold text-heading mb-1">إجراءات التخفيف:</p>
+                    <ul className="space-y-0.5">{dim.mitigations.map((m, i) => <li key={i} className="text-[11px] text-foreground flex gap-1.5"><CheckCircle2 className="w-2.5 h-2.5 text-heading shrink-0 mt-0.5" />{m}</li>)}</ul>
                   </div>
                 )}
               </SectionCard>

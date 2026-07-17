@@ -8,15 +8,15 @@ interface AuthorityHierarchyProps {
 }
 
 const CLASS_LABELS: Record<string, { ar: string; className: string }> = {
-  binding:     { ar: 'مُلزِم',   className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 border-emerald-200 dark:border-emerald-700' },
+  binding:     { ar: 'مُلزِم',   className: 'bg-heading/15 text-heading dark:bg-heading/30 dark:text-heading border-heading/25 dark:border-heading/50' },
   persuasive:  { ar: 'مرجعي',   className: 'bg-gold/15 text-gold/75 dark:bg-gold/30 dark:text-gold/40 border-gold/25 dark:border-gold' },
-  non_binding: { ar: 'غير مُلزِم', className: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700' },
+  non_binding: { ar: 'غير مُلزِم', className: 'bg-muted/60 text-muted-foreground dark:bg-card dark:text-muted-foreground border-border' },
 };
 
 const ROLE_LABELS: Record<string, { ar: string; className: string }> = {
-  primary:    { ar: 'أساسي',    className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
-  supporting: { ar: 'داعم',     className: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' },
-  contextual: { ar: 'سياقي',    className: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400' },
+  primary:    { ar: 'أساسي',    className: 'bg-heading/15 text-heading dark:bg-heading/30 dark:text-heading' },
+  supporting: { ar: 'داعم',     className: 'bg-heading/15 text-heading dark:bg-heading/30 dark:text-heading' },
+  contextual: { ar: 'سياقي',    className: 'bg-muted/60 text-muted-foreground dark:bg-card dark:text-muted-foreground' },
 };
 
 const HIERARCHY_LEVEL_LABELS: Record<string, string> = {

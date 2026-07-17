@@ -110,7 +110,7 @@ export default function AdkgDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-[#1e3a5f] flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-heading flex items-center gap-2">
             <Network className="w-6 h-6" />
             {t('سجل القرارات الإدارية', 'Administrative Decision Knowledge Graph')}
           </h1>
@@ -118,7 +118,7 @@ export default function AdkgDashboard() {
             {t('إنشاء وإدارة القرارات الإدارية مع ربطها بالتشريعات والقضاء', 'Create and manage administrative decisions linked to legislation and case law')}
           </p>
         </div>
-        <Button onClick={() => setShowCreate(true)} className="bg-[#1e3a5f] hover:bg-[#2d5a8f] text-white gap-2">
+        <Button onClick={() => setShowCreate(true)} className="bg-primary hover:opacity-90 text-white gap-2">
           <Plus className="w-4 h-4" />
           {t('قرار جديد', 'New Decision')}
         </Button>
@@ -143,7 +143,7 @@ export default function AdkgDashboard() {
             <button
               key={opt.value}
               onClick={() => setFilterStatus(opt.value)}
-              className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${filterStatus === opt.value ? 'bg-[#1e3a5f] text-white border-[#1e3a5f]' : 'bg-white text-gray-600 border-gray-300 hover:border-[#1e3a5f]'}`}
+              className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${filterStatus === opt.value ? 'bg-primary text-primary-foreground border-primary/50' : 'bg-card text-muted-foreground border-border hover:border-primary/60'}`}
             >
               {t(opt.labelAr, opt.labelEn)}
             </button>
@@ -170,7 +170,7 @@ export default function AdkgDashboard() {
       {decisions.length > 0 && (
         <div className="rounded-lg border overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-[#1e3a5f] text-white">
+            <thead className="bg-primary text-primary-foreground">
               <tr>
                 <th className="text-right px-4 py-3 font-semibold">{t('رقم القرار', 'Decision No.')}</th>
                 <th className="text-right px-4 py-3 font-semibold">{t('العنوان', 'Title')}</th>
@@ -184,12 +184,12 @@ export default function AdkgDashboard() {
               {decisions.map((d, i) => (
                 <tr
                   key={d.id}
-                  className={`cursor-pointer hover:bg-blue-50 transition-colors group ${i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}
+                  className={`cursor-pointer hover:bg-heading/10 transition-colors group ${i % 2 === 0 ? 'bg-card' : 'bg-muted/40'}`}
                   onClick={() => navigate(`/adkg/${d.id}`)}
                 >
-                  <td className="px-4 py-3 font-mono text-xs text-[#1e3a5f] font-semibold">{d.decisionNumber}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-heading font-semibold">{d.decisionNumber}</td>
                   <td className="px-4 py-3">
-                    <p className="font-medium text-gray-900 line-clamp-1">{d.titleAr}</p>
+                    <p className="font-medium text-foreground line-clamp-1">{d.titleAr}</p>
                     <p className="text-xs text-muted-foreground">{d.title}</p>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{d.issuerOrgAr ?? d.issuerOrg ?? '—'}</td>
@@ -203,7 +203,7 @@ export default function AdkgDashboard() {
                         e.stopPropagation();
                         if (confirm(t('حذف هذا القرار؟', 'Delete this decision?'))) deleteMut.mutate(d.id);
                       }}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-red-600"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

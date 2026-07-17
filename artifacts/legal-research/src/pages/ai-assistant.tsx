@@ -1971,8 +1971,8 @@ const MODE_CONFIG: Record<ResponseMode, {
     ar: 'سريع',
     en: 'Quick',
     descAr: 'إجابة مباشرة · 2–5 ثوانٍ',
-    activeClass: 'bg-sky-600 text-white border-sky-600',
-    badgeClass: 'bg-sky-50 text-sky-700 border-sky-200',
+    activeClass: 'bg-heading text-white border-heading/50',
+    badgeClass: 'bg-heading/10 text-heading border-heading/25',
     maxSections: 2,
   },
   standard: {
@@ -1980,8 +1980,8 @@ const MODE_CONFIG: Record<ResponseMode, {
     ar: 'إجابة مفصّلة',
     en: 'Detailed Answer',
     descAr: 'تحليل قانوني تفصيلي · 5–10 ثوانٍ',
-    activeClass: 'bg-indigo-600 text-white border-indigo-600',
-    badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+    activeClass: 'bg-heading text-white border-heading/50',
+    badgeClass: 'bg-heading/10 text-heading border-heading/25',
     maxSections: 6,
   },
   professional: {
@@ -1989,8 +1989,8 @@ const MODE_CONFIG: Record<ResponseMode, {
     ar: 'احترافي',
     en: 'Professional',
     descAr: 'تقرير كامل · 10–30 ثانية',
-    activeClass: 'bg-violet-600 text-white border-violet-600',
-    badgeClass: 'bg-violet-50 text-violet-700 border-violet-200',
+    activeClass: 'bg-heading text-white border-heading/50',
+    badgeClass: 'bg-heading/10 text-heading border-heading/25',
     maxSections: undefined,
   },
   expert: {
@@ -2007,8 +2007,8 @@ const MODE_CONFIG: Record<ResponseMode, {
     ar: 'النموذج القياسي',
     en: 'Standard Model Answer',
     descAr: 'نموذج قضائي مثالي — يُعلِّم المسار الصحيح للاستدلال والحكم',
-    activeClass: 'bg-slate-700 text-white border-slate-700',
-    badgeClass: 'bg-slate-50 text-slate-700 border-slate-200',
+    activeClass: 'bg-card text-white border-border',
+    badgeClass: 'bg-muted/40 text-muted-foreground border-border',
     maxSections: undefined,
   },
   court_full: {
@@ -2025,8 +2025,8 @@ const MODE_CONFIG: Record<ResponseMode, {
     ar: 'نظرية الشامسي',
     en: 'Al-Shamsi Theory',
     descAr: 'تحليل مُعمَّق بنظرية الشامسي — 11 بُعداً للقرار الخوارزمي والذكاء الاصطناعي',
-    activeClass: 'bg-blue-700 text-white border-blue-700',
-    badgeClass: 'bg-blue-50 text-blue-700 border-blue-200',
+    activeClass: 'bg-heading text-white border-heading/50',
+    badgeClass: 'bg-heading/10 text-heading border-heading/25',
     maxSections: undefined,
   },
   scenario_builder: {
@@ -2034,8 +2034,8 @@ const MODE_CONFIG: Record<ResponseMode, {
     ar: 'تعليم السيناريوهات / بناء القضية',
     en: 'Scenario Builder',
     descAr: 'يُقيّم اكتمال السيناريو ويرشدك لبناء قضية قانونية متكاملة',
-    activeClass: 'bg-teal-600 text-white border-teal-600',
-    badgeClass: 'bg-teal-50 text-teal-700 border-teal-200',
+    activeClass: 'bg-heading text-white border-heading/50',
+    badgeClass: 'bg-heading/10 text-heading border-heading/25',
     maxSections: undefined,
   },
   // V5.0 — Section 3: Judicial Review Simulator
@@ -2044,8 +2044,8 @@ const MODE_CONFIG: Record<ResponseMode, {
     ar: 'المراجعة القضائية الافتراضية',
     en: 'Judicial Review Simulator',
     descAr: '5 وجهات نظر متمايزة + احتمالية تأييد / تعديل / إلغاء / إعادة التحقيق',
-    activeClass: 'bg-rose-700 text-white border-rose-700',
-    badgeClass: 'bg-rose-50 text-rose-700 border-rose-200',
+    activeClass: 'bg-destructive text-white border-destructive/50',
+    badgeClass: 'bg-destructive/10 text-destructive border-destructive/25',
     maxSections: undefined,
   },
   // V5.0 — Section 5: Legal Risk Engine
@@ -2405,7 +2405,7 @@ function CitationChip({ token, citation }: { token: string; citation?: Citation 
             onClick={() => copy(citation.formats![fmt])}
             className="flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
           >
-            {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+            {copied ? <Check className="w-3 h-3 text-heading" /> : <Copy className="w-3 h-3" />}
             {copied ? 'تم النسخ' : 'نسخ'}
           </button>
         </div>
@@ -2726,14 +2726,14 @@ function deriveStrengths(text: string, citations: Citation[]): {
 function AnswerStrengthIndicator({ text, citations }: { text: string; citations: Citation[] }) {
   const s = deriveStrengths(text, citations);
   const confColor =
-    s.confidence >= 90 ? 'text-emerald-600' :
-    s.confidence >= 75 ? 'text-gold'   : 'text-rose-600';
+    s.confidence >= 90 ? 'text-heading' :
+    s.confidence >= 75 ? 'text-gold'   : 'text-destructive';
   const confDot =
     s.confidence >= 90 ? '🟢' :
     s.confidence >= 75 ? '🟡' : '🔴';
   const riskColor =
-    s.disagreementRisk === 'منخفض'  ? 'text-emerald-700' :
-    s.disagreementRisk === 'متوسط'  ? 'text-gold'   : 'text-rose-700';
+    s.disagreementRisk === 'منخفض'  ? 'text-heading' :
+    s.disagreementRisk === 'متوسط'  ? 'text-gold'   : 'text-destructive';
 
   return (
     <div
@@ -2809,13 +2809,13 @@ function AssistantContent({
 
       {/* Theory Lens section */}
       {theory && (
-        <div className="mt-4 border-l-4 border-violet-400 pl-3 rounded-r-lg bg-violet-50/60 py-2 pr-2 space-y-1">
+        <div className="mt-4 border-l-4 border-heading/40 pl-3 rounded-r-lg bg-heading/10 py-2 pr-2 space-y-1">
           <div className="flex items-center gap-1.5 mb-2">
-            <FlaskConical className="w-3.5 h-3.5 text-violet-600 shrink-0" />
-            <span className="text-[11px] font-bold text-violet-700 uppercase tracking-wide">
+            <FlaskConical className="w-3.5 h-3.5 text-heading shrink-0" />
+            <span className="text-[11px] font-bold text-heading uppercase tracking-wide">
               {label ?? 'Theory Lens'}
             </span>
-            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-violet-200 text-violet-700 font-semibold border border-violet-300">
+            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-heading/20 text-heading font-semibold border border-heading/30">
               Non-Binding
             </span>
           </div>
@@ -2875,10 +2875,10 @@ function ScenarioInputPanel({
   const sel = 'text-[11px] rounded-lg border border-border bg-background px-2 py-1 text-foreground cursor-pointer disabled:opacity-50';
   return (
     <div
-      className="mb-2 rounded-xl border border-teal-200 bg-teal-50/60 px-3 py-2 flex flex-wrap gap-3 items-center"
+      className="mb-2 rounded-xl border border-heading/25 bg-heading/10 px-3 py-2 flex flex-wrap gap-3 items-center"
       dir="rtl"
     >
-      <span className="text-[10px] font-semibold text-teal-700 shrink-0">🧩 {t('محرك السيناريو', 'Scenario Engine')}</span>
+      <span className="text-[10px] font-semibold text-heading shrink-0">🧩 {t('محرك السيناريو', 'Scenario Engine')}</span>
       {/* Case type */}
       <div className="flex items-center gap-1">
         <label className="text-[10px] text-muted-foreground">{t('نوع القضية', 'Case type')}</label>
@@ -3050,14 +3050,14 @@ function PreAnalysisPanel({
             {identityChosen && selectedIdentity && (
               <div className={`mx-3 mb-3 mt-2 rounded-lg px-3 py-2 text-[11px] ${
                 isPolice
-                  ? 'bg-blue-50 border border-blue-200'
+                  ? 'bg-heading/10 border border-heading/25'
                   : 'bg-primary/5 border border-primary/15'
               }`}>
-                <p className={`font-bold mb-0.5 ${isPolice ? 'text-blue-800' : 'text-primary'}`}>
+                <p className={`font-bold mb-0.5 ${isPolice ? 'text-heading' : 'text-primary'}`}>
                   {selectedIdentity.emoji} {selectedIdentity.labelAr}
                 </p>
                 {isPolice && (
-                  <p className="text-[10px] text-blue-700 font-medium">
+                  <p className="text-[10px] text-heading font-medium">
                     🔍 تُفعَّل الوحدة الخاصة بالشرطة — 15 محوراً إجرائياً إضافياً في كل إجابة
                   </p>
                 )}
@@ -3172,17 +3172,17 @@ function PreAnalysisPanel({
           {/* ── Comparative Law toggle, Al-Shamsi toggle & Expert Mode toggle — hidden in the simplified assistant view */}
           {SHOW_LEGACY_CHAT_UI && (
           <>
-          <label htmlFor="comparativeMode" className="flex items-start gap-3 rounded-xl px-3 py-2.5 cursor-pointer bg-indigo-50 border border-indigo-200">
+          <label htmlFor="comparativeMode" className="flex items-start gap-3 rounded-xl px-3 py-2.5 cursor-pointer bg-heading/10 border border-heading/25">
             <input
               type="checkbox"
               id="comparativeMode"
               checked={config.comparativeMode}
               onChange={() => onChange({ ...config, comparativeMode: !config.comparativeMode })}
-              className="w-4 h-4 mt-0.5 shrink-0 accent-indigo-700"
+              className="w-4 h-4 mt-0.5 shrink-0 accent-heading"
             />
             <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-bold leading-tight text-indigo-800">🇦🇪↔🇫🇷 القانون المقارن: الإمارات ↔ فرنسا</p>
-              <p className="text-[9px] leading-relaxed mt-0.5 text-indigo-500">
+              <p className="text-[11px] font-bold leading-tight text-heading">🇦🇪↔🇫🇷 القانون المقارن: الإمارات ↔ فرنسا</p>
+              <p className="text-[9px] leading-relaxed mt-0.5 text-heading">
                 مقارنة منهجية بين الموقف الإماراتي والموقف الفرنسي مع جدول مقارن في كل إجابة.
               </p>
             </div>
@@ -3214,7 +3214,7 @@ function PreAnalysisPanel({
             <button type="button" onClick={onToggleExpert}
               className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors shrink-0 ${expertMode ? 'bg-gold' : 'bg-muted border border-border'}`}
             >
-              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${expertMode ? 'translate-x-4' : 'translate-x-0.5'}`} />
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-card shadow transition-transform ${expertMode ? 'translate-x-4' : 'translate-x-0.5'}`} />
             </button>
           </div>
           </>
@@ -3398,12 +3398,12 @@ function SessionConfigBar({ config, expertMode, onEdit }: {
       )}
       {/* Extra state badges — hidden in the simplified assistant view; role/jurisdiction/answer-mode above are the only selectors shown */}
       {SHOW_LEGACY_CHAT_UI && POLICE_IDENTITY_TYPES.has(config.userType) && (
-        <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full font-bold">
+        <span className="text-[10px] bg-heading/10 text-heading border border-heading/25 px-2 py-0.5 rounded-full font-bold">
           🔍 وحدة الشرطة
         </span>
       )}
       {SHOW_LEGACY_CHAT_UI && config.comparativeMode && (
-        <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+        <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-heading/10 text-heading border border-heading/25">
           🇦🇪↔🇫🇷 مقارنة إماراتي–فرنسي
         </span>
       )}
@@ -3636,14 +3636,14 @@ interface QuickAction {
 }
 
 const QUICK_ACTIONS: QuickAction[] = [
-  { key: 'legislation',  emoji: '📚', ar: 'التشريعات',                  color: 'bg-blue-50 border-blue-200 text-blue-800 hover:bg-blue-100' },
-  { key: 'cases',        emoji: '⚖',  ar: 'السوابق القضائية',           color: 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100' },
-  { key: 'fiqh',         emoji: '📚', ar: 'الفقه',                      color: 'bg-emerald-50 border-emerald-200 text-emerald-800 hover:bg-emerald-100' },
-  { key: 'french',       emoji: '🇫🇷', ar: 'مقارنة بالقانون الفرنسي',   color: 'bg-indigo-50 border-indigo-200 text-indigo-800 hover:bg-indigo-100' },
+  { key: 'legislation',  emoji: '📚', ar: 'التشريعات',                  color: 'bg-heading/10 border-heading/25 text-heading hover:bg-heading/15' },
+  { key: 'cases',        emoji: '⚖',  ar: 'السوابق القضائية',           color: 'bg-muted/40 border-border text-muted-foreground hover:bg-muted/60' },
+  { key: 'fiqh',         emoji: '📚', ar: 'الفقه',                      color: 'bg-heading/10 border-heading/25 text-heading hover:bg-heading/15' },
+  { key: 'french',       emoji: '🇫🇷', ar: 'مقارنة بالقانون الفرنسي',   color: 'bg-heading/10 border-heading/25 text-heading hover:bg-heading/15' },
   { key: 'uae_compare',  emoji: '🇦🇪', ar: 'مقارنة بالقانون الإماراتي', color: 'bg-heading/10 border-heading/25 text-heading/75 hover:bg-heading/15' },
-  { key: 'ai_analysis',  emoji: '🧠', ar: 'تحليل الذكاء الاصطناعي',    color: 'bg-purple-50 border-purple-200 text-purple-800 hover:bg-purple-100' },
+  { key: 'ai_analysis',  emoji: '🧠', ar: 'تحليل الذكاء الاصطناعي',    color: 'bg-heading/10 border-heading/25 text-heading hover:bg-heading/15' },
   { key: 'shamsi',       emoji: '⚙',  ar: 'تطبيق نظرية الشامسي',       color: 'bg-gold/10 border-gold/25 text-gold/75 hover:bg-gold/15' },
-  { key: 'memorandum',   emoji: '📝', ar: 'مذكرة قانونية',              color: 'bg-rose-50 border-rose-200 text-rose-800 hover:bg-rose-100' },
+  { key: 'memorandum',   emoji: '📝', ar: 'مذكرة قانونية',              color: 'bg-destructive/10 border-destructive/25 text-destructive hover:bg-destructive/15' },
   { key: 'appeal',       emoji: '📝', ar: 'صياغة صحيفة طعن',           color: 'bg-gold/10 border-gold/25 text-gold/75 hover:bg-gold/15' },
   { key: 'export_word',  emoji: '📄', ar: 'Word',                       color: 'bg-muted border-border text-muted-foreground hover:bg-muted/60' },
   { key: 'export_pdf',   emoji: '📑', ar: 'PDF',                        color: 'bg-muted border-border text-muted-foreground hover:bg-muted/60' },
@@ -4096,21 +4096,21 @@ function CaseLifecycleTracker({
 }) {
   const pct = Math.round((stage / 10) * 100);
   return (
-    <div className="mb-2 rounded-xl border border-indigo-200 bg-indigo-50/60 px-3 py-2" dir="rtl">
+    <div className="mb-2 rounded-xl border border-heading/25 bg-heading/10 px-3 py-2" dir="rtl">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[10px] font-semibold text-indigo-700">⚖️ محرك دورة حياة القضية — المرحلة {stage} من 10</span>
+        <span className="text-[10px] font-semibold text-heading">⚖️ محرك دورة حياة القضية — المرحلة {stage} من 10</span>
         <button
           type="button"
           onClick={onClose}
-          className="text-[9px] text-indigo-400 hover:text-indigo-700 transition-colors"
+          className="text-[9px] text-heading hover:text-heading transition-colors"
         >
           إغلاق
         </button>
       </div>
       {/* Progress bar */}
-      <div className="w-full bg-indigo-100 rounded-full h-1.5 mb-2">
+      <div className="w-full bg-heading/15 rounded-full h-1.5 mb-2">
         <div
-          className="bg-indigo-600 h-1.5 rounded-full transition-all"
+          className="bg-heading h-1.5 rounded-full transition-all"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -4123,17 +4123,17 @@ function CaseLifecycleTracker({
             onClick={() => onStageChange(s.id)}
             className={`text-[9px] px-2 py-0.5 rounded-full border transition-colors ${
               s.id === stage
-                ? 'bg-indigo-600 text-white border-indigo-600'
+                ? 'bg-heading text-white border-heading/50'
                 : s.id < stage
-                  ? 'bg-indigo-100 text-indigo-600 border-indigo-200'
-                  : 'bg-white text-muted-foreground border-border'
+                  ? 'bg-heading/15 text-heading border-heading/25'
+                  : 'bg-card text-muted-foreground border-border'
             }`}
           >
             {s.emoji} {s.ar}
           </button>
         ))}
       </div>
-      <p className="text-[9px] text-indigo-500 mt-1.5">
+      <p className="text-[9px] text-heading mt-1.5">
         {stage < 10
           ? `التالية: ${CASE_LIFECYCLE_STAGES[stage]?.emoji} ${CASE_LIFECYCLE_STAGES[stage]?.ar} · الإنجاز الكلي ${pct}%`
           : `✅ القضية مكتملة — ${pct}% إنجاز`
@@ -5251,8 +5251,8 @@ export default function AiAssistant() {
                     disabled={courtLoading}
                     className={`flex items-center gap-1.5 text-[11px] font-medium px-3 py-1.5 rounded-full border transition-colors disabled:opacity-40 ${
                       supremeCourtMode
-                        ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
-                        : 'bg-background text-muted-foreground border-border hover:border-purple-400 hover:text-purple-700'
+                        ? 'bg-heading text-white border-heading/50 shadow-sm'
+                        : 'bg-background text-muted-foreground border-border hover:border-heading/40 hover:text-heading'
                     }`}
                   >
                     🔬 {supremeCourtMode ? 'المحكمة العليا — فعّال' : 'اختبار المحكمة العليا'}
@@ -5269,8 +5269,8 @@ export default function AiAssistant() {
                   disabled={sending}
                   className={`flex items-center gap-1.5 text-[11px] font-medium px-3 py-1.5 rounded-full border transition-colors disabled:opacity-40 ${
                     showLifecycle && lifecycleStage > 0
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                      : 'bg-background text-muted-foreground border-border hover:border-indigo-400 hover:text-indigo-700'
+                      ? 'bg-heading text-white border-heading/50 shadow-sm'
+                      : 'bg-background text-muted-foreground border-border hover:border-heading/40 hover:text-heading'
                   }`}
                 >
                   ⚖️ {showLifecycle && lifecycleStage > 0 ? `دورة الحياة — م${lifecycleStage}` : 'دورة حياة القضية'}

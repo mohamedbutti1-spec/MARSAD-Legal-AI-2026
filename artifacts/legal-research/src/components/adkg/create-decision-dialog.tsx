@@ -154,12 +154,12 @@ export function CreateDecisionDialog({ open, onClose, onSave }: CreateDecisionDi
             />
           </div>
 
-          {error && <p className="text-xs text-red-600">{error}</p>}
+          {error && <p className="text-xs text-destructive">{error}</p>}
         </div>
 
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={() => { reset(); onClose(); }} disabled={saving}>{t('إلغاء', 'Cancel')}</Button>
-          <Button onClick={handleSave} disabled={saving} className="bg-[#1e3a5f] hover:bg-[#2d5a8f] text-white">
+          <Button onClick={handleSave} disabled={saving} className="bg-primary hover:opacity-90 text-white">
             {saving && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
             {t('إنشاء', 'Create')}
           </Button>

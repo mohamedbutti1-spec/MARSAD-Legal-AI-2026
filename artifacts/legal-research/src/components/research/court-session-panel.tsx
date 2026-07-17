@@ -32,7 +32,7 @@ function ScoreBar({ label, value, color }: { label: string; value: number; color
       <div className="h-1.5 rounded-full bg-muted overflow-hidden">
         <div
           className={`h-full rounded-full transition-all duration-700 ${
-            value >= 70 ? 'bg-emerald-500' : value >= 40 ? 'bg-gold' : 'bg-red-500'
+            value >= 70 ? 'bg-heading' : value >= 40 ? 'bg-gold' : 'bg-destructive'
           }`}
           style={{ width: `${value}%` }}
         />
@@ -43,9 +43,9 @@ function ScoreBar({ label, value, color }: { label: string; value: number; color
 
 function StrengthBadge({ strength }: { strength: string }) {
   const cfg =
-    strength === 'قوي'   ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+    strength === 'قوي'   ? 'bg-heading/10 text-heading border-heading/25' :
     strength === 'متوسط' ? 'bg-gold/10  text-gold  border-gold/25'   :
-                           'bg-red-50    text-red-700    border-red-200';
+                           'bg-destructive/10    text-destructive    border-destructive/25';
   return (
     <span className={`text-[10px] border rounded-full px-2 py-0.5 font-medium ${cfg}`}>
       {strength}
@@ -84,7 +84,7 @@ function SectionCard({
         </div>
         <div className="flex items-center gap-2">
           {loading && <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />}
-          {!loading && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+          {!loading && <CheckCircle2 className="w-3.5 h-3.5 text-heading" />}
           {open ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
         </div>
       </button>
@@ -146,9 +146,9 @@ function resolveShamsiStatus(p: CourtShamsiPrinciple): 'مُستوفى' | 'جز�
 }
 
 function ShamsiStatusIcon({ status }: { status: 'مُستوفى' | 'جزئي' | 'مخفق' }) {
-  if (status === 'مُستوفى') return <span className="text-emerald-600 font-bold text-base">✓</span>;
+  if (status === 'مُستوفى') return <span className="text-heading font-bold text-base">✓</span>;
   if (status === 'جزئي')   return <span className="text-gold  font-bold text-base">△</span>;
-  return                          <span className="text-red-600    font-bold text-base">✗</span>;
+  return                          <span className="text-destructive    font-bold text-base">✗</span>;
 }
 
 function ShamsiMatrix({ items }: { items: CourtShamsiPrinciple[] }) {
@@ -161,13 +161,13 @@ function ShamsiMatrix({ items }: { items: CourtShamsiPrinciple[] }) {
         const status = resolveShamsiStatus(p);
         const score  = Math.min(100, Math.max(0, Number(p.score ?? 0)));
         const statusBg =
-          status === 'مُستوفى' ? 'border-emerald-200 bg-emerald-50/40' :
+          status === 'مُستوفى' ? 'border-heading/25 bg-heading/10' :
           status === 'جزئي'   ? 'border-gold/25  bg-gold/40'   :
-                                 'border-red-200    bg-red-50/40';
+                                 'border-destructive/25    bg-destructive/10';
         const scoreColor =
-          score >= 70 ? 'text-emerald-600' : score >= 40 ? 'text-gold' : 'text-red-600';
+          score >= 70 ? 'text-heading' : score >= 40 ? 'text-gold' : 'text-destructive';
         const barColor =
-          score >= 70 ? 'bg-emerald-500' : score >= 40 ? 'bg-gold' : 'bg-red-500';
+          score >= 70 ? 'bg-heading' : score >= 40 ? 'bg-gold' : 'bg-destructive';
         const key = p.id || String(idx);
 
         return (
@@ -204,7 +204,7 @@ function ShamsiMatrix({ items }: { items: CourtShamsiPrinciple[] }) {
                 </div>
                 {/* 2 — Evidence (always, with placeholder) */}
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-blue-600 mb-0.5 flex items-center gap-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-heading mb-0.5 flex items-center gap-1">
                     <Search className="w-3 h-3" /> الأدلة المستند إليها
                   </p>
                   <p className="text-muted-foreground leading-relaxed">
@@ -213,7 +213,7 @@ function ShamsiMatrix({ items }: { items: CourtShamsiPrinciple[] }) {
                 </div>
                 {/* 3 — Human oversight (always, with placeholder) */}
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-purple-600 mb-0.5 flex items-center gap-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-heading mb-0.5 flex items-center gap-1">
                     <Eye className="w-3 h-3" /> الرقابة البشرية
                   </p>
                   <p className="text-muted-foreground leading-relaxed">
@@ -222,13 +222,13 @@ function ShamsiMatrix({ items }: { items: CourtShamsiPrinciple[] }) {
                 </div>
                 {/* 4 — Legal risk (always) */}
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-red-500 mb-0.5">المخاطر القانونية</p>
-                  <p className="text-red-700 text-xs leading-relaxed">{p.legalRisk || '—'}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-destructive mb-0.5">المخاطر القانونية</p>
+                  <p className="text-destructive text-xs leading-relaxed">{p.legalRisk || '—'}</p>
                 </div>
                 {/* 5 — Recommendation (always) */}
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-600 mb-0.5">التوصية</p>
-                  <p className="text-emerald-700 text-xs leading-relaxed">{p.recommendation || '—'}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-heading mb-0.5">التوصية</p>
+                  <p className="text-heading text-xs leading-relaxed">{p.recommendation || '—'}</p>
                 </div>
               </div>
             )}
@@ -243,11 +243,11 @@ function ShamsiMatrix({ items }: { items: CourtShamsiPrinciple[] }) {
         const failed    = items.filter(p => resolveShamsiStatus(p) === 'مخفق').length;
         return (
           <div className="mt-3 flex items-center justify-center gap-4 border border-border/50 rounded-lg py-2 bg-muted/20 text-[11px]" dir="rtl">
-            <span className="flex items-center gap-1 text-emerald-700 font-semibold">✓ مُستوفى: {satisfied}</span>
+            <span className="flex items-center gap-1 text-heading font-semibold">✓ مُستوفى: {satisfied}</span>
             <span className="text-muted-foreground/40">|</span>
             <span className="flex items-center gap-1 text-gold font-semibold">△ جزئي: {partial}</span>
             <span className="text-muted-foreground/40">|</span>
-            <span className="flex items-center gap-1 text-red-600 font-semibold">✗ مخفق: {failed}</span>
+            <span className="flex items-center gap-1 text-destructive font-semibold">✗ مخفق: {failed}</span>
           </div>
         );
       })()}
@@ -391,7 +391,7 @@ function DigitalWillEngine({ session, loading }: { session: CourtSessionData; lo
             {stages.map((stage, idx) => {
               const isActive = loading && idx === activeIdx;
               const statusColor = stage.done
-                ? 'text-emerald-600 border-emerald-400 bg-emerald-50'
+                ? 'text-heading border-heading/40 bg-heading/10'
                 : isActive
                 ? 'text-gold border-gold/80 bg-gold/10 animate-pulse'
                 : 'text-muted-foreground border-border bg-muted/30';
@@ -401,7 +401,7 @@ function DigitalWillEngine({ session, loading }: { session: CourtSessionData; lo
                     {/* Step indicator */}
                     <div className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold border-2 mt-0.5 ${
                       stage.done
-                        ? 'bg-emerald-500 text-white border-emerald-500'
+                        ? 'bg-heading text-white border-heading/40'
                         : isActive
                         ? 'bg-gold/80 text-white border-gold/80'
                         : 'bg-muted text-muted-foreground border-border/60'
@@ -424,9 +424,9 @@ function DigitalWillEngine({ session, loading }: { session: CourtSessionData; lo
                   </div>
                   {idx < stages.length - 1 && (
                     <div className="flex flex-col items-center w-6 shrink-0">
-                      <div className={`w-0.5 h-3 ${stage.done ? 'bg-emerald-400' : 'bg-border'}`} />
-                      <ArrowDown className={`w-3 h-3 ${stage.done ? 'text-emerald-400' : 'text-border'}`} />
-                      <div className={`w-0.5 h-1 ${stages[idx + 1]?.done ? 'bg-emerald-400' : 'bg-border'}`} />
+                      <div className={`w-0.5 h-3 ${stage.done ? 'bg-heading' : 'bg-border'}`} />
+                      <ArrowDown className={`w-3 h-3 ${stage.done ? 'text-heading' : 'text-border'}`} />
+                      <div className={`w-0.5 h-1 ${stages[idx + 1]?.done ? 'bg-heading' : 'bg-border'}`} />
                     </div>
                   )}
                 </React.Fragment>
@@ -445,7 +445,7 @@ function ASEPPanel({ report }: { report: ASEPReport }) {
   const [expanded, setExpanded] = useState<number | null>(null);
 
   const confColor = (c: number) =>
-    c >= 70 ? 'text-emerald-600' : c >= 40 ? 'text-gold' : 'text-red-600';
+    c >= 70 ? 'text-heading' : c >= 40 ? 'text-gold' : 'text-destructive';
 
   // Defensive: ensure answers is always an array and each entry has required fields
   const safeAnswers = Array.isArray(report.answers)
@@ -475,8 +475,8 @@ function ASEPPanel({ report }: { report: ASEPReport }) {
           <div className="h-2 rounded-full bg-muted overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-700 ${
-                safeExplainability >= 70 ? 'bg-emerald-500'
-                : safeExplainability >= 40 ? 'bg-gold' : 'bg-red-500'
+                safeExplainability >= 70 ? 'bg-heading'
+                : safeExplainability >= 40 ? 'bg-gold' : 'bg-destructive'
               }`}
               style={{ width: `${safeExplainability}%` }}
             />
@@ -532,7 +532,7 @@ function ASEPPanel({ report }: { report: ASEPReport }) {
                 <div className="flex-1 h-1 rounded-full bg-muted overflow-hidden">
                   <div
                     className={`h-full rounded-full ${
-                      qa.confidence >= 70 ? 'bg-emerald-500' : qa.confidence >= 40 ? 'bg-gold' : 'bg-red-500'
+                      qa.confidence >= 70 ? 'bg-heading' : qa.confidence >= 40 ? 'bg-gold' : 'bg-destructive'
                     }`}
                     style={{ width: `${qa.confidence}%` }}
                   />
@@ -594,8 +594,8 @@ function ScoresDashboard({ scores }: { scores: CourtScores }) {
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       {items.map((item) => {
         const color = item.inverse
-          ? item.value >= 70 ? 'text-red-600' : item.value >= 40 ? 'text-gold' : 'text-emerald-600'
-          : item.value >= 70 ? 'text-emerald-600' : item.value >= 40 ? 'text-gold' : 'text-red-600';
+          ? item.value >= 70 ? 'text-destructive' : item.value >= 40 ? 'text-gold' : 'text-heading'
+          : item.value >= 70 ? 'text-heading' : item.value >= 40 ? 'text-gold' : 'text-destructive';
         return <ScoreBar key={item.label} label={item.label} value={item.value} color={color} />;
       })}
     </div>
@@ -794,8 +794,8 @@ export function CourtSessionPanel({ session, onSupremeReview, onReset, loading }
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-[11px] font-bold text-muted-foreground">التوصية:</span>
                     <span className={`text-sm font-bold ${
-                      c.recommendation === 'قبول' ? 'text-emerald-600' :
-                      c.recommendation === 'رفض'  ? 'text-red-600'     : 'text-gold'
+                      c.recommendation === 'قبول' ? 'text-heading' :
+                      c.recommendation === 'رفض'  ? 'text-destructive'     : 'text-gold'
                     }`}>{c.recommendation}</span>
                   </div>
                 </div>
@@ -817,12 +817,12 @@ export function CourtSessionPanel({ session, onSupremeReview, onReset, loading }
                 <div className="space-y-3">
                   <div className="flex flex-wrap gap-2">
                     <span className={`text-sm font-bold px-3 py-1 rounded-full border ${
-                      o.decision.includes('قبول') ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'
+                      o.decision.includes('قبول') ? 'bg-heading/10 text-heading border-heading/25' : 'bg-destructive/10 text-destructive border-destructive/25'
                     }`}>{o.decision}</span>
                     <span className={`text-sm font-bold px-3 py-1 rounded-full border ${
-                      o.cancellation.includes('إلغاء') ? 'bg-red-50 text-red-700 border-red-200' :
+                      o.cancellation.includes('إلغاء') ? 'bg-destructive/10 text-destructive border-destructive/25' :
                       o.cancellation.includes('تعديل') ? 'bg-gold/10 text-gold border-gold/25' :
-                      'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      'bg-heading/10 text-heading border-heading/25'
                     }`}>{o.cancellation}</span>
                   </div>
                   <div>
@@ -856,8 +856,8 @@ export function CourtSessionPanel({ session, onSupremeReview, onReset, loading }
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-bold text-muted-foreground">قابل للاستئناف:</span>
                     {a.isAppealable
-                      ? <span className="text-emerald-600 font-bold text-sm flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> نعم</span>
-                      : <span className="text-red-600 font-bold text-sm flex items-center gap-1"><XCircle className="w-3.5 h-3.5" /> لا</span>
+                      ? <span className="text-heading font-bold text-sm flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> نعم</span>
+                      : <span className="text-destructive font-bold text-sm flex items-center gap-1"><XCircle className="w-3.5 h-3.5" /> لا</span>
                     }
                     <span className="text-[11px] text-muted-foreground me-auto">
                       فرص النجاح: <span className="font-bold">{a.successChance}%</span>
@@ -865,7 +865,7 @@ export function CourtSessionPanel({ session, onSupremeReview, onReset, loading }
                   </div>
                   {a.strongestGrounds.length > 0 && (
                     <div>
-                      <p className="text-[11px] font-bold text-emerald-700 mb-1 flex items-center gap-1">
+                      <p className="text-[11px] font-bold text-heading mb-1 flex items-center gap-1">
                         <TrendingUp className="w-3 h-3" /> أقوى أسباب الطعن
                       </p>
                       <ul className="list-disc list-inside space-y-0.5">
@@ -875,7 +875,7 @@ export function CourtSessionPanel({ session, onSupremeReview, onReset, loading }
                   )}
                   {a.weakestPoints.length > 0 && (
                     <div>
-                      <p className="text-[11px] font-bold text-red-600 mb-1 flex items-center gap-1">
+                      <p className="text-[11px] font-bold text-destructive mb-1 flex items-center gap-1">
                         <TrendingDown className="w-3 h-3" /> أضعف نقاط الحكم
                       </p>
                       <ul className="list-disc list-inside space-y-0.5">
@@ -904,14 +904,14 @@ export function CourtSessionPanel({ session, onSupremeReview, onReset, loading }
 
       {/* ARCHITECTURAL LOCK — Incomplete session banner */}
       {isIncomplete && failedComponents.length > 0 && (
-        <div className="border-2 border-red-400 rounded-xl p-4 bg-red-50/60" dir="rtl">
+        <div className="border-2 border-destructive/40 rounded-xl p-4 bg-destructive/10" dir="rtl">
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center shrink-0 mt-0.5">
-              <AlertTriangle className="w-4 h-4 text-red-600" />
+            <div className="w-8 h-8 rounded-full bg-destructive/15 flex items-center justify-center shrink-0 mt-0.5">
+              <AlertTriangle className="w-4 h-4 text-destructive" />
             </div>
             <div className="flex-1">
-              <h3 className="font-bold text-sm text-red-800 mb-1">جلسة غير مكتملة — الحكم موقوف</h3>
-              <p className="text-xs text-red-700 leading-relaxed mb-3">
+              <h3 className="font-bold text-sm text-destructive mb-1">جلسة غير مكتملة — الحكم موقوف</h3>
+              <p className="text-xs text-destructive leading-relaxed mb-3">
                 فشل أحد المكونات الإلزامية أو أكثر. لا يمكن إصدار حكم نهائي إلا بعد نجاح جميع المكونات الثلاثة: مصفوفة الشامسي، وبروتوكول قابلية التفسير (ASEP)، ومحرك الإرادة الرقمية.
               </p>
               <div className="space-y-1.5">
@@ -923,8 +923,8 @@ export function CourtSessionPanel({ session, onSupremeReview, onReset, loading }
                   return (
                     <div key={id} className={`flex items-center gap-2 text-xs rounded-lg px-2.5 py-1.5 border ${
                       failed
-                        ? 'border-red-300 bg-red-100/60 text-red-800'
-                        : 'border-emerald-300 bg-emerald-50/60 text-emerald-800'
+                        ? 'border-destructive/30 bg-destructive/10 text-destructive'
+                        : 'border-heading/30 bg-heading/10 text-heading'
                     }`}>
                       <span className="font-bold">{failed ? '✗' : '✓'}</span>
                       <span className="font-medium">{nameAr}</span>
@@ -934,7 +934,7 @@ export function CourtSessionPanel({ session, onSupremeReview, onReset, loading }
                   );
                 })}
                 {/* Digital Will Engine is always present (pure frontend) */}
-                <div className="flex items-center gap-2 text-xs rounded-lg px-2.5 py-1.5 border border-emerald-300 bg-emerald-50/60 text-emerald-800">
+                <div className="flex items-center gap-2 text-xs rounded-lg px-2.5 py-1.5 border border-heading/30 bg-heading/10 text-heading">
                   <span className="font-bold">✓</span>
                   <span className="font-medium">محرك الإرادة الرقمية</span>
                   <span className="text-muted-foreground">(Digital Will Engine)</span>
@@ -944,7 +944,7 @@ export function CourtSessionPanel({ session, onSupremeReview, onReset, loading }
               <button
                 type="button"
                 onClick={onReset}
-                className="mt-3 w-full py-2 text-xs font-semibold bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                className="mt-3 w-full py-2 text-xs font-semibold bg-destructive text-white rounded-lg hover:bg-destructive transition-colors"
               >
                 إعادة المحاكمة
               </button>
@@ -984,7 +984,7 @@ export function CourtSessionPanel({ session, onSupremeReview, onReset, loading }
             <button
               type="button"
               onClick={onSupremeReview}
-              className="mt-3 w-full flex items-center justify-center gap-2 py-2 text-sm font-medium bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              className="mt-3 w-full flex items-center justify-center gap-2 py-2 text-sm font-medium bg-heading text-white rounded-lg hover:bg-heading transition-colors"
             >
               🔬 اختبار المحكمة العليا
             </button>
@@ -1021,8 +1021,8 @@ export function CourtSessionPanel({ session, onSupremeReview, onReset, loading }
                 const val = sr[key];
                 if (!val) return null;
                 return (
-                  <div key={key} className="border-r-2 border-purple-300 pr-3">
-                    <p className="text-[11px] font-bold text-purple-700 mb-0.5">{icon} {labelAr}</p>
+                  <div key={key} className="border-r-2 border-heading/30 pr-3">
+                    <p className="text-[11px] font-bold text-heading mb-0.5">{icon} {labelAr}</p>
                     <p className="text-sm text-foreground leading-relaxed">{String(val)}</p>
                   </div>
                 );

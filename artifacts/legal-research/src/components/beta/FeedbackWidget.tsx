@@ -24,10 +24,10 @@ const CATEGORY_LABELS: Record<Category, string> = {
 };
 
 const SEVERITY_LABELS: Record<Severity, { label: string; colour: string }> = {
-  low:      { label: 'Low',      colour: 'text-slate-400' },
+  low:      { label: 'Low',      colour: 'text-muted-foreground' },
   medium:   { label: 'Medium',   colour: 'text-gold/80' },
   high:     { label: 'High',     colour: 'text-gold/80' },
-  critical: { label: 'Critical', colour: 'text-red-500' },
+  critical: { label: 'Critical', colour: 'text-destructive' },
 };
 
 export function BetaFeedbackWidget() {
@@ -137,9 +137,9 @@ export function BetaFeedbackWidget() {
             {/* Success state */}
             {done ? (
               <div className="py-8 flex flex-col items-center gap-3 text-center">
-                <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-full bg-heading/10 flex items-center justify-center">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
-                       className="w-6 h-6 text-emerald-400">
+                       className="w-6 h-6 text-heading">
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
                 </div>
@@ -187,7 +187,7 @@ export function BetaFeedbackWidget() {
                 {/* Description */}
                 <div>
                   <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                    Description <span className="text-red-400">*</span>
+                    Description <span className="text-destructive">*</span>
                   </label>
                   <textarea
                     value={description}
@@ -202,7 +202,7 @@ export function BetaFeedbackWidget() {
 
                 {/* Error */}
                 {error && (
-                  <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+                  <p className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">
                     {error}
                   </p>
                 )}

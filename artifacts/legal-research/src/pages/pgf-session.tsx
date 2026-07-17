@@ -215,10 +215,10 @@ function MentorPanel({ stage }: { stage: PgfWorkflowStage }) {
 
       {/* ❌ Do not do */}
       {stage.doNotDo && stage.doNotDo.length > 0 && (
-        <MentorAccordion icon="❌" title="لا تفعل" colorClass="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/10">
+        <MentorAccordion icon="❌" title="لا تفعل" colorClass="border-destructive/25 bg-destructive/10 dark:border-destructive/40 dark:bg-destructive/10">
           <ul className="space-y-1">
             {stage.doNotDo.map((d, i) => (
-              <li key={i} className="flex items-start gap-2 text-red-700 dark:text-red-400">
+              <li key={i} className="flex items-start gap-2 text-destructive">
                 <span className="shrink-0 mt-0.5">✗</span>{d}
               </li>
             ))}
@@ -228,10 +228,10 @@ function MentorPanel({ stage }: { stage: PgfWorkflowStage }) {
 
       {/* 📄 Required documents */}
       {stage.requiredDocumentsAtStage && stage.requiredDocumentsAtStage.length > 0 && (
-        <MentorAccordion icon="📄" title="المستندات المطلوبة في هذه المرحلة" colorClass="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/10">
+        <MentorAccordion icon="📄" title="المستندات المطلوبة في هذه المرحلة" colorClass="border-heading/25 bg-heading/10 dark:border-heading/40 dark:bg-heading/10">
           <ul className="space-y-1">
             {stage.requiredDocumentsAtStage.map((doc, i) => (
-              <li key={i} className="flex items-start gap-2 text-blue-700 dark:text-blue-300">
+              <li key={i} className="flex items-start gap-2 text-heading">
                 <span className="shrink-0 mt-0.5">📋</span>{doc}
               </li>
             ))}
@@ -244,7 +244,7 @@ function MentorPanel({ stage }: { stage: PgfWorkflowStage }) {
         <MentorAccordion icon="📌" title="متى تُصعّد؟" colorClass="border-gold/25 bg-gold/10 dark:border-gold/75 dark:bg-gold/10">
           <ul className="space-y-1">
             {stage.escalationTriggers.map((t, i) => (
-              <li key={i} className="flex items-start gap-2 text-gold dark:text-gold/40">
+              <li key={i} className="flex items-start gap-2 text-gold/40">
                 <span className="shrink-0 mt-0.5">↑</span>{t}
               </li>
             ))}
@@ -254,8 +254,8 @@ function MentorPanel({ stage }: { stage: PgfWorkflowStage }) {
 
       {/* 🧠 Professional judgment notes */}
       {stage.professionalJudgmentNotes && (
-        <MentorAccordion icon="🧠" title="الحكم المهني" colorClass="border-violet-200 bg-violet-50 dark:border-violet-800 dark:bg-violet-900/10">
-          <p className="text-violet-700 dark:text-violet-300">{stage.professionalJudgmentNotes}</p>
+        <MentorAccordion icon="🧠" title="الحكم المهني" colorClass="border-heading/25 bg-heading/10 dark:border-heading/40 dark:bg-heading/10">
+          <p className="text-heading">{stage.professionalJudgmentNotes}</p>
         </MentorAccordion>
       )}
     </div>
@@ -265,23 +265,23 @@ function MentorPanel({ stage }: { stage: PgfWorkflowStage }) {
 // ─── Institutional Memory Section ────────────────────────────────────────────
 
 const CATEGORY_COLOR: Record<InstitutionalMemoryCategory, string> = {
-  expert_practice:      'border-violet-200 bg-violet-50 dark:border-violet-800 dark:bg-violet-900/10',
-  frequent_mistake:     'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/10',
-  lesson_learned:       'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/10',
-  recommended_sequence: 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/10',
+  expert_practice:      'border-heading/25 bg-heading/10 dark:border-heading/40 dark:bg-heading/10',
+  frequent_mistake:     'border-destructive/25 bg-destructive/10 dark:border-destructive/40 dark:bg-destructive/10',
+  lesson_learned:       'border-heading/25 bg-heading/10 dark:border-heading/40 dark:bg-heading/10',
+  recommended_sequence: 'border-heading/25 bg-heading/10 dark:border-heading/40 dark:bg-heading/10',
   practical_tip:        'border-gold/25 bg-gold/10 dark:border-gold/75 dark:bg-gold/10',
   success_indicator:    'border-heading/25 bg-heading/10 dark:border-heading/75 dark:bg-heading/10',
   failure_indicator:    'border-gold/25 bg-gold/10 dark:border-gold/75 dark:bg-gold/10',
 };
 
 const CATEGORY_TEXT: Record<InstitutionalMemoryCategory, string> = {
-  expert_practice:      'text-violet-700 dark:text-violet-300',
-  frequent_mistake:     'text-red-700 dark:text-red-300',
-  lesson_learned:       'text-blue-700 dark:text-blue-300',
-  recommended_sequence: 'text-emerald-700 dark:text-emerald-300',
-  practical_tip:        'text-gold dark:text-gold/40',
-  success_indicator:    'text-heading dark:text-heading/40',
-  failure_indicator:    'text-gold dark:text-gold/40',
+  expert_practice:      'text-heading',
+  frequent_mistake:     'text-destructive',
+  lesson_learned:       'text-heading',
+  recommended_sequence: 'text-heading',
+  practical_tip:        'text-gold/40',
+  success_indicator:    'text-heading/40',
+  failure_indicator:    'text-gold/40',
 };
 
 function InstitutionalMemoryCard({ entry }: { entry: InstitutionalMemoryEntry }) {
@@ -407,22 +407,22 @@ function WorkflowStep({ step }: { step: ProfessionalWorkflowStep }) {
       </div>
 
       {/* Objective */}
-      <WorkflowBlock icon="🎯" label="الهدف" accent="bg-blue-50 dark:bg-blue-900/10">
+      <WorkflowBlock icon="🎯" label="الهدف" accent="bg-heading/10">
         <p className="text-sm text-foreground/80 leading-relaxed">{step.objective}</p>
       </WorkflowBlock>
 
       {/* Next action */}
-      <WorkflowBlock icon="⚡" label="الإجراء التالي الفوري" accent="bg-gold/10 dark:bg-gold/10">
+      <WorkflowBlock icon="⚡" label="الإجراء التالي الفوري" accent="bg-gold/10">
         <p className="text-sm text-foreground/80 leading-relaxed">{step.nextAction}</p>
       </WorkflowBlock>
 
       {/* Required documents */}
       {step.requiredDocuments.length > 0 && (
-        <WorkflowBlock icon="📄" label="المستندات المطلوبة" accent="bg-violet-50 dark:bg-violet-900/10">
+        <WorkflowBlock icon="📄" label="المستندات المطلوبة" accent="bg-heading/10">
           <ul className="space-y-1">
             {step.requiredDocuments.map((d, i) => (
               <li key={i} className="text-xs text-foreground/75 flex items-start gap-1.5">
-                <span className="text-violet-500 mt-0.5 shrink-0">•</span>{d}
+                <span className="text-heading mt-0.5 shrink-0">•</span>{d}
               </li>
             ))}
           </ul>
@@ -431,11 +431,11 @@ function WorkflowStep({ step }: { step: ProfessionalWorkflowStep }) {
 
       {/* Approvals */}
       {step.approvals.length > 0 && (
-        <WorkflowBlock icon="✅" label="الموافقات المطلوبة" accent="bg-emerald-50 dark:bg-emerald-900/10">
+        <WorkflowBlock icon="✅" label="الموافقات المطلوبة" accent="bg-heading/10">
           <ul className="space-y-1">
             {step.approvals.map((a, i) => (
               <li key={i} className="text-xs text-foreground/75 flex items-start gap-1.5">
-                <span className="text-emerald-500 mt-0.5 shrink-0">✓</span>{a}
+                <span className="text-heading mt-0.5 shrink-0">✓</span>{a}
               </li>
             ))}
           </ul>
@@ -444,11 +444,11 @@ function WorkflowStep({ step }: { step: ProfessionalWorkflowStep }) {
 
       {/* Checkpoints */}
       {step.checkpoints.length > 0 && (
-        <WorkflowBlock icon="🔍" label="نقاط التحقق" accent="bg-sky-50 dark:bg-sky-900/10">
+        <WorkflowBlock icon="🔍" label="نقاط التحقق" accent="bg-heading/10">
           <ul className="space-y-1">
             {step.checkpoints.map((c, i) => (
               <li key={i} className="text-xs text-foreground/75 flex items-start gap-1.5">
-                <span className="text-sky-500 mt-0.5 shrink-0">◇</span>{c}
+                <span className="text-heading mt-0.5 shrink-0">◇</span>{c}
               </li>
             ))}
           </ul>
@@ -457,14 +457,14 @@ function WorkflowStep({ step }: { step: ProfessionalWorkflowStep }) {
 
       {/* Branch rules */}
       {step.branchRules.length > 0 && (
-        <WorkflowBlock icon="🔀" label="المسارات الممكنة" accent="bg-indigo-50 dark:bg-indigo-900/10">
+        <WorkflowBlock icon="🔀" label="المسارات الممكنة" accent="bg-heading/10">
           <div className="space-y-2">
             {step.branchRules.map((b, i) => (
               <div key={i} className="text-xs">
-                <span className="font-semibold text-indigo-700 dark:text-indigo-300">إذا: </span>
+                <span className="font-semibold text-heading">إذا: </span>
                 <span className="text-foreground/70">{b.condition}</span>
                 <br />
-                <span className="font-semibold text-indigo-700 dark:text-indigo-300">→ </span>
+                <span className="font-semibold text-heading">→ </span>
                 <span className="text-foreground/80">{b.outcome}</span>
               </div>
             ))}
@@ -474,14 +474,14 @@ function WorkflowStep({ step }: { step: ProfessionalWorkflowStep }) {
 
       {/* Escalation rules */}
       {step.escalationRules.length > 0 && (
-        <WorkflowBlock icon="📌" label="شروط التصعيد" accent="bg-red-50 dark:bg-red-900/10">
+        <WorkflowBlock icon="📌" label="شروط التصعيد" accent="bg-destructive/10">
           <div className="space-y-2">
             {step.escalationRules.map((e, i) => (
               <div key={i} className="text-xs">
-                <span className="font-semibold text-red-700 dark:text-red-300">عند: </span>
+                <span className="font-semibold text-destructive">عند: </span>
                 <span className="text-foreground/70">{e.condition}</span>
                 <br />
-                <span className="font-semibold text-red-700 dark:text-red-300">→ </span>
+                <span className="font-semibold text-destructive">→ </span>
                 <span className="text-foreground/80">{e.action}</span>
               </div>
             ))}
@@ -490,7 +490,7 @@ function WorkflowStep({ step }: { step: ProfessionalWorkflowStep }) {
       )}
 
       {/* Expected output */}
-      <WorkflowBlock icon="📤" label="المخرج المتوقع" accent="bg-heading/10 dark:bg-heading/10">
+      <WorkflowBlock icon="📤" label="المخرج المتوقع" accent="bg-heading/10">
         <p className="text-sm text-foreground/80 leading-relaxed">{step.expectedOutput}</p>
       </WorkflowBlock>
     </div>
@@ -521,7 +521,7 @@ function WorkflowSection({
   if (!isLoading && steps.length === 0) return null;
 
   return (
-    <div className="rounded-2xl border border-dashed border-emerald-400/40 overflow-hidden" dir="rtl">
+    <div className="rounded-2xl border border-dashed border-heading/40 overflow-hidden" dir="rtl">
       {/* Header */}
       <button
         onClick={() => setOpen(!open)}
@@ -545,7 +545,7 @@ function WorkflowSection({
 
       {/* Body */}
       {open && (
-        <div className="px-5 pb-5 border-t border-dashed border-emerald-400/20 pt-4 space-y-6">
+        <div className="px-5 pb-5 border-t border-dashed border-heading/20 pt-4 space-y-6">
           {isLoading && (
             <div className="flex justify-center py-6">
               <Loader2 className="w-5 h-5 animate-spin text-primary" />
@@ -571,22 +571,22 @@ interface StepHistoryItem {
 }
 
 function ScoreBadge({ score, critical }: { score: number; critical: boolean }) {
-  const color = score >= 80 ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+  const color = score >= 80 ? 'bg-heading/15 text-heading border-heading/25'
     : score >= 60 ? 'bg-gold/15 text-gold/75 border-gold/25'
-    : 'bg-red-100 text-red-800 border-red-200';
+    : 'bg-destructive/15 text-destructive border-destructive/25';
   return (
     <span className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full border ${color}`} dir="ltr">
       {score}/100
-      {critical && score < 50 && <span className="text-red-600">⚠</span>}
+      {critical && score < 50 && <span className="text-destructive">⚠</span>}
     </span>
   );
 }
 
 function GradeBadge({ grade, score }: { grade: string; score: number }) {
   const colors: Record<string, string> = {
-    A: 'bg-emerald-500 text-white', B: 'bg-blue-500 text-white',
+    A: 'bg-heading text-white', B: 'bg-heading text-white',
     C: 'bg-gold text-white',   D: 'bg-gold text-white',
-    F: 'bg-red-600 text-white',
+    F: 'bg-destructive text-white',
   };
   return (
     <div className="flex flex-col items-center gap-1">
@@ -636,8 +636,8 @@ function SimFinalReportView({ report, scenarioTitle }: { report: PcsFinalReport;
           <p className="text-xs font-semibold text-muted-foreground mb-2">الملاحظات والأخطاء</p>
           <div className="space-y-2">
             {report.mistakes.map((m, i) => (
-              <div key={i} className="p-3 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 text-xs">
-                <p className="font-semibold text-red-800 dark:text-red-300 mb-1">{m.question}</p>
+              <div key={i} className="p-3 rounded-xl bg-destructive/10 border border-destructive/25 dark:border-destructive/40 text-xs">
+                <p className="font-semibold text-destructive mb-1">{m.question}</p>
                 <p className="text-foreground/70">{m.evaluation}</p>
               </div>
             ))}
@@ -649,7 +649,7 @@ function SimFinalReportView({ report, scenarioTitle }: { report: PcsFinalReport;
       {(report.missedDocuments.length > 0 || report.missedApprovals.length > 0) && (
         <div className="grid grid-cols-1 gap-3">
           {report.missedDocuments.length > 0 && (
-            <div className="p-3 rounded-xl bg-gold/10 dark:bg-gold/10 border border-gold/25 dark:border-gold/75">
+            <div className="p-3 rounded-xl bg-gold/10 border border-gold/25 dark:border-gold/75">
               <p className="text-xs font-semibold text-gold/75 dark:text-gold/40 mb-1.5">📄 مستندات لم تُذكر</p>
               <ul className="space-y-0.5">
                 {report.missedDocuments.map((d, i) => (
@@ -661,12 +661,12 @@ function SimFinalReportView({ report, scenarioTitle }: { report: PcsFinalReport;
             </div>
           )}
           {report.missedApprovals.length > 0 && (
-            <div className="p-3 rounded-xl bg-violet-50 dark:bg-violet-900/10 border border-violet-200 dark:border-violet-800">
-              <p className="text-xs font-semibold text-violet-800 dark:text-violet-300 mb-1.5">✅ موافقات لم تُذكر</p>
+            <div className="p-3 rounded-xl bg-heading/10 border border-heading/25 dark:border-heading/40">
+              <p className="text-xs font-semibold text-heading mb-1.5">✅ موافقات لم تُذكر</p>
               <ul className="space-y-0.5">
                 {report.missedApprovals.map((a, i) => (
                   <li key={i} className="text-xs text-foreground/70 flex items-start gap-1.5">
-                    <span className="text-violet-500 shrink-0">•</span>{a}
+                    <span className="text-heading shrink-0">•</span>{a}
                   </li>
                 ))}
               </ul>
@@ -677,8 +677,8 @@ function SimFinalReportView({ report, scenarioTitle }: { report: PcsFinalReport;
 
       {/* Strengths */}
       {report.strengths.length > 0 && (
-        <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800">
-          <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300 mb-1.5">💪 نقاط القوة</p>
+        <div className="p-3 rounded-xl bg-heading/10 border border-heading/25 dark:border-heading/40">
+          <p className="text-xs font-semibold text-heading mb-1.5">💪 نقاط القوة</p>
           <ul className="space-y-0.5">
             {report.strengths.map((s, i) => (
               <li key={i} className="text-xs text-foreground/70">{s}</li>
@@ -689,8 +689,8 @@ function SimFinalReportView({ report, scenarioTitle }: { report: PcsFinalReport;
 
       {/* Recommendations */}
       {report.recommendations.length > 0 && (
-        <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800">
-          <p className="text-xs font-semibold text-blue-800 dark:text-blue-300 mb-1.5">📌 توصيات التطوير</p>
+        <div className="p-3 rounded-xl bg-heading/10 border border-heading/25 dark:border-heading/40">
+          <p className="text-xs font-semibold text-heading mb-1.5">📌 توصيات التطوير</p>
           <ul className="space-y-1">
             {report.recommendations.slice(0, 5).map((r, i) => (
               <li key={i} className="text-xs text-foreground/70">{r}</li>
@@ -716,13 +716,13 @@ function StepEvalView({ evaluation, stepIdx, totalSteps }: { evaluation: PcsStep
       {/* Evaluation */}
       <div className={`p-3 rounded-xl text-xs leading-relaxed border ${
         evaluation.criticalError
-          ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800 text-foreground'
+          ? 'bg-destructive/10 border-destructive/25 dark:border-destructive/40 text-foreground'
           : evaluation.score >= 80
-            ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800 text-foreground'
-            : 'bg-gold/10 dark:bg-gold/10 border-gold/25 dark:border-gold/75 text-foreground'
+            ? 'bg-heading/10 border-heading/25 dark:border-heading/40 text-foreground'
+            : 'bg-gold/10 border-gold/25 dark:border-gold/75 text-foreground'
       }`}>
         {evaluation.criticalError && (
-          <p className="font-bold text-red-700 dark:text-red-400 mb-1">⚠️ خطأ في خطوة حرجة</p>
+          <p className="font-bold text-destructive mb-1">⚠️ خطأ في خطوة حرجة</p>
         )}
         {evaluation.evaluation}
       </div>
@@ -731,13 +731,13 @@ function StepEvalView({ evaluation, stepIdx, totalSteps }: { evaluation: PcsStep
       {(evaluation.missedDocuments.length > 0 || evaluation.missedApprovals.length > 0) && (
         <div className="space-y-1.5">
           {evaluation.missedDocuments.length > 0 && (
-            <div className="text-xs text-gold dark:text-gold/80">
+            <div className="text-xs text-gold/80">
               <span className="font-semibold">📄 مستندات لم تُذكر: </span>
               {evaluation.missedDocuments.join("، ")}
             </div>
           )}
           {evaluation.missedApprovals.length > 0 && (
-            <div className="text-xs text-violet-700 dark:text-violet-400">
+            <div className="text-xs text-heading">
               <span className="font-semibold">✅ موافقات لم تُذكر: </span>
               {evaluation.missedApprovals.join("، ")}
             </div>
@@ -746,7 +746,7 @@ function StepEvalView({ evaluation, stepIdx, totalSteps }: { evaluation: PcsStep
       )}
 
       {/* Recommendation */}
-      <div className="p-2.5 rounded-lg bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 text-xs text-blue-800 dark:text-blue-300">
+      <div className="p-2.5 rounded-lg bg-heading/10 border border-heading/25 dark:border-heading/40 text-xs text-heading">
         <span className="font-semibold">التوجيه: </span>{evaluation.recommendation}
       </div>
     </div>
@@ -859,7 +859,7 @@ function SimulatorSection({
   }
 
   return (
-    <div className="rounded-2xl border border-dashed border-sky-400/40 overflow-hidden" dir="rtl">
+    <div className="rounded-2xl border border-dashed border-heading/40 overflow-hidden" dir="rtl">
       {/* Header */}
       <button
         onClick={() => setOpen(!open)}
@@ -875,7 +875,7 @@ function SimulatorSection({
           )}
           {scenarioLoading && <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />}
           {phase === 'completed' && finalReport && (
-            <span className="text-xs bg-emerald-100 text-emerald-700 font-semibold px-2 py-0.5 rounded-full">
+            <span className="text-xs bg-heading/15 text-heading font-semibold px-2 py-0.5 rounded-full">
               {finalReport.grade} — {finalReport.totalScore}/100
             </span>
           )}
@@ -887,7 +887,7 @@ function SimulatorSection({
       </button>
 
       {open && (
-        <div className="border-t border-dashed border-sky-400/20">
+        <div className="border-t border-dashed border-heading/20">
 
           {/* ── IDLE ── */}
           {phase === 'idle' && (
@@ -960,7 +960,7 @@ function SimulatorSection({
               {/* Question */}
               <div className="space-y-1">
                 {currentStep.critical && (
-                  <span className="text-xs text-red-600 font-semibold flex items-center gap-1">
+                  <span className="text-xs text-destructive font-semibold flex items-center gap-1">
                     <AlertTriangle className="w-3 h-3" /> خطوة حرجة
                   </span>
                 )}
@@ -1051,7 +1051,7 @@ function SimulatorSection({
                   totalSteps={history.length}
                 />
               )}
-              <div className="border-t border-dashed border-sky-400/20 pt-4">
+              <div className="border-t border-dashed border-heading/20 pt-4">
                 <SimFinalReportView report={finalReport} scenarioTitle={scenarioTitle} />
               </div>
               <Button variant="outline" onClick={reset} className="w-full gap-2" size="sm">
@@ -1121,8 +1121,8 @@ function ExpertActionsPanel({
             <>
               {/* Why this matters */}
               {data.whyThisMatters && (
-                <div className="p-3 bg-gold/10 dark:bg-gold/10 border border-gold/25 dark:border-gold/75 rounded-xl">
-                  <p className="text-xs font-semibold text-gold dark:text-gold/80 mb-1">لماذا هذا يهمّ؟</p>
+                <div className="p-3 bg-gold/10 border border-gold/25 dark:border-gold/75 rounded-xl">
+                  <p className="text-xs font-semibold text-gold/80 mb-1">لماذا هذا يهمّ؟</p>
                   <p className="text-sm text-gold/75 dark:text-gold/40 leading-relaxed">{data.whyThisMatters}</p>
                 </div>
               )}
@@ -1228,7 +1228,7 @@ function StageForm({
             {(stage.expertFirstActions?.length || stage.mentorPrompt) && (
               <button
                 onClick={() => setShowExpert(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold/10 dark:bg-gold/20 border border-gold/25 dark:border-gold/75 text-gold dark:text-gold/40 text-xs font-medium hover:bg-gold/15 dark:hover:bg-gold/40 transition-colors shrink-0"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold/10 dark:bg-gold/20 border border-gold/25 dark:border-gold/75 text-gold/40 text-xs font-medium hover:bg-gold/15 dark:hover:bg-gold/40 transition-colors shrink-0"
               >
                 <Zap className="w-3.5 h-3.5" />
                 ماذا سيفعل الخبير؟
@@ -1303,8 +1303,8 @@ function StageForm({
 // ─── Confidence gauge ─────────────────────────────────────────────────────────
 
 function ConfidenceGauge({ score }: { score: number }) {
-  const color = score >= 80 ? 'text-emerald-600' : score >= 60 ? 'text-gold' : 'text-red-600';
-  const bg    = score >= 80 ? 'bg-emerald-500' : score >= 60 ? 'bg-gold' : 'bg-red-500';
+  const color = score >= 80 ? 'text-heading' : score >= 60 ? 'text-gold' : 'text-destructive';
+  const bg    = score >= 80 ? 'bg-heading' : score >= 60 ? 'bg-gold' : 'bg-destructive';
   return (
     <div className="flex items-center gap-3 p-4 bg-card border rounded-xl">
       <div className="relative w-14 h-14 shrink-0">
@@ -1342,10 +1342,10 @@ function SectionTitle({ icon, children }: { icon: React.ReactNode; children: Rea
 
 function LegalRefCard({ r }: { r: PgfLegalReference }) {
   return (
-    <div className={`p-3 rounded-lg border text-sm ${r.binding ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/10' : 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/10'}`}>
+    <div className={`p-3 rounded-lg border text-sm ${r.binding ? 'border-heading/25 bg-heading/10 dark:border-heading/40 dark:bg-heading/10' : 'border-heading/25 bg-heading/10 dark:border-heading/40 dark:bg-heading/10'}`}>
       <div className="flex items-center justify-between gap-2 mb-1">
         <Badge variant="outline" className="text-xs shrink-0">{r.type}</Badge>
-        <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${r.binding ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400'}`}>
+        <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${r.binding ? 'bg-heading/15 text-heading dark:bg-heading/40 dark:text-heading' : 'bg-heading/15 text-heading dark:bg-heading/40 dark:text-heading'}`}>
           {r.binding ? '⚖️ ملزم' : '💡 استرشادي'}
         </span>
       </div>
@@ -1357,9 +1357,9 @@ function LegalRefCard({ r }: { r: PgfLegalReference }) {
 
 function RiskCard({ risk }: { risk: PgfRisk }) {
   const conf = {
-    high:   { label: 'عالية',  className: 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/10', badge: 'bg-red-100 text-red-700' },
+    high:   { label: 'عالية',  className: 'border-destructive/25 bg-destructive/10 dark:border-destructive/40 dark:bg-destructive/10', badge: 'bg-destructive/15 text-destructive' },
     medium: { label: 'متوسطة', className: 'border-gold/25 bg-gold/10 dark:border-gold/75 dark:bg-gold/10', badge: 'bg-gold/15 text-gold' },
-    low:    { label: 'منخفضة', className: 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900/10', badge: 'bg-gray-100 text-gray-600' },
+    low:    { label: 'منخفضة', className: 'border-border bg-muted/40 dark:border-border dark:bg-card/10', badge: 'bg-muted/60 text-muted-foreground' },
   }[risk.severity] ?? { label: risk.severity, className: 'border-border bg-card', badge: 'bg-muted text-muted-foreground' };
 
   return (
@@ -1380,13 +1380,13 @@ function ChecklistRow({ item }: { item: PgfFinalChecklistResult }) {
     <div
       className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
         isNA ? 'opacity-50 cursor-default' : done
-          ? 'bg-emerald-50/50 dark:bg-emerald-900/5 border-emerald-200 dark:border-emerald-800'
+          ? 'bg-heading/10 dark:bg-heading/5 border-heading/25 dark:border-heading/40'
           : 'bg-card border-border hover:bg-muted/30'
       }`}
       onClick={() => !isNA && setDone(!done)}
     >
       <div className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
-        isNA ? 'border-muted bg-muted' : done ? 'bg-emerald-500 border-emerald-500' : 'border-muted-foreground/40'
+        isNA ? 'border-muted bg-muted' : done ? 'bg-heading border-heading/40' : 'border-muted-foreground/40'
       }`}>
         {done && !isNA && <CheckCircle2 className="w-3 h-3 text-white" />}
         {isNA && <span className="text-xs text-muted-foreground">—</span>}
@@ -1396,7 +1396,7 @@ function ChecklistRow({ item }: { item: PgfFinalChecklistResult }) {
         {item.note && <p className="text-xs text-muted-foreground mt-0.5">{item.note}</p>}
         <div className="flex items-center gap-2 mt-1">
           <Badge variant="outline" className="text-xs">{item.category}</Badge>
-          {item.mandatory && <span className="text-xs text-red-600 dark:text-red-400">إلزامي</span>}
+          {item.mandatory && <span className="text-xs text-destructive">إلزامي</span>}
           {isNA && <span className="text-xs text-muted-foreground">غير منطبق</span>}
         </div>
       </div>
@@ -1410,8 +1410,8 @@ function AssessmentView({
   return (
     <div className="space-y-6" dir="rtl">
       {/* Disclaimer */}
-      <div className="flex items-start gap-2 p-4 bg-gold/10 dark:bg-gold/10 border border-gold/25 dark:border-gold/75 rounded-xl">
-        <Info className="w-4 h-4 text-gold dark:text-gold/80 mt-0.5 shrink-0" />
+      <div className="flex items-start gap-2 p-4 bg-gold/10 border border-gold/25 dark:border-gold/75 rounded-xl">
+        <Info className="w-4 h-4 text-gold/80 mt-0.5 shrink-0" />
         <p className="text-sm text-gold/75 dark:text-gold/40">{output.disclaimer}</p>
       </div>
 
@@ -1429,11 +1429,11 @@ function AssessmentView({
 
       {/* Expert reasoning (PME field) */}
       {output.expertReasoning && (
-        <section className="p-4 bg-violet-50 dark:bg-violet-900/10 border border-violet-200 dark:border-violet-800 rounded-xl">
-          <SectionTitle icon={<Brain className="w-4.5 h-4.5 text-violet-500" />}>
+        <section className="p-4 bg-heading/10 border border-heading/25 dark:border-heading/40 rounded-xl">
+          <SectionTitle icon={<Brain className="w-4.5 h-4.5 text-heading" />}>
             تفكير الخبير
           </SectionTitle>
-          <p className="text-sm leading-loose text-violet-900 dark:text-violet-200 whitespace-pre-wrap">{output.expertReasoning}</p>
+          <p className="text-sm leading-loose text-heading whitespace-pre-wrap">{output.expertReasoning}</p>
         </section>
       )}
 
@@ -1441,10 +1441,10 @@ function AssessmentView({
       {output.verificationStatus && (
         <div className={`flex items-center gap-3 p-3 rounded-xl border text-sm font-medium ${
           output.verificationStatus === 'verified'
-            ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300'
+            ? 'bg-heading/10 border-heading/25 dark:border-heading/40 text-heading'
             : output.verificationStatus === 'needs_review'
-            ? 'bg-gold/10 dark:bg-gold/10 border-gold/25 dark:border-gold/75 text-gold dark:text-gold/40'
-            : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300'
+            ? 'bg-gold/10 border-gold/25 dark:border-gold/75 text-gold/40'
+            : 'bg-destructive/10 border-destructive/25 dark:border-destructive/40 text-destructive'
         }`}>
           {output.verificationStatus === 'verified'   && <><CheckCircle2 className="w-4 h-4 shrink-0" /> مُتحقَّق منه</>}
           {output.verificationStatus === 'needs_review' && <><AlertTriangle className="w-4 h-4 shrink-0" /> يحتاج مراجعة</>}
@@ -1463,13 +1463,13 @@ function AssessmentView({
       {/* Required actions */}
       {output.requiredActions?.length > 0 && (
         <section>
-          <SectionTitle icon={<ChevronRight className="w-4.5 h-4.5 text-blue-500" />}>
+          <SectionTitle icon={<ChevronRight className="w-4.5 h-4.5 text-heading" />}>
             الإجراءات المطلوبة
           </SectionTitle>
           <ul className="space-y-2">
             {output.requiredActions.map((a, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm p-3 bg-blue-50/60 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/40 rounded-lg">
-                <span className="text-blue-600 font-bold shrink-0 text-xs mt-0.5">{i + 1}.</span>
+              <li key={i} className="flex items-start gap-2 text-sm p-3 bg-heading/10 border border-heading/25 dark:border-heading/40 rounded-lg">
+                <span className="text-heading font-bold shrink-0 text-xs mt-0.5">{i + 1}.</span>
                 {a}
               </li>
             ))}
@@ -1480,13 +1480,13 @@ function AssessmentView({
       {/* Missing actions */}
       {output.missingActions?.length > 0 && (
         <section>
-          <SectionTitle icon={<XCircle className="w-4.5 h-4.5 text-red-500" />}>
+          <SectionTitle icon={<XCircle className="w-4.5 h-4.5 text-destructive" />}>
             الإجراءات الغائبة أو الناقصة
           </SectionTitle>
           <ul className="space-y-2">
             {output.missingActions.map((m, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm p-3 bg-red-50/60 dark:bg-red-900/10 border border-red-100 dark:border-red-900/40 rounded-lg">
-                <XCircle className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" />
+              <li key={i} className="flex items-start gap-2 text-sm p-3 bg-destructive/10 border border-destructive/25 dark:border-destructive/40 rounded-lg">
+                <XCircle className="w-3.5 h-3.5 text-destructive shrink-0 mt-0.5" />
                 {m}
               </li>
             ))}
@@ -1509,7 +1509,7 @@ function AssessmentView({
       {/* Legislation */}
       {(output.applicableLegislation?.length > 0 || output.applicableRegulations?.length > 0) && (
         <section>
-          <SectionTitle icon={<Shield className="w-4.5 h-4.5 text-emerald-500" />}>
+          <SectionTitle icon={<Shield className="w-4.5 h-4.5 text-heading" />}>
             التشريعات واللوائح المنطبقة
           </SectionTitle>
           <div className="grid gap-2 sm:grid-cols-2">
@@ -1518,8 +1518,8 @@ function AssessmentView({
             ))}
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            <span className="text-emerald-600 font-medium">⚖️ ملزم</span> = متطلب قانوني إلزامي &nbsp;|&nbsp;
-            <span className="text-blue-600 font-medium">💡 استرشادي</span> = ممارسة موصى بها
+            <span className="text-heading font-medium">⚖️ ملزم</span> = متطلب قانوني إلزامي &nbsp;|&nbsp;
+            <span className="text-heading font-medium">💡 استرشادي</span> = ممارسة موصى بها
           </p>
         </section>
       )}
@@ -1527,13 +1527,13 @@ function AssessmentView({
       {/* Best practices */}
       {output.bestPractices?.length > 0 && (
         <section>
-          <SectionTitle icon={<BookMarked className="w-4.5 h-4.5 text-violet-500" />}>
+          <SectionTitle icon={<BookMarked className="w-4.5 h-4.5 text-heading" />}>
             الممارسات الفضلى للموقف الحالي
           </SectionTitle>
           <ul className="space-y-1.5">
             {output.bestPractices.map((b, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm p-2.5 bg-violet-50/60 dark:bg-violet-900/10 border border-violet-100 dark:border-violet-900/40 rounded-lg">
-                <Star className="w-3.5 h-3.5 text-violet-500 shrink-0 mt-0.5" />
+              <li key={i} className="flex items-start gap-2 text-sm p-2.5 bg-heading/10 border border-heading/25 dark:border-heading/40 rounded-lg">
+                <Star className="w-3.5 h-3.5 text-heading shrink-0 mt-0.5" />
                 {b}
               </li>
             ))}
@@ -1544,15 +1544,15 @@ function AssessmentView({
       {/* Common mistakes */}
       {output.commonMistakes?.length > 0 && (
         <section>
-          <SectionTitle icon={<FileWarning className="w-4.5 h-4.5 text-red-500" />}>
+          <SectionTitle icon={<FileWarning className="w-4.5 h-4.5 text-destructive" />}>
             الأخطاء الشائعة ذات الصلة
           </SectionTitle>
           <div className="space-y-3">
             {output.commonMistakes.map((m, i) => (
-              <div key={i} className="p-3 bg-red-50/40 dark:bg-red-900/5 border border-red-100 dark:border-red-900/30 rounded-lg text-sm" dir="rtl">
-                <p className="font-semibold text-red-700 dark:text-red-400">⚠ {m.mistake}</p>
+              <div key={i} className="p-3 bg-destructive/10 dark:bg-destructive/5 border border-destructive/25 dark:border-destructive/30 rounded-lg text-sm" dir="rtl">
+                <p className="font-semibold text-destructive">⚠ {m.mistake}</p>
                 <p className="text-muted-foreground mt-1 text-xs">العواقب: {m.consequence}</p>
-                <p className="text-emerald-700 dark:text-emerald-400 mt-0.5 text-xs">العلاج: {m.remedy}</p>
+                <p className="text-heading mt-0.5 text-xs">العلاج: {m.remedy}</p>
               </div>
             ))}
           </div>
@@ -1574,7 +1574,7 @@ function AssessmentView({
       {/* Final checklist */}
       {output.finalChecklist?.length > 0 && (
         <section>
-          <SectionTitle icon={<BarChart3 className="w-4.5 h-4.5 text-emerald-500" />}>
+          <SectionTitle icon={<BarChart3 className="w-4.5 h-4.5 text-heading" />}>
             قائمة التحقق النهائية
           </SectionTitle>
           <p className="text-xs text-muted-foreground mb-3">اضغط على البند لتعليمه منجزاً</p>

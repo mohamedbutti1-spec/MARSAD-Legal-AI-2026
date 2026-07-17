@@ -78,9 +78,9 @@ function getHeaders(role: string, userId: number, org: string) {
 
 function statusConfig(status: DecisionStatus) {
   switch (status) {
-    case 'sealed':   return { label: 'مختوم', bg: 'bg-blue-100 dark:bg-blue-950/40', text: 'text-blue-700 dark:text-blue-400' };
-    case 'active':   return { label: 'نشط', bg: 'bg-emerald-100 dark:bg-emerald-950/40', text: 'text-emerald-700 dark:text-emerald-400' };
-    case 'draft':    return { label: 'مسودة', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80' };
+    case 'sealed':   return { label: 'مختوم', bg: 'bg-heading/15 dark:bg-heading/40', text: 'text-heading' };
+    case 'active':   return { label: 'نشط', bg: 'bg-heading/15 dark:bg-heading/40', text: 'text-heading' };
+    case 'draft':    return { label: 'مسودة', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold/80' };
     case 'archived': return { label: 'مؤرشف', bg: 'bg-muted', text: 'text-muted-foreground' };
     default:         return { label: status, bg: 'bg-muted', text: 'text-muted-foreground' };
   }
@@ -88,10 +88,10 @@ function statusConfig(status: DecisionStatus) {
 
 function riskConfig(level: RiskLevel | null | undefined) {
   switch (level) {
-    case 'critical': return { label: 'حرج', bg: 'bg-red-100 dark:bg-red-950/40', text: 'text-red-700 dark:text-red-400', bar: 'bg-red-500' };
-    case 'high':     return { label: 'عالٍ', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80', bar: 'bg-gold' };
-    case 'moderate': return { label: 'متوسط', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80', bar: 'bg-gold' };
-    case 'low':      return { label: 'منخفض', bg: 'bg-emerald-100 dark:bg-emerald-950/40', text: 'text-emerald-700 dark:text-emerald-400', bar: 'bg-emerald-500' };
+    case 'critical': return { label: 'حرج', bg: 'bg-destructive/15 dark:bg-destructive/40', text: 'text-destructive', bar: 'bg-destructive' };
+    case 'high':     return { label: 'عالٍ', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold/80', bar: 'bg-gold' };
+    case 'moderate': return { label: 'متوسط', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold/80', bar: 'bg-gold' };
+    case 'low':      return { label: 'منخفض', bg: 'bg-heading/15 dark:bg-heading/40', text: 'text-heading', bar: 'bg-heading' };
     default:         return { label: '—', bg: 'bg-muted', text: 'text-muted-foreground', bar: 'bg-muted-foreground' };
   }
 }
@@ -103,9 +103,9 @@ function truncate(str: string, max: number) {
 
 function ccsColor(score: number | null) {
   if (score == null) return 'text-muted-foreground';
-  if (score >= 75) return 'text-emerald-600 dark:text-emerald-400';
-  if (score >= 50) return 'text-gold dark:text-gold/80';
-  return 'text-red-600 dark:text-red-400';
+  if (score >= 75) return 'text-heading';
+  if (score >= 50) return 'text-gold/80';
+  return 'text-destructive';
 }
 
 // ─── Stat Tile ────────────────────────────────────────────────────────────────
@@ -185,11 +185,11 @@ export default function NaipDirectorGeneral() {
         {/* ── Header ─────────────────────────────────────────────────────── */}
         <div className="space-y-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <Building2 className="w-6 h-6 text-teal-500" />
+            <Building2 className="w-6 h-6 text-heading" />
             <h1 className="text-xl font-bold text-foreground">
               {t('لوحة مدير عام', 'Director General Dashboard')}
             </h1>
-            <span className="text-[10px] font-bold tracking-widest text-teal-600 dark:text-teal-400 bg-teal-100 dark:bg-teal-950/40 px-2 py-0.5 rounded-full border border-teal-200 dark:border-teal-800/40">
+            <span className="text-[10px] font-bold tracking-widest text-heading bg-heading/15 dark:bg-heading/40 px-2 py-0.5 rounded-full border border-heading/25 dark:border-heading/40">
               مدير عام
             </span>
           </div>
@@ -205,7 +205,7 @@ export default function NaipDirectorGeneral() {
         )}
 
         {isError && (
-          <div className="flex items-center gap-3 p-4 rounded-lg border border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-950/20 text-sm text-red-700 dark:text-red-400">
+          <div className="flex items-center gap-3 p-4 rounded-lg border border-destructive/25 dark:border-destructive/40 bg-destructive/10 dark:bg-destructive/20 text-sm text-destructive">
             <XCircle className="w-4 h-4 shrink-0" />
             {t('تعذر تحميل البيانات', 'Failed to load data')}
           </div>
@@ -217,7 +217,7 @@ export default function NaipDirectorGeneral() {
             labelAr="قرارات المؤسسة"
             labelEn="Org Decisions"
             value={kpi?.orgDecisionCount}
-            colorClass="text-blue-600 dark:text-blue-400"
+            colorClass="text-heading"
             icon={<FileText className="w-4 h-4" />}
           />
           <StatTile
@@ -226,9 +226,9 @@ export default function NaipDirectorGeneral() {
             value={kpi?.avgNriOrg != null ? Math.round(kpi.avgNriOrg) : null}
             colorClass={
               kpi?.avgNriOrg == null ? 'text-foreground' :
-              kpi.avgNriOrg >= 75 ? 'text-red-600 dark:text-red-400' :
-              kpi.avgNriOrg >= 50 ? 'text-gold dark:text-gold/80' :
-              'text-emerald-600 dark:text-emerald-400'
+              kpi.avgNriOrg >= 75 ? 'text-destructive' :
+              kpi.avgNriOrg >= 50 ? 'text-gold/80' :
+              'text-heading'
             }
             icon={<Activity className="w-4 h-4" />}
           />
@@ -236,14 +236,14 @@ export default function NaipDirectorGeneral() {
             labelAr="متوسط الامتثال الدستوري"
             labelEn="Avg CCS (Org)"
             value={kpi?.avgCcsOrg != null ? Math.round(kpi.avgCcsOrg) : null}
-            colorClass="text-emerald-600 dark:text-emerald-400"
+            colorClass="text-heading"
             icon={<CheckCircle2 className="w-4 h-4" />}
           />
           <StatTile
             labelAr="تحذيرات دستورية"
             labelEn="Constitutional Warnings"
             value={kpi?.criticalWarningsOrg}
-            colorClass="text-gold dark:text-gold/80"
+            colorClass="text-gold/80"
             icon={<AlertTriangle className="w-4 h-4" />}
           />
         </div>
@@ -317,10 +317,10 @@ export default function NaipDirectorGeneral() {
             {riskDist && totalRisk > 0 ? (
               <div className="space-y-2">
                 {([
-                  { key: 'critical' as const, label: 'حرج', color: 'bg-red-500' },
+                  { key: 'critical' as const, label: 'حرج', color: 'bg-destructive' },
                   { key: 'high' as const, label: 'عالٍ', color: 'bg-gold' },
                   { key: 'moderate' as const, label: 'متوسط', color: 'bg-gold' },
-                  { key: 'low' as const, label: 'منخفض', color: 'bg-emerald-500' },
+                  { key: 'low' as const, label: 'منخفض', color: 'bg-heading' },
                 ]).map((l) => {
                   const count = riskDist[l.key];
                   const pct = totalRisk > 0 ? Math.round((count / totalRisk) * 100) : 0;
@@ -351,10 +351,10 @@ export default function NaipDirectorGeneral() {
             {cilDist ? (
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { key: 'compliant' as const, label: 'ممتثل', color: 'text-emerald-500', bg: 'bg-emerald-100 dark:bg-emerald-950/40' },
+                  { key: 'compliant' as const, label: 'ممتثل', color: 'text-heading', bg: 'bg-heading/15 dark:bg-heading/40' },
                   { key: 'minorConcern' as const, label: 'قلق بسيط', color: 'text-gold', bg: 'bg-gold/15 dark:bg-gold/40' },
                   { key: 'significantConcern' as const, label: 'قلق كبير', color: 'text-gold', bg: 'bg-gold/15 dark:bg-gold/40' },
-                  { key: 'deficient' as const, label: 'قاصر', color: 'text-red-500', bg: 'bg-red-100 dark:bg-red-950/40' },
+                  { key: 'deficient' as const, label: 'قاصر', color: 'text-destructive', bg: 'bg-destructive/15 dark:bg-destructive/40' },
                 ].map((l) => (
                   <div key={l.key} className={`${l.bg} rounded-lg p-3 text-center`}>
                     <div className={`text-2xl font-bold tabular-nums ${l.color}`}>{cilDist[l.key]}</div>
@@ -371,9 +371,9 @@ export default function NaipDirectorGeneral() {
         {/* ── Action Buttons ───────────────────────────────────────────────── */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {[
-            { href: '/decisions', icon: <FileText className="w-5 h-5" />, label: 'القرارات', labelEn: 'Decisions', color: 'text-blue-500' },
+            { href: '/decisions', icon: <FileText className="w-5 h-5" />, label: 'القرارات', labelEn: 'Decisions', color: 'text-heading' },
             { href: '/risk-engine', icon: <Target className="w-5 h-5" />, label: 'محرك المخاطر', labelEn: 'Risk Engine', color: 'text-gold' },
-            { href: '/constitutional-intelligence', icon: <ShieldAlert className="w-5 h-5" />, label: 'المراجعة الدستورية', labelEn: 'Constitutional Review', color: 'text-purple-500' },
+            { href: '/constitutional-intelligence', icon: <ShieldAlert className="w-5 h-5" />, label: 'المراجعة الدستورية', labelEn: 'Constitutional Review', color: 'text-heading' },
           ].map((a) => (
             <Link key={a.href} href={a.href}>
               <div className="bg-card border border-border rounded-xl p-4 flex flex-col items-center gap-2 hover:border-foreground/30 hover:bg-muted/30 cursor-pointer transition-colors text-center">

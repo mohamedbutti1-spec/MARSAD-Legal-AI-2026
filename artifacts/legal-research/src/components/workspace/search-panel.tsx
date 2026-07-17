@@ -22,14 +22,14 @@ interface SearchPanelProps {
 }
 
 const TYPE_LABELS: Record<string, { ar: string; en: string; color: string }> = {
-  question:       { ar: 'سؤال',          en: 'Question',        color: 'bg-purple-100 text-purple-800' },
-  answer:         { ar: 'جواب',          en: 'Answer',          color: 'bg-blue-100 text-blue-800' },
+  question:       { ar: 'سؤال',          en: 'Question',        color: 'bg-heading/15 text-heading' },
+  answer:         { ar: 'جواب',          en: 'Answer',          color: 'bg-heading/15 text-heading' },
   authority:      { ar: 'سلطة قانونية', en: 'Authority',       color: 'bg-heading/15 text-heading/75' },
   document:       { ar: 'وثيقة',         en: 'Document',        color: 'bg-gold/15 text-gold/75' },
-  note:           { ar: 'ملاحظة',        en: 'Note',            color: 'bg-gray-100 text-gray-800' },
+  note:           { ar: 'ملاحظة',        en: 'Note',            color: 'bg-muted/60 text-foreground' },
   highlight:      { ar: 'تظليل',         en: 'Highlight',       color: 'bg-gold/15 text-gold/75' },
-  bookmark:       { ar: 'إشارة مرجعية', en: 'Bookmark',        color: 'bg-red-100 text-red-800' },
-  timeline_entry: { ar: 'إدخال زمني',   en: 'Timeline Entry',  color: 'bg-indigo-100 text-indigo-800' },
+  bookmark:       { ar: 'إشارة مرجعية', en: 'Bookmark',        color: 'bg-destructive/15 text-destructive' },
+  timeline_entry: { ar: 'إدخال زمني',   en: 'Timeline Entry',  color: 'bg-heading/15 text-heading' },
 };
 
 export function SearchPanel({ projectId, onResultClick, placeholder }: SearchPanelProps) {
@@ -69,7 +69,7 @@ export function SearchPanel({ projectId, onResultClick, placeholder }: SearchPan
     }
   }
 
-  const typeInfo = (type: string) => TYPE_LABELS[type] ?? { ar: type, en: type, color: 'bg-gray-100 text-gray-700' };
+  const typeInfo = (type: string) => TYPE_LABELS[type] ?? { ar: type, en: type, color: 'bg-muted/60 text-muted-foreground' };
 
   return (
     <div className="w-full">
@@ -106,11 +106,11 @@ export function SearchPanel({ projectId, onResultClick, placeholder }: SearchPan
               <li key={result.id}>
                 <button
                   onClick={() => handleClick(result)}
-                  className="w-full text-start rounded-md border border-transparent hover:border-blue-200 hover:bg-blue-50 px-3 py-2 transition-colors"
+                  className="w-full text-start rounded-md border border-transparent hover:border-heading/25 hover:bg-heading/10 px-3 py-2 transition-colors"
                 >
                   <div className="flex items-center gap-2 mb-0.5">
-                    <FileText className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
-                    <span className="text-sm font-medium text-gray-900 truncate">{result.title}</span>
+                    <FileText className="w-3.5 h-3.5 text-heading flex-shrink-0" />
+                    <span className="text-sm font-medium text-foreground truncate">{result.title}</span>
                     <span className={`text-xs px-1.5 py-0.5 rounded-full shrink-0 ${info.color}`}>
                       {t(info.ar, info.en)}
                     </span>

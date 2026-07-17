@@ -127,46 +127,46 @@ function riskLevelConfig(level: CilRiskLevel | null | undefined) {
   switch (level) {
     case 'critical': return {
       labelAr: 'حرج', labelEn: 'Critical',
-      bg: 'bg-red-100 dark:bg-red-950/40', text: 'text-red-700 dark:text-red-400',
-      border: 'border-red-200 dark:border-red-800/40', dot: 'bg-red-500',
-      ring: 'ring-red-400/30',
+      bg: 'bg-destructive/15 dark:bg-destructive/40', text: 'text-destructive',
+      border: 'border-destructive/25 dark:border-destructive/40', dot: 'bg-destructive',
+      ring: 'ring-destructive/30',
     };
     case 'high': return {
       labelAr: 'عالٍ', labelEn: 'High',
-      bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80',
+      bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold/80',
       border: 'border-gold/25 dark:border-gold/40', dot: 'bg-gold',
       ring: 'ring-gold/30',
     };
     case 'moderate': return {
       labelAr: 'متوسط', labelEn: 'Moderate',
-      bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80',
+      bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold/80',
       border: 'border-gold/25 dark:border-gold/40', dot: 'bg-gold',
       ring: 'ring-gold/30',
     };
     default: return {
       labelAr: 'منخفض', labelEn: 'Low',
-      bg: 'bg-emerald-100 dark:bg-emerald-950/40', text: 'text-emerald-700 dark:text-emerald-400',
-      border: 'border-emerald-200 dark:border-emerald-800/40', dot: 'bg-emerald-500',
-      ring: 'ring-emerald-400/30',
+      bg: 'bg-heading/15 dark:bg-heading/40', text: 'text-heading',
+      border: 'border-heading/25 dark:border-heading/40', dot: 'bg-heading',
+      ring: 'ring-heading/30',
     };
   }
 }
 
 function severityConfig(severity: CilWarning['severity']) {
   switch (severity) {
-    case 'critical': return { bg: 'bg-red-50 dark:bg-red-950/30', border: 'border-red-300 dark:border-red-800', text: 'text-red-700 dark:text-red-400', badge: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400', icon: <XCircle className="w-4 h-4" /> };
-    case 'warning':  return { bg: 'bg-gold/10 dark:bg-gold/30', border: 'border-gold/40 dark:border-gold/75', text: 'text-gold dark:text-gold/80', badge: 'bg-gold/15 text-gold dark:bg-gold/40 dark:text-gold/80', icon: <AlertTriangle className="w-4 h-4" /> };
-    default:         return { bg: 'bg-gold/10 dark:bg-gold/30', border: 'border-gold/40 dark:border-gold/75', text: 'text-gold dark:text-gold/80', badge: 'bg-gold/15 text-gold dark:bg-gold/40 dark:text-gold/80', icon: <AlertTriangle className="w-4 h-4" /> };
+    case 'critical': return { bg: 'bg-destructive/10 dark:bg-destructive/30', border: 'border-destructive/30 dark:border-destructive/40', text: 'text-destructive', badge: 'bg-destructive/15 text-destructive dark:bg-destructive/40 dark:text-destructive', icon: <XCircle className="w-4 h-4" /> };
+    case 'warning':  return { bg: 'bg-gold/10 dark:bg-gold/30', border: 'border-gold/40 dark:border-gold/75', text: 'text-gold/80', badge: 'bg-gold/15 text-gold dark:bg-gold/40 dark:text-gold/80', icon: <AlertTriangle className="w-4 h-4" /> };
+    default:         return { bg: 'bg-gold/10 dark:bg-gold/30', border: 'border-gold/40 dark:border-gold/75', text: 'text-gold/80', badge: 'bg-gold/15 text-gold dark:bg-gold/40 dark:text-gold/80', icon: <AlertTriangle className="w-4 h-4" /> };
   }
 }
 
 function statusConfig(status: PrincipleResult['status']) {
   switch (status) {
-    case 'compliant':            return { bg: 'bg-emerald-500', text: 'text-emerald-700', label: 'ممتثل' };
+    case 'compliant':            return { bg: 'bg-heading', text: 'text-heading', label: 'ممتثل' };
     case 'minor_concern':        return { bg: 'bg-gold/80',   text: 'text-gold',   label: 'قلق طفيف' };
     case 'significant_concern':  return { bg: 'bg-gold',  text: 'text-gold',  label: 'قلق جوهري' };
-    case 'deficient':            return { bg: 'bg-red-500',     text: 'text-red-700',     label: 'ناقص' };
-    default:                     return { bg: 'bg-slate-400',   text: 'text-slate-600',   label: 'لم يُقيَّم' };
+    case 'deficient':            return { bg: 'bg-destructive',     text: 'text-destructive',     label: 'ناقص' };
+    default:                     return { bg: 'bg-muted-foreground',   text: 'text-muted-foreground',   label: 'لم يُقيَّم' };
   }
 }
 
@@ -182,12 +182,12 @@ function ScoreGauge({
   const pct = value ?? 0;
   // For inverse metrics (riskIndex), red is high; for others, green is high
   const colorClass = isInverse
-    ? pct >= 70 ? 'text-red-500'    : pct >= 40 ? 'text-gold' : 'text-emerald-500'
-    : pct >= 70 ? 'text-emerald-500' : pct >= 40 ? 'text-gold' : 'text-red-500';
+    ? pct >= 70 ? 'text-destructive'    : pct >= 40 ? 'text-gold' : 'text-heading'
+    : pct >= 70 ? 'text-heading' : pct >= 40 ? 'text-gold' : 'text-destructive';
 
   const trackColor = isInverse
-    ? pct >= 70 ? 'stroke-red-500'    : pct >= 40 ? 'stroke-gold' : 'stroke-emerald-500'
-    : pct >= 70 ? 'stroke-emerald-500' : pct >= 40 ? 'stroke-gold' : 'stroke-red-500';
+    ? pct >= 70 ? 'stroke-destructive'    : pct >= 40 ? 'stroke-gold' : 'stroke-heading'
+    : pct >= 70 ? 'stroke-heading' : pct >= 40 ? 'stroke-gold' : 'stroke-destructive';
 
   const r = 30;
   const circ = 2 * Math.PI * r;
@@ -232,7 +232,7 @@ function PrincipleCard({
   return (
     <div className={`border rounded-xl overflow-hidden transition-all ${
       principle.isBlockingApproval
-        ? 'border-red-300 dark:border-red-800'
+        ? 'border-destructive/30 dark:border-destructive/40'
         : 'border-border'
     }`}>
       <button
@@ -245,7 +245,7 @@ function PrincipleCard({
             <circle cx="24" cy="24" r="18" fill="none" className="stroke-border" strokeWidth="4" />
             <circle
               cx="24" cy="24" r="18" fill="none"
-              className={score >= 70 ? 'stroke-emerald-500' : score >= 40 ? 'stroke-gold' : 'stroke-red-500'}
+              className={score >= 70 ? 'stroke-heading' : score >= 40 ? 'stroke-gold' : 'stroke-destructive'}
               strokeWidth="4"
               strokeDasharray={`${(score / 100) * (2 * Math.PI * 18)} ${2 * Math.PI * 18}`}
               strokeLinecap="round"
@@ -260,7 +260,7 @@ function PrincipleCard({
           <div className="flex items-center gap-2">
             <span className="font-semibold text-foreground text-sm">{principle.labelAr}</span>
             {principle.isBlockingApproval && (
-              <span className="text-[10px] bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 px-1.5 py-0.5 rounded font-bold">
+              <span className="text-[10px] bg-destructive/15 text-destructive dark:bg-destructive/40 dark:text-destructive px-1.5 py-0.5 rounded font-bold">
                 يعيق الإقرار
               </span>
             )}
@@ -295,7 +295,7 @@ function PrincipleCard({
               <div className="space-y-1.5">
                 {(principle.constitutionalReferences ?? []).map((ref, i) => (
                   <div key={i} className="flex items-start gap-2 text-xs">
-                    <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-1.5 py-0.5 rounded font-mono shrink-0">{ref.article}</span>
+                    <span className="bg-heading/15 dark:bg-heading/30 text-heading px-1.5 py-0.5 rounded font-mono shrink-0">{ref.article}</span>
                     <span className="text-foreground/80">{ref.titleAr} — {ref.relevance}</span>
                   </div>
                 ))}
@@ -310,7 +310,7 @@ function PrincipleCard({
               <div className="space-y-1.5">
                 {(principle.uaeLegalReferences ?? []).map((ref, i) => (
                   <div key={i} className="flex items-start gap-2 text-xs">
-                    <span className="bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 px-1.5 py-0.5 rounded shrink-0">{ref.law}</span>
+                    <span className="bg-heading/15 dark:bg-heading/30 text-heading px-1.5 py-0.5 rounded shrink-0">{ref.law}</span>
                     <span className="text-foreground/80">{ref.article}: {ref.titleAr}</span>
                   </div>
                 ))}
@@ -341,9 +341,9 @@ function PrincipleCard({
 
           {/* Remedy */}
           {principle.remedyAr && (
-            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-              <div className="text-xs font-bold text-blue-700 dark:text-blue-400 mb-1">التوصية العلاجية</div>
-              <p className="text-sm text-blue-700 dark:text-blue-300">{principle.remedyAr}</p>
+            <div className="bg-heading/10 dark:bg-heading/20 border border-heading/25 dark:border-heading/40 rounded-lg p-3">
+              <div className="text-xs font-bold text-heading mb-1">التوصية العلاجية</div>
+              <p className="text-sm text-heading">{principle.remedyAr}</p>
             </div>
           )}
 
@@ -457,7 +457,7 @@ function DecisionAssessmentView({
             </span>
           )}
           {status === 'failed' && (
-            <span className="text-xs text-red-600">{t('فشل التقييم', 'Assessment failed')}</span>
+            <span className="text-xs text-destructive">{t('فشل التقييم', 'Assessment failed')}</span>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -479,12 +479,12 @@ function DecisionAssessmentView({
               disabled={acknowledgeMutation.isPending}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-sm font-medium hover:bg-muted/50 transition-colors"
             >
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-heading" />
               {t('إقرار', 'Acknowledge')}
             </button>
           )}
           {assessment?.acknowledged && (
-            <span className="flex items-center gap-1.5 text-xs text-emerald-600">
+            <span className="flex items-center gap-1.5 text-xs text-heading">
               <CheckCircle2 className="w-3.5 h-3.5" />
               {t('تم الإقرار', 'Acknowledged')}
             </span>
@@ -563,7 +563,7 @@ function DecisionAssessmentView({
                             {w.severity === 'critical' ? 'حرج' : w.severity === 'warning' ? 'تحذير' : 'استشاري'}
                           </span>
                           {w.isResolved && (
-                            <span className="text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-1.5 py-0.5 rounded font-bold">
+                            <span className="text-[10px] bg-heading/15 text-heading dark:bg-heading/30 dark:text-heading px-1.5 py-0.5 rounded font-bold">
                               ✓ محلول
                             </span>
                           )}
@@ -575,7 +575,7 @@ function DecisionAssessmentView({
                           </div>
                         )}
                         {w.remedyAr && !w.isResolved && (
-                          <div className="mt-1.5 text-xs text-blue-700 dark:text-blue-400">
+                          <div className="mt-1.5 text-xs text-heading">
                             <span className="font-medium">التوصية:</span> {w.remedyAr}
                           </div>
                         )}
@@ -630,7 +630,7 @@ function DecisionAssessmentView({
             {assessment.nrmeIntegration && (
               <div className="bg-card border border-border rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-3">
-                  <Activity className="w-4 h-4 text-blue-500" />
+                  <Activity className="w-4 h-4 text-heading" />
                   <span className="text-sm font-bold">{t('تكامل تقييم المخاطر', 'Risk Assessment Integration')}</span>
                 </div>
                 <div className="space-y-2 text-xs text-muted-foreground">
@@ -649,7 +649,7 @@ function DecisionAssessmentView({
             {assessment.replayIntegration && (
               <div className="bg-card border border-border rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-3">
-                  <RefreshCw className="w-4 h-4 text-purple-500" />
+                  <RefreshCw className="w-4 h-4 text-heading" />
                   <span className="text-sm font-bold">{t('تكامل محرك التشغيل', 'Replay Integration')}</span>
                 </div>
                 <div className="space-y-2 text-xs text-muted-foreground">
@@ -662,7 +662,7 @@ function DecisionAssessmentView({
                       <span className="block mb-1">المراحل الحرجة:</span>
                       <div className="flex flex-wrap gap-1">
                         {assessment.replayIntegration.criticalStages.map((s) => (
-                          <span key={s} className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 px-1.5 py-0.5 rounded text-[10px]">{s}</span>
+                          <span key={s} className="bg-destructive/15 text-destructive dark:bg-destructive/30 dark:text-destructive px-1.5 py-0.5 rounded text-[10px]">{s}</span>
                         ))}
                       </div>
                     </div>
@@ -771,19 +771,19 @@ export default function ConstitutionalIntelligence() {
               <div className="text-xs text-muted-foreground">{dashStats.completedAssessments} {t('مكتمل', 'completed')}</div>
             </div>
             <div className="bg-card border border-border rounded-xl p-5">
-              <div className="text-2xl font-bold tabular-nums text-emerald-600">
+              <div className="text-2xl font-bold tabular-nums text-heading">
                 {dashStats.avgComplianceScore !== null ? `${dashStats.avgComplianceScore}%` : '—'}
               </div>
               <div className="text-xs text-muted-foreground mt-1">{t('متوسط الامتثال', 'Avg Compliance Score')}</div>
             </div>
             <div className="bg-card border border-border rounded-xl p-5">
-              <div className={`text-2xl font-bold tabular-nums ${dashStats.criticalWarnings > 0 ? 'text-red-600' : 'text-foreground'}`}>
+              <div className={`text-2xl font-bold tabular-nums ${dashStats.criticalWarnings > 0 ? 'text-destructive' : 'text-foreground'}`}>
                 {dashStats.criticalWarnings}
               </div>
               <div className="text-xs text-muted-foreground mt-1">{t('تحذيرات حرجة', 'Critical Warnings')}</div>
             </div>
             <div className="bg-card border border-border rounded-xl p-5">
-              <div className="text-2xl font-bold tabular-nums text-blue-600">
+              <div className="text-2xl font-bold tabular-nums text-heading">
                 {dashStats.avgSurvivalProbability !== null ? `${dashStats.avgSurvivalProbability}%` : '—'}
               </div>
               <div className="text-xs text-muted-foreground mt-1">{t('متوسط احتمالية الصمود', 'Avg Judicial Survival')}</div>
@@ -856,7 +856,7 @@ export default function ConstitutionalIntelligence() {
                           <div className="flex items-center gap-2 mb-1">
                             <span className="text-xs font-mono text-muted-foreground">{d.caseNumber}</span>
                             {d.hasCriticalWarning && (
-                              <AlertTriangle className="w-3 h-3 text-red-500 shrink-0" />
+                              <AlertTriangle className="w-3 h-3 text-destructive shrink-0" />
                             )}
                           </div>
                           <div className="text-sm font-medium text-foreground line-clamp-1">{d.titleAr}</div>
@@ -878,7 +878,7 @@ export default function ConstitutionalIntelligence() {
                           ) : d.assessmentStatus === 'running' ? (
                             <Loader2 className="w-4 h-4 animate-spin text-gold" />
                           ) : d.assessmentStatus === 'failed' ? (
-                            <XCircle className="w-4 h-4 text-red-500" />
+                            <XCircle className="w-4 h-4 text-destructive" />
                           ) : (
                             <Clock className="w-4 h-4 text-muted-foreground" />
                           )}

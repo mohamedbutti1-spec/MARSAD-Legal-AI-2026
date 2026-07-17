@@ -74,9 +74,9 @@ function getHeaders(role: string, userId: number, org: string) {
 
 function statusConfig(status: DecisionStatus) {
   switch (status) {
-    case 'sealed':   return { label: 'مختوم', bg: 'bg-blue-100 dark:bg-blue-950/40', text: 'text-blue-700 dark:text-blue-400' };
-    case 'active':   return { label: 'نشط', bg: 'bg-emerald-100 dark:bg-emerald-950/40', text: 'text-emerald-700 dark:text-emerald-400' };
-    case 'draft':    return { label: 'مسودة', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80' };
+    case 'sealed':   return { label: 'مختوم', bg: 'bg-heading/15 dark:bg-heading/40', text: 'text-heading' };
+    case 'active':   return { label: 'نشط', bg: 'bg-heading/15 dark:bg-heading/40', text: 'text-heading' };
+    case 'draft':    return { label: 'مسودة', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold/80' };
     case 'archived': return { label: 'مؤرشف', bg: 'bg-muted', text: 'text-muted-foreground' };
     default:         return { label: status, bg: 'bg-muted', text: 'text-muted-foreground' };
   }
@@ -84,10 +84,10 @@ function statusConfig(status: DecisionStatus) {
 
 function riskConfig(level: RiskLevel | null | undefined) {
   switch (level) {
-    case 'critical': return { label: 'حرج', bg: 'bg-red-100 dark:bg-red-950/40', text: 'text-red-700 dark:text-red-400' };
-    case 'high':     return { label: 'عالٍ', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80' };
-    case 'moderate': return { label: 'متوسط', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold dark:text-gold/80' };
-    case 'low':      return { label: 'منخفض', bg: 'bg-emerald-100 dark:bg-emerald-950/40', text: 'text-emerald-700 dark:text-emerald-400' };
+    case 'critical': return { label: 'حرج', bg: 'bg-destructive/15 dark:bg-destructive/40', text: 'text-destructive' };
+    case 'high':     return { label: 'عالٍ', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold/80' };
+    case 'moderate': return { label: 'متوسط', bg: 'bg-gold/15 dark:bg-gold/40', text: 'text-gold/80' };
+    case 'low':      return { label: 'منخفض', bg: 'bg-heading/15 dark:bg-heading/40', text: 'text-heading' };
     default:         return { label: '—', bg: 'bg-muted', text: 'text-muted-foreground' };
   }
 }
@@ -175,11 +175,11 @@ export default function NaipMinister() {
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="space-y-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <Scale className="w-6 h-6 text-blue-500" />
+              <Scale className="w-6 h-6 text-heading" />
               <h1 className="text-xl font-bold text-foreground">
                 {t('مرحباً بمعالي الوزير', 'Welcome, Minister')}
               </h1>
-              <span className="text-[10px] font-bold tracking-widest text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-950/40 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800/40">
+              <span className="text-[10px] font-bold tracking-widest text-heading bg-heading/15 dark:bg-heading/40 px-2 py-0.5 rounded-full border border-heading/25 dark:border-heading/40">
                 وزير
               </span>
             </div>
@@ -198,7 +198,7 @@ export default function NaipMinister() {
 
         {/* ── Error ───────────────────────────────────────────────────────── */}
         {isError && (
-          <div className="flex items-center gap-3 p-4 rounded-lg border border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-950/20 text-sm text-red-700 dark:text-red-400">
+          <div className="flex items-center gap-3 p-4 rounded-lg border border-destructive/25 dark:border-destructive/40 bg-destructive/10 dark:bg-destructive/20 text-sm text-destructive">
             <XCircle className="w-4 h-4 shrink-0" />
             {t('تعذر تحميل البيانات التنفيذية', 'Failed to load executive data')}
           </div>
@@ -210,21 +210,21 @@ export default function NaipMinister() {
             labelAr="إجمالي القرارات"
             labelEn="Total Decisions"
             value={kpi?.totalDecisions ?? overview?.totalDecisions}
-            colorClass="text-blue-600 dark:text-blue-400"
+            colorClass="text-heading"
             icon={<FileText className="w-4 h-4" />}
           />
           <StatTile
             labelAr="القرارات الحرجة"
             labelEn="Critical Risk"
             value={kpi?.criticalRiskCount}
-            colorClass="text-red-600 dark:text-red-400"
+            colorClass="text-destructive"
             icon={<AlertTriangle className="w-4 h-4" />}
           />
           <StatTile
             labelAr="تحذيرات دستورية نشطة"
             labelEn="Active Constitutional Warnings"
             value={kpi?.activeConstitutionalWarnings}
-            colorClass="text-gold dark:text-gold/80"
+            colorClass="text-gold/80"
             icon={<ShieldAlert className="w-4 h-4" />}
           />
           <StatTile
@@ -233,9 +233,9 @@ export default function NaipMinister() {
             value={kpi?.avgNationalRiskIndex != null ? Math.round(kpi.avgNationalRiskIndex) : null}
             colorClass={
               kpi?.avgNationalRiskIndex == null ? 'text-foreground' :
-              kpi.avgNationalRiskIndex >= 75 ? 'text-red-600 dark:text-red-400' :
-              kpi.avgNationalRiskIndex >= 50 ? 'text-gold dark:text-gold/80' :
-              'text-emerald-600 dark:text-emerald-400'
+              kpi.avgNationalRiskIndex >= 75 ? 'text-destructive' :
+              kpi.avgNationalRiskIndex >= 50 ? 'text-gold/80' :
+              'text-heading'
             }
             icon={<Activity className="w-4 h-4" />}
           />
@@ -243,19 +243,19 @@ export default function NaipMinister() {
             labelAr="متوسط الامتثال الدستوري"
             labelEn="Avg Constitutional Compliance"
             value={kpi?.avgConstitutionalCompliance != null ? Math.round(kpi.avgConstitutionalCompliance) : null}
-            colorClass="text-emerald-600 dark:text-emerald-400"
+            colorClass="text-heading"
             icon={<CheckCircle2 className="w-4 h-4" />}
           />
           <div className="bg-card border border-border rounded-xl p-5">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-purple-600 dark:text-purple-400"><Users className="w-4 h-4" /></span>
+              <span className="text-heading"><Users className="w-4 h-4" /></span>
               <div className="text-xs font-bold tracking-widest uppercase text-muted-foreground">طابور الرقابة البشرية</div>
             </div>
-            <div className="text-3xl font-bold tabular-nums text-purple-600 dark:text-purple-400">
+            <div className="text-3xl font-bold tabular-nums text-heading">
               {kpi?.humanOversightQueueCount ?? '—'}
             </div>
             {kpi?.humanOversightUrgent != null && kpi.humanOversightUrgent > 0 && (
-              <div className="text-xs text-red-500 font-semibold mt-1">
+              <div className="text-xs text-destructive font-semibold mt-1">
                 {kpi.humanOversightUrgent} {t('عاجل', 'urgent')}
               </div>
             )}
@@ -302,13 +302,13 @@ export default function NaipMinister() {
 
         {/* ── Critical Warnings ───────────────────────────────────────────── */}
         {criticalWarnings.length > 0 && (
-          <div className="bg-card border border-red-200 dark:border-red-800/40 rounded-xl overflow-hidden">
-            <div className="flex items-center gap-2 px-5 py-4 border-b border-red-200 dark:border-red-800/40 bg-red-50/50 dark:bg-red-950/10">
-              <AlertTriangle className="w-4 h-4 text-red-500" />
-              <h2 className="text-sm font-bold text-red-700 dark:text-red-400">
+          <div className="bg-card border border-destructive/25 dark:border-destructive/40 rounded-xl overflow-hidden">
+            <div className="flex items-center gap-2 px-5 py-4 border-b border-destructive/25 dark:border-destructive/40 bg-destructive/10">
+              <AlertTriangle className="w-4 h-4 text-destructive" />
+              <h2 className="text-sm font-bold text-destructive">
                 {t('التحذيرات الدستورية الحرجة', 'Critical Constitutional Warnings')}
               </h2>
-              <span className="text-xs bg-red-500 text-white rounded-full px-2 py-0.5 font-bold ml-auto">
+              <span className="text-xs bg-destructive text-white rounded-full px-2 py-0.5 font-bold ml-auto">
                 {criticalWarnings.length}
               </span>
             </div>
@@ -319,7 +319,7 @@ export default function NaipMinister() {
                     <span className="text-xs font-mono text-muted-foreground shrink-0">{w.warningCode}</span>
                     <span className="flex-1 text-sm text-foreground truncate">{w.titleAr}</span>
                     <span className="text-xs text-muted-foreground shrink-0">{w.caseNumber}</span>
-                    <ArrowUpRight className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                    <ArrowUpRight className="w-3.5 h-3.5 text-destructive shrink-0" />
                   </div>
                 </Link>
               ))}
@@ -330,10 +330,10 @@ export default function NaipMinister() {
         {/* ── Quick Actions ───────────────────────────────────────────────── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { href: '/governance', icon: <Scale className="w-5 h-5" />, label: 'مركز الحوكمة', labelEn: 'Governance Hub', color: 'text-blue-500' },
+            { href: '/governance', icon: <Scale className="w-5 h-5" />, label: 'مركز الحوكمة', labelEn: 'Governance Hub', color: 'text-heading' },
             { href: '/risk-engine', icon: <BarChart3 className="w-5 h-5" />, label: 'محرك المخاطر', labelEn: 'Risk Engine', color: 'text-gold' },
-            { href: '/constitutional-intelligence', icon: <ShieldAlert className="w-5 h-5" />, label: 'المراجعة الدستورية', labelEn: 'Constitutional Review', color: 'text-purple-500' },
-            { href: '/decisions', icon: <FileText className="w-5 h-5" />, label: 'القرارات', labelEn: 'All Decisions', color: 'text-emerald-500' },
+            { href: '/constitutional-intelligence', icon: <ShieldAlert className="w-5 h-5" />, label: 'المراجعة الدستورية', labelEn: 'Constitutional Review', color: 'text-heading' },
+            { href: '/decisions', icon: <FileText className="w-5 h-5" />, label: 'القرارات', labelEn: 'All Decisions', color: 'text-heading' },
           ].map((a) => (
             <Link key={a.href} href={a.href}>
               <div className="bg-card border border-border rounded-xl p-4 flex flex-col items-center gap-2 hover:border-foreground/30 hover:bg-muted/30 cursor-pointer transition-colors text-center">

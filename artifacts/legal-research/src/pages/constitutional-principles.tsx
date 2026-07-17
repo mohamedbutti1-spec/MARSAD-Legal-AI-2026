@@ -167,11 +167,11 @@ export default function ConstitutionalPrinciples() {
 
           {/* Immutability notice */}
           <div className="mt-6 flex items-start gap-3 px-4 py-3 rounded-lg bg-gold/60 dark:bg-gold/20 border border-gold/60 dark:border-gold/40">
-            <Shield className="w-4 h-4 text-gold dark:text-gold/80 mt-0.5 shrink-0" />
+            <Shield className="w-4 h-4 text-gold/80 mt-0.5 shrink-0" />
             <p className="text-sm text-gold/75 dark:text-gold/40 leading-relaxed">
               هذه الصفحة ثابتة وغير قابلة للتعديل إلا من خلال ترقية رسمية للإصدار.
               <span className="mx-2 text-gold/60">·</span>
-              <span dir="ltr" className="text-gold dark:text-gold/80">
+              <span dir="ltr" className="text-gold/80">
                 This page is immutable except through a formal version upgrade.
               </span>
             </p>
@@ -285,7 +285,7 @@ export default function ConstitutionalPrinciples() {
                 </div>
                 <div className="shrink-0">
                   <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border/60 bg-background text-xs font-semibold text-muted-foreground">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-heading shrink-0" />
                     Research Framework
                   </span>
                 </div>
@@ -372,7 +372,7 @@ export default function ConstitutionalPrinciples() {
                   key={criterion}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/40 border border-border/40"
                 >
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-heading shrink-0" />
                   <span className="text-xs font-medium text-foreground/80 leading-tight">{criterion}</span>
                 </div>
               ))}

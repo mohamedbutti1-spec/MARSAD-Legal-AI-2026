@@ -24,15 +24,15 @@ interface AnswerProvenanceProps {
 
 const CLASS_CONFIG: Record<string, { label: string; labelEn: string; variant: 'default' | 'secondary' | 'outline'; bg: string }> = {
   binding:     { label: 'ملزم',     labelEn: 'Binding',      variant: 'default',   bg: 'bg-heading/15 text-heading/75 border-heading/40' },
-  persuasive:  { label: 'إرشادي',  labelEn: 'Persuasive',   variant: 'secondary', bg: 'bg-blue-100 text-blue-800 border-blue-300' },
-  non_binding: { label: 'غير ملزم', labelEn: 'Non-binding',  variant: 'outline',   bg: 'bg-gray-100 text-gray-700 border-gray-300' },
+  persuasive:  { label: 'إرشادي',  labelEn: 'Persuasive',   variant: 'secondary', bg: 'bg-heading/15 text-heading border-heading/30' },
+  non_binding: { label: 'غير ملزم', labelEn: 'Non-binding',  variant: 'outline',   bg: 'bg-muted/60 text-muted-foreground border-border' },
 };
 
 function confidenceBg(score: number): string {
   if (score >= 0.85) return 'bg-heading/15 text-heading/75';
-  if (score >= 0.65) return 'bg-blue-100 text-blue-800';
+  if (score >= 0.65) return 'bg-heading/15 text-heading';
   if (score >= 0.4)  return 'bg-gold/15 text-gold/75';
-  return 'bg-gray-100 text-gray-600';
+  return 'bg-muted/60 text-muted-foreground';
 }
 
 export function AnswerProvenance({
@@ -48,12 +48,12 @@ export function AnswerProvenance({
   const nonBinding = citedAuthorities.filter((a) => a.authorityClass === 'non_binding');
 
   return (
-    <div className="rounded-lg border border-blue-200 bg-blue-50/40 p-4">
+    <div className="rounded-lg border border-heading/25 bg-heading/10 p-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <Shield className="w-4 h-4 text-blue-700" />
-          <span className="text-sm font-semibold text-blue-900">
+          <Shield className="w-4 h-4 text-heading" />
+          <span className="text-sm font-semibold text-heading">
             {t('مصادر الاستشهاد', 'Cited Authorities')}
           </span>
         </div>
@@ -69,10 +69,10 @@ export function AnswerProvenance({
         <span className="text-xs px-2 py-0.5 rounded-full bg-heading/15 text-heading/75 border border-heading/40">
           {t('ملزم', 'Binding')}: {binding.length}
         </span>
-        <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-300">
+        <span className="text-xs px-2 py-0.5 rounded-full bg-heading/15 text-heading border border-heading/30">
           {t('إرشادي', 'Persuasive')}: {persuasive.length}
         </span>
-        <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-gray-300">
+        <span className="text-xs px-2 py-0.5 rounded-full bg-muted/60 text-muted-foreground border border-border">
           {t('غير ملزم', 'Non-binding')}: {nonBinding.length}
         </span>
       </div>
@@ -88,8 +88,8 @@ export function AnswerProvenance({
             const score = auth.confidenceScore ?? 0;
             return (
               <li key={i} className="flex items-start gap-2 text-xs">
-                <BookOpen className="w-3.5 h-3.5 text-blue-600 mt-0.5 flex-shrink-0" />
-                <span className="flex-1 text-gray-800 leading-relaxed">
+                <BookOpen className="w-3.5 h-3.5 text-heading mt-0.5 flex-shrink-0" />
+                <span className="flex-1 text-foreground leading-relaxed">
                   {auth.titleAr || auth.title || auth.ragTag || `[${auth.documentId ?? i}]`}
                 </span>
                 <span className={`shrink-0 text-xs px-1.5 py-0.5 rounded border ${cfg.bg}`}>
@@ -106,7 +106,7 @@ export function AnswerProvenance({
 
       {/* Footer */}
       {(modelVersion || generationTimestamp) && (
-        <div className="mt-3 pt-2 border-t border-blue-200 flex flex-wrap gap-3 text-[10px] text-muted-foreground">
+        <div className="mt-3 pt-2 border-t border-heading/25 flex flex-wrap gap-3 text-[10px] text-muted-foreground">
           {modelVersion && (
             <span className="flex items-center gap-1">
               <Info className="w-3 h-3" />

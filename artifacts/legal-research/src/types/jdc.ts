@@ -118,13 +118,13 @@ export const PANEL_SIZE_CONFIG: Record<PanelSize, { labelAr: string; labelEn: st
   1: {
     labelAr:     "قاضٍ فرد",
     labelEn:     "Single Judge",
-    color:       "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+    color:       "bg-heading/15 text-heading dark:bg-heading/30 dark:text-heading",
     description: "قاضٍ إداري واحد يُصدر الحكم بصفة منفردة",
   },
   3: {
     labelAr:     "دائرة ثلاثية",
     labelEn:     "3-Judge Panel",
-    color:       "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400",
+    color:       "bg-heading/15 text-heading dark:bg-heading/30 dark:text-heading",
     description: "دائرة مؤلفة من ثلاثة قضاة — الأغلبية تحتاج إلى صوتين",
   },
   5: {
@@ -136,20 +136,20 @@ export const PANEL_SIZE_CONFIG: Record<PanelSize, { labelAr: string; labelEn: st
 };
 
 export const DISPOSAL_POSITION_CONFIG: Record<DisposalPosition, { labelAr: string; labelEn: string; color: string; icon: string }> = {
-  grant:       { labelAr: "قبول الطعن",         labelEn: "Grant",       color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400", icon: "✓" },
-  dismiss:     { labelAr: "رفض الطعن",          labelEn: "Dismiss",     color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",                 icon: "✗" },
+  grant:       { labelAr: "قبول الطعن",         labelEn: "Grant",       color: "bg-heading/15 text-heading dark:bg-heading/30 dark:text-heading", icon: "✓" },
+  dismiss:     { labelAr: "رفض الطعن",          labelEn: "Dismiss",     color: "bg-destructive/15 text-destructive dark:bg-destructive/30 dark:text-destructive",                 icon: "✗" },
   remand:      { labelAr: "إعادة الإحالة",      labelEn: "Remand",      color: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",     icon: "↩" },
   conditional: { labelAr: "قبول مشروط",         labelEn: "Conditional", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",         icon: "⚑" },
 };
 
 export const OPINION_TYPE_CONFIG: Record<OpinionType, { labelAr: string; labelEn: string; color: string }> = {
-  majority:   { labelAr: "رأي الأغلبية",        labelEn: "Majority Opinion",   color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" },
-  concurring: { labelAr: "رأي موافق",           labelEn: "Concurring Opinion", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
-  dissenting: { labelAr: "رأي مخالف",           labelEn: "Dissenting Opinion", color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" },
+  majority:   { labelAr: "رأي الأغلبية",        labelEn: "Majority Opinion",   color: "bg-heading/15 text-heading dark:bg-heading/30 dark:text-heading" },
+  concurring: { labelAr: "رأي موافق",           labelEn: "Concurring Opinion", color: "bg-heading/15 text-heading dark:bg-heading/30 dark:text-heading" },
+  dissenting: { labelAr: "رأي مخالف",           labelEn: "Dissenting Opinion", color: "bg-destructive/15 text-destructive dark:bg-destructive/30 dark:text-destructive" },
 };
 
 export const STATUS_CONFIG: Record<string, { labelAr: string; color: string }> = {
-  deliberating: { labelAr: "جارٍ التداول",  color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
-  complete:     { labelAr: "مكتمل",          color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" },
-  error:        { labelAr: "خطأ",            color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" },
+  deliberating: { labelAr: "جارٍ التداول",  color: "bg-heading/15 text-heading dark:bg-heading/30 dark:text-heading" },
+  complete:     { labelAr: "مكتمل",          color: "bg-heading/15 text-heading dark:bg-heading/30 dark:text-heading" },
+  error:        { labelAr: "خطأ",            color: "bg-destructive/15 text-destructive dark:bg-destructive/30 dark:text-destructive" },
 };

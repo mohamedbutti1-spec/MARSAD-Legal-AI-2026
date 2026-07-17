@@ -26,10 +26,10 @@ import { useUserContext } from '@/lib/user-context';
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<string, { label: string; icon: React.ReactNode; className: string }> = {
-  pending:   { label: 'في الانتظار', icon: <Clock className="w-3 h-3" />,        className: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400' },
-  analyzing: { label: 'جارٍ التحليل', icon: <Loader2 className="w-3 h-3 animate-spin" />, className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
-  complete:  { label: 'مكتمل',       icon: <CheckCircle2 className="w-3 h-3" />,  className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' },
-  error:     { label: 'خطأ',         icon: <XCircle className="w-3 h-3" />,       className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
+  pending:   { label: 'في الانتظار', icon: <Clock className="w-3 h-3" />,        className: 'bg-muted/60 text-muted-foreground dark:bg-card dark:text-muted-foreground' },
+  analyzing: { label: 'جارٍ التحليل', icon: <Loader2 className="w-3 h-3 animate-spin" />, className: 'bg-heading/15 text-heading dark:bg-heading/30 dark:text-heading' },
+  complete:  { label: 'مكتمل',       icon: <CheckCircle2 className="w-3 h-3" />,  className: 'bg-heading/15 text-heading dark:bg-heading/30 dark:text-heading' },
+  error:     { label: 'خطأ',         icon: <XCircle className="w-3 h-3" />,       className: 'bg-destructive/15 text-destructive dark:bg-destructive/30 dark:text-destructive' },
 };
 
 function formatDate(iso: string) {
@@ -68,7 +68,7 @@ function SessionCard({ session, onDelete }: { session: JreSession; onDelete: (id
             </span>
             {/* AI involved */}
             {session.hasAiDecision === 'true' && (
-              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">
+              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-heading/15 text-heading dark:bg-heading/30 dark:text-heading">
                 <Bot className="w-3 h-3" /> قرار رقمي
               </span>
             )}
@@ -96,7 +96,7 @@ function SessionCard({ session, onDelete }: { session: JreSession; onDelete: (id
           {/* Delete */}
           <button
             onClick={(e) => { e.stopPropagation(); onDelete(session.id); }}
-            className="p-1.5 rounded text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors opacity-0 group-hover:opacity-100"
+            className="p-1.5 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 dark:hover:bg-destructive/20 transition-colors opacity-0 group-hover:opacity-100"
             title="حذف الجلسة"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -243,7 +243,7 @@ export default function JrePage() {
           <span>جارٍ التحميل…</span>
         </div>
       ) : error ? (
-        <div className="flex items-center gap-2 text-red-600 py-10">
+        <div className="flex items-center gap-2 text-destructive py-10">
           <AlertCircle className="w-5 h-5" />
           تعذَّر تحميل الجلسات
         </div>
@@ -301,7 +301,7 @@ export default function JrePage() {
             {/* Dispute summary */}
             <div className="space-y-1.5">
               <Label htmlFor="summary" className="text-right block">
-                ملخص النزاع الإداري <span className="text-red-500">*</span>
+                ملخص النزاع الإداري <span className="text-destructive">*</span>
               </Label>
               <Textarea
                 id="summary"
@@ -311,7 +311,7 @@ export default function JrePage() {
                 onChange={(e) => setForm({ ...form, disputeSummary: e.target.value })}
                 dir="rtl"
               />
-              <div className={`text-xs text-left ${form.disputeSummary.length < 50 ? 'text-red-500' : 'text-muted-foreground'}`}>
+              <div className={`text-xs text-left ${form.disputeSummary.length < 50 ? 'text-destructive' : 'text-muted-foreground'}`}>
                 {form.disputeSummary.length} / 50 حد أدنى
               </div>
             </div>
@@ -320,7 +320,7 @@ export default function JrePage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label className="text-right block">
-                  المدعي / المتظلم <span className="text-red-500">*</span>
+                  المدعي / المتظلم <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   placeholder="الاسم بالعربية"
@@ -337,7 +337,7 @@ export default function JrePage() {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-right block">
-                  المدعى عليه / الجهة الإدارية <span className="text-red-500">*</span>
+                  المدعى عليه / الجهة الإدارية <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   placeholder="الاسم بالعربية"
@@ -380,7 +380,7 @@ export default function JrePage() {
               />
               <div>
                 <label htmlFor="aiDecision" className="text-sm font-medium cursor-pointer flex items-center gap-1.5">
-                  <Bot className="w-4 h-4 text-violet-600" />
+                  <Bot className="w-4 h-4 text-heading" />
                   القرار المطعون فيه صادر عن نظام ذكاء اصطناعي أو خوارزمي
                 </label>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -416,7 +416,7 @@ export default function JrePage() {
                 />
               )}
               {form.theoryLensId && form.theoryLensId !== '__none' && (
-                <p className="text-xs text-gold dark:text-gold/80 flex items-start gap-1 mt-1">
+                <p className="text-xs text-gold/80 flex items-start gap-1 mt-1">
                   <AlertCircle className="w-3 h-3 mt-0.5 shrink-0" />
                   التحليل النظري غير مُلزِم قانونياً ولا يُشكِّل سلطة قضائية ملزمة. يُعرض منفصلاً عن الحكم دائماً.
                 </p>
