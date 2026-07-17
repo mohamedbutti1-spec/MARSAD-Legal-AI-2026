@@ -9,10 +9,21 @@ import { Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import {
-  Scale, Shield, ShieldAlert, RefreshCw, Sparkles, BookOpen,
-  AlertTriangle, ChevronRight, Loader2, Activity, BarChart3,
-  Eye, Users, Gavel,
+  Scale,
+  Shield,
+  ShieldAlert,
+  RefreshCw,
+  Sparkles,
+  BookOpen,
+  AlertTriangle,
+  ChevronRight,
+  Loader2,
+  Activity,
+  BarChart3,
+  Eye,
+  Users,
 } from 'lucide-react';
+import { Gavel } from '@/components/icons/gavel';
 import { useUserContext, useT } from '@/lib/user-context';
 
 // ─── Types ────────────────────────────────────────────────────────────────────

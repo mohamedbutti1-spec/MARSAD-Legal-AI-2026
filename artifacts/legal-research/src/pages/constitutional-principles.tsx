@@ -5,7 +5,8 @@
  */
 import React from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
-import { Shield, Scale, Eye, Users, FileSearch, BarChart2, Gavel, ClipboardCheck, RotateCcw, Activity } from 'lucide-react';
+import { Shield, Scale, Eye, Users, FileSearch, BarChart2, ClipboardCheck, RotateCcw, Activity } from 'lucide-react';
+import { Gavel } from '@/components/icons/gavel';
 
 // ─── Constitutional Data ────────────────────────────────────────────────────
 

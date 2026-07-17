@@ -5,11 +5,32 @@ import { apiFetch } from '@/lib/api-fetch';
 import { useT, useUserContext } from '@/lib/user-context';
 import { useListDocuments } from '@workspace/api-client-react';
 import {
-  Bot, Plus, Trash2, Send, Loader2, MessageSquare, Sparkles,
-  FileText, BookOpen, Copy, Check, ChevronDown, ChevronUp,
-  X, Pin, PinOff, Menu, FlaskConical,
-  Zap, GraduationCap, Star, Maximize2, Minimize2, Scale, Gavel,
+  Bot,
+  Plus,
+  Trash2,
+  Send,
+  Loader2,
+  MessageSquare,
+  Sparkles,
+  FileText,
+  BookOpen,
+  Copy,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  X,
+  Pin,
+  PinOff,
+  Menu,
+  FlaskConical,
+  Zap,
+  GraduationCap,
+  Star,
+  Maximize2,
+  Minimize2,
+  Scale,
 } from 'lucide-react';
+import { Gavel } from '@/components/icons/gavel';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { TheoryLensSelector, TheoryLensBadge, type TheoryLensState } from '@/components/research/theory-lens-selector';

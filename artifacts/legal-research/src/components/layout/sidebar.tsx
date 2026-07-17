@@ -7,7 +7,6 @@ import {
   FolderOpen,
   Network,
   ScrollText,
-  Gavel,
   Landmark,
   Globe,
   BookOpenText,
@@ -32,6 +31,7 @@ import {
   UserCircle,
   GraduationCap,
 } from 'lucide-react';
+import { Gavel } from '@/components/icons/gavel';
 import { useUserContext } from '@/lib/user-context';
 
 interface SidebarProps {

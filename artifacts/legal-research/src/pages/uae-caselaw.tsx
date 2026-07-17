@@ -1,5 +1,6 @@
 import React from 'react';
-import { Gavel } from 'lucide-react';
+import {  } from 'lucide-react';
+import { Gavel } from '@/components/icons/gavel';
 import { LegalSourcesBrowser } from '@/components/legal/legal-sources-browser';
 
 export default function UaeCaseLaw() {
