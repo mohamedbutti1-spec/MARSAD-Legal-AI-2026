@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { apiFetch } from '@/lib/api-fetch';
-import { ArrowRight, AlertCircle, Loader2, Sparkles } from 'lucide-react';
+import { ArrowRight, AlertCircle, Loader2, Sparkles, Paperclip, X } from 'lucide-react';
 import {
   findService, incidentTypesFor, CASE_FORM_FIELDS, type JourneyFormField,
 } from '@/lib/journey-catalog';
@@ -97,6 +97,8 @@ export default function JourneyCasePage() {
   const { toast } = useToast();
   const found = findService(pathId ?? '', categoryId ?? '', serviceId ?? '');
   const [values, setValues] = useState<FormValues>({});
+  // مرفقات اختيارية (صور/مستندات) — تُدرج أسماؤها ضمن معطيات التحليل
+  const [attachments, setAttachments] = useState<File[]>([]);
 
   const incident = found ? incidentTypesFor(found.path).find((t) => t.id === incidentId) : undefined;
 
@@ -129,7 +131,8 @@ export default function JourneyCasePage() {
           `الخدمة: ${service.nameAr} (${service.descAr}) — الفئة المهنية: ${category.nameAr} ضمن مسار ${path.nameAr}.`,
         documents:
           `وجود وفيات أو إصابات: ${boolAr(values.casualties)}. وجود شهود: ${boolAr(values.witnesses)}. ` +
-          `وجود كاميرات مراقبة: ${boolAr(values.cameras)}. الجهات المنفذة/الحاضرة: ${values.agencies || 'غير محدد'}.`,
+          `وجود كاميرات مراقبة: ${boolAr(values.cameras)}. الجهات المنفذة/الحاضرة: ${values.agencies || 'غير محدد'}. ` +
+          `المرفقات: ${attachments.length > 0 ? attachments.map((f) => f.name).join('، ') : 'لا توجد'}.`,
         action:
           `المطلوب: تحليل ${path.incidentLabelAr} وفق أفضل الممارسات والإطار القانوني، وبيان الإجراءات الواجبة والمستندات والمخرجات المطلوبة لخدمة ${service.nameAr}.`,
         risks: `ملاحظات أولية: ${values.notes || 'لا توجد'}.`,
@@ -228,6 +231,52 @@ export default function JourneyCasePage() {
               </div>
             );
           })}
+
+          {/* مرفقات اختيارية — صور أو مستندات (البند ٧ من المواصفة المعتمدة) */}
+          <div className="space-y-1.5">
+            <Label htmlFor="attachments" className="text-sm font-medium">
+              إرفاق ملفات أو صور أو مستندات (اختياري)
+            </Label>
+            <label
+              htmlFor="attachments"
+              className="flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-3 cursor-pointer hover:border-gold/40 transition-colors text-sm text-muted-foreground"
+            >
+              <Paperclip className="w-4 h-4 text-gold shrink-0" aria-hidden />
+              اضغط لاختيار الملفات (صور، PDF، مستندات)
+            </label>
+            <input
+              id="attachments"
+              type="file"
+              multiple
+              accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+              className="hidden"
+              onChange={(e) => {
+                const picked = Array.from(e.target.files ?? []);
+                if (picked.length) setAttachments((prev) => [...prev, ...picked]);
+                e.target.value = '';
+              }}
+            />
+            {attachments.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {attachments.map((f, i) => (
+                  <span
+                    key={`${f.name}-${i}`}
+                    className="inline-flex items-center gap-1 text-[11px] bg-muted/30 border border-border rounded-full px-2.5 py-1 text-foreground"
+                  >
+                    {f.name}
+                    <button
+                      type="button"
+                      aria-label={`إزالة ${f.name}`}
+                      onClick={() => setAttachments((prev) => prev.filter((_, idx) => idx !== i))}
+                      className="hover:text-destructive"
+                    >
+                      <X className="w-3 h-3" aria-hidden />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Actions */}

@@ -3,8 +3,9 @@ import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Shield, Lock, User, AlertCircle, ChevronDown, Eye } from 'lucide-react';
+import { Lock, User, AlertCircle, ChevronDown, Eye } from 'lucide-react';
 import { useUserContext } from '@/lib/user-context';
+import { MarsadEmblem } from '@/components/icons/marsad-emblem';
 
 // True when built for production (Vite replaces this at compile time).
 const IS_PROD = import.meta.env.PROD;
@@ -130,7 +131,7 @@ export default function Login() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gold/10 border border-gold/20 mb-4">
-            <Shield className="w-8 h-8 text-gold" />
+            <MarsadEmblem className="w-10 h-10 text-gold" />
           </div>
           <h1 className="text-2xl font-bold text-heading mb-1">مرصد — MARSAD</h1>
           <p className="text-sm text-muted-foreground">

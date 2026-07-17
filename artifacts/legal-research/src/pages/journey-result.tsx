@@ -19,9 +19,10 @@ import { loadResultMeta, type JourneyResultMeta } from '@/pages/journey-case';
 
 const TABS = [
   { id: 'analysis',  nameAr: 'التحليل' },
-  { id: 'actions',   nameAr: 'الإجراءات المتبعة' },
+  { id: 'actions',   nameAr: 'الإجراءات المقترحة' },
   { id: 'mistakes',  nameAr: 'الأخطاء المحتملة' },
   { id: 'documents', nameAr: 'المستندات والمخرجات' },
+  { id: 'legal',     nameAr: 'التوصيات القانونية' },
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
@@ -265,6 +266,12 @@ export default function JourneyResultPage() {
               </p>
               <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{output.summary}</p>
             </div>
+          </div>
+        )}
+
+        {/* ── التوصيات القانونية ── */}
+        {tab === 'legal' && (
+          <div className="space-y-4">
             {output.legalReferences.length > 0 && (
               <div className="moj-card rounded-xl border border-border p-5">
                 <p className="text-sm font-bold text-heading mb-3">المراجع القانونية</p>
@@ -289,10 +296,15 @@ export default function JourneyResultPage() {
                 <p className="text-sm text-foreground leading-relaxed">{output.escalationRecommendation}</p>
               </div>
             )}
+            {output.legalReferences.length === 0 && !output.escalationRecommendation && (
+              <p className="text-center text-sm text-muted-foreground py-8">
+                لا توجد توصيات قانونية إضافية لهذه الحالة
+              </p>
+            )}
           </div>
         )}
 
-        {/* ── الإجراءات المتبعة ── */}
+        {/* ── الإجراءات المقترحة ── */}
         {tab === 'actions' && (
           <div className="space-y-4">
             <div className="moj-card rounded-xl border border-border p-5">

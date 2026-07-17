@@ -204,7 +204,7 @@ const CRIME_SCENE_STAGES: JourneyStage[] = [
 function policeServices(): JourneyService[] {
   return [
     { ...svc('crime-scene', 'مسرح الجريمة', 'إدارة المعاينة وجمع الأدلة وتوثيق الموقع', '🕵️', CRIME_SCENE_STAGES) },
-    svc('station-complaint', 'مشتكى في مركز الشرطة', 'استقبال البلاغ وتحرير المحضر والتحري', '🏢'),
+    svc('station-complaint', 'مباشرة الاستدلالات', 'استقبال البلاغ وجمع الاستدلالات والتحري', '🏢'),
     svc('suspect-interrogation', 'استجواب مشتبه به', 'التحقيق والاستجواب وفق الضمانات القانونية', '🗣️'),
     svc('reports-drafting', 'تحرير محاضر', 'محضر استدلال — ضبط — إثبات حالة', '📄'),
     svc('evidence-management', 'إدارة الأدلة', 'حفظ الأدلة وتحليلها وسلسلة الحيازة', '🧾'),
@@ -326,7 +326,7 @@ export const DEFAULT_INCIDENT_TYPES: JourneyIncidentType[] = [
   { id: 'cyber',        nameAr: 'جريمة إلكترونية', icon: '💻' },
   { id: 'forgery',      nameAr: 'تزوير',           icon: '📑' },
   { id: 'drugs',        nameAr: 'مخدرات',          icon: '💊' },
-  { id: 'property',     nameAr: 'إتلاف مال',       icon: '🔨' },
+  { id: 'property',     nameAr: 'إتلاف مال',       icon: '💥' },
   { id: 'other',        nameAr: 'أخرى',            icon: '➕' },
 ];
 
@@ -412,6 +412,7 @@ export const JOURNEY_PATHS: JourneyPath[] = [
       cat('criminal-investigator', 'محقق جنائي', '🕵️', 'مرحباً بك أيها المحقق. تم تجهيز أدوات التحقيق الجنائي وجمع الاستدلالات.', policeServices(), SPG.forensicInvestigator),
       cat('judicial-officer', 'مأمور ضبط قضائي', '🪪', 'مرحباً بك. تم تجهيز أدوات الضبط القضائي وفق الضمانات القانونية.', policeServices(), SPG.judicialOfficer),
       cat('evidence-expert', 'خبير استدلالات', '🔬', 'مرحباً بك أيها الخبير. تم تجهيز أدوات فحص الأدلة والاستدلالات الجنائية.', policeServices(), SPG.forensicEvidence),
+      cat('report-clerk', 'كاتب محضر', '🖊️', 'مرحباً بك. تم تجهيز نماذج المحاضر وأدوات التحرير والتوثيق وفق الأصول القانونية.', policeServices(), SPG.judicialOfficer),
       cat('new-officer', 'ضابط مستجد', '🌱', 'مرحباً بك أيها الضابط المستجد. تم تجهيز مسار تدريبي يرافقك خطوة بخطوة في بداية عملك.', policeServices(), SPG.police),
       cat('operations', 'إدارة العمليات', '🖥️', 'مرحباً بك. تم تجهيز أدوات إدارة غرفة العمليات وتوجيه البلاغات.', policeServices(), SPG.police),
     ],

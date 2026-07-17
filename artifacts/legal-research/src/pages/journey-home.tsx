@@ -82,15 +82,14 @@ export default function JourneyHome() {
           </p>
         </div>
 
-        {/* ── نظرية الشامسي — الميزان الأساسي في القرارات الذكية ── */}
+        {/* ── نظرية الشامسي — تُخفى بالكامل لغير المصرح لهم (صلاحيات النظام) ── */}
+        {canUseShamsiFramework && (
         <section>
           <SectionTitle>نظرية الشامسي — الميزان الأساسي في القرارات الذكية</SectionTitle>
           <div className="moj-card rounded-xl border border-border p-5 sm:p-6 relative overflow-hidden">
-            {!canUseShamsiFramework && (
-              <span className="absolute top-3 left-3 inline-flex items-center gap-1 text-[10px] font-bold text-red-500/90 bg-red-500/10 px-2 py-1 rounded-full">
-                <Lock className="w-3 h-3" /> لا يظهر إلا للمصرح لهم
-              </span>
-            )}
+            <span className="absolute top-3 left-3 inline-flex items-center gap-1 text-[10px] font-bold text-gold bg-gold/10 px-2 py-1 rounded-full">
+              <Lock className="w-3 h-3" /> خاص — للمصرح لهم فقط
+            </span>
             <p className="text-sm text-muted-foreground leading-relaxed mb-5 max-w-3xl">
               نظرية الشامسي — الميزان العلمي الذي يُقيّم مدى مشروعية القرار الإداري الرقمي الذكي وفق سبعة
               أركان أساسية لضمان العدالة التقنية والشفافية والمساءلة القانونية.
@@ -104,25 +103,20 @@ export default function JourneyHome() {
               ))}
             </div>
             <div className="mt-5 flex justify-center">
-              {canUseShamsiFramework ? (
-                <button
-                  type="button"
-                  onClick={() => navigate('/shamsi-theory')}
-                  className="gold-hover-glow inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-background text-sm font-bold hover:opacity-90 transition-all"
-                >
-                  فتح النظرية الكاملة <ChevronLeft className="w-4 h-4" aria-hidden />
-                </button>
-              ) : (
-                <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border text-sm font-bold text-muted-foreground select-none">
-                  <Lock className="w-4 h-4" /> دخول مخوّل
-                </span>
-              )}
+              <button
+                type="button"
+                onClick={() => navigate('/shamsi-theory')}
+                className="gold-hover-glow inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-background text-sm font-bold hover:opacity-90 transition-all"
+              >
+                فتح النظرية الكاملة <ChevronLeft className="w-4 h-4" aria-hidden />
+              </button>
             </div>
             <p className="text-[11px] text-muted-foreground/70 text-center mt-4">
               تطبيق النظرية على القرارات الذكية لضمان الموازنة بين الكفاءة التقنية والعدالة القانونية.
             </p>
           </div>
         </section>
+        )}
 
         {/* ── خدمة نافع — التوعية والتحذير من الجرم الحديث ── */}
         <section>
