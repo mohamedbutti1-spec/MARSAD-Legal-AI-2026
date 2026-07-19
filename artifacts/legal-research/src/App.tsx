@@ -26,6 +26,16 @@ const JourneyResult        = React.lazy(() => import('@/pages/journey-result'));
 const NafePage             = React.lazy(() => import('@/pages/nafe'));
 const CommunityPage        = React.lazy(() => import('@/pages/community'));
 
+// MLOS UI redesign — hub pages (الخدمات → القانون / التدريب / المجتمع)
+const ServicesHub       = React.lazy(() => import('@/pages/services-hub'));
+const ServicesLaw       = React.lazy(() => import('@/pages/services-law'));
+const ServicesTraining  = React.lazy(() => import('@/pages/services-training'));
+const ServicesCommunity = React.lazy(() => import('@/pages/services-community'));
+const DecisionAnalysis  = React.lazy(() => import('@/pages/decision-analysis'));
+const NotificationsPage = React.lazy(() => import('@/pages/notifications'));
+const HelpPage          = React.lazy(() => import('@/pages/help'));
+const AboutMarsadPage   = React.lazy(() => import('@/pages/about-marsad'));
+
 // Research Tools
 const LegalResearch = React.lazy(() => import('@/pages/legal-research'));
 const AiAssistant = React.lazy(() => import('@/pages/ai-assistant'));
@@ -146,6 +156,16 @@ function Router() {
             الشاشات ٣→٨: التقدم الطبيعي عبر /journey/… حتى النتيجة الذكية */}
         <Route path="/" component={JourneyHome} />
         <Route path="/journey-services" component={MarsadServicesPage} />
+
+        {/* ── MLOS UI redesign — صفحات المحاور (روابط لوحدات قائمة فقط) ── */}
+        <Route path="/services/law/decision-analysis" component={DecisionAnalysis} />
+        <Route path="/services/law"       component={ServicesLaw} />
+        <Route path="/services/training"  component={ServicesTraining} />
+        <Route path="/services/community" component={ServicesCommunity} />
+        <Route path="/services"           component={ServicesHub} />
+        <Route path="/notifications"      component={NotificationsPage} />
+        <Route path="/help"               component={HelpPage} />
+        <Route path="/about"              component={AboutMarsadPage} />
         <Route path="/journey/result/:sessionId" component={JourneyResult} />
         <Route path="/journey/:pathId/:categoryId/:serviceId/incident/:incidentId" component={JourneyCase} />
         <Route path="/journey/:pathId/:categoryId/:serviceId/incident" component={JourneyIncident} />

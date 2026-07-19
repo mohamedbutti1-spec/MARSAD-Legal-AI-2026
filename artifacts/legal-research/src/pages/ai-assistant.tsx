@@ -4287,7 +4287,7 @@ export default function AiAssistant() {
           ...DEFAULT_SESSION_CONFIG,
           userType: (cfg.userType as UserType) ?? DEFAULT_SESSION_CONFIG.userType,
           answerMode: cfg.answerStyle === 'quick' ? 'quick' : 'standard',
-          depth: cfg.answerStyle === 'detailed' ? 'comprehensive' : cfg.answerStyle === 'standard' ? 'detailed' : DEFAULT_SESSION_CONFIG.depth,
+          depth: cfg.analysisDepth ?? (cfg.answerStyle === 'detailed' ? 'comprehensive' : cfg.answerStyle === 'standard' ? 'detailed' : DEFAULT_SESSION_CONFIG.depth),
           jurisdiction: cfg.legalReference === 'france' ? 'france' : cfg.legalReference === 'comparative' ? 'comparative' : 'uae',
           comparativeMode: cfg.legalReference === 'comparative',
           // Al-Shamsi is owner-only — ignore this selection for anyone else, even

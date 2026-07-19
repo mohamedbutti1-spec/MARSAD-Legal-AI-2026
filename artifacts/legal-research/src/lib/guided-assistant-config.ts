@@ -47,6 +47,14 @@ export const LEGAL_BRANCHES: { id: LegalBranchId; labelAr: string }[] = [
   { id: 'criminal',   labelAr: 'جنائي' },
 ];
 
+// Values are a subset of the assistant's ResearchDepth union.
+export type AnalysisDepthId = 'medium' | 'detailed' | 'comprehensive';
+export const ANALYSIS_DEPTHS: { id: AnalysisDepthId; labelAr: string }[] = [
+  { id: 'medium',        labelAr: 'أساسي' },
+  { id: 'detailed',      labelAr: 'متقدم' },
+  { id: 'comprehensive', labelAr: 'شامل' },
+];
+
 export interface GuidedAssistantConfig {
   userCategory: UserCategoryId;
   userType: string;
@@ -54,4 +62,6 @@ export interface GuidedAssistantConfig {
   legalReference: LegalRefId;
   legalBranch: LegalBranchId | null;
   trainingMode: boolean;
+  /** مستوى التحليل — optional research-depth override from the home composer. */
+  analysisDepth?: AnalysisDepthId;
 }

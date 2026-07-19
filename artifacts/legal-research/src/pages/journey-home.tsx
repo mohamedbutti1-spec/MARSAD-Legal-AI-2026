@@ -1,208 +1,202 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useUserContext } from '@/lib/user-context';
-import { Lock, ChevronLeft, Bell, Users, ShieldCheck } from 'lucide-react';
-import { PathIcon } from '@/components/icons/prosecution-emblem';
+import { ChevronLeft, Paperclip, Send } from 'lucide-react';
+import { MarsadEmblem } from '@/components/icons/marsad-emblem';
+import { MARSAD_SERVICES } from '@/lib/journey-catalog';
 import {
-  JOURNEY_PATHS, NEW_IN_MARSAD, MARSAD_SERVICES,
-  NAFE_ALERTS, COMMUNITY_FEATURES, COMMUNITY_POSTS, SHAMSI_PILLARS,
-} from '@/lib/journey-catalog';
+  ANSWER_STYLES, type AnswerStyleId,
+  LEGAL_REFERENCES, type LegalRefId,
+  LEGAL_BRANCHES, type LegalBranchId,
+  ANALYSIS_DEPTHS, type AnalysisDepthId,
+} from '@/lib/guided-assistant-config';
 
-// ─── الصفحة الرئيسية — مرحباً بك في مرصد (المرفق ١ / الشاشة ٢) ────────────────
-// ترتيب المسارات والعناصر هنا يطابق ترتيب المرفق حرفياً — لا تعد ترتيبها.
+// ─── الصفحة الرئيسية بعد تسجيل الدخول — MLOS Legal AI ─────────────────────────
+// التصميم المعتمد: ترحيب + مربع سؤال كبير + صف إعدادات التحليل + ثلاث بطاقات
+// (القانون / التدريب / المجتمع) فقط. لا خدمات أخرى في هذه الصفحة.
+// الإرسال يستخدم آلية pendingAssistantQuery/Config القائمة — الأتمتة بلا تغيير.
 
-function PathTile({ icon, nameAr, href }: { icon: React.ReactNode; nameAr: string; href: string }) {
+const PILLARS = [
+  {
+    id: 'law',
+    icon: '⚖',
+    nameAr: 'القانون',
+    descAr: 'تحليل القرارات الإدارية والأحكام القضائية، المقارنة التشريعية، وصياغة المذكرات والتقارير والدراسات.',
+    href: '/services/law',
+    cta: 'دخول إلى خدمات القانون',
+  },
+  {
+    id: 'training',
+    icon: '🎓',
+    nameAr: 'التدريب',
+    descAr: 'بيئات محاكاة مهنية: مركز الشرطة، جلسة المحكمة، مسرح الجريمة، والسيناريوهات القانونية التفاعلية.',
+    href: '/services/training',
+    cta: 'دخول إلى خدمات التدريب',
+  },
+  {
+    id: 'community',
+    icon: '🛡',
+    nameAr: 'المجتمع',
+    descAr: 'التوعية المجتمعية، المواد التثقيفية، المؤشرات والإحصاءات، والأدلة الإرشادية.',
+    href: '/services/community',
+    cta: 'دخول إلى خدمات المجتمع',
+  },
+];
+
+/** Small labelled select used in the analysis-settings row. */
+function SettingSelect<T extends string>({
+  label, value, options, onChange,
+}: {
+  label: string;
+  value: T;
+  options: { id: T; labelAr: string }[];
+  onChange: (v: T) => void;
+}) {
   return (
-    <Link href={href}>
-      <div className="moj-card rounded-2xl p-6 sm:p-7 flex flex-col items-center justify-center gap-3.5 text-center cursor-pointer border border-border hover:border-gold/50 hover:shadow-lg transition-all min-h-[150px] sm:min-h-[170px] group">
-        <span className="text-4xl sm:text-5xl group-hover:scale-110 transition-transform" aria-hidden>{icon}</span>
-        <span className="text-base sm:text-lg font-bold text-heading leading-snug">{nameAr}</span>
-      </div>
-    </Link>
-  );
-}
-
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <h2 className="text-lg sm:text-xl font-bold text-heading flex items-center gap-2 mb-4">
-      <span className="w-1.5 h-6 rounded-full bg-gold inline-block" aria-hidden />
-      {children}
-    </h2>
+    <label className="flex flex-col gap-1 min-w-[120px] flex-1 sm:flex-none">
+      <span className="text-[10px] font-bold text-muted-foreground">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value as T)}
+        className="rounded-lg bg-background border border-border px-2.5 py-1.5 text-xs font-semibold text-foreground focus:outline-none focus:border-gold/60 cursor-pointer"
+      >
+        {options.map((o) => (
+          <option key={o.id} value={o.id}>{o.labelAr}</option>
+        ))}
+      </select>
+    </label>
   );
 }
 
 export default function JourneyHome() {
-  const { canUseShamsiFramework } = useUserContext();
   const [, navigate] = useLocation();
+  const { lang, setLang, canUseShamsiFramework, canUpload } = useUserContext();
+
+  const [question, setQuestion] = useState('');
+  const [answerStyle, setAnswerStyle] = useState<AnswerStyleId>('standard');
+  const [legalReference, setLegalReference] = useState<LegalRefId>('uae');
+  const [legalBranch, setLegalBranch] = useState<LegalBranchId>('admin');
+  const [analysisDepth, setAnalysisDepth] = useState<AnalysisDepthId>('detailed');
+
+  // نظرية الشامسي لا تُعرض كخيار إلا للمصرح لهم — الصلاحيات كما هي.
+  const legalRefOptions = LEGAL_REFERENCES.filter(
+    (r) => r.id !== 'shamsi' || canUseShamsiFramework,
+  );
+
+  const submitQuestion = () => {
+    const q = question.trim();
+    if (!q) return;
+    sessionStorage.setItem('pendingAssistantQuery', q);
+    sessionStorage.setItem(
+      'pendingAssistantConfig',
+      JSON.stringify({
+        userCategory: 'general_user',
+        userType: 'unspecified',
+        answerStyle,
+        legalReference,
+        legalBranch,
+        trainingMode: false,
+        analysisDepth,
+      }),
+    );
+    navigate('/assistant');
+  };
 
   return (
     <AppLayout>
-      <div className="max-w-6xl mx-auto px-4 py-8 space-y-10" dir="rtl">
+      <div className="max-w-4xl mx-auto px-4 py-8 sm:py-10 space-y-10" dir="rtl">
 
-        {/* ── Hero ── */}
-        <div className="text-center space-y-2">
+        {/* ── الشعار والترحيب ── */}
+        <div className="text-center space-y-3">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gold/10 border border-gold/20">
+            <MarsadEmblem className="w-10 h-10 text-gold" />
+          </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-heading" style={{ fontFamily: 'var(--app-font-serif)' }}>
             مرحباً بك في مرصد
           </h1>
-          <p className="text-sm sm:text-base text-muted-foreground font-medium">
-            اختر مسارك المهني لبدء تجربتك
-          </p>
+          <p className="text-xs font-bold text-gold tracking-widest" dir="ltr">MLOS · LEGAL AI</p>
         </div>
 
-        {/* ── المسارات المهنية (بترتيب المرفق) ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-          {JOURNEY_PATHS.map((p) => (
-            <PathTile
-              key={p.id}
-              icon={<PathIcon path={p} className="w-11 h-11 sm:w-14 sm:h-14 text-gold" />}
-              nameAr={p.nameAr}
-              href={`/journey/${p.id}`}
+        {/* ── مربع السؤال ── */}
+        <div className="moj-card rounded-2xl border border-gold/30 p-4 sm:p-5 shadow-lg space-y-4">
+          {/* في اتجاه RTL: الزر أولاً في الـ DOM ليظهر على اليمين كما في التصميم المعتمد */}
+          <div className="flex items-end gap-3">
+            <button
+              type="button"
+              onClick={submitQuestion}
+              disabled={!question.trim()}
+              aria-label="إرسال"
+              className="gold-hover-glow shrink-0 w-11 h-11 rounded-xl bg-gold text-background flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Send className="w-5 h-5 -scale-x-100" aria-hidden />
+            </button>
+            <textarea
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  submitQuestion();
+                }
+              }}
+              rows={3}
+              placeholder="اكتب سؤالك القانوني أو ارفع قراراً إدارياً لتحليله..."
+              className="flex-1 bg-transparent border-0 resize-none text-sm sm:text-base text-foreground placeholder:text-muted-foreground/60 focus:outline-none leading-relaxed py-1"
             />
-          ))}
-          {/* خدمات مرصد — البلاطة الثامنة */}
-          <PathTile icon="🧰" nameAr="خدمات مرصد" href="/journey-services" />
+          </div>
         </div>
 
-        {/* ── جديد في مرصد ── */}
-        <div className="moj-card rounded-xl p-4 sm:p-5 border border-gold/20">
-          <p className="text-xs font-bold text-gold mb-3 text-center">جديد في مرصد</p>
-          <div className="flex flex-wrap items-stretch justify-center gap-2 sm:gap-3">
-            {NEW_IN_MARSAD.map((item) => (
-              <Link key={item.id} href={item.href}>
-                <div className="flex flex-col items-center gap-1.5 px-3 py-2 rounded-lg hover:bg-gold/10 cursor-pointer transition-colors min-w-[92px]">
-                  <span className="text-xl" aria-hidden>{item.icon}</span>
-                  <span className="text-[11px] font-medium text-foreground text-center leading-tight">{item.nameAr}</span>
-                </div>
-              </Link>
-            ))}
-          </div>
-          <p className="text-[10px] text-muted-foreground/60 text-center mt-3 select-none">
-            من في مجتمع مرصد لحفظ الوطن
-          </p>
-        </div>
-
-        {/* ── نظرية الشامسي — تُخفى بالكامل لغير المصرح لهم (صلاحيات النظام) ── */}
-        {canUseShamsiFramework && (
-        <section>
-          <SectionTitle>نظرية الشامسي — الميزان الأساسي في القرارات الذكية</SectionTitle>
-          <div className="moj-card rounded-xl border border-border p-5 sm:p-6 relative overflow-hidden">
-            <span className="absolute top-3 left-3 inline-flex items-center gap-1 text-[10px] font-bold text-gold bg-gold/10 px-2 py-1 rounded-full">
-              <Lock className="w-3 h-3" /> خاص — للمصرح لهم فقط
-            </span>
-            <p className="text-sm text-muted-foreground leading-relaxed mb-5 max-w-3xl">
-              نظرية الشامسي — الميزان العلمي الذي يُقيّم مدى مشروعية القرار الإداري الرقمي الذكي وفق سبعة
-              أركان أساسية لضمان العدالة التقنية والشفافية والمساءلة القانونية.
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
-              {SHAMSI_PILLARS.map((pillar) => (
-                <div key={pillar.id} className="rounded-lg border border-border/60 bg-muted/20 p-3 flex flex-col items-center gap-1.5 text-center">
-                  <span className="text-lg" aria-hidden>{pillar.icon}</span>
-                  <span className="text-[11px] font-semibold text-foreground leading-tight">{pillar.nameAr}</span>
-                </div>
-              ))}
-            </div>
-            <div className="mt-5 flex justify-center">
-              <button
-                type="button"
-                onClick={() => navigate('/shamsi-theory')}
-                className="gold-hover-glow inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-background text-sm font-bold hover:opacity-90 transition-all"
-              >
-                فتح النظرية الكاملة <ChevronLeft className="w-4 h-4" aria-hidden />
-              </button>
-            </div>
-            <p className="text-[11px] text-muted-foreground/70 text-center mt-4">
-              تطبيق النظرية على القرارات الذكية لضمان الموازنة بين الكفاءة التقنية والعدالة القانونية.
-            </p>
-          </div>
-        </section>
-        )}
-
-        {/* ── خدمة نافع — التوعية والتحذير من الجرم الحديث ── */}
-        <section>
-          <SectionTitle>
-            <Bell className="w-5 h-5 text-gold" aria-hidden />
-            خدمة نافع — التوعية والتحذير من الجرم الحديث
-          </SectionTitle>
-          <div className="grid sm:grid-cols-3 gap-3">
-            {NAFE_ALERTS.slice(0, 3).map((alert) => (
-              <div key={alert.id} className="moj-card rounded-xl border border-border p-4 flex flex-col gap-2">
-                <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                  <span className="font-semibold text-gold">{alert.sourceAr}</span>
-                  <span dir="ltr">{new Date(alert.date).toLocaleDateString('ar-AE')}</span>
-                </div>
-                <p className="text-sm font-bold text-heading leading-snug flex-1">{alert.titleAr}</p>
-                <Link href="/nafe">
-                  <span className="text-xs text-gold font-semibold cursor-pointer hover:underline">اقرأ المزيد</span>
-                </Link>
-              </div>
-            ))}
-          </div>
-          <div className="mt-4 flex justify-center">
-            <Link href="/nafe">
-              <span className="gold-hover-glow inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-background text-sm font-bold cursor-pointer hover:opacity-90 transition-all">
-                <ShieldCheck className="w-4 h-4" aria-hidden /> أبلغ عن حالة مشبوهة
+        {/* ── إعدادات التحليل — صف أفقي واحد تحت مربع السؤال ── */}
+        <div className="flex flex-wrap items-end gap-2.5 sm:gap-3 -mt-5">
+          <SettingSelect<AnswerStyleId>   label="نوع الإجابة"     value={answerStyle}    options={ANSWER_STYLES}    onChange={setAnswerStyle} />
+          <SettingSelect<LegalRefId>      label="النظام القانوني" value={legalReference} options={legalRefOptions}  onChange={setLegalReference} />
+          <SettingSelect<LegalBranchId>   label="الفرع القانوني"  value={legalBranch}    options={LEGAL_BRANCHES}   onChange={setLegalBranch} />
+          <SettingSelect<AnalysisDepthId> label="مستوى التحليل"   value={analysisDepth}  options={ANALYSIS_DEPTHS}  onChange={setAnalysisDepth} />
+          <label className="flex flex-col gap-1 min-w-[90px]">
+            <span className="text-[10px] font-bold text-muted-foreground">اللغة</span>
+            <select
+              value={lang}
+              onChange={(e) => setLang(e.target.value as 'ar' | 'en')}
+              className="rounded-lg bg-background border border-border px-2.5 py-1.5 text-xs font-semibold text-foreground focus:outline-none focus:border-gold/60 cursor-pointer"
+            >
+              <option value="ar">العربية</option>
+              <option value="en">English</option>
+            </select>
+          </label>
+          {canUpload && (
+            <Link href="/upload">
+              <span className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:border-gold/50 hover:text-gold cursor-pointer transition-colors">
+                <Paperclip className="w-3.5 h-3.5" aria-hidden />
+                إرفاق ملف
               </span>
             </Link>
-          </div>
-        </section>
+          )}
+        </div>
 
-        {/* ── المجتمع المهني ── */}
-        <section>
-          <SectionTitle>
-            <Users className="w-5 h-5 text-gold" aria-hidden />
-            المجتمع المهني
-          </SectionTitle>
-          <div className="moj-card rounded-xl border border-border p-5">
-            <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-5">
-              {COMMUNITY_FEATURES.map((f) => (
-                <div key={f.id} className="flex flex-col items-center gap-1.5 px-4 py-2 rounded-lg bg-muted/20 min-w-[88px]">
-                  <span className="text-lg" aria-hidden>{f.icon}</span>
-                  <span className="text-[11px] font-medium text-foreground">{f.nameAr}</span>
-                </div>
-              ))}
-            </div>
-            <p className="text-xs font-bold text-muted-foreground mb-3">آخر المشاركات</p>
-            <div className="space-y-2">
-              {COMMUNITY_POSTS.slice(0, 2).map((post) => (
-                <div key={post.id} className="rounded-lg border border-border/60 p-3 flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-foreground truncate">{post.titleAr}</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">
-                      {post.authorAr} · {new Date(post.date).toLocaleDateString('ar-AE')}
-                    </p>
-                  </div>
-                  <div className="shrink-0 text-[11px] text-muted-foreground flex items-center gap-3">
-                    <span>💬 {post.replies}</span>
-                    <span>👍 {post.likes}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-4 text-center">
-              <Link href="/community">
-                <span className="text-sm text-gold font-bold cursor-pointer hover:underline">عرض المزيد من المشاركات</span>
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        {/* ── من في مجتمع مرصد لحفظ الوطن ── */}
-        <section className="moj-card rounded-xl border border-gold/25 p-6 text-center space-y-2">
-          <p className="text-lg font-bold text-heading" style={{ fontFamily: 'var(--app-font-serif)' }}>
-            من في مجتمع مرصد لحفظ الوطن 🇦🇪
-          </p>
-          <p className="text-sm text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            نجتمع على هدف واحد: صناعة عدالة ذكية، وحماية المجتمع، وتعزيز الأمن القانوني.
-          </p>
-        </section>
+        {/* ── المحاور الرئيسية الثلاثة ── */}
+        <div className="grid sm:grid-cols-3 gap-4">
+          {PILLARS.map((p) => (
+            <Link key={p.id} href={p.href}>
+              <div className="moj-card h-full rounded-2xl border border-border p-6 flex flex-col items-center text-center gap-3.5 cursor-pointer hover:border-gold/50 hover:shadow-lg transition-all group">
+                <span className="text-4xl group-hover:scale-110 transition-transform" aria-hidden>{p.icon}</span>
+                <h2 className="text-lg font-bold text-heading">{p.nameAr}</h2>
+                <p className="text-[13px] text-muted-foreground leading-relaxed flex-1">{p.descAr}</p>
+                <span className="gold-hover-glow inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gold text-background text-[13px] font-bold group-hover:opacity-90 transition-all">
+                  {p.cta}
+                  <ChevronLeft className="w-4 h-4" aria-hidden />
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
 
       </div>
     </AppLayout>
   );
 }
 
-// ─── خدمات مرصد — صفحة روابط الوحدات القائمة ─────────────────────────────────
+// ─── خدمات مرصد — صفحة روابط الوحدات القائمة (بلا تغيير) ──────────────────────
 
 export function MarsadServicesPage() {
   return (

@@ -3,7 +3,7 @@ import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Lock, User, AlertCircle, ChevronDown, Eye } from 'lucide-react';
+import { Lock, User, AlertCircle, ChevronDown, Eye, Globe } from 'lucide-react';
 import { useUserContext } from '@/lib/user-context';
 import { MarsadEmblem } from '@/components/icons/marsad-emblem';
 
@@ -57,7 +57,7 @@ const DEMO_ACCOUNTS = [
 
 export default function Login() {
   const [, navigate] = useLocation();
-  const { refreshSession } = useUserContext();
+  const { refreshSession, lang, setLang } = useUserContext();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -128,12 +128,25 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="relative w-full max-w-md">
+        {/* Language toggle */}
+        <div className="flex justify-end mb-2">
+          <button
+            type="button"
+            onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
+            className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+          >
+            <Globe className="w-3.5 h-3.5" />
+            <span>{lang === 'ar' ? 'English' : 'العربية'}</span>
+          </button>
+        </div>
+
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gold/10 border border-gold/20 mb-4">
             <MarsadEmblem className="w-10 h-10 text-gold" />
           </div>
           <h1 className="text-2xl font-bold text-heading mb-1">مرصد — MARSAD</h1>
+          <p className="text-xs font-bold text-gold tracking-widest mb-1" dir="ltr">MLOS · LEGAL AI</p>
           <p className="text-sm text-muted-foreground">
             منصة القرارات الإدارية الذكية
           </p>
