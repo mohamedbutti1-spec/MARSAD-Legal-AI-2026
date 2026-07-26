@@ -1,4 +1,4 @@
-import { Router, type IRouter } from "express";
+import { Router, type IRouter, type Request, type Response, type NextFunction } from "express";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -26,16 +26,63 @@ const storage = multer.diskStorage({
   },
 });
 
+const MAX_UPLOAD_MB = 100;
+
+/** Raised by the multer fileFilter for disallowed extensions; mapped to 400. */
+class UnsupportedFileTypeError extends Error {
+  constructor(ext: string) {
+    super(`Unsupported file type: ${ext || "(none)"}`);
+    this.name = "UnsupportedFileTypeError";
+  }
+}
+
 const upload = multer({
   storage,
-  limits: { fileSize: 100 * 1024 * 1024 },
+  limits: { fileSize: MAX_UPLOAD_MB * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     const allowed = [".pdf", ".docx", ".txt"];
     const ext = path.extname(file.originalname).toLowerCase();
     if (allowed.includes(ext)) cb(null, true);
-    else cb(new Error("Only PDF, DOCX, and TXT files are allowed"));
+    else cb(new UnsupportedFileTypeError(ext));
   },
 });
+
+/**
+ * Runs multer's single-file handler and converts its failures into clear,
+ * bilingual client errors. Previously these errors fell through to the global
+ * error handler and surfaced as "Internal server error" (500) with no hint of
+ * what went wrong — for user mistakes as ordinary as picking a .jpg or a file
+ * over the size limit.
+ */
+function uploadSingleFile(req: Request, res: Response, next: NextFunction): void {
+  upload.single("file")(req, res, (err: unknown) => {
+    if (!err) {
+      next();
+      return;
+    }
+    if (err instanceof UnsupportedFileTypeError) {
+      res.status(400).json({
+        error: "نوع الملف غير مدعوم — الأنواع المسموح بها: PDF أو DOCX أو TXT. / Unsupported file type — allowed types: PDF, DOCX, or TXT.",
+      });
+      return;
+    }
+    if (err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE") {
+      res.status(413).json({
+        error: `حجم الملف يتجاوز الحد الأقصى ${MAX_UPLOAD_MB} ميغابايت. / File exceeds the ${MAX_UPLOAD_MB} MB size limit.`,
+      });
+      return;
+    }
+    if (err instanceof multer.MulterError) {
+      // Remaining multer codes (wrong field name, too many files, …) are
+      // malformed requests, not server faults.
+      res.status(400).json({
+        error: `تعذّر استلام الملف: ${err.code}. / Could not accept the file: ${err.code}.`,
+      });
+      return;
+    }
+    next(err);
+  });
+}
 
 function extractKeywords(text: string): string {
   // Stop words (Arabic + English)
@@ -197,10 +244,10 @@ router.delete("/documents/:id", requireSupervisorOrOwner, async (req, res): Prom
 });
 
 // POST /documents/upload
-router.post("/documents/upload", requireSupervisorOrOwner, upload.single("file"), async (req, res): Promise<void> => {
+router.post("/documents/upload", requireSupervisorOrOwner, uploadSingleFile, async (req, res): Promise<void> => {
   const file = req.file;
   if (!file) {
-    res.status(400).json({ error: "No file provided" });
+    res.status(400).json({ error: "لم يتم إرفاق أي ملف. / No file provided." });
     return;
   }
 
