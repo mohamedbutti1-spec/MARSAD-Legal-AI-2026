@@ -1,0 +1,52 @@
+<!--META {"title": "How we achieved 120ms finality across 38 chains", "description": "A look inside the consensus rework that cut confirmation times by 6x."} -->
+  <main>
+    <article class="section container">
+      <div class="post-layout">
+        <div>
+          <div class="post-header" data-aos="fade-up">
+            <div class="cat">Engineering</div>
+            <h1>How we achieved 120ms finality across 38 chains</h1>
+            <div class="post-meta"><span class="avatar"></span> Amara Chen · Jul 18, 2026 · 8 min read</div>
+          </div>
+          <div class="post-cover" data-aos="fade-in"></div>
+
+          <div class="post-body" data-aos="fade-up">
+            <p>Eighteen months ago, a cross-chain transaction through BUIO took an average of 780ms to finalize. Today it takes 120ms — a 6x improvement — without weakening a single security assumption. This is the story of how we got there.</p>
+
+            <h2 id="the-bottleneck">The bottleneck</h2>
+            <p>Our original relayer network polled each connected chain independently, batching proofs every 400ms to control cost. That batching window was the single biggest contributor to latency, and it scaled linearly with the number of chains we supported.</p>
+            <p>As we crossed 20 integrated networks, the math stopped working: more chains meant more batches, and more batches meant users waiting longer for the same guarantee.</p>
+
+            <h2 id="rethinking-consensus">Rethinking consensus</h2>
+            <p>Instead of batching proofs per chain, we moved to a shared aggregation layer that collects attestations from all relayers into a single Merkle root every 90ms, regardless of how many chains are attached.</p>
+            <blockquote>The insight wasn't a faster algorithm — it was decoupling proof aggregation from the number of chains entirely.</blockquote>
+            <p>This required rewriting our light-client verification logic so that any chain could confirm inclusion using the shared root instead of a chain-specific proof:</p>
+            <pre><code>function verifyInclusion(leaf, proof, root) {
+  return merkleVerify(leaf, proof, root);
+}</code></pre>
+
+            <h2 id="what-changed-for-developers">What changed for developers</h2>
+            <p>Nothing in the public SDK surface changed. <code>buio.tx.wait()</code> now simply resolves faster, and the underlying aggregation is invisible to application code.</p>
+
+            <h2 id="results">Results</h2>
+            <p>Median finality across all 38 supported chains now sits at 120ms, with p99 under 400ms even during peak load. We're continuing to push this further as we onboard additional relayer regions in Q3.</p>
+          </div>
+
+          <div class="share-row" data-aos="fade-up">
+            <a href="#" class="btn btn-secondary btn-sm">Share on X</a>
+            <a href="#" class="btn btn-secondary btn-sm">Copy link</a>
+          </div>
+        </div>
+
+        <aside class="toc" data-aos="fade-in">
+          <h4>On this page</h4>
+          <ul>
+            <li><a href="#the-bottleneck">The bottleneck</a></li>
+            <li><a href="#rethinking-consensus">Rethinking consensus</a></li>
+            <li><a href="#what-changed-for-developers">What changed for developers</a></li>
+            <li><a href="#results">Results</a></li>
+          </ul>
+        </aside>
+      </div>
+    </article>
+  </main>

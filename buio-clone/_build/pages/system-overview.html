@@ -1,0 +1,79 @@
+<!--META {"title": "System Status", "description": "Live status and uptime history for every BUIO service."} -->
+  <main>
+    <section class="page-header container">
+      <div class="eyebrow" data-aos="fade-up">System status</div>
+      <h1 data-aos="fade-up" data-aos-delay="60">All systems overview</h1>
+      <p data-aos="fade-up" data-aos-delay="120">Live status across identity, storage, indexing, and every supported chain relayer.</p>
+    </section>
+
+    <section class="container">
+      <div class="status-banner" data-aos="fade-up">
+        <span class="status-dot"></span>
+        All systems operational — 99.99% uptime over the last 90 days
+      </div>
+
+      <div class="grid system-grid" data-aos="fade-up">
+        <div class="card-flat system-card">
+          <div class="row"><h4>Identity API</h4><span class="badge" style="color:var(--c-success);border-color:currentColor;">Operational</span></div>
+          <div class="metric-row"><span class="value">99.99%</span><span class="text-muted text-sm">uptime</span></div>
+          <div class="uptime-bar" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="degraded"></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+        </div>
+        <div class="card-flat system-card">
+          <div class="row"><h4>Storage layer</h4><span class="badge" style="color:var(--c-success);border-color:currentColor;">Operational</span></div>
+          <div class="metric-row"><span class="value">100%</span><span class="text-muted text-sm">uptime</span></div>
+          <div class="uptime-bar" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+        </div>
+        <div class="card-flat system-card">
+          <div class="row"><h4>Indexing service</h4><span class="badge" style="color:var(--c-success);border-color:currentColor;">Operational</span></div>
+          <div class="metric-row"><span class="value">99.97%</span><span class="text-muted text-sm">uptime</span></div>
+          <div class="uptime-bar" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i class="down"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+        </div>
+        <div class="card-flat system-card">
+          <div class="row"><h4>Relayer network</h4><span class="badge" style="color:var(--c-success);border-color:currentColor;">Operational</span></div>
+          <div class="metric-row"><span class="value">99.98%</span><span class="text-muted text-sm">uptime</span></div>
+          <div class="uptime-bar" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+        </div>
+        <div class="card-flat system-card">
+          <div class="row"><h4>Dashboard</h4><span class="badge" style="color:var(--c-success);border-color:currentColor;">Operational</span></div>
+          <div class="metric-row"><span class="value">100%</span><span class="text-muted text-sm">uptime</span></div>
+          <div class="uptime-bar" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+        </div>
+        <div class="card-flat system-card">
+          <div class="row"><h4>Webhooks</h4><span class="badge" style="color:var(--c-success);border-color:currentColor;">Operational</span></div>
+          <div class="metric-row"><span class="value">99.95%</span><span class="text-muted text-sm">uptime</span></div>
+          <div class="uptime-bar" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="degraded"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section container">
+      <div class="section-head center" data-aos="fade-up">
+        <div class="eyebrow">Incident history</div>
+        <h2 class="font-serif" style="font-size: var(--text-3xl);">Past incidents</h2>
+      </div>
+      <div class="changelog-list" data-aos="fade-up">
+        <div class="changelog-entry">
+          <div class="version-row"><span class="tag-pill tag-fix">Resolved</span><span class="date">Jul 3, 2026</span></div>
+          <h3>Indexing service degraded performance</h3>
+          <p class="text-secondary">A regional database failover caused indexing lag of up to 4 minutes for 22 minutes. Root cause: connection pool exhaustion during failover. Fixed by increasing pool limits and adding automated failover tests.</p>
+        </div>
+        <div class="changelog-entry">
+          <div class="version-row"><span class="tag-pill tag-fix">Resolved</span><span class="date">Jun 11, 2026</span></div>
+          <h3>Webhook delivery delays</h3>
+          <p class="text-secondary">A subset of webhook deliveries were delayed by up to 8 minutes due to a queue backlog. Fully resolved after scaling the delivery workers.</p>
+        </div>
+      </div>
+    </section>
+  </main>

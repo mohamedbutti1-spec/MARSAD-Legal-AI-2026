@@ -1,0 +1,87 @@
+/* ==========================================================================
+   BUIO — Design tokens
+   Dark-first theme. Colors are CSS custom properties so [data-theme="light"]
+   and prefers-color-scheme can override them without touching component CSS.
+   ========================================================================== */
+
+:root {
+  /* ---- base neutrals (dark-first defaults) ---- */
+  --c-bg: oklch(16.89% .002 286.18);
+  --c-bg-elevated: oklch(23.48% .004 264.49);
+  --c-bg-elevated-2: oklch(20.2% .003 275);
+  --c-border: oklch(35.42% .009 285.95);
+  --c-border-soft: oklch(29% .006 280);
+  --c-text: #fff;
+  --c-text-secondary: oklch(74.22% .009 278.59);
+  --c-text-muted: oklch(67.48% .012 280.37);
+
+  /* ---- accent ---- */
+  --c-accent-400: oklch(74.6% .16 232.661);
+  --c-accent-500: oklch(68.5% .169 237.323);
+  --c-accent-600: oklch(58.8% .158 241.966);
+  --c-accent-contrast: #04141f;
+
+  /* ---- state ---- */
+  --c-error: oklch(63.7% .237 25.331);
+  --c-success: oklch(72% .17 155);
+
+  /* ---- surfaces / glass ---- */
+  --glass-bg: oklch(23.48% .004 264.49 / 55%);
+  --glass-border: oklch(100% 0 0 / 8%);
+  --glass-blur: 14px;
+
+  /* ---- fonts ---- */
+  --font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-serif: "EB Garamond", Georgia, serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* ---- type scale ---- */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+
+  /* ---- radii ---- */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-pill: 9999px;
+
+  /* ---- motion ---- */
+  --ease-out: cubic-bezier(.16,1,.3,1);
+  --dur-fast: 150ms;
+  --dur-base: 200ms;
+  --dur-slow: 300ms;
+
+  /* ---- layout ---- */
+  --container-w: 1216px;
+  --header-h: 76px;
+
+  color-scheme: dark;
+}
+
+/* Light theme overrides — applied via explicit [data-theme="light"]
+   OR automatically when the OS prefers light and no explicit theme is set. */
+:root[data-theme="light"] {
+  --c-bg: oklch(96.74% .001 286.38);
+  --c-bg-elevated: #ffffff;
+  --c-bg-elevated-2: oklch(93% .002 286);
+  --c-border: oklch(85% .004 286);
+  --c-border-soft: oklch(90% .003 286);
+  --c-text: oklch(20% .004 286);
+  --c-text-secondary: oklch(38% .008 280);
+  --c-text-muted: oklch(48% .012 280);
+  --glass-bg: oklch(100% 0 0 / 65%);
+  --glass-border: oklch(0% 0 0 / 6%);
+  color-scheme: light;
+}
+
+/* BUIO is dark-first: the theme stays dark on first load regardless of OS
+   preference. prefers-color-scheme is only used to pre-select the toggle's
+   starting position (handled in JS via localStorage), never to silently
+   flip the whole page light before a user has chosen anything. */

@@ -1,0 +1,62 @@
+<!--META {"title": "Changelog", "description": "Every release, improvement, and fix shipped to the BUIO platform."} -->
+  <main>
+    <section class="page-header container">
+      <div class="eyebrow" data-aos="fade-up">Changelog</div>
+      <h1 data-aos="fade-up" data-aos-delay="60">What's new in BUIO</h1>
+      <p data-aos="fade-up" data-aos-delay="120">Every release, in one place. Subscribe to stay ahead of breaking changes.</p>
+    </section>
+
+    <section class="section container">
+      <div class="changelog-list">
+        <div class="changelog-entry" data-aos="fade-up">
+          <div class="version-row"><span class="version">v4.3.0</span><span class="date">Jul 18, 2026</span></div>
+          <h3>Faster finality, shared aggregation layer</h3>
+          <p class="text-secondary">Median cross-chain finality drops from 780ms to 120ms platform-wide.</p>
+          <ul>
+            <li><span class="tag-pill tag-new">New</span> Shared proof aggregation across all 38 chains</li>
+            <li><span class="tag-pill tag-improve">Improved</span> Light-client verification 3x faster</li>
+            <li><span class="tag-pill tag-fix">Fixed</span> Occasional timeout on Arbitrum relayer</li>
+          </ul>
+        </div>
+
+        <div class="changelog-entry" data-aos="fade-up" data-aos-delay="80">
+          <div class="version-row"><span class="version">v4.2.0</span><span class="date">Jul 10, 2026</span></div>
+          <h3>Session keys for gasless onboarding</h3>
+          <p class="text-secondary">Users authenticate once and transact for a full session without repeated prompts.</p>
+          <ul>
+            <li><span class="tag-pill tag-new">New</span> Session key scopes &amp; expiry controls</li>
+            <li><span class="tag-pill tag-new">New</span> Passkey login for embedded wallets</li>
+            <li><span class="tag-pill tag-improve">Improved</span> Onboarding SDK bundle size reduced 22%</li>
+          </ul>
+        </div>
+
+        <div class="changelog-entry" data-aos="fade-up" data-aos-delay="0">
+          <div class="version-row"><span class="version">v4.1.2</span><span class="date">Jun 29, 2026</span></div>
+          <h3>Security patch release</h3>
+          <ul>
+            <li><span class="tag-pill tag-fix">Fixed</span> Signature replay edge case flagged in Q2 audit</li>
+            <li><span class="tag-pill tag-fix">Fixed</span> Rate limiter bypass on batched requests</li>
+          </ul>
+        </div>
+
+        <div class="changelog-entry" data-aos="fade-up" data-aos-delay="80">
+          <div class="version-row"><span class="version">v4.1.0</span><span class="date">Jun 14, 2026</span></div>
+          <h3>Storage pricing overhaul</h3>
+          <ul>
+            <li><span class="tag-pill tag-improve">Improved</span> Erasure coding cuts storage cost 40%</li>
+            <li><span class="tag-pill tag-new">New</span> Regional replication controls in dashboard</li>
+          </ul>
+        </div>
+
+        <div class="changelog-entry" data-aos="fade-up" data-aos-delay="0">
+          <div class="version-row"><span class="version">v4.0.0</span><span class="date">May 22, 2026</span></div>
+          <h3>BUIO 4.0</h3>
+          <p class="text-secondary">A full rewrite of the SDK core, unifying identity, storage, and indexing under one client.</p>
+          <ul>
+            <li><span class="tag-pill tag-new">New</span> Unified <code class="font-mono">@buio/sdk</code> package</li>
+            <li><span class="tag-pill tag-improve">Improved</span> TypeScript types generated from live schemas</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>

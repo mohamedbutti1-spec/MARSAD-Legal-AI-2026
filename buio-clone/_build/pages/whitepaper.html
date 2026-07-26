@@ -1,0 +1,57 @@
+<!--META {"title": "Whitepaper", "description": "The BUIO whitepaper — architecture, consensus, and the ownership economy."} -->
+  <main class="section container">
+    <div class="whitepaper-cover" data-aos="fade-up">
+      <div class="eyebrow" style="justify-content:center;">Whitepaper · v2.1</div>
+      <h1 class="font-serif" style="font-size: clamp(2rem,5vw,3rem);">BUIO: An Ownership Layer for the Web</h1>
+      <p class="text-muted" style="margin-top:1rem;">Published July 2026 · 24 min read</p>
+    </div>
+
+    <div class="whitepaper-layout">
+      <aside class="whitepaper-nav" data-aos="fade-in">
+        <h4>Contents</h4>
+        <ul>
+          <li><a href="#abstract">1. Abstract</a></li>
+          <li><a href="#problem">2. The problem</a></li>
+          <li><a href="#architecture">3. Architecture</a></li>
+          <li><a href="#consensus">4. Consensus &amp; finality</a></li>
+          <li><a href="#economics">5. Token economics</a></li>
+          <li><a href="#roadmap">6. Roadmap</a></li>
+        </ul>
+      </aside>
+
+      <div class="whitepaper-body" data-aos="fade-up">
+        <h2 id="abstract">1. Abstract</h2>
+        <p>BUIO is an infrastructure layer that lets application teams give end users genuine ownership of their identity, assets, and data — without asking those teams to become blockchain engineers. This paper describes the architecture, consensus design, and economic model underpinning the network.</p>
+
+        <h2 id="problem">2. The problem</h2>
+        <p>Most consumer-facing products that claim to be "on-chain" still route every meaningful action through centralized infrastructure: custodial key management, opaque indexing services, and storage that disappears the day a company shuts down. Users are told they own their data while every practical lever remains in someone else's hands.</p>
+        <ul>
+          <li>Custodial wallets recreate the same trust assumptions Web3 was meant to remove.</li>
+          <li>Centralized indexers become single points of failure and censorship.</li>
+          <li>Off-chain storage ties user data to a single company's uptime.</li>
+        </ul>
+
+        <h2 id="architecture">3. Architecture</h2>
+        <p>BUIO is composed of three cooperating layers: an identity layer built on threshold key management, a content-addressed storage layer with verifiable retrieval proofs, and a shared aggregation layer that batches cross-chain attestations into a single Merkle root.</p>
+        <ol>
+          <li><strong>Identity:</strong> embedded wallets derived from distributed key shares, recoverable via social or passkey guardians.</li>
+          <li><strong>Storage:</strong> erasure-coded, regionally replicated objects addressed by content hash.</li>
+          <li><strong>Aggregation:</strong> a relayer network that produces one shared proof root every 90ms across all connected chains.</li>
+        </ol>
+
+        <h2 id="consensus">4. Consensus &amp; finality</h2>
+        <p>Rather than requiring each chain to independently verify a chain-specific proof, BUIO's light clients verify inclusion against the shared aggregation root. This decouples latency from the number of connected chains, and is the basis for the 120ms median finality described in our Q3 engineering post.</p>
+
+        <h2 id="economics">5. Token economics</h2>
+        <p>Network fees are denominated in the currency of the underlying chain and split between relayer operators, storage providers, and a protocol treasury that funds ongoing security audits and public-good infrastructure grants.</p>
+
+        <h2 id="roadmap">6. Roadmap</h2>
+        <p>Upcoming milestones include zero-knowledge storage proofs, a permissionless relayer onboarding process, and expanded support for non-EVM execution environments through Q4 2026.</p>
+      </div>
+    </div>
+
+    <div class="hero-actions" style="margin-top:3rem;" data-aos="fade-up">
+      <a href="#" class="btn btn-primary btn-lg">Download PDF</a>
+      <a href="contact.html" class="btn btn-secondary btn-lg">Discuss with our team</a>
+    </div>
+  </main>

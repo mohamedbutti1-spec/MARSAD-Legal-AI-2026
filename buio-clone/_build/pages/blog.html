@@ -1,0 +1,70 @@
+<!--META {"title": "Blog", "description": "Product updates, engineering deep-dives, and protocol notes from the BUIO team."} -->
+  <main>
+    <section class="page-header container">
+      <div class="eyebrow" data-aos="fade-up">Blog</div>
+      <h1 data-aos="fade-up" data-aos-delay="60">Notes from the protocol</h1>
+      <p data-aos="fade-up" data-aos-delay="120">Engineering deep-dives, release notes, and thoughts on the decentralized web.</p>
+    </section>
+
+    <section class="section container">
+      <div class="blog-filters" data-filter-group=".blog-grid .post-card" data-aos="fade-up">
+        <button class="filter-chip active" data-filter="all">All</button>
+        <button class="filter-chip" data-filter="engineering">Engineering</button>
+        <button class="filter-chip" data-filter="product">Product</button>
+        <button class="filter-chip" data-filter="security">Security</button>
+        <button class="filter-chip" data-filter="company">Company</button>
+      </div>
+
+      <div class="grid blog-grid">
+        <a class="card post-card featured" href="blog-post.html" data-category="engineering" data-aos="fade-up">
+          <div class="post-thumb">
+            <svg viewBox="0 0 400 250" width="100%" height="100%"><rect width="400" height="250" fill="none"/><circle cx="200" cy="125" r="70" fill="var(--c-accent-500)" opacity=".18"/><circle cx="200" cy="125" r="40" fill="var(--c-accent-500)" opacity=".3"/></svg>
+          </div>
+          <div class="cat">Engineering</div>
+          <h3>How we achieved 120ms finality across 38 chains</h3>
+          <p>A look inside the consensus rework that cut confirmation times by 6x without sacrificing security guarantees.</p>
+          <div class="post-meta"><span class="avatar"></span> Amara Chen · Jul 18, 2026 · 8 min read</div>
+        </a>
+
+        <a class="card post-card" href="blog-post.html" data-category="product" data-aos="fade-up" data-aos-delay="80">
+          <div class="post-thumb"><svg viewBox="0 0 400 250" width="100%" height="100%"><rect x="60" y="60" width="280" height="130" rx="10" fill="var(--c-accent-500)" opacity=".2"/></svg></div>
+          <div class="cat">Product</div>
+          <h3>Introducing session keys for gasless onboarding</h3>
+          <p>Users can now sign in once and transact for a full session without repeated wallet prompts.</p>
+          <div class="post-meta"><span class="avatar"></span> Devon Ruiz · Jul 10, 2026 · 5 min read</div>
+        </a>
+
+        <a class="card post-card" href="blog-post.html" data-category="security" data-aos="fade-up" data-aos-delay="0">
+          <div class="post-thumb"><svg viewBox="0 0 400 250" width="100%" height="100%"><rect x="60" y="60" width="280" height="130" rx="10" fill="var(--c-accent-500)" opacity=".2"/></svg></div>
+          <div class="cat">Security</div>
+          <h3>Our Q2 audit results, in full</h3>
+          <p>Three independent firms reviewed the storage and identity layers. Here's what they found.</p>
+          <div class="post-meta"><span class="avatar"></span> Priya Nandan · Jun 29, 2026 · 6 min read</div>
+        </a>
+
+        <a class="card post-card" href="blog-post.html" data-category="company" data-aos="fade-up" data-aos-delay="80">
+          <div class="post-thumb"><svg viewBox="0 0 400 250" width="100%" height="100%"><rect x="60" y="60" width="280" height="130" rx="10" fill="var(--c-accent-500)" opacity=".2"/></svg></div>
+          <div class="cat">Company</div>
+          <h3>BUIO raises $32M to build the ownership layer</h3>
+          <p>A note from our founders on the round, and what it means for the roadmap ahead.</p>
+          <div class="post-meta"><span class="avatar"></span> Founders · Jun 14, 2026 · 4 min read</div>
+        </a>
+
+        <a class="card post-card" href="blog-post.html" data-category="engineering" data-aos="fade-up" data-aos-delay="160">
+          <div class="post-thumb"><svg viewBox="0 0 400 250" width="100%" height="100%"><rect x="60" y="60" width="280" height="130" rx="10" fill="var(--c-accent-500)" opacity=".2"/></svg></div>
+          <div class="cat">Engineering</div>
+          <h3>Indexing 4B events a day without falling behind</h3>
+          <p>The architecture behind our real-time indexer, and the tradeoffs we made to keep it cheap.</p>
+          <div class="post-meta"><span class="avatar"></span> Amara Chen · Jun 2, 2026 · 7 min read</div>
+        </a>
+
+        <a class="card post-card" href="blog-post.html" data-category="product" data-aos="fade-up" data-aos-delay="240">
+          <div class="post-thumb"><svg viewBox="0 0 400 250" width="100%" height="100%"><rect x="60" y="60" width="280" height="130" rx="10" fill="var(--c-accent-500)" opacity=".2"/></svg></div>
+          <div class="cat">Product</div>
+          <h3>Storage pricing is now 40% cheaper</h3>
+          <p>Better erasure coding and smarter regional replication let us pass savings straight to you.</p>
+          <div class="post-meta"><span class="avatar"></span> Devon Ruiz · May 22, 2026 · 3 min read</div>
+        </a>
+      </div>
+    </section>
+  </main>

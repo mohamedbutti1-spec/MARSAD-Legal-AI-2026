@@ -1,0 +1,41 @@
+<!--META {"title": "Sign in", "description": "Sign in to your BUIO account."} -->
+  <main>
+    <div class="auth-shell">
+      <div class="card auth-card" data-aos="zoom-in">
+        <h1>Welcome back</h1>
+        <p class="text-muted">Sign in to your BUIO account to continue.</p>
+
+        <div class="oauth-row">
+          <button class="btn btn-secondary">
+            <svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 00-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.46-1.16-1.11-1.47-1.11-1.47-.9-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.26-.45-1.28.1-2.66 0 0 .84-.27 2.75 1.02a9.6 9.6 0 015 0c1.9-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.66.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0012 2z"/></svg>
+            GitHub
+          </button>
+          <button class="btn btn-secondary">
+            <svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M21.6 12.23c0-.7-.06-1.4-.18-2.05H12v3.9h5.4a4.6 4.6 0 01-2 3.02v2.5h3.24c1.9-1.75 3-4.32 3-7.37z"/><path fill="currentColor" opacity=".6" d="M12 22c2.7 0 4.97-.89 6.63-2.4l-3.24-2.5c-.9.6-2.05.96-3.4.96-2.6 0-4.8-1.76-5.6-4.12H3.06v2.58A10 10 0 0012 22z"/><path fill="currentColor" opacity=".3" d="M6.4 13.94a6 6 0 010-3.87V7.5H3.06a10 10 0 000 9z"/><path fill="currentColor" opacity=".8" d="M12 6.06c1.47 0 2.8.5 3.83 1.5l2.87-2.87C16.96 2.99 14.7 2 12 2A10 10 0 003.06 7.5l3.34 2.57C7.2 7.82 9.4 6.06 12 6.06z"/></svg>
+            Google
+          </button>
+        </div>
+
+        <div class="auth-divider">or continue with email</div>
+
+        <form data-demo-form data-success-message="Signed in. This is a static demo — no account was created.">
+          <div class="field">
+            <label for="si-email">Email</label>
+            <input id="si-email" type="email" required placeholder="you@company.com" />
+          </div>
+          <div class="field">
+            <label for="si-password">Password</label>
+            <input id="si-password" type="password" required placeholder="••••••••" />
+          </div>
+          <div class="field-row-between">
+            <label class="checkbox-row"><input type="checkbox" /> Remember me</label>
+            <a href="#" class="text-accent">Forgot password?</a>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block btn-lg">Sign in</button>
+          <p data-form-note hidden style="margin-top:1rem; font-size: var(--text-sm); color: var(--c-success); text-align:center;"></p>
+        </form>
+
+        <p class="auth-footer-link">Don't have an account? <a href="sign-up.html" class="text-accent">Sign up free</a></p>
+      </div>
+    </div>
+  </main>
