@@ -32,6 +32,8 @@ import {
   GraduationCap,
   MoreHorizontal,
   Bell,
+  Siren,
+  MessageCircle,
 } from 'lucide-react';
 import { Gavel } from '@/components/icons/gavel';
 import { useUserContext } from '@/lib/user-context';
@@ -68,6 +70,7 @@ const MORE_SECTION_IDS = new Set([
   'research-knowledge',
   'decisions-governance',
   'training',
+  'training-scenarios',
   'services',
   'private',
 ]);
@@ -361,6 +364,44 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
               show: true,
             },
           ],
+        },
+      ],
+    },
+    // ── التدريب والسيناريوهات — أربعة سيناريوهات رئيسية فقط. مراحل كل سيناريو
+    // (قبل/أثناء/بعد، ماذا تسأل؟، ماذا تقول؟، ماذا تحرر؟، متى تمتنع؟...) تظهر
+    // داخل صفحة السيناريو نفسه (خدمة الرحلة الموجهة)، وليست عناصر مستقلة هنا.
+    {
+      id: 'training-scenarios',
+      titleAr: 'التدريب والسيناريوهات',
+      titleEn: 'Training Scenarios',
+      items: [
+        {
+          href: '/journey/police/station-officer/crime-scene',
+          labelAr: 'أنت في مسرح جريمة',
+          labelEn: 'You Are at a Crime Scene',
+          icon: <Siren className="w-4.5 h-4.5" />,
+          show: canUseAi,
+        },
+        {
+          href: '/journey/police/station-officer/station-complaint',
+          labelAr: 'أمام مشتكي في مركز الشرطة',
+          labelEn: 'Facing a Complainant at the Police Station',
+          icon: <MessageCircle className="w-4.5 h-4.5" />,
+          show: canUseAi,
+        },
+        {
+          href: '/journey/prosecution/prosecutor/trial-attendance',
+          labelAr: 'حضور جلسة محاكمة',
+          labelEn: 'Attending a Trial Session',
+          icon: <Landmark className="w-4.5 h-4.5" />,
+          show: canUseAi,
+        },
+        {
+          href: '/journey/police/station-officer/reports-drafting',
+          labelAr: 'الاستعداد لكتابة مذكرة',
+          labelEn: 'Preparing to Write a Memo',
+          icon: <ScrollText className="w-4.5 h-4.5" />,
+          show: canUseAi,
         },
       ],
     },
