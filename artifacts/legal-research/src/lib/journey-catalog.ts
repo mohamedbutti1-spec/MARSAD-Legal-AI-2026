@@ -175,7 +175,7 @@ function svc(id: string, nameAr: string, descAr: string, icon: string, stages?: 
 
 const CRIME_SCENE_STAGES: JourneyStage[] = [
   {
-    id: 'before-travel', nameAr: 'قبل الانتقال',
+    id: 'before-travel', nameAr: 'قائمة التحقق قبل الانتقال',
     checklist: [
       'تلقي البلاغ وتوجيهه فوراً',
       'تحديد نوع البلاغ وموقعه بدقة',
