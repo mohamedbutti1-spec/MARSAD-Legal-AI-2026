@@ -12,4 +12,5 @@ export interface UserUpdate {
   name?: string;
   email?: string;
   role?: UserUpdateRole;
+  isActive?: boolean;
 }

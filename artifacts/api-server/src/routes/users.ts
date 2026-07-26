@@ -60,6 +60,13 @@ router.patch("/users/:id", requireOwner, async (req, res): Promise<void> => {
   const body = UpdateUserBody.safeParse(req.body);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
   if (!body.success) { res.status(400).json({ error: body.error.message }); return; }
+  // Zod strips unrecognized keys, so a body with only unknown fields parses
+  // successfully as {} — and drizzle throws on an empty .set(). Reject it as
+  // the client error it is instead of surfacing a 500.
+  if (Object.keys(body.data).length === 0) {
+    res.status(400).json({ error: "No updatable fields provided." });
+    return;
+  }
   const [user] = await db
     .update(usersTable)
     .set(body.data)

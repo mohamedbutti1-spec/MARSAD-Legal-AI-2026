@@ -422,7 +422,7 @@ paths:
     patch:
       operationId: updateUser
       tags: [users]
-      summary: Update user role (admin only)
+      summary: Update a user's name, email, role, or active status (admin only)
       parameters:
         - name: id
           in: path
@@ -785,7 +785,7 @@ components:
 
     User:
       type: object
-      required: [id, name, email, role, createdAt]
+      required: [id, name, email, role, isActive, createdAt]
       properties:
         id:
           type: integer
@@ -796,6 +796,12 @@ components:
         role:
           type: string
           enum: [owner, supervisor, viewer]
+        isActive:
+          type: boolean
+        lastActiveAt:
+          type: string
+          format: date-time
+          nullable: true
         createdAt:
           type: string
           format: date-time
@@ -824,6 +830,8 @@ components:
         role:
           type: string
           enum: [owner, supervisor, viewer]
+        isActive:
+          type: boolean
 
     Settings:
       type: object

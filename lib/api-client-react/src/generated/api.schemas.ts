@@ -168,6 +168,8 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  isActive: boolean;
+  lastActiveAt?: string | null;
   createdAt: string;
 }
 
@@ -201,6 +203,7 @@ export interface UserUpdate {
   name?: string;
   email?: string;
   role?: UserUpdateRole;
+  isActive?: boolean;
 }
 
 export interface Settings {
