@@ -21,6 +21,28 @@ export interface JourneyStage {
   nameAr:    string;
   /** Ordered checklist items shown for this stage. */
   checklist: string[];
+  /** Optional structured interactive block rendered above the checklist —
+   *  used sparingly for stage-specific compliance widgets (e.g. prosecution
+   *  notification/authorization capture). Stages without it render as before. */
+  interactive?: JourneyStageInteractive;
+}
+
+/** A single question inside a JourneyStageInteractive block. */
+export interface JourneyInteractiveQuestion {
+  id:       string;
+  promptAr: string;
+  options:  string[];
+  /** When set, selecting this exact option reveals `fields` below the question. */
+  revealFieldsOnOption?: string;
+  fields?:  JourneyFormField[];
+}
+
+/** A self-contained interactive widget scoped to one journey stage. */
+export interface JourneyStageInteractive {
+  titleAr:  string;
+  /** Short legal/procedural caveat shown under the widget title. */
+  noteAr?:  string;
+  questions: JourneyInteractiveQuestion[];
 }
 
 export interface JourneyTool {
@@ -145,11 +167,15 @@ function svc(id: string, nameAr: string, descAr: string, icon: string, stages?: 
   return { id, nameAr, descAr, icon, stages: stages ?? genericStages(nameAr), tools: DEFAULT_TOOLS };
 }
 
-// ─── مسرح الجريمة — bespoke stages (as in the mockup, screen 5) ────────────────
+// ─── مسرح الجريمة — bespoke stages (سيناريو «أنت في مسرح جريمة») ───────────────
+// تسعة مراحل: قبل الانتقال (وفيها إخطار النيابة العامة) ← عند الوصول ← أثناء
+// التعامل مع مسرح الجريمة ← ماذا تسأل؟ ← ماذا تقول؟ ← ماذا تحرر؟ ← متى تمتنع؟ ←
+// بعد الانتهاء ← التقييم النهائي. هذه المراحل خاصة بهذا السيناريو فقط ولا تُعرض
+// كعناصر مستقلة في القائمة الجانبية.
 
 const CRIME_SCENE_STAGES: JourneyStage[] = [
   {
-    id: 'before-arrival', nameAr: 'قبل الوصول',
+    id: 'before-travel', nameAr: 'قبل الانتقال',
     checklist: [
       'تلقي البلاغ وتوجيهه فوراً',
       'تحديد نوع البلاغ وموقعه بدقة',
@@ -158,9 +184,43 @@ const CRIME_SCENE_STAGES: JourneyStage[] = [
       'الاطلاع على أي معلومات أولية متاحة',
       'التأكد من وسائل السلامة المتاحة',
     ],
+    interactive: {
+      titleAr: 'إخطار النيابة العامة وأخذ التوجيه',
+      noteAr:
+        'لا يتطلب مجرد الانتقال لتأمين الموقع أو معاينة الواقعة دائمًا إذنًا مسبقًا، أما الإجراءات التي تمس حرمة المسكن أو الأشخاص فتخضع للضوابط القانونية، مع مراعاة حالات التلبس والاستعجال وخطر ضياع الأدلة.',
+      questions: [
+        {
+          id: 'notify-status',
+          promptAr: 'هل تم إخطار النيابة العامة أو أخذ توجيهها قبل الانتقال؟',
+          options: [
+            'نعم، تم الإخطار وأخذ التوجيه.',
+            'تم الإخطار ولم يصدر التوجيه بعد.',
+            'الحالة عاجلة وتم الانتقال فورًا مع إخطار النيابة العامة.',
+            'الواقعة لا تستلزم إذنًا مسبقًا لمجرد الانتقال.',
+            'لم يتم الإخطار.',
+          ],
+        },
+        {
+          id: 'permit-needed',
+          promptAr: 'هل يتضمن الإجراء دخول مسكن أو تفتيشًا أو ضبطًا أو أي إجراء يحتاج إلى إذن؟',
+          options: ['نعم.', 'لا.', 'غير واضح ويحتاج إلى مراجعة.'],
+          revealFieldsOnOption: 'نعم.',
+          fields: [
+            { id: 'prosecutor-name', labelAr: 'اسم عضو النيابة العامة', type: 'text' },
+            { id: 'permit-ref',      labelAr: 'رقم الإذن أو رقم المرجع', type: 'text' },
+            { id: 'permit-date',     labelAr: 'تاريخ الإذن',            type: 'text', placeholder: 'يوم / شهر / سنة' },
+            { id: 'permit-time',     labelAr: 'وقت الإذن',              type: 'text', placeholder: 'الساعة' },
+            { id: 'permit-type',     labelAr: 'نوع الإذن أو التوجيه',   type: 'text' },
+            { id: 'permit-scope',    labelAr: 'نطاق الإذن',             type: 'textarea' },
+            { id: 'permit-duration', labelAr: 'مدة سريان الإذن',        type: 'text' },
+            { id: 'permit-notes',    labelAr: 'ملاحظات',                type: 'textarea' },
+          ],
+        },
+      ],
+    },
   },
   {
-    id: 'on-arrival', nameAr: 'أثناء الوصول',
+    id: 'on-arrival', nameAr: 'عند الوصول',
     checklist: [
       'تأمين محيط مسرح الحادث ومنع الاقتراب',
       'تقديم الإسعافات الأولية للمصابين إن وجدوا',
@@ -170,7 +230,7 @@ const CRIME_SCENE_STAGES: JourneyStage[] = [
     ],
   },
   {
-    id: 'inspection', nameAr: 'أثناء المعاينة',
+    id: 'handling-scene', nameAr: 'أثناء التعامل مع مسرح الجريمة',
     checklist: [
       'التصوير الشامل للموقع قبل أي تحريك',
       'رفع الأدلة المادية وترقيمها وتوثيقها',
@@ -180,21 +240,68 @@ const CRIME_SCENE_STAGES: JourneyStage[] = [
     ],
   },
   {
-    id: 'after', nameAr: 'بعد الانتهاء',
+    id: 'what-to-ask', nameAr: 'ماذا تسأل؟',
     checklist: [
-      'تحرير محضر معاينة مسرح الحادث',
-      'تسليم الأدلة وفق سلسلة الحيازة الموثقة',
-      'رفع التقرير للجهة المختصة',
-      'التأكد من رفع الحراسة عن الموقع بعد الإذن',
+      'من كان أول من وصل إلى الموقع أو اكتشف الواقعة؟',
+      'ما الذي شاهدته أو سمعته بالتحديد؟ وفي أي وقت؟',
+      'هل تم تحريك أو لمس أي شيء في الموقع قبل وصولك؟',
+      'هل يوجد شهود آخرون أو أشخاص غادروا الموقع قبل وصولك؟',
+      'هل توجد كاميرات مراقبة قريبة من الموقع يمكن الرجوع إليها؟',
+      'هل هناك علاقة سابقة أو خلافات معروفة بين الأطراف؟',
+      'كيف تم تحديد وقت وقوع الحادث تقريبًا؟',
     ],
   },
   {
-    id: 'review', nameAr: 'مراجعة خطوة بخطوة',
+    id: 'what-to-say', nameAr: 'ماذا تقول؟',
     checklist: [
+      'الإفصاح فقط بالمعلومات العامة اللازمة لطمأنة الحاضرين، دون ذكر تفاصيل التحقيق.',
+      'عدم التكهن أو الجزم بسبب الواقعة أو هوية أي طرف أمام الشهود أو وسائل الإعلام.',
+      'إحالة أي استفسار إعلامي إلى الجهة المختصة بالتواصل الرسمي.',
+      'إبلاغ الحاضرين بإجراءات التعامل مع مسرح الحادث دون وعود بنتائج التحقيق.',
+      'توثيق أي تصريح يُدلى به من الشهود أو الأطراف بلغة محايدة لا توحي بإدانة أو تبرئة مسبقة.',
+    ],
+  },
+  {
+    id: 'what-to-document', nameAr: 'ماذا تحرر؟',
+    checklist: [
+      'تحرير محضر معاينة مسرح الحادث بالتفصيل والتسلسل الزمني',
+      'إثبات إخطار النيابة العامة وإثبات وقت الاتصال بها',
+      'اسم عضو النيابة العامة الذي تم التواصل معه، والتوجيه الصادر عنه',
+      'بيانات الإذن عند وجوده، ونطاقه ومدة سريانه',
+      'إثبات سبب الانتقال العاجل قبل صدور التوجيه، عند الضرورة',
+      'تسليم الأدلة وفق سلسلة حيازة موثقة',
+      'رفع التقرير الشامل للجهة المختصة',
+    ],
+  },
+  {
+    id: 'when-to-abstain', nameAr: 'متى تمتنع؟',
+    checklist: [
+      'الامتناع عن دخول مسكن أو مكان خاص دون إذن أو توجيه من النيابة العامة، إلا في حالات التلبس أو الخطر العاجل على الأرواح أو الأدلة.',
+      'الامتناع عن تفتيش الأشخاص أو الأماكن أو ضبط أي منقول دون سند قانوني واضح.',
+      'الامتناع عن الإدلاء بأي رأي حول ثبوت التهمة أو براءة أي طرف.',
+      'الامتناع عن تحريك أو نقل أي دليل قبل توثيقه وتصويره.',
+      'الامتناع عن تسليم أي معلومة أو مستند للإعلام أو الغير دون إذن الجهة المختصة.',
+    ],
+  },
+  {
+    id: 'after', nameAr: 'بعد الانتهاء',
+    checklist: [
+      'التأكد من رفع الحراسة عن الموقع بعد الإذن بذلك',
+      'إعادة الموقع إلى وضعه الطبيعي إن أمكن وبعد موافقة الجهة المختصة',
+      'متابعة استكمال أي إجراء لاحق يتعلق بمسرح الحادث',
+    ],
+  },
+  {
+    id: 'final-evaluation', nameAr: 'التقييم النهائي',
+    checklist: [
+      'سلامة إخطار النيابة العامة وتوثيقه',
+      'صحة تحديد الحاجة إلى إذن مسبق من عدمها',
+      'الالتزام بنطاق الإذن الصادر ومدته',
+      'مشروعية الدخول والتفتيش والضبط إن وُجد',
+      'توثيق الاتصال والتوجيه الصادر عن النيابة العامة بصورة صحيحة',
       'مراجعة اكتمال محضر المعاينة والمرفقات',
       'التحقق من سلامة سلسلة حيازة الأدلة',
       'رصد أي ثغرات إجرائية قد تؤثر على الدعوى',
-      'توثيق الدروس المستفادة',
     ],
   },
 ];
