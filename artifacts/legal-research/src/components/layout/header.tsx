@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useLocation } from 'wouter';
 import { useUserContext, type UserRole, ROLE_META } from '@/lib/user-context';
-import { Bell, Menu, Scale, Globe, LogOut, User, Settings as SettingsIcon } from 'lucide-react';
+import { Bell, Menu, Scale, Globe, LogOut, User, Settings as SettingsIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'wouter';
+import { useBackNavigation } from '@/hooks/use-back-navigation';
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -26,12 +28,15 @@ async function apiLogout() {
 }
 
 export function Header({ onMenuClick }: HeaderProps) {
-  const { role, lang, setLang, refreshSession } = useUserContext();
+  const { role, lang, setLang, dir, refreshSession } = useUserContext();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [, navigate] = useLocation();
+  const backInfo = useBackNavigation();
 
   const meta = ROLE_META[role as UserRole];
   const tierStyle = TIER_STYLES[meta?.tier ?? 'legacy'];
   const isAr = lang === 'ar';
+  const isRtl = dir === 'rtl';
 
   const handleLogout = async () => {
     setUserMenuOpen(false);
@@ -39,22 +44,71 @@ export function Header({ onMenuClick }: HeaderProps) {
     await refreshSession();
   };
 
+  /** Navigate back — prefer browser history so scroll/state is preserved; fall back to parent route. */
+  const handleBack = () => {
+    if (backInfo) {
+      if (window.history.length > 2) {
+        window.history.back();
+      } else {
+        navigate(backInfo.parentPath);
+      }
+    }
+  };
+
+  const backLabel = backInfo ? (isAr ? backInfo.labelAr : backInfo.labelEn) : '';
+  // RTL: back chevron points right; LTR: points left
+  const BackChevron = isRtl ? ChevronRight : ChevronLeft;
+
   return (
     <header className="h-14 bg-sidebar border-b border-sidebar-border flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20 shrink-0 shadow-xs">
-      <div className="flex items-center gap-3">
-        <button
-          className="lg:hidden text-muted-foreground hover:text-foreground p-1.5 rounded-md hover:bg-muted/50 transition-colors"
-          onClick={onMenuClick}
-          aria-label="Open menu"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
-        <div className="lg:hidden flex items-center gap-2">
-          <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
-            <Scale className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-bold text-foreground text-base">مرصد</span>
-        </div>
+
+      {/* ── Left section ─────────────────────────────────────────────────── */}
+      <div className="flex items-center gap-2 min-w-0">
+
+        {backInfo ? (
+          /* ── Sub-page: back button (mobile + desktop) ── */
+          <>
+            <button
+              onClick={handleBack}
+              aria-label={isAr ? 'رجوع' : 'Go back'}
+              className="flex items-center gap-1 text-gold hover:text-gold/80 active:scale-95 transition-all
+                         px-2 py-1.5 rounded-lg hover:bg-gold/10 active:bg-gold/20
+                         text-sm font-semibold min-w-[44px] min-h-[44px] touch-manipulation"
+            >
+              <BackChevron className="w-5 h-5 shrink-0" />
+              {/* Label: visible on all breakpoints on mobile, always on desktop */}
+              <span className="truncate max-w-[120px] sm:max-w-[200px]">{backLabel}</span>
+            </button>
+
+            {/* Mobile hamburger still accessible on sub-pages (sidebar nav) */}
+            <button
+              className="lg:hidden text-muted-foreground hover:text-foreground p-1.5 rounded-md hover:bg-muted/50 transition-colors"
+              onClick={onMenuClick}
+              aria-label="Open menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          </>
+        ) : (
+          /* ── Top-level page: standard hamburger + logo ── */
+          <>
+            <button
+              className="lg:hidden text-muted-foreground hover:text-foreground p-1.5 rounded-md hover:bg-muted/50 transition-colors"
+              onClick={onMenuClick}
+              aria-label="Open menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <div className="lg:hidden flex items-center gap-2">
+              <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
+                <Scale className="w-4 h-4 text-white" />
+              </div>
+              <span className="font-bold text-foreground text-base">مرصد</span>
+            </div>
+          </>
+        )}
+
+        {/* Desktop: always show platform title */}
         <div className="hidden lg:flex items-center gap-2 text-sm text-muted-foreground">
           <Scale className="w-4 h-4 text-gold" />
           <span className="font-semibold text-foreground">
@@ -63,6 +117,7 @@ export function Header({ onMenuClick }: HeaderProps) {
         </div>
       </div>
 
+      {/* ── Right section ─────────────────────────────────────────────────── */}
       <div className="flex items-center gap-2">
         {/* Language toggle */}
         <button
