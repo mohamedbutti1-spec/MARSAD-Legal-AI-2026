@@ -22,6 +22,13 @@ export interface JwtPayload {
   /** Organisation string for org-scoped roles; empty string otherwise */
   org: string;
   /**
+   * Stable session identifier (UUID v4) generated at login and stored in
+   * the user_sessions table. Lets the authenticate middleware update
+   * last_seen_at and lets sign-out-other-sessions delete every other row
+   * while keeping the caller's row intact.
+   */
+  sid: string;
+  /**
    * Snapshot of users.password_version at the moment this token was issued.
    * Checked against the live DB value on every request (see authenticate
    * middleware) so that resetting a user's password immediately invalidates
@@ -48,6 +55,9 @@ export const TOKEN_EXPIRY = "8h";
 /** Cookie maxAge in milliseconds (must match TOKEN_EXPIRY) */
 export const COOKIE_MAX_AGE_MS = 8 * 60 * 60 * 1000;
 
+/** Token lifetime as a millisecond value — used to set session row expiresAt */
+export const TOKEN_EXPIRY_MS = COOKIE_MAX_AGE_MS;
+
 export function signToken(payload: JwtPayload): string {
   const opts: SignOptions = { expiresIn: TOKEN_EXPIRY, algorithm: "HS256" };
   return jwt.sign(payload, SECRET!, opts);
@@ -64,5 +74,6 @@ export function verifyToken(token: string): JwtPayload {
     org: decoded.org ?? "",
     pwv: decoded.pwv ?? 0,
     mustChangePassword: decoded.mustChangePassword ?? false,
+    sid: decoded.sid ?? "",
   };
 }

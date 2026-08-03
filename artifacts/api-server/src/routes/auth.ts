@@ -1,15 +1,20 @@
 /**
  * Authentication routes — no JWT required (these establish the session).
  *
- *   POST /api/auth/login   — verify credentials, issue session cookie
- *   GET  /api/auth/me      — return the current session's user payload
- *   POST /api/auth/logout  — clear the session cookie
+ *   POST /api/auth/login                 — verify credentials, issue session cookie
+ *   POST /api/auth/guest-login           — one-click reviewer login
+ *   GET  /api/auth/me                    — return the current session's user payload
+ *   GET  /api/auth/sessions              — list active sessions for the current user
+ *   POST /api/auth/change-password       — self-service password change
+ *   POST /api/auth/sign-out-other-sessions — revoke every session except this one
+ *   POST /api/auth/logout                — clear this session's cookie
  */
 import { Router, type IRouter } from "express";
-import { db, usersTable, getPermissions } from "@workspace/db";
-import { eq, sql } from "drizzle-orm";
+import { db, usersTable, userSessionsTable, getPermissions } from "@workspace/db";
+import { eq, sql, gt } from "drizzle-orm";
 import bcrypt from "bcryptjs";
-import { signToken, verifyToken, COOKIE_NAME, COOKIE_MAX_AGE_MS } from "../lib/jwt";
+import { randomUUID } from "crypto";
+import { signToken, verifyToken, COOKIE_NAME, COOKIE_MAX_AGE_MS, TOKEN_EXPIRY_MS } from "../lib/jwt";
 import { logger } from "../lib/logger";
 import { logAudit } from "../middlewares/auditLog";
 
@@ -32,6 +37,34 @@ function orgForRole(role: string): string {
   } catch {
     return "";
   }
+}
+
+/** Resolve the client IP from a request — trusts X-Forwarded-For first hop */
+function clientIp(req: import("express").Request): string {
+  const fwd = req.headers["x-forwarded-for"];
+  if (typeof fwd === "string") return fwd.split(",")[0].trim();
+  if (Array.isArray(fwd) && fwd.length) return fwd[0].trim();
+  return req.socket?.remoteAddress ?? "unknown";
+}
+
+/**
+ * Create a session row in user_sessions and return the generated sid.
+ * Called after every successful login/guest-login.
+ */
+async function createSession(
+  userId: number,
+  req: import("express").Request,
+): Promise<string> {
+  const sid = randomUUID();
+  const expiresAt = new Date(Date.now() + TOKEN_EXPIRY_MS);
+  await db.insert(userSessionsTable).values({
+    userId,
+    sid,
+    userAgent: req.headers["user-agent"]?.slice(0, 300) ?? null,
+    ip: clientIp(req),
+    expiresAt,
+  });
+  return sid;
 }
 
 // ── POST /api/auth/login ─────────────────────────────────────────────────────
@@ -78,12 +111,15 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   }
 
   const org = orgForRole(user.role);
+  const sid = await createSession(user.id, req);
+
   const token = signToken({
     userId: user.id,
     role: user.role,
     org,
     pwv: user.passwordVersion,
     mustChangePassword: user.mustChangePassword,
+    sid,
   });
 
   // SameSite=Lax: cookies are sent on top-level navigations AND same-site fetch
@@ -99,7 +135,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
     path: "/",
   });
 
-  logger.info({ userId: user.id, role: user.role }, "User authenticated");
+  logger.info({ userId: user.id, role: user.role, sid }, "User authenticated");
 
   res.json({
     userId: user.id,
@@ -118,7 +154,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
 // intentionally not gated by a client-supplied password: the target account
 // itself carries zero write permissions, so there is no meaningful escalation
 // risk, and it lets reviewers explore the full journey with a single click.
-router.post("/auth/guest-login", async (_req, res): Promise<void> => {
+router.post("/auth/guest-login", async (req, res): Promise<void> => {
   const [user] = await db
     .select()
     .from(usersTable)
@@ -145,12 +181,15 @@ router.post("/auth/guest-login", async (_req, res): Promise<void> => {
   }
 
   const org = orgForRole(user.role);
+  const sid = await createSession(user.id, req);
+
   const token = signToken({
     userId: user.id,
     role: user.role,
     org,
     pwv: user.passwordVersion,
     mustChangePassword: user.mustChangePassword,
+    sid,
   });
 
   res.cookie(COOKIE_NAME, token, {
@@ -161,7 +200,7 @@ router.post("/auth/guest-login", async (_req, res): Promise<void> => {
     path: "/",
   });
 
-  logger.info({ userId: user.id, role: user.role }, "Guest evaluation session started");
+  logger.info({ userId: user.id, role: user.role, sid }, "Guest evaluation session started");
 
   res.json({
     userId: user.id,
@@ -206,6 +245,43 @@ router.get("/auth/me", (req, res): void => {
     res.clearCookie(COOKIE_NAME, { path: "/" });
     res.status(401).json({ error: "Session expired." });
   }
+});
+
+// ── GET /api/auth/sessions ───────────────────────────────────────────────────
+// Returns ACTIVE (non-expired) session rows for the authenticated user, ordered
+// by most recently seen first. The current session (matched by sid claim) is
+// flagged so the UI can highlight it.
+// "Active" means expires_at > NOW() — sessions whose JWT lifetime has elapsed
+// are silently excluded even if the row was never explicitly deleted.
+router.get("/auth/sessions", async (req, res): Promise<void> => {
+  const userId = req.user?.userId;
+  const currentSid = req.user?.sid ?? "";
+
+  if (userId === undefined) {
+    res.status(401).json({ error: "Authentication required." });
+    return;
+  }
+
+  const rows = await db
+    .select()
+    .from(userSessionsTable)
+    .where(
+      sql`${userSessionsTable.userId} = ${userId} AND ${userSessionsTable.expiresAt} > NOW()`,
+    )
+    .orderBy(sql`${userSessionsTable.lastSeenAt} DESC`);
+
+  const sessions = rows.map((r) => ({
+    id:          r.id,
+    sid:         r.sid,
+    isCurrent:   r.sid === currentSid,
+    userAgent:   r.userAgent,
+    ip:          r.ip,
+    createdAt:   r.createdAt,
+    lastSeenAt:  r.lastSeenAt,
+    expiresAt:   r.expiresAt,
+  }));
+
+  res.json({ sessions });
 });
 
 // ── POST /api/auth/change-password ───────────────────────────────────────────
@@ -269,6 +345,17 @@ router.post("/auth/change-password", async (req, res): Promise<void> => {
     return;
   }
 
+  // Delete all session rows for this user except the current one —
+  // those sessions are now dead (pwv mismatch) and their rows are stale.
+  const currentSid = req.user?.sid ?? "";
+  if (currentSid) {
+    await db
+      .delete(userSessionsTable)
+      .where(
+        sql`${userSessionsTable.userId} = ${userId} AND ${userSessionsTable.sid} != ${currentSid}`,
+      );
+  }
+
   const org = orgForRole(updated.role);
   const token = signToken({
     userId: updated.id,
@@ -276,6 +363,7 @@ router.post("/auth/change-password", async (req, res): Promise<void> => {
     org,
     pwv: updated.passwordVersion,
     mustChangePassword: false,
+    sid: currentSid,
   });
 
   res.cookie(COOKIE_NAME, token, {
@@ -307,12 +395,25 @@ router.post("/auth/change-password", async (req, res): Promise<void> => {
 // live pwv check on its next request. The current session is kept alive: we
 // immediately re-issue a fresh token/cookie carrying the new pwv, so the
 // caller is never logged out of the session that requested this.
+// Also deletes all user_sessions rows except the caller's so the list
+// immediately reflects the result.
 router.post("/auth/sign-out-other-sessions", async (req, res): Promise<void> => {
   const userId = req.user?.userId;
+  const currentSid = req.user?.sid ?? "";
+
   if (userId === undefined) {
     res.status(401).json({ error: "Authentication required." });
     return;
   }
+
+  // Count active (non-expired) sessions that will be ended (for the response message)
+  const liveSessions = await db
+    .select({ sid: userSessionsTable.sid })
+    .from(userSessionsTable)
+    .where(
+      sql`${userSessionsTable.userId} = ${userId} AND ${userSessionsTable.expiresAt} > NOW()`,
+    );
+  const revokedCount = liveSessions.filter((s) => s.sid !== currentSid).length;
 
   const [updated] = await db
     .update(usersTable)
@@ -324,6 +425,18 @@ router.post("/auth/sign-out-other-sessions", async (req, res): Promise<void> => 
     return;
   }
 
+  // Delete every session row except the current one
+  if (currentSid) {
+    await db
+      .delete(userSessionsTable)
+      .where(
+        sql`${userSessionsTable.userId} = ${userId} AND ${userSessionsTable.sid} != ${currentSid}`,
+      );
+  } else {
+    // Fallback: no sid in token (legacy token) — delete all rows
+    await db.delete(userSessionsTable).where(eq(userSessionsTable.userId, userId));
+  }
+
   const org = orgForRole(updated.role);
   const token = signToken({
     userId: updated.id,
@@ -331,6 +444,7 @@ router.post("/auth/sign-out-other-sessions", async (req, res): Promise<void> => 
     org,
     pwv: updated.passwordVersion,
     mustChangePassword: updated.mustChangePassword,
+    sid: currentSid,
   });
 
   res.cookie(COOKIE_NAME, token, {
@@ -341,14 +455,30 @@ router.post("/auth/sign-out-other-sessions", async (req, res): Promise<void> => 
     path: "/",
   });
 
-  logAudit(req, "user.sessions_revoked", { entityType: "user", entityId: updated.id, details: { selfService: true } });
-  logger.info({ userId: updated.id }, "User signed out of their other active sessions");
+  logAudit(req, "user.sessions_revoked", { entityType: "user", entityId: updated.id, details: { selfService: true, revokedCount } });
+  logger.info({ userId: updated.id, revokedCount }, "User signed out of their other active sessions");
 
-  res.json({ message: "All other active sessions have been signed out." });
+  res.json({ message: "All other active sessions have been signed out.", revokedCount });
 });
 
 // ── POST /api/auth/logout ────────────────────────────────────────────────────
-router.post("/auth/logout", (_req, res): void => {
+router.post("/auth/logout", async (req, res): Promise<void> => {
+  // Delete the session row for this specific session if we have a sid
+  const cookies = req.cookies as Record<string, string> | undefined;
+  const token = cookies?.[COOKIE_NAME];
+  if (token) {
+    try {
+      const payload = verifyToken(token);
+      if (payload.sid) {
+        await db
+          .delete(userSessionsTable)
+          .where(eq(userSessionsTable.sid, payload.sid));
+      }
+    } catch {
+      // Token invalid/expired — nothing to delete
+    }
+  }
+
   res.clearCookie(COOKIE_NAME, {
     httpOnly: true,
     secure: IS_PRODUCTION,

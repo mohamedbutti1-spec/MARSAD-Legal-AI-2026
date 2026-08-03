@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useUserContext, ROLE_META, type UserRole } from '@/lib/user-context';
 import { apiFetch } from '@/lib/api-fetch';
@@ -7,8 +7,23 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { KeyRound, Lock, ShieldOff, Loader2, User, CheckCircle2 } from 'lucide-react';
+import {
+  KeyRound, Lock, ShieldOff, Loader2, User,
+  Monitor, Smartphone, Globe, Clock, Wifi,
+} from 'lucide-react';
 
+// ── Types ────────────────────────────────────────────────────────────────────
+interface SessionRow {
+  id: number;
+  sid: string;
+  isCurrent: boolean;
+  userAgent: string | null;
+  ip: string | null;
+  createdAt: string;
+  lastSeenAt: string;
+}
+
+// ── API helpers ───────────────────────────────────────────────────────────────
 async function apiChangePassword(currentPassword: string, newPassword: string) {
   const res = await apiFetch('/api/auth/change-password', {
     method: 'POST',
@@ -20,11 +35,61 @@ async function apiChangePassword(currentPassword: string, newPassword: string) {
   return data;
 }
 
-async function apiSignOutOtherSessions() {
+async function apiSignOutOtherSessions(): Promise<{ revokedCount?: number }> {
   const res = await apiFetch('/api/auth/sign-out-other-sessions', { method: 'POST' });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error ?? 'Could not sign out other sessions.');
   return data;
+}
+
+async function apiGetSessions(): Promise<SessionRow[]> {
+  const res = await apiFetch('/api/auth/sessions');
+  const data = await res.json().catch(() => ({ sessions: [] }));
+  if (!res.ok) return [];
+  return (data.sessions as SessionRow[]) ?? [];
+}
+
+// ── Device label heuristic ────────────────────────────────────────────────────
+function parseDeviceLabel(ua: string | null): { label: string; icon: React.ReactNode } {
+  if (!ua) return { label: 'Unknown device', icon: <Globe className="w-4 h-4" /> };
+  const u = ua.toLowerCase();
+  const isPhone = /iphone|android.*mobile|windows phone/.test(u);
+  const isTablet = /ipad|android(?!.*mobile)/.test(u);
+
+  let browser = 'Browser';
+  if (u.includes('edg/') || u.includes('edge/')) browser = 'Edge';
+  else if (u.includes('chrome/') && !u.includes('chromium')) browser = 'Chrome';
+  else if (u.includes('firefox/')) browser = 'Firefox';
+  else if (u.includes('safari/') && !u.includes('chrome')) browser = 'Safari';
+  else if (u.includes('opr/') || u.includes('opera/')) browser = 'Opera';
+
+  let os = '';
+  if (u.includes('windows nt')) os = 'Windows';
+  else if (u.includes('macintosh') || u.includes('mac os x')) os = 'macOS';
+  else if (u.includes('iphone') || u.includes('ipad')) os = 'iOS';
+  else if (u.includes('android')) os = 'Android';
+  else if (u.includes('linux')) os = 'Linux';
+
+  const label = [browser, os].filter(Boolean).join(' on ') || 'Unknown device';
+  const icon = isPhone
+    ? <Smartphone className="w-4 h-4" />
+    : isTablet
+    ? <Smartphone className="w-4 h-4" />
+    : <Monitor className="w-4 h-4" />;
+
+  return { label, icon };
+}
+
+function relativeTime(iso: string, isAr: boolean): string {
+  const ms = Date.now() - new Date(iso).getTime();
+  const sec = Math.floor(ms / 1000);
+  if (sec < 60) return isAr ? 'الآن' : 'Just now';
+  const min = Math.floor(sec / 60);
+  if (min < 60) return isAr ? `منذ ${min} دقيقة` : `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return isAr ? `منذ ${hr} ساعة` : `${hr}h ago`;
+  const days = Math.floor(hr / 24);
+  return isAr ? `منذ ${days} يوم` : `${days}d ago`;
 }
 
 /**
@@ -66,6 +131,8 @@ export default function Account() {
       setNewPassword('');
       setConfirmPassword('');
       toast({ title: isAr ? 'تم تغيير كلمة المرور' : 'Password changed', description: isAr ? 'تم تحديث كلمة مرورك بنجاح.' : 'Your password has been updated successfully.' });
+      // Refresh session list — other sessions are now gone
+      loadSessions();
     } catch (err: unknown) {
       setPwError(err instanceof Error ? err.message : 'Password change failed.');
     } finally {
@@ -73,20 +140,40 @@ export default function Account() {
     }
   };
 
-  // ── Sign out of other sessions ───────────────────────────────────────────
+  // ── Sessions ─────────────────────────────────────────────────────────────
+  const [sessions, setSessions] = useState<SessionRow[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(true);
   const [signOutLoading, setSignOutLoading] = useState(false);
+
+  const loadSessions = useCallback(async () => {
+    setSessionsLoading(true);
+    try {
+      const rows = await apiGetSessions();
+      setSessions(rows);
+    } catch {
+      // non-fatal
+    } finally {
+      setSessionsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadSessions(); }, [loadSessions]);
+
+  const otherSessionCount = sessions.filter((s) => !s.isCurrent).length;
 
   const handleSignOutOthers = async () => {
     setSignOutLoading(true);
     try {
-      await apiSignOutOtherSessions();
+      const result = await apiSignOutOtherSessions();
       // Refresh so this tab's context picks up the freshly-issued cookie.
       await refreshSession();
+      await loadSessions();
+      const count = result.revokedCount ?? 0;
       toast({
         title: isAr ? 'تم تسجيل الخروج من الجلسات الأخرى' : 'Other sessions signed out',
         description: isAr
-          ? 'تم إنهاء كل جلسة نشطة أخرى. هذه الجلسة لا تزال مفتوحة.'
-          : 'Every other active session has been ended. This session remains active.',
+          ? `تم إنهاء ${count} جلسة أخرى. هذه الجلسة لا تزال مفتوحة.`
+          : `${count} other session${count !== 1 ? 's' : ''} ended. This session remains active.`,
       });
     } catch (err: unknown) {
       toast({ title: isAr ? 'خطأ' : 'Error', description: err instanceof Error ? err.message : 'Failed to sign out other sessions.', variant: 'destructive' });
@@ -203,34 +290,102 @@ export default function Account() {
 
         {/* ── Active sessions ──────────────────────────────────────────── */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ShieldOff className="w-5 h-5 text-primary" />
-              {isAr ? 'الجلسات النشطة' : 'Active Sessions'}
-            </CardTitle>
-            <CardDescription>
-              {isAr
-                ? 'إذا تركت حسابك مسجّلاً على جهاز آخر أو حاسوب مشترك، يمكنك إنهاء تلك الجلسات دون التأثير على هذه الجلسة.'
-                : "If you left yourself signed in on another device or a shared computer, you can end those sessions without affecting this one."}
-            </CardDescription>
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <ShieldOff className="w-5 h-5 text-primary" />
+                  {isAr ? 'الجلسات النشطة' : 'Active Sessions'}
+                </CardTitle>
+                <CardDescription className="mt-1">
+                  {isAr
+                    ? 'الأجهزة والمتصفحات التي تملك جلسة نشطة حالياً في حسابك.'
+                    : 'Devices and browsers that currently have an active session on your account.'}
+                </CardDescription>
+              </div>
+              {otherSessionCount > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/10 shrink-0 mt-0.5"
+                  onClick={handleSignOutOthers}
+                  disabled={signOutLoading}
+                >
+                  {signOutLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ShieldOff className="w-3.5 h-3.5" />}
+                  {signOutLoading
+                    ? (isAr ? 'جارٍ التنفيذ…' : 'Signing out…')
+                    : (isAr ? `إنهاء ${otherSessionCount} جلسة أخرى` : `Sign out ${otherSessionCount} other session${otherSessionCount !== 1 ? 's' : ''}`)}
+                </Button>
+              )}
+            </div>
           </CardHeader>
-          <CardContent className="flex items-start justify-between gap-4">
-            <p className="text-sm text-muted-foreground max-w-md">
-              {isAr
-                ? 'سيتم تسجيل الخروج فورًا من كل جلسة أخرى نشطة على أي جهاز. ستبقى هذه الجلسة مفتوحة.'
-                : 'Every other active session on any device is signed out immediately. This session stays active.'}
-            </p>
-            <Button
-              variant="outline"
-              className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/10 shrink-0"
-              onClick={handleSignOutOthers}
-              disabled={signOutLoading}
-            >
-              {signOutLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldOff className="w-4 h-4" />}
-              {signOutLoading
-                ? (isAr ? 'جارٍ التنفيذ…' : 'Signing out…')
-                : (isAr ? 'تسجيل الخروج من الجلسات الأخرى' : 'Sign out of all other sessions')}
-            </Button>
+          <CardContent className="pt-0">
+            {sessionsLoading ? (
+              <div className="flex items-center gap-2 py-6 justify-center text-muted-foreground text-sm">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                {isAr ? 'جارٍ التحميل…' : 'Loading sessions…'}
+              </div>
+            ) : sessions.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                {isAr ? 'لا توجد جلسات نشطة مسجّلة.' : 'No active sessions on record.'}
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {sessions.map((s) => {
+                  const { label, icon } = parseDeviceLabel(s.userAgent);
+                  return (
+                    <li
+                      key={s.id}
+                      className={`flex items-start gap-3 rounded-lg px-3 py-3 border transition-colors ${
+                        s.isCurrent
+                          ? 'bg-primary/5 border-primary/20'
+                          : 'bg-muted/30 border-border/50'
+                      }`}
+                    >
+                      <div className={`mt-0.5 shrink-0 ${s.isCurrent ? 'text-primary' : 'text-muted-foreground'}`}>
+                        {icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-medium text-foreground truncate">{label}</span>
+                          {s.isCurrent && (
+                            <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20 shrink-0">
+                              {isAr ? 'هذه الجلسة' : 'This session'}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 mt-1 flex-wrap">
+                          {s.ip && (
+                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Wifi className="w-3 h-3" />
+                              {s.ip}
+                            </span>
+                          )}
+                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Clock className="w-3 h-3" />
+                            {isAr ? 'آخر نشاط: ' : 'Last active: '}
+                            {relativeTime(s.lastSeenAt, isAr)}
+                          </span>
+                          <span className="text-xs text-muted-foreground/60">
+                            {isAr ? 'بدأت: ' : 'Started: '}
+                            {relativeTime(s.createdAt, isAr)}
+                          </span>
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+
+            {/* Show the sign-out button at the bottom too when there are other sessions */}
+            {!sessionsLoading && otherSessionCount === 0 && sessions.length > 0 && (
+              <p className="text-xs text-muted-foreground mt-3 text-center">
+                {isAr
+                  ? 'لا توجد جلسات أخرى نشطة.'
+                  : 'No other active sessions.'}
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -17,6 +17,8 @@ declare global {
         pwv: number;
         /** TRUE when an admin-issued temporary password has not been replaced yet */
         mustChangePassword: boolean;
+        /** Stable session identifier — matches a row in user_sessions */
+        sid: string;
       };
     }
   }

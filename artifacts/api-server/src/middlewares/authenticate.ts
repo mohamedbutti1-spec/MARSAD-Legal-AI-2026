@@ -8,9 +8,23 @@
  * specific role should additionally use requireRole() / requireAnyRole().
  */
 import type { Request, Response, NextFunction } from "express";
-import { eq } from "drizzle-orm";
-import { db, usersTable } from "@workspace/db";
+import { eq, sql } from "drizzle-orm";
+import { db, usersTable, userSessionsTable } from "@workspace/db";
 import { verifyToken, COOKIE_NAME } from "../lib/jwt";
+
+// ── last_seen_at throttle ─────────────────────────────────────────────────────
+// We update last_seen_at at most once per minute per sid to avoid saturating
+// the DB on every API call. A Map<sid, lastUpdateMs> tracks the most recent
+// successful update; entries are evicted lazily when the session expires.
+const LAST_SEEN_THROTTLE_MS = 60_000; // 1 minute
+const lastSeenUpdatedAt = new Map<string, number>();
+
+function shouldUpdateLastSeen(sid: string): boolean {
+  const last = lastSeenUpdatedAt.get(sid) ?? 0;
+  if (Date.now() - last < LAST_SEEN_THROTTLE_MS) return false;
+  lastSeenUpdatedAt.set(sid, Date.now());
+  return true;
+}
 
 export async function authenticate(req: Request, res: Response, next: NextFunction): Promise<void> {
   const cookies = req.cookies as Record<string, string> | undefined;
@@ -60,6 +74,17 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
     if (mustChangePassword && req.path !== "/auth/change-password") {
       res.status(403).json({ error: "You must set a new password before continuing.", code: "MUST_CHANGE_PASSWORD" });
       return;
+    }
+
+    // ── Touch last_seen_at for this session (throttled to 1/min) ─────────────
+    // Fire-and-forget — a failed update must never fail the request. Throttled
+    // to at most once per minute per sid to limit DB write pressure on
+    // high-frequency callers.
+    if (user.sid && shouldUpdateLastSeen(user.sid)) {
+      db.update(userSessionsTable)
+        .set({ lastSeenAt: sql`NOW()` })
+        .where(eq(userSessionsTable.sid, user.sid))
+        .catch(() => { /* non-fatal */ });
     }
 
     // ── Backfill legacy headers from verified JWT payload ─────────────────────

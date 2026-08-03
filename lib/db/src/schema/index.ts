@@ -66,3 +66,5 @@ export * from "./pgf-workflow-steps";
 export * from "./pcs";
 // Production RBAC — DB-backed roles/permissions
 export * from "./rbac";
+// Auth — per-user session registry
+export * from "./user-sessions";

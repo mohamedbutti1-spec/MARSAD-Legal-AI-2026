@@ -11,7 +11,7 @@ import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
 import { eq } from "drizzle-orm";
-import { db, usersTable, decisionReplayEventsTable } from "@workspace/db";
+import { db, usersTable, decisionReplayEventsTable, userSessionsTable } from "@workspace/db";
 import bcrypt from "bcryptjs";
 import app from "../app";
 import { signToken, COOKIE_NAME } from "../lib/jwt";
@@ -31,7 +31,7 @@ const passwordVersions = new Map<number, number>();
 
 function cookieFor(role: string, userId = 1, org = ""): string {
   const pwv = passwordVersions.get(userId) ?? 0;
-  return `${COOKIE_NAME}=${signToken({ userId, role, org, pwv, mustChangePassword: false })}`;
+  return `${COOKIE_NAME}=${signToken({ userId, role, org, pwv, mustChangePassword: false, sid: '' })}`;
 }
 
 function json(extra: Record<string, string> = {}): Record<string, string> {
@@ -815,7 +815,7 @@ describe("Forced password change after admin-issued temporary password", () => {
 
   function cookieForTestUser(): Record<string, string> {
     return json({ Cookie: `${COOKIE_NAME}=${signToken({
-      userId: testUserId, role: "viewer", org: "", pwv: 0, mustChangePassword: true,
+      userId: testUserId, role: 'viewer', org: '', pwv: 0, mustChangePassword: true, sid: '',
     })}` });
   }
 
@@ -851,7 +851,7 @@ describe("Forced password change after admin-issued temporary password", () => {
 
     // A fresh token reflecting the post-change state must pass through freely.
     const freshCookie = json({ Cookie: `${COOKIE_NAME}=${signToken({
-      userId: testUserId, role: "viewer", org: "", pwv: row.passwordVersion, mustChangePassword: false,
+      userId: testUserId, role: "viewer", org: "", pwv: row.passwordVersion, mustChangePassword: false, sid: "",
     })}` });
     const { status: freshStatus } = await req("GET", "/api/documents", undefined, freshCookie);
     assert.notEqual(freshStatus, 403);
@@ -864,7 +864,7 @@ describe("Forced password change after admin-issued temporary password", () => {
       .where(eq(usersTable.id, testUserId));
 
     const { status, body } = await req("GET", "/api/documents", undefined, json({ Cookie: `${COOKIE_NAME}=${signToken({
-      userId: testUserId, role: "viewer", org: "", pwv: 1, mustChangePassword: false,
+      userId: testUserId, role: "viewer", org: "", pwv: 1, mustChangePassword: false, sid: "",
     })}` }));
     assert.equal(status, 403);
     assert.equal((body as { code?: string }).code, "MUST_CHANGE_PASSWORD");
@@ -876,7 +876,7 @@ describe("Forced password change after admin-issued temporary password", () => {
     // not merely re-gated behind MUST_CHANGE_PASSWORD — since it represents a
     // session issued before the admin reset happened.
     const staleCookie = json({ Cookie: `${COOKIE_NAME}=${signToken({
-      userId: testUserId, role: "viewer", org: "", pwv: 0, mustChangePassword: false,
+      userId: testUserId, role: "viewer", org: "", pwv: 0, mustChangePassword: false, sid: "",
     })}` });
     const { status } = await req("GET", "/api/documents", undefined, staleCookie);
     assert.equal(status, 401);
@@ -924,5 +924,178 @@ describe("Forced password change after admin-issued temporary password", () => {
     } finally {
       await db.delete(usersTable).where(eq(usersTable.id, newUserId));
     }
+  });
+});
+
+// ── Session registry ──────────────────────────────────────────────────────────
+describe("Session registry — user_sessions table", () => {
+  let sessionUserId: number;
+  const SESSION_USER_PASSWORD = "SessionTest#7890";
+
+  before(async () => {
+    const hash = await bcrypt.hash(SESSION_USER_PASSWORD, 10);
+    const [u] = await db
+      .insert(usersTable)
+      .values({
+        name: "Session Test User",
+        email: "session-test@example.com",
+        username: "session-test-user",
+        role: "viewer",
+        isActive: true,
+        isDemo: false,
+        passwordHash: hash,
+        passwordVersion: 0,
+        mustChangePassword: false,
+      })
+      .returning({ id: usersTable.id });
+    sessionUserId = u.id;
+  });
+
+  after(async () => {
+    await db.delete(usersTable).where(eq(usersTable.id, sessionUserId));
+  });
+
+  it("POST /api/auth/login creates a session row in user_sessions", async () => {
+    const loginRes = await fetch(`${baseUrl}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: "session-test-user", password: SESSION_USER_PASSWORD }),
+    });
+    assert.equal(loginRes.status, 200);
+
+    const rows = await db
+      .select()
+      .from(userSessionsTable)
+      .where(eq(userSessionsTable.userId, sessionUserId));
+    assert.ok(rows.length >= 1, "at least one session row must exist after login");
+    assert.ok(rows[0].sid.length > 0, "sid must be a non-empty string");
+    assert.ok(rows[0].expiresAt > new Date(), "expiresAt must be in the future");
+  });
+
+  it("GET /api/auth/sessions requires authentication", async () => {
+    const { status } = await req("GET", "/api/auth/sessions", undefined, H_ANON);
+    assert.equal(status, 401);
+  });
+
+  it("GET /api/auth/sessions returns only the caller's session and marks it isCurrent", async () => {
+    // Login to get a real cookie with a real session row (and real pwv in JWT)
+    const loginRes = await fetch(`${baseUrl}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: "session-test-user", password: SESSION_USER_PASSWORD }),
+    });
+    assert.equal(loginRes.status, 200);
+    const setCookie = loginRes.headers.get("set-cookie");
+    assert.ok(setCookie, "login must return a session cookie");
+    const cookieHeader = setCookie.split(";")[0];
+
+    const { status, body } = await req("GET", "/api/auth/sessions", undefined, {
+      Cookie: cookieHeader,
+    });
+    assert.equal(status, 200);
+    const sessions = (body as { sessions: Array<{ isCurrent: boolean; sid: string }> }).sessions;
+    assert.ok(Array.isArray(sessions), "sessions must be an array");
+    assert.ok(sessions.length >= 1, "must have at least one session");
+    const current = sessions.find((s) => s.isCurrent);
+    assert.ok(current, "exactly one session must be marked isCurrent");
+  });
+
+  it("GET /api/auth/sessions excludes expired rows", async () => {
+    // Manually insert an already-expired session row for this user
+    await db.insert(userSessionsTable).values({
+      userId: sessionUserId,
+      sid: "expired-test-sid-" + Date.now(),
+      userAgent: "ExpiredBrowser/1.0",
+      ip: "127.0.0.2",
+      // Set expires_at to 1 hour in the past
+      expiresAt: new Date(Date.now() - 60 * 60 * 1000),
+    });
+
+    const loginRes = await fetch(`${baseUrl}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: "session-test-user", password: SESSION_USER_PASSWORD }),
+    });
+    const cookieHeader = loginRes.headers.get("set-cookie")!.split(";")[0];
+
+    const { status, body } = await req("GET", "/api/auth/sessions", undefined, {
+      Cookie: cookieHeader,
+    });
+    assert.equal(status, 200);
+    const sessions = (body as { sessions: Array<{ sid: string }> }).sessions;
+    const expiredRow = sessions.find((s) => s.sid.startsWith("expired-test-sid-"));
+    assert.ok(!expiredRow, "expired session rows must not appear in the list");
+  });
+
+  it("POST /api/auth/logout deletes the session row", async () => {
+    const loginRes = await fetch(`${baseUrl}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: "session-test-user", password: SESSION_USER_PASSWORD }),
+    });
+    assert.equal(loginRes.status, 200);
+    const cookieHeader = loginRes.headers.get("set-cookie")!.split(";")[0];
+
+    // Find the most recently inserted sid for this user
+    const rowsBefore = await db
+      .select()
+      .from(userSessionsTable)
+      .where(eq(userSessionsTable.userId, sessionUserId));
+    const latestSid = rowsBefore.sort(
+      (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+    )[0].sid;
+
+    await fetch(`${baseUrl}/api/auth/logout`, {
+      method: "POST",
+      headers: { Cookie: cookieHeader },
+    });
+
+    const rowsAfter = await db
+      .select()
+      .from(userSessionsTable)
+      .where(eq(userSessionsTable.userId, sessionUserId));
+    const stillExists = rowsAfter.find((r) => r.sid === latestSid);
+    assert.ok(!stillExists, "logout must delete the session row from user_sessions");
+  });
+
+  it("POST /api/auth/sign-out-other-sessions removes other session rows but keeps the current one", async () => {
+    // Login twice to create two live session rows
+    const login1 = await fetch(`${baseUrl}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: "session-test-user", password: SESSION_USER_PASSWORD }),
+    });
+    const cookie1 = login1.headers.get("set-cookie")!.split(";")[0];
+
+    const login2 = await fetch(`${baseUrl}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: "session-test-user", password: SESSION_USER_PASSWORD }),
+    });
+    const cookie2 = login2.headers.get("set-cookie")!.split(";")[0];
+
+    // Use the second session to revoke all other sessions
+    const { status, body } = await req(
+      "POST", "/api/auth/sign-out-other-sessions", undefined,
+      { Cookie: cookie2 },
+    );
+    assert.equal(status, 200);
+    assert.ok(
+      (body as { revokedCount?: number }).revokedCount! >= 1,
+      "at least one other session must be reported as revoked",
+    );
+
+    // After revocation, cookie1 should fail (pwv bumped)
+    const { status: s1 } = await req("GET", "/api/auth/sessions", undefined, { Cookie: cookie1 });
+    assert.equal(s1, 401, "the revoked session must no longer authenticate");
+
+    // cookie2 session row must still exist in the DB
+    const rows = await db
+      .select()
+      .from(userSessionsTable)
+      .where(eq(userSessionsTable.userId, sessionUserId));
+    // Filter to only non-expired, non-stale rows
+    const live = rows.filter((r) => r.expiresAt > new Date());
+    assert.ok(live.length >= 1, "at least the current session row must remain after revocation");
   });
 });
