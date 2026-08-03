@@ -6,7 +6,10 @@ import {
   settingsTable,
   legalSourcesTable,
   seedRiskCategories,
+  seedRbacTables,
+  loadPermissionsFromDb,
 } from "@workspace/db";
+import { migrateRbac } from "./rbac/migration.js";
 import bcrypt from "bcryptjs";
 import { createHmac } from "crypto";
 import { logger } from "./lib/logger";
@@ -120,6 +123,10 @@ async function migrateAuth() {
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_demo BOOLEAN NOT NULL DEFAULT FALSE`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_version INTEGER NOT NULL DEFAULT 0`);
+  // TRUE when the current password is an admin-issued temporary one (new
+  // account or admin "Reset password" action) — the user must set their own
+  // before using the app. See authenticate.ts and POST /auth/change-password.
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT FALSE`);
   await pool.query(
     `CREATE UNIQUE INDEX IF NOT EXISTS users_username_uix ON users(username) WHERE username IS NOT NULL`,
   );
@@ -239,6 +246,17 @@ export async function seedDatabase() {
   // ─── Auth migration (MUST run first — adds username/password_hash columns) ───
   await migrateAuth().catch((err) =>
     logger.error({ err }, "Auth migration failed — users will not be able to log in"),
+  );
+
+  // ─── Production RBAC: DB-backed roles/permissions (additive, IF NOT EXISTS) ─
+  await migrateRbac().catch((err) =>
+    logger.error({ err }, "RBAC migration failed — falling back to hardcoded permission matrix"),
+  );
+  await seedRbacTables().catch((err) =>
+    logger.error({ err }, "RBAC table seeding failed — falling back to hardcoded permission matrix"),
+  );
+  await loadPermissionsFromDb().catch((err) =>
+    logger.error({ err }, "Loading permissions from DB failed — using hardcoded permission matrix"),
   );
 
   // ─── Phase 57: Research Workspace tables (additive, IF NOT EXISTS) ───────────

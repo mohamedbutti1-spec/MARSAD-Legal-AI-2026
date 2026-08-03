@@ -13,6 +13,10 @@ declare global {
         role: string;
         /** Organisation string for org-scoped roles; empty string otherwise */
         org: string;
+        /** password_version snapshot at token issuance; see authenticate middleware */
+        pwv: number;
+        /** TRUE when an admin-issued temporary password has not been replaced yet */
+        mustChangePassword: boolean;
       };
     }
   }

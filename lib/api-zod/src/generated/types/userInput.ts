@@ -5,11 +5,16 @@
  * Legal Research Platform API with AI capabilities
  * OpenAPI spec version: 0.1.0
  */
-import type { UserInputRole } from './userInputRole';
 
 export interface UserInput {
   /** @minLength 1 */
   name: string;
   email: string;
-  role: UserInputRole;
+  /** @minLength 1 */
+  username?: string;
+  /** One of the built-in UserRole values, or a custom role key created by an owner via /rbac/roles. */
+  role: string;
+  /** @minLength 8 */
+  password?: string;
+  isActive?: boolean;
 }

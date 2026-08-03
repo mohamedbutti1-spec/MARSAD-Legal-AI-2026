@@ -10,16 +10,28 @@
 import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
+import { eq } from "drizzle-orm";
+import { db, usersTable, decisionReplayEventsTable } from "@workspace/db";
+import bcrypt from "bcryptjs";
 import app from "../app";
 import { signToken, COOKIE_NAME } from "../lib/jwt";
 
 let server: http.Server;
 let baseUrl: string;
 
+// The authenticate middleware compares each token's `pwv` claim against the
+// live users.password_version column when a matching row exists (see
+// authenticate.ts). Real seeded accounts (ids 1/2/3 here) must be signed with
+// their current password_version or every request gets rejected as a stale
+// session; synthetic/non-existent ids have no row to compare against, so any
+// value works for them.
+const passwordVersions = new Map<number, number>();
+
 // ── Cookie / header factories ─────────────────────────────────────────────────
 
 function cookieFor(role: string, userId = 1, org = ""): string {
-  return `${COOKIE_NAME}=${signToken({ userId, role, org })}`;
+  const pwv = passwordVersions.get(userId) ?? 0;
+  return `${COOKIE_NAME}=${signToken({ userId, role, org, pwv, mustChangePassword: false })}`;
 }
 
 function json(extra: Record<string, string> = {}): Record<string, string> {
@@ -59,6 +71,16 @@ before(async () => {
   await new Promise<void>((resolve) => server.listen(0, resolve));
   const addr = server.address() as { port: number };
   baseUrl = `http://localhost:${addr.port}`;
+
+  // Load real password_version values for the seeded accounts used below so
+  // signed test cookies match the live DB (see authenticate.ts).
+  for (const id of [1, 2, 3]) {
+    const [row] = await db
+      .select({ passwordVersion: usersTable.passwordVersion })
+      .from(usersTable)
+      .where(eq(usersTable.id, id));
+    if (row) passwordVersions.set(id, row.passwordVersion);
+  }
 
   // Build JWT cookies after SESSION_SECRET is verified to be in environment
   H_OWNER      = json({ Cookie: cookieFor("owner",      1) });
@@ -578,6 +600,91 @@ describe("Admin Decision OS — Al-Shamsi endpoints", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Regression test for a confirmed leak: GET /decisions/:id/replay nulled the
+// dedicated `alShamsiDimensions` field for non-owners, but the raw Shamsi
+// principle-scoring data still passed through unredacted via the `inputs`/
+// `outputs`/`auditHash` fields of the replay_09_alshamsi_engine stage (sourced
+// from the same underlying aiAnalysis/replay-event row under different keys).
+describe("Decision Replay — Al-Shamsi Theory data is fully redacted for non-owners", () => {
+  // Uses a real seeded decision that already has a completed
+  // constitutional_validation stage (case MARSAD-2026-0147) so the route's
+  // decision-lookup / org-scoping / sealed-scoping checks all pass normally.
+  // We only add a replay event row (deleted in `after`) to exercise the
+  // `replayEvent ? outputs : virtualOutputs` branch that leaked the raw data.
+  const REAL_DECISION_ID = 4;
+  const SHAMSI_PAYLOAD = { jurisdiction: 90, cause: 85 };
+  const AUDIT_HASH = "test-shamsi-leak-regression";
+
+  before(async () => {
+    await db.insert(decisionReplayEventsTable).values({
+      decisionId: REAL_DECISION_ID,
+      replayStageKey: "replay_09_alshamsi_engine",
+      sourceStageKey: "constitutional_validation",
+      actor: "1",
+      alShamsiDimensions: SHAMSI_PAYLOAD,
+      auditHash: AUDIT_HASH,
+    } as typeof decisionReplayEventsTable.$inferInsert);
+  });
+
+  after(async () => {
+    await db.delete(decisionReplayEventsTable)
+      .where(eq(decisionReplayEventsTable.auditHash, AUDIT_HASH));
+  });
+
+  function findShamsiStage(body: unknown) {
+    const timeline = (body as Record<string, unknown>).timeline as Record<string, unknown>;
+    const stages = timeline.stages as Array<Record<string, unknown>>;
+    return stages.find((s) => s.replayStageKey === "replay_09_alshamsi_engine")!;
+  }
+
+  it("owner sees the real Al-Shamsi data (dedicated field + inputs/outputs/hash)", async () => {
+    const { status, body } = await req(
+      "GET", `/api/decisions/${REAL_DECISION_ID}/replay`, undefined, H_OWNER,
+    );
+    assert.equal(status, 200);
+    const stage = findShamsiStage(body);
+    assert.deepEqual(stage.alShamsiDimensions, SHAMSI_PAYLOAD);
+    assert.equal(stage.auditHash, AUDIT_HASH);
+    assert.ok(stage.inputs !== null, "owner must see the stage inputs");
+    assert.ok(stage.outputs !== null, "owner must see the stage outputs");
+  });
+
+  it("non-owner (viewer) gets full redaction — not just the dedicated field", async () => {
+    const { status, body } = await req(
+      "GET", `/api/decisions/${REAL_DECISION_ID}/replay`, undefined, H_VIEWER,
+    );
+    assert.equal(status, 200);
+    const stage = findShamsiStage(body);
+    // The dedicated field being null is not enough on its own — this is the
+    // regression check: the SAME Shamsi scores previously leaked through
+    // `inputs`/`outputs` (sourced from the same underlying stageData/
+    // aiAnalysis) even when `alShamsiDimensions` itself was already null.
+    assert.equal(stage.alShamsiDimensions, null);
+    assert.equal(stage.inputs, null, "inputs must not leak Shamsi principleResults to non-owners");
+    assert.equal(stage.outputs, null, "outputs must not leak Shamsi scores to non-owners");
+    assert.equal(stage.auditHash, null, "auditHash must not identify a non-owner-visible Shamsi record");
+    assert.equal(stage.reasoningNarrative, null);
+    assert.deepEqual(stage.evidenceUsed, []);
+    assert.deepEqual(stage.riskIndicators, []);
+    assert.equal(stage.humanInterventionRecord, null);
+    // Stage still shows up in the timeline (existence isn't hidden) — only
+    // its Al-Shamsi payload is stripped, matching the CIL/admin-os pattern.
+    assert.equal(stage.status, "complete");
+  });
+
+  it("supervisor (non-owner) is also fully redacted", async () => {
+    const { status, body } = await req(
+      "GET", `/api/decisions/${REAL_DECISION_ID}/replay`, undefined, H_SUPERVISOR,
+    );
+    assert.equal(status, 200);
+    const stage = findShamsiStage(body);
+    assert.equal(stage.alShamsiDimensions, null);
+    assert.equal(stage.outputs, null);
+    assert.equal(stage.inputs, null);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 describe("Court Simulation — Architectural Lock (ASEP + Al-Shamsi Matrix + Digital Will Engine)", () => {
   it("POST /api/court/simulate rejects unauthenticated requests", async () => {
     const { status } = await req(
@@ -670,5 +777,152 @@ describe("Judicial Review (CJI) — judge access preserved, not Shamsi-gated", (
       "GET", "/api/judicial-review/1", undefined, H_OWNER,
     );
     assert.equal(ownerStatus, 403);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Forced password change (admin-issued temporary passwords)
+//
+// An admin-created account or an admin password reset sets
+// users.must_change_password = true. The authenticate middleware must then
+// block every route except POST /auth/change-password until the user
+// replaces the temporary password — enforced server-side, not just via a
+// frontend redirect.
+describe("Forced password change after admin-issued temporary password", () => {
+  const TEMP_PASSWORD = "TempPass#1234";
+  let testUserId: number;
+
+  before(async () => {
+    const [row] = await db
+      .insert(usersTable)
+      .values({
+        name: "Forced PW Test",
+        email: "forced-pw-test@example.com",
+        role: "viewer",
+        username: "forced-pw-test",
+        passwordHash: await bcrypt.hash(TEMP_PASSWORD, 10),
+        authProvider: "password",
+        isDemo: false,
+        mustChangePassword: true,
+      })
+      .returning({ id: usersTable.id });
+    testUserId = row.id;
+  });
+
+  after(async () => {
+    await db.delete(usersTable).where(eq(usersTable.id, testUserId));
+  });
+
+  function cookieForTestUser(): Record<string, string> {
+    return json({ Cookie: `${COOKIE_NAME}=${signToken({
+      userId: testUserId, role: "viewer", org: "", pwv: 0, mustChangePassword: true,
+    })}` });
+  }
+
+  it("blocks an unrelated protected route while must_change_password is true", async () => {
+    const { status, body } = await req("GET", "/api/documents", undefined, cookieForTestUser());
+    assert.equal(status, 403);
+    assert.equal((body as { code?: string }).code, "MUST_CHANGE_PASSWORD");
+  });
+
+  it("rejects /auth/change-password with the wrong current password", async () => {
+    const { status } = await req(
+      "POST", "/api/auth/change-password",
+      { currentPassword: "not-the-temp-password", newPassword: "BrandNewPass#5678" },
+      cookieForTestUser(),
+    );
+    assert.equal(status, 401);
+  });
+
+  it("accepts the correct current password, clears the flag, and unblocks access", async () => {
+    const { status, body } = await req(
+      "POST", "/api/auth/change-password",
+      { currentPassword: TEMP_PASSWORD, newPassword: "BrandNewPass#5678" },
+      cookieForTestUser(),
+    );
+    assert.equal(status, 200);
+    assert.equal((body as { mustChangePassword?: boolean }).mustChangePassword, false);
+
+    const [row] = await db
+      .select({ mustChangePassword: usersTable.mustChangePassword, passwordVersion: usersTable.passwordVersion })
+      .from(usersTable)
+      .where(eq(usersTable.id, testUserId));
+    assert.equal(row.mustChangePassword, false);
+
+    // A fresh token reflecting the post-change state must pass through freely.
+    const freshCookie = json({ Cookie: `${COOKIE_NAME}=${signToken({
+      userId: testUserId, role: "viewer", org: "", pwv: row.passwordVersion, mustChangePassword: false,
+    })}` });
+    const { status: freshStatus } = await req("GET", "/api/documents", undefined, freshCookie);
+    assert.notEqual(freshStatus, 403);
+  });
+
+  it("an admin password reset re-sets must_change_password on the target account", async () => {
+    await db
+      .update(usersTable)
+      .set({ mustChangePassword: true, passwordVersion: 1 })
+      .where(eq(usersTable.id, testUserId));
+
+    const { status, body } = await req("GET", "/api/documents", undefined, json({ Cookie: `${COOKIE_NAME}=${signToken({
+      userId: testUserId, role: "viewer", org: "", pwv: 1, mustChangePassword: false,
+    })}` }));
+    assert.equal(status, 403);
+    assert.equal((body as { code?: string }).code, "MUST_CHANGE_PASSWORD");
+  });
+
+  it("an admin password reset invalidates sessions signed before the reset (stale pwv)", async () => {
+    // testUserId is now at passwordVersion 1 (bumped by the previous test).
+    // A token still carrying the pre-reset pwv (0) must be rejected outright —
+    // not merely re-gated behind MUST_CHANGE_PASSWORD — since it represents a
+    // session issued before the admin reset happened.
+    const staleCookie = json({ Cookie: `${COOKIE_NAME}=${signToken({
+      userId: testUserId, role: "viewer", org: "", pwv: 0, mustChangePassword: false,
+    })}` });
+    const { status } = await req("GET", "/api/documents", undefined, staleCookie);
+    assert.equal(status, 401);
+  });
+
+  it("full admin-creation flow: POST /api/users issues a temp password that forces a change on first login", async () => {
+    const created = await req("POST", "/api/users", {
+      name: "New Hire",
+      email: "new-hire-forced-pw@example.com",
+      role: "viewer",
+    });
+    assert.equal(created.status, 201);
+    const createdBody = created.body as { id: number; mustChangePassword?: boolean; temporaryPassword?: string };
+    const newUserId = createdBody.id;
+    const tempPassword = createdBody.temporaryPassword;
+    assert.ok(tempPassword && tempPassword.length > 0, "a temporary password must be returned on creation");
+
+    try {
+      // Log in with the admin-issued temporary password.
+      const loginRes = await fetch(`${baseUrl}/api/auth/login`, {
+        method: "POST",
+        headers: json(),
+        body: JSON.stringify({ username: "new-hire-forced-pw", password: tempPassword }),
+      });
+      assert.equal(loginRes.status, 200);
+      const loginBody = (await loginRes.json()) as { mustChangePassword?: boolean };
+      assert.equal(loginBody.mustChangePassword, true);
+      const setCookie = loginRes.headers.get("set-cookie");
+      assert.ok(setCookie, "login must set a session cookie");
+      const sessionCookie = { "Content-Type": "application/json", Cookie: setCookie!.split(";")[0] };
+
+      // Blocked everywhere except the change-password endpoint.
+      const blocked = await req("GET", "/api/documents", undefined, sessionCookie);
+      assert.equal(blocked.status, 403);
+      assert.equal((blocked.body as { code?: string }).code, "MUST_CHANGE_PASSWORD");
+
+      // Changing the password with the correct temp password unblocks the account.
+      const changed = await req(
+        "POST", "/api/auth/change-password",
+        { currentPassword: tempPassword, newPassword: "PostHireFresh#9012" },
+        sessionCookie,
+      );
+      assert.equal(changed.status, 200);
+      assert.equal((changed.body as { mustChangePassword?: boolean }).mustChangePassword, false);
+    } finally {
+      await db.delete(usersTable).where(eq(usersTable.id, newUserId));
+    }
   });
 });

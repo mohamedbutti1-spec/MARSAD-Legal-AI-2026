@@ -315,7 +315,11 @@ export const ListUsersResponseItem = zod.object({
   "id": zod.number(),
   "name": zod.string(),
   "email": zod.string(),
-  "role": zod.enum(['owner', 'supervisor', 'viewer']),
+  "username": zod.string().nullish(),
+  "role": zod.string().describe('One of the built-in UserRole values, or a custom role key created by an owner via \/rbac\/roles.'),
+  "isActive": zod.boolean().optional(),
+  "authProvider": zod.string().optional(),
+  "mustChangePassword": zod.boolean().optional().describe('TRUE when the current password is an admin-issued temporary one (new account or admin password reset); the user must set their own password before continuing.'),
   "createdAt": zod.coerce.date()
 })
 export const ListUsersResponse = zod.array(ListUsersResponseItem)
@@ -326,20 +330,32 @@ export const ListUsersResponse = zod.array(ListUsersResponseItem)
  */
 
 
+export const createUserBodyPasswordMin = 8;
+
+
 
 export const CreateUserBody = zod.object({
   "name": zod.string().min(1),
   "email": zod.string(),
-  "role": zod.enum(['owner', 'supervisor', 'viewer'])
+  "username": zod.string().min(1).optional(),
+  "role": zod.string().describe('One of the built-in UserRole values, or a custom role key created by an owner via \/rbac\/roles.'),
+  "password": zod.string().min(createUserBodyPasswordMin).optional(),
+  "isActive": zod.boolean().optional()
 })
 
 export const CreateUserResponse = zod.object({
   "id": zod.number(),
   "name": zod.string(),
   "email": zod.string(),
-  "role": zod.enum(['owner', 'supervisor', 'viewer']),
+  "username": zod.string().nullish(),
+  "role": zod.string().describe('One of the built-in UserRole values, or a custom role key created by an owner via \/rbac\/roles.'),
+  "isActive": zod.boolean().optional(),
+  "authProvider": zod.string().optional(),
+  "mustChangePassword": zod.boolean().optional().describe('TRUE when the current password is an admin-issued temporary one (new account or admin password reset); the user must set their own password before continuing.'),
   "createdAt": zod.coerce.date()
-})
+}).and(zod.object({
+  "temporaryPassword": zod.string().optional().describe('Only present when the request did not supply a password; shown once so the admin can relay it to the new user.')
+}))
 
 
 /**
@@ -353,7 +369,11 @@ export const GetUserResponse = zod.object({
   "id": zod.number(),
   "name": zod.string(),
   "email": zod.string(),
-  "role": zod.enum(['owner', 'supervisor', 'viewer']),
+  "username": zod.string().nullish(),
+  "role": zod.string().describe('One of the built-in UserRole values, or a custom role key created by an owner via \/rbac\/roles.'),
+  "isActive": zod.boolean().optional(),
+  "authProvider": zod.string().optional(),
+  "mustChangePassword": zod.boolean().optional().describe('TRUE when the current password is an admin-issued temporary one (new account or admin password reset); the user must set their own password before continuing.'),
   "createdAt": zod.coerce.date()
 })
 
@@ -366,19 +386,27 @@ export const UpdateUserParams = zod.object({
 })
 
 
+export const updateUserBodyPasswordMin = 8;
+
 
 
 export const UpdateUserBody = zod.object({
   "name": zod.string().min(1).optional(),
   "email": zod.string().optional(),
-  "role": zod.enum(['owner', 'supervisor', 'viewer']).optional()
+  "role": zod.string().optional().describe('One of the built-in UserRole values, or a custom role key created by an owner via \/rbac\/roles.'),
+  "password": zod.string().min(updateUserBodyPasswordMin).optional(),
+  "isActive": zod.boolean().optional()
 })
 
 export const UpdateUserResponse = zod.object({
   "id": zod.number(),
   "name": zod.string(),
   "email": zod.string(),
-  "role": zod.enum(['owner', 'supervisor', 'viewer']),
+  "username": zod.string().nullish(),
+  "role": zod.string().describe('One of the built-in UserRole values, or a custom role key created by an owner via \/rbac\/roles.'),
+  "isActive": zod.boolean().optional(),
+  "authProvider": zod.string().optional(),
+  "mustChangePassword": zod.boolean().optional().describe('TRUE when the current password is an admin-issued temporary one (new account or admin password reset); the user must set their own password before continuing.'),
   "createdAt": zod.coerce.date()
 })
 
@@ -423,6 +451,114 @@ export const UpdateSettingsResponse = zod.object({
   "allowedFileTypes": zod.string(),
   "maintenanceMode": zod.boolean().optional(),
   "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary List all roles, all permission keys, and the current grant matrix (owner only)
+ */
+export const GetRolesPermissionsResponse = zod.object({
+  "roles": zod.array(zod.object({
+  "key": zod.string(),
+  "labelAr": zod.string(),
+  "labelEn": zod.string(),
+  "tier": zod.string(),
+  "isGovernance": zod.boolean(),
+  "isCustom": zod.boolean().describe('True for an owner-created role; false for one of the built-in roles, which can never be renamed or deleted.')
+})),
+  "permissions": zod.array(zod.object({
+  "key": zod.string(),
+  "description": zod.string().nullish()
+})),
+  "grants": zod.array(zod.object({
+  "roleKey": zod.string(),
+  "permissionKey": zod.string(),
+  "allowed": zod.boolean()
+}))
+})
+
+
+/**
+ * @summary Toggle a single role's grant for a single permission (owner only). Reloads the in-memory permissions cache immediately.
+ */
+export const UpdateRolePermissionBody = zod.object({
+  "roleKey": zod.string(),
+  "permissionKey": zod.string(),
+  "allowed": zod.boolean()
+})
+
+export const UpdateRolePermissionResponse = zod.object({
+  "roleKey": zod.string(),
+  "permissionKey": zod.string(),
+  "allowed": zod.boolean()
+})
+
+
+/**
+ * @summary Create a new custom role (owner only). Starts with every permission unchecked (deny-by-default).
+ */
+export const createRoleBodyKeyMin = 2;
+export const createRoleBodyKeyMax = 40;
+
+
+
+
+
+
+export const CreateRoleBody = zod.object({
+  "key": zod.string().min(createRoleBodyKeyMin).max(createRoleBodyKeyMax).describe('Stable machine key, e.g. \"regional_coordinator\" (lowercase letters, digits, underscores).'),
+  "labelAr": zod.string().min(1),
+  "labelEn": zod.string().min(1),
+  "tier": zod.string().min(1)
+})
+
+export const CreateRoleResponse = zod.object({
+  "key": zod.string(),
+  "labelAr": zod.string(),
+  "labelEn": zod.string(),
+  "tier": zod.string(),
+  "isGovernance": zod.boolean(),
+  "isCustom": zod.boolean().describe('True for an owner-created role; false for one of the built-in roles, which can never be renamed or deleted.')
+})
+
+
+/**
+ * @summary Rename a custom role's labels/tier (owner only). Built-in roles cannot be renamed.
+ */
+export const UpdateRoleParams = zod.object({
+  "key": zod.coerce.string()
+})
+
+
+
+
+
+
+export const UpdateRoleBody = zod.object({
+  "labelAr": zod.string().min(1).optional(),
+  "labelEn": zod.string().min(1).optional(),
+  "tier": zod.string().min(1).optional()
+})
+
+export const UpdateRoleResponse = zod.object({
+  "key": zod.string(),
+  "labelAr": zod.string(),
+  "labelEn": zod.string(),
+  "tier": zod.string(),
+  "isGovernance": zod.boolean(),
+  "isCustom": zod.boolean().describe('True for an owner-created role; false for one of the built-in roles, which can never be renamed or deleted.')
+})
+
+
+/**
+ * @summary Delete a custom role (owner only). Built-in roles cannot be deleted, nor can a role still assigned to any user.
+ */
+export const DeleteRoleParams = zod.object({
+  "key": zod.coerce.string()
+})
+
+export const DeleteRoleResponse = zod.object({
+  "success": zod.boolean()
 })
 
 

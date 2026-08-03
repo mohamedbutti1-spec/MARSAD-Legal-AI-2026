@@ -14,7 +14,7 @@
 import { Router, type IRouter }             from "express";
 import { eq, desc, and }                    from "drizzle-orm";
 import { db, pgfSessionsTable, pgfInstitutionalMemoryTable } from "@workspace/db";
-import { requireAnyRole, requireWriteRole } from "../middlewares/roleAuth.js";
+import { requireOperationalRole, requireOperationalWriteRole } from "../middlewares/roleAuth.js";
 import {
   getSectorSummaries,
   findProfession,
@@ -59,14 +59,14 @@ function sessionToApi(s: typeof pgfSessionsTable.$inferSelect) {
 }
 
 // ─── GET /pgf/catalogue ───────────────────────────────────────────────────────
-router.get("/pgf/catalogue", requireAnyRole, (_req, res) => {
+router.get("/pgf/catalogue", requireOperationalRole, (_req, res) => {
   res.json({ sectors: getSectorSummaries() });
 });
 
 // ─── GET /pgf/memory/:sectorId/:professionId/:stageId ────────────────────────
 router.get(
   "/pgf/memory/:sectorId/:professionId/:stageId",
-  requireAnyRole,
+  requireOperationalRole,
   async (req, res): Promise<void> => {
     const { sectorId, professionId, stageId } = req.params as Record<string, string>;
     try {
@@ -82,7 +82,7 @@ router.get(
 // Admin-only: create a new institutional memory entry
 router.post(
   "/pgf/memory",
-  requireWriteRole,
+  requireOperationalWriteRole,
   async (req, res): Promise<void> => {
     // Only owners/supervisors may create entries — trusted session role only,
     // never a client-supplied header (which is spoofable).
@@ -127,7 +127,7 @@ router.post(
 // ─── GET /pgf/workflow/:sectorId/:professionId/:stageId ───────────────────────
 router.get(
   "/pgf/workflow/:sectorId/:professionId/:stageId",
-  requireAnyRole,
+  requireOperationalRole,
   async (req, res): Promise<void> => {
     const { sectorId, professionId, stageId } = req.params as Record<string, string>;
     try {
@@ -142,7 +142,7 @@ router.get(
 // ─── GET /pgf/professions/:sectorId/:professionId/stages/:stageId/expert-actions ──
 router.get(
   "/pgf/professions/:sectorId/:professionId/stages/:stageId/expert-actions",
-  requireAnyRole,
+  requireOperationalRole,
   (req, res): void => {
     const { sectorId, professionId, stageId } = req.params as Record<string, string>;
     const config = findProfession(sectorId, professionId);
@@ -160,7 +160,7 @@ router.get(
 );
 
 // ─── GET /pgf/professions/:sectorId/:professionId ─────────────────────────────
-router.get("/pgf/professions/:sectorId/:professionId", requireAnyRole, (req, res): void => {
+router.get("/pgf/professions/:sectorId/:professionId", requireOperationalRole, (req, res): void => {
   const { sectorId, professionId } = req.params as { sectorId: string; professionId: string };
   const config = findProfession(sectorId, professionId);
   if (!config) { res.status(404).json({ error: "Profession not found" }); return; }
@@ -174,7 +174,7 @@ router.get("/pgf/professions/:sectorId/:professionId", requireAnyRole, (req, res
 });
 
 // ─── POST /pgf/sessions ───────────────────────────────────────────────────────
-router.post("/pgf/sessions", requireWriteRole, async (req, res): Promise<void> => {
+router.post("/pgf/sessions", requireOperationalWriteRole, async (req, res): Promise<void> => {
   const uid = getUserId(req);
   const { sectorId, professionId } = req.body as { sectorId: string; professionId: string };
 
@@ -210,7 +210,7 @@ router.post("/pgf/sessions", requireWriteRole, async (req, res): Promise<void> =
 });
 
 // ─── GET /pgf/sessions ────────────────────────────────────────────────────────
-router.get("/pgf/sessions", requireAnyRole, async (req, res): Promise<void> => {
+router.get("/pgf/sessions", requireOperationalRole, async (req, res): Promise<void> => {
   const uid      = getUserId(req);
   const sessions = await db
     .select({
@@ -240,7 +240,7 @@ router.get("/pgf/sessions", requireAnyRole, async (req, res): Promise<void> => {
 });
 
 // ─── GET /pgf/sessions/:id ────────────────────────────────────────────────────
-router.get("/pgf/sessions/:id", requireAnyRole, async (req, res): Promise<void> => {
+router.get("/pgf/sessions/:id", requireOperationalRole, async (req, res): Promise<void> => {
   const id  = parseInt(req.params.id as string, 10);
   const uid = getUserId(req);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid session id" }); return; }
@@ -253,7 +253,7 @@ router.get("/pgf/sessions/:id", requireAnyRole, async (req, res): Promise<void> 
 });
 
 // ─── POST /pgf/sessions/:id/answer ───────────────────────────────────────────
-router.post("/pgf/sessions/:id/answer", requireWriteRole, async (req, res): Promise<void> => {
+router.post("/pgf/sessions/:id/answer", requireOperationalWriteRole, async (req, res): Promise<void> => {
   const id  = parseInt(req.params.id as string, 10);
   const uid = getUserId(req);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid session id" }); return; }
@@ -325,7 +325,7 @@ router.post("/pgf/sessions/:id/answer", requireWriteRole, async (req, res): Prom
 });
 
 // ─── POST /pgf/sessions/:id/finalize ─────────────────────────────────────────
-router.post("/pgf/sessions/:id/finalize", requireWriteRole, aiAnalysisLimit, async (req, res): Promise<void> => {
+router.post("/pgf/sessions/:id/finalize", requireOperationalWriteRole, aiAnalysisLimit, async (req, res): Promise<void> => {
   const id  = parseInt(req.params.id as string, 10);
   const uid = getUserId(req);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid session id" }); return; }
@@ -381,7 +381,7 @@ router.post("/pgf/sessions/:id/finalize", requireWriteRole, aiAnalysisLimit, asy
 });
 
 // ─── DELETE /pgf/sessions/:id ─────────────────────────────────────────────────
-router.delete("/pgf/sessions/:id", requireWriteRole, async (req, res): Promise<void> => {
+router.delete("/pgf/sessions/:id", requireOperationalWriteRole, async (req, res): Promise<void> => {
   const id  = parseInt(req.params.id as string, 10);
   const uid = getUserId(req);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid session id" }); return; }

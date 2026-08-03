@@ -5,12 +5,18 @@
  * Legal Research Platform API with AI capabilities
  * OpenAPI spec version: 0.1.0
  */
-import type { UserRole } from './userRole';
 
 export interface User {
   id: number;
   name: string;
   email: string;
-  role: UserRole;
+  /** @nullable */
+  username?: string | null;
+  /** One of the built-in UserRole values, or a custom role key created by an owner via /rbac/roles. */
+  role: string;
+  isActive?: boolean;
+  authProvider?: string;
+  /** TRUE when the current password is an admin-issued temporary one (new account or admin password reset); the user must set their own password before continuing. */
+  mustChangePassword?: boolean;
   createdAt: Date;
 }

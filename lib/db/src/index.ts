@@ -20,7 +20,16 @@ export const pool = new Pool({
 export const db = drizzle(pool, { schema });
 
 export * from "./schema";
-export { PERMISSIONS, getPermissions, ROLE_META, ALL_ROLES, GOVERNANCE_ROLES, type UserRole, type LegacyRole, type GovernanceRole, type RolePermissions } from "./permissions";
+export {
+  PERMISSIONS, getPermissions, ROLE_META, ALL_ROLES, GOVERNANCE_ROLES,
+  setPermissionsCache, getPermissionsCacheSnapshot, PERMISSION_KEYS, isKnownRole,
+  type UserRole, type LegacyRole, type GovernanceRole, type AccessTierRole, type RolePermissions,
+} from "./permissions";
+// Production RBAC service functions
+export {
+  seedRbacTables, loadPermissionsFromDb, reloadRbacCache, assignUserRole,
+  isBuiltInRole, createCustomRole, renameCustomRole, deleteCustomRole,
+} from "./rbac-service";
 // Phase 3 — Chain of Custody service functions
 export {
   recordCustodyEvent,

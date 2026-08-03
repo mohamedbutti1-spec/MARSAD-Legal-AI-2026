@@ -21,6 +21,22 @@ export interface JwtPayload {
   role: string;
   /** Organisation string for org-scoped roles; empty string otherwise */
   org: string;
+  /**
+   * Snapshot of users.password_version at the moment this token was issued.
+   * Checked against the live DB value on every request (see authenticate
+   * middleware) so that resetting a user's password immediately invalidates
+   * any session token issued before the reset — even though the token
+   * itself hasn't expired yet.
+   */
+  pwv: number;
+  /**
+   * TRUE when the user must set a new password before doing anything else
+   * (admin-issued temporary password: new account or password reset).
+   * Snapshot at issuance; a fresh login/change-password re-issues the token
+   * with the current value, so this never goes stale for longer than one
+   * password-reset cycle (which already forces re-login via the pwv check).
+   */
+  mustChangePassword: boolean;
 }
 
 /** Name of the HTTP-only session cookie */
@@ -46,5 +62,7 @@ export function verifyToken(token: string): JwtPayload {
     userId: decoded.userId,
     role: decoded.role,
     org: decoded.org ?? "",
+    pwv: decoded.pwv ?? 0,
+    mustChangePassword: decoded.mustChangePassword ?? false,
   };
 }

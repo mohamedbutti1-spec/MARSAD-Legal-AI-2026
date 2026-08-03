@@ -11,6 +11,7 @@ import Login from '@/pages/login';
 // ─── Pages ────────────────────────────────────────────────────────────────────
 import NotFound from '@/pages/not-found';
 import JourneyHome from '@/pages/journey-home';
+import ForcePasswordChange from '@/pages/force-password-change';
 const LegalSearchHub = React.lazy(() => import('@/pages/legal-search-hub'));
 
 // رحلة مرصد الموجهة (قوالب المرفق ١ — الشاشات ٢ إلى ٨)
@@ -99,6 +100,10 @@ const NaipKpi = React.lazy(() => import('@/pages/naip-kpi'));
 // Admin
 const UserManagement = React.lazy(() => import('@/pages/user-management'));
 const Settings = React.lazy(() => import('@/pages/settings'));
+
+const Account = React.lazy(() => import('@/pages/account'));
+
+const RolePermissions = React.lazy(() => import('@/pages/role-permissions'));
 const AdminLegalOS = React.lazy(() => import('@/pages/admin-legal-os'));
 
 // Legacy route aliases (keep old URLs working)
@@ -297,6 +302,14 @@ function Router() {
             <Settings />
           </RouteGuard>
         </Route>
+        <Route path="/account">
+          <Account />
+        </Route>
+        <Route path="/settings/roles">
+          <RouteGuard allow={canManageSettings}>
+            <RolePermissions />
+          </RouteGuard>
+        </Route>
 
         {/* ── Unified search hub ───────────────────────────────────── */}
         <Route path="/search">
@@ -402,7 +415,7 @@ function Router() {
 // Blocks the entire app until a valid JWT session is confirmed.
 // Unauthenticated users see the login page; authenticated users see the app.
 function AuthGate({ children }: { children: React.ReactNode }) {
-  const { isLoaded, isAuthenticated } = useUserContext();
+  const { isLoaded, isAuthenticated, mustChangePassword } = useUserContext();
 
   // Still verifying the session cookie — show nothing to avoid flash
   if (!isLoaded) {
@@ -415,6 +428,13 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
   if (!isAuthenticated) {
     return <Login />;
+  }
+
+  // An admin-issued temporary password (new account or password reset) must
+  // be replaced before anything else — the backend enforces this on every
+  // other route too, so this is a UX shortcut, not the only guard.
+  if (mustChangePassword) {
+    return <ForcePasswordChange />;
   }
 
   return <>{children}</>;

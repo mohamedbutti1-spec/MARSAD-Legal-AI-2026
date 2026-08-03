@@ -64,3 +64,5 @@ export * from "./pgf-institutional-memory";
 export * from "./pgf-workflow-steps";
 // PCS — Professional Case Simulator
 export * from "./pcs";
+// Production RBAC — DB-backed roles/permissions
+export * from "./rbac";

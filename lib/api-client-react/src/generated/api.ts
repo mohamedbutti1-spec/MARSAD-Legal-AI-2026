@@ -29,6 +29,8 @@ import type {
   Comparison,
   ComparisonInput,
   ComparisonUpdate,
+  CreateUser201,
+  DeleteRole200,
   Document,
   DocumentStats,
   ErrorResponse,
@@ -41,6 +43,12 @@ import type {
   ListDocumentsParams,
   LiteratureReviewInput,
   LiteratureReviewResult,
+  RbacRole,
+  RoleCreateInput,
+  RolePermissionGrant,
+  RolePermissionUpdate,
+  RoleRenameInput,
+  RolesPermissionsMatrix,
   Settings,
   SettingsUpdate,
   User,
@@ -1417,9 +1425,9 @@ export const getCreateUserUrl = () => {
 /**
  * @summary Create a new user (admin only)
  */
-export const createUser = async (userInput: UserInput, options?: RequestInit): Promise<User> => {
+export const createUser = async (userInput: UserInput, options?: RequestInit): Promise<CreateUser201> => {
 
-  return customFetch<User>(getCreateUserUrl(),
+  return customFetch<CreateUser201>(getCreateUserUrl(),
   {
     ...options,
     method: 'POST',
@@ -1839,6 +1847,364 @@ export const useUpdateSettings = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getUpdateSettingsMutationOptions(options));
+    }
+
+export const getGetRolesPermissionsUrl = () => {
+
+
+
+
+  return `/api/rbac/roles-permissions`
+}
+
+/**
+ * @summary List all roles, all permission keys, and the current grant matrix (owner only)
+ */
+export const getRolesPermissions = async ( options?: RequestInit): Promise<RolesPermissionsMatrix> => {
+
+  return customFetch<RolesPermissionsMatrix>(getGetRolesPermissionsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetRolesPermissionsQueryKey = () => {
+    return [
+    `/api/rbac/roles-permissions`
+    ] as const;
+    }
+
+
+export const getGetRolesPermissionsQueryOptions = <TData = Awaited<ReturnType<typeof getRolesPermissions>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRolesPermissions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetRolesPermissionsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRolesPermissions>>> = ({ signal }) => getRolesPermissions({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRolesPermissions>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetRolesPermissionsQueryResult = NonNullable<Awaited<ReturnType<typeof getRolesPermissions>>>
+export type GetRolesPermissionsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List all roles, all permission keys, and the current grant matrix (owner only)
+ */
+
+export function useGetRolesPermissions<TData = Awaited<ReturnType<typeof getRolesPermissions>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRolesPermissions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetRolesPermissionsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateRolePermissionUrl = () => {
+
+
+
+
+  return `/api/rbac/role-permissions`
+}
+
+/**
+ * @summary Toggle a single role's grant for a single permission (owner only). Reloads the in-memory permissions cache immediately.
+ */
+export const updateRolePermission = async (rolePermissionUpdate: RolePermissionUpdate, options?: RequestInit): Promise<RolePermissionGrant> => {
+
+  return customFetch<RolePermissionGrant>(getUpdateRolePermissionUrl(),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(rolePermissionUpdate)
+  }
+);}
+
+
+
+
+export const getUpdateRolePermissionMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRolePermission>>, TError,{data: BodyType<RolePermissionUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateRolePermission>>, TError,{data: BodyType<RolePermissionUpdate>}, TContext> => {
+
+const mutationKey = ['updateRolePermission'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateRolePermission>>, {data: BodyType<RolePermissionUpdate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateRolePermission(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateRolePermissionMutationResult = NonNullable<Awaited<ReturnType<typeof updateRolePermission>>>
+    export type UpdateRolePermissionMutationBody = BodyType<RolePermissionUpdate>
+    export type UpdateRolePermissionMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Toggle a single role's grant for a single permission (owner only). Reloads the in-memory permissions cache immediately.
+ */
+export const useUpdateRolePermission = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRolePermission>>, TError,{data: BodyType<RolePermissionUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateRolePermission>>,
+        TError,
+        {data: BodyType<RolePermissionUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateRolePermissionMutationOptions(options));
+    }
+
+export const getCreateRoleUrl = () => {
+
+
+
+
+  return `/api/rbac/roles`
+}
+
+/**
+ * @summary Create a new custom role (owner only). Starts with every permission unchecked (deny-by-default).
+ */
+export const createRole = async (roleCreateInput: RoleCreateInput, options?: RequestInit): Promise<RbacRole> => {
+
+  return customFetch<RbacRole>(getCreateRoleUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(roleCreateInput)
+  }
+);}
+
+
+
+
+export const getCreateRoleMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createRole>>, TError,{data: BodyType<RoleCreateInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createRole>>, TError,{data: BodyType<RoleCreateInput>}, TContext> => {
+
+const mutationKey = ['createRole'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createRole>>, {data: BodyType<RoleCreateInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createRole(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateRoleMutationResult = NonNullable<Awaited<ReturnType<typeof createRole>>>
+    export type CreateRoleMutationBody = BodyType<RoleCreateInput>
+    export type CreateRoleMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create a new custom role (owner only). Starts with every permission unchecked (deny-by-default).
+ */
+export const useCreateRole = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createRole>>, TError,{data: BodyType<RoleCreateInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createRole>>,
+        TError,
+        {data: BodyType<RoleCreateInput>},
+        TContext
+      > => {
+      return useMutation(getCreateRoleMutationOptions(options));
+    }
+
+export const getUpdateRoleUrl = (key: string,) => {
+
+
+
+
+  return `/api/rbac/roles/${key}`
+}
+
+/**
+ * @summary Rename a custom role's labels/tier (owner only). Built-in roles cannot be renamed.
+ */
+export const updateRole = async (key: string,
+    roleRenameInput: RoleRenameInput, options?: RequestInit): Promise<RbacRole> => {
+
+  return customFetch<RbacRole>(getUpdateRoleUrl(key),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(roleRenameInput)
+  }
+);}
+
+
+
+
+export const getUpdateRoleMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRole>>, TError,{key: string;data: BodyType<RoleRenameInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateRole>>, TError,{key: string;data: BodyType<RoleRenameInput>}, TContext> => {
+
+const mutationKey = ['updateRole'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateRole>>, {key: string;data: BodyType<RoleRenameInput>}> = (props) => {
+          const {key,data} = props ?? {};
+
+          return  updateRole(key,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateRoleMutationResult = NonNullable<Awaited<ReturnType<typeof updateRole>>>
+    export type UpdateRoleMutationBody = BodyType<RoleRenameInput>
+    export type UpdateRoleMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Rename a custom role's labels/tier (owner only). Built-in roles cannot be renamed.
+ */
+export const useUpdateRole = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRole>>, TError,{key: string;data: BodyType<RoleRenameInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateRole>>,
+        TError,
+        {key: string;data: BodyType<RoleRenameInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateRoleMutationOptions(options));
+    }
+
+export const getDeleteRoleUrl = (key: string,) => {
+
+
+
+
+  return `/api/rbac/roles/${key}`
+}
+
+/**
+ * @summary Delete a custom role (owner only). Built-in roles cannot be deleted, nor can a role still assigned to any user.
+ */
+export const deleteRole = async (key: string, options?: RequestInit): Promise<DeleteRole200> => {
+
+  return customFetch<DeleteRole200>(getDeleteRoleUrl(key),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteRoleMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRole>>, TError,{key: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteRole>>, TError,{key: string}, TContext> => {
+
+const mutationKey = ['deleteRole'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteRole>>, {key: string}> = (props) => {
+          const {key} = props ?? {};
+
+          return  deleteRole(key,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteRoleMutationResult = NonNullable<Awaited<ReturnType<typeof deleteRole>>>
+
+    export type DeleteRoleMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete a custom role (owner only). Built-in roles cannot be deleted, nor can a role still assigned to any user.
+ */
+export const useDeleteRole = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRole>>, TError,{key: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteRole>>,
+        TError,
+        {key: string},
+        TContext
+      > => {
+      return useMutation(getDeleteRoleMutationOptions(options));
     }
 
 export const getExportDataUrl = () => {

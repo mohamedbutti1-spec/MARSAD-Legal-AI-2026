@@ -21,7 +21,7 @@ import {
   documentsTable,
   legalSourcesTable,
 } from "@workspace/db";
-import { requireAnyRole, requireSupervisorOrOwner, requireWriteRoleOrGuestDemo } from "../middlewares/roleAuth";
+import { requireOperationalRole, requireSupervisorOrOwner, requireWriteRoleOrGuestDemo } from "../middlewares/roleAuth";
 import { logAudit } from "../middlewares/auditLog";
 import { aiRouter, TaskType } from "../ai";
 import {
@@ -47,7 +47,7 @@ const router: IRouter = Router();
 const SESSION_CONTEXT_MESSAGES = 12;
 
 // ─── GET /assistant/sessions ───────────────────────────────────────────────────
-router.get("/assistant/sessions", requireAnyRole, async (req, res): Promise<void> => {
+router.get("/assistant/sessions", requireOperationalRole, async (req, res): Promise<void> => {
   const uid = getUserId(req);
   const sessions = await db
     .select()
@@ -106,7 +106,7 @@ router.delete("/assistant/sessions/:id", requireSupervisorOrOwner, async (req, r
 });
 
 // ─── GET /assistant/sessions/:id/messages ─────────────────────────────────────
-router.get("/assistant/sessions/:id/messages", requireAnyRole, async (req, res): Promise<void> => {
+router.get("/assistant/sessions/:id/messages", requireOperationalRole, async (req, res): Promise<void> => {
   const id = parseInt(req.params.id as string, 10);
   const uid = getUserId(req);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
@@ -813,7 +813,7 @@ ${ragContext
 // On-demand citation formatting for any source from the UI citation panel.
 // Documents are fetched without ownership checks (all docs are currently shared
 // across the platform — consistent with how /documents works).
-router.post("/assistant/cite", requireAnyRole, async (req, res): Promise<void> => {
+router.post("/assistant/cite", requireOperationalRole, async (req, res): Promise<void> => {
   const { sourceType, sourceId } = req.body as { sourceType?: string; sourceId?: number };
   if (!sourceType || !sourceId) {
     res.status(400).json({ error: "sourceType and sourceId required" }); return;

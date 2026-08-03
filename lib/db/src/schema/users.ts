@@ -19,6 +19,14 @@ export const usersTable = pgTable("users", {
   isDemo:          boolean("is_demo").notNull().default(false),
   // Bumped whenever demo passwords are rotated in seed.ts — triggers re-hash on next start.
   passwordVersion: integer("password_version").notNull().default(0),
+  // TRUE when the current password is an admin-issued temporary one (new
+  // account or admin-triggered reset). The user must set their own password
+  // before using the app; cleared by POST /auth/change-password.
+  mustChangePassword: boolean("must_change_password").notNull().default(false),
+  // ── Production RBAC (schema readiness for future SSO/UAE Pass) ───────────
+  // How this account authenticates. "password" today; UAE Pass/SSO providers
+  // can be added later without a schema change — no UI surfaces this yet.
+  authProvider: text("auth_provider").notNull().default("password"),
 });
 
 export const insertUserSchema = createInsertSchema(usersTable).omit({

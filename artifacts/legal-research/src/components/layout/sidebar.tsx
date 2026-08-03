@@ -24,6 +24,7 @@ import {
   Sparkles,
   Shield,
   ShieldAlert,
+  ShieldCheck,
   Target,
   Cpu,
   Brain,
@@ -425,6 +426,13 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           icon: <Settings className="w-4.5 h-4.5" />,
           show: canManageSettings,
         },
+        {
+          href: '/settings/roles',
+          labelAr: 'صلاحيات الأدوار',
+          labelEn: 'Role Permissions',
+          icon: <ShieldCheck className="w-4.5 h-4.5" />,
+          show: canManageSettings,
+        },
       ],
     },
     // ── خاص — owner-only command surfaces ────────────────────────────────────
@@ -505,7 +513,14 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
   const ROLE_CONFIG: Record<string, { labelAr: string; labelEn: string; color: string }> = {
     owner: { labelAr: 'مالك', labelEn: 'Owner', color: 'bg-gold/20 text-gold/40 border-gold/30' },
     supervisor: { labelAr: 'مشرف', labelEn: 'Supervisor', color: 'bg-sky-400/20 text-sky-300 border-sky-400/30' },
-    viewer: { labelAr: 'مشاهد', labelEn: 'Viewer', color: 'bg-slate-400/20 text-slate-300 border-slate-400/30' },
+    viewer: { labelAr: 'مراجع', labelEn: 'Reviewer', color: 'bg-slate-400/20 text-slate-300 border-slate-400/30' },
+    admin: { labelAr: 'مسؤول النظام', labelEn: 'Admin', color: 'bg-violet-400/20 text-violet-300 border-violet-400/30' },
+    professional_user: { labelAr: 'مستخدم تنفيذي', labelEn: 'Executive User', color: 'bg-teal-400/20 text-teal-300 border-teal-400/30' },
+    prosecutor: { labelAr: 'النيابة العامة', labelEn: 'Prosecutor', color: 'bg-rose-400/20 text-rose-300 border-rose-400/30' },
+    lawyer: { labelAr: 'محامٍ', labelEn: 'Lawyer', color: 'bg-amber-400/20 text-amber-300 border-amber-400/30' },
+    researcher: { labelAr: 'باحث', labelEn: 'Researcher', color: 'bg-indigo-400/20 text-indigo-300 border-indigo-400/30' },
+    student: { labelAr: 'طالب', labelEn: 'Student', color: 'bg-cyan-400/20 text-cyan-300 border-cyan-400/30' },
+    guest: { labelAr: 'زائر', labelEn: 'Guest', color: 'bg-neutral-400/20 text-neutral-300 border-neutral-400/30' },
   };
 
   const roleConf = ROLE_CONFIG[role] ?? ROLE_CONFIG.viewer;

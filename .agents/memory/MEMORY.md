@@ -53,3 +53,8 @@
 - [MLOS Restructured Legal Analysis Flow](mlos-restructured-legal-flow.md) — domain/branch/law-source/answer-format/training selectors; lawSource maps onto existing Jurisdiction field; legacy mode chips gated off
 - [Al-Shamsi owner-lock gating pattern](shamsi-owner-lock-pattern.md) — 3-tier gating (hard lock / field-strip / silent downgrade); branding text is out-of-scope, methodology-derived fields are in-scope; grep all id aliases
 - [Nav restoration + hardening pass](nav-restoration-and-hardening.md) — hidden-nav comment blocks are deliberate, not bugs; route-dedup via Redirect; AI-repair flags must surface; double-opacity sweep cleanup pass
+- [RBAC architecture](rbac-architecture.md) — cache-overlay pattern; admin (read-only)/professional_user (operational-only) role split; requireOperationalRole/WriteRole tiers; seed never reduces existing role grants
+- [Password-reset session invalidation](session-invalidation-pattern.md) — pwv claim vs DB password_version, mismatch-only rejection (not missing-row rejection), /auth/me bypasses the check
+- [Forced password change after admin reset](forced-password-change.md) — must_change_password gate enforced server-side in authenticate.ts, not just a frontend redirect
+- [Custom roles vs. two-layer RBAC gating](custom-roles-rbac.md) — permission-flag routes support custom roles automatically; static requireAnyRole allowlists don't; orval body-schema naming collision fix
+- [Shamsi replay endpoint field-strip gap](shamsi-replay-field-strip-gap.md) — nulling the named sensitive field isn't enough if sibling fields (inputs/outputs/hash) carry the same raw data under different keys

@@ -7,10 +7,11 @@
  */
 import { Router, type IRouter } from "express";
 import { db, usersTable, getPermissions } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { signToken, verifyToken, COOKIE_NAME, COOKIE_MAX_AGE_MS } from "../lib/jwt";
 import { logger } from "../lib/logger";
+import { logAudit } from "../middlewares/auditLog";
 
 const router: IRouter = Router();
 
@@ -77,7 +78,13 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   }
 
   const org = orgForRole(user.role);
-  const token = signToken({ userId: user.id, role: user.role, org });
+  const token = signToken({
+    userId: user.id,
+    role: user.role,
+    org,
+    pwv: user.passwordVersion,
+    mustChangePassword: user.mustChangePassword,
+  });
 
   // SameSite=Lax: cookies are sent on top-level navigations AND same-site fetch
   // calls. "Strict" breaks iOS Safari in standalone PWA mode — the hard-navigation
@@ -100,6 +107,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
     email: user.email,
     role: user.role,
     org,
+    mustChangePassword: user.mustChangePassword,
   });
 });
 
@@ -137,7 +145,13 @@ router.post("/auth/guest-login", async (_req, res): Promise<void> => {
   }
 
   const org = orgForRole(user.role);
-  const token = signToken({ userId: user.id, role: user.role, org });
+  const token = signToken({
+    userId: user.id,
+    role: user.role,
+    org,
+    pwv: user.passwordVersion,
+    mustChangePassword: user.mustChangePassword,
+  });
 
   res.cookie(COOKIE_NAME, token, {
     httpOnly: true,
@@ -155,6 +169,7 @@ router.post("/auth/guest-login", async (_req, res): Promise<void> => {
     email: user.email,
     role: user.role,
     org,
+    mustChangePassword: user.mustChangePassword,
   });
 });
 
@@ -191,6 +206,145 @@ router.get("/auth/me", (req, res): void => {
     res.clearCookie(COOKIE_NAME, { path: "/" });
     res.status(401).json({ error: "Session expired." });
   }
+});
+
+// ── POST /api/auth/change-password ───────────────────────────────────────────
+// Self-service password change. Requires a valid session (this path is not in
+// app.ts's no-auth allowlist, so `authenticate` runs first and populates
+// req.user). Used both for the mandatory first-login flow after an admin
+// issues a temporary password, and as a voluntary password change at any
+// other time. Requires the current password to prevent a hijacked/left-open
+// session from being used to lock the real owner out of their account.
+router.post("/auth/change-password", async (req, res): Promise<void> => {
+  const userId = req.user?.userId;
+  if (userId === undefined) {
+    res.status(401).json({ error: "Authentication required." });
+    return;
+  }
+
+  const { currentPassword, newPassword } = req.body as {
+    currentPassword?: unknown;
+    newPassword?: unknown;
+  };
+
+  if (typeof currentPassword !== "string" || !currentPassword) {
+    res.status(400).json({ error: "Current password is required." });
+    return;
+  }
+  if (typeof newPassword !== "string" || newPassword.length < 8) {
+    res.status(400).json({ error: "New password must be at least 8 characters." });
+    return;
+  }
+
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
+  if (!user || !user.passwordHash) {
+    res.status(404).json({ error: "User not found." });
+    return;
+  }
+
+  const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+  if (!valid) {
+    res.status(401).json({ error: "Current password is incorrect." });
+    return;
+  }
+  if (newPassword === currentPassword) {
+    res.status(400).json({ error: "New password must be different from the current password." });
+    return;
+  }
+
+  const passwordHash = await bcrypt.hash(newPassword, 10);
+  const [updated] = await db
+    .update(usersTable)
+    .set({
+      passwordHash,
+      // Bump password_version so any other active session (other device,
+      // or the temporary-password session itself) is invalidated.
+      passwordVersion: sql`${usersTable.passwordVersion} + 1`,
+      mustChangePassword: false,
+    })
+    .where(eq(usersTable.id, userId))
+    .returning();
+  if (!updated) {
+    res.status(404).json({ error: "User not found." });
+    return;
+  }
+
+  const org = orgForRole(updated.role);
+  const token = signToken({
+    userId: updated.id,
+    role: updated.role,
+    org,
+    pwv: updated.passwordVersion,
+    mustChangePassword: false,
+  });
+
+  res.cookie(COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: IS_PRODUCTION,
+    sameSite: "lax",
+    maxAge: COOKIE_MAX_AGE_MS,
+    path: "/",
+  });
+
+  logAudit(req, "user.password_changed", { entityType: "user", entityId: updated.id, details: { selfService: true } });
+  logger.info({ userId: updated.id }, "User changed their own password");
+
+  res.json({
+    userId: updated.id,
+    name: updated.name,
+    email: updated.email,
+    role: updated.role,
+    org,
+    mustChangePassword: false,
+  });
+});
+
+// ── POST /api/auth/sign-out-other-sessions ───────────────────────────────────
+// Voluntary self-service session revocation — e.g. "I think I left myself
+// logged in on a shared computer." Bumps password_version (the same counter
+// a password reset bumps) WITHOUT touching the password itself, so every
+// other token — on any other device/tab — fails the authenticate middleware's
+// live pwv check on its next request. The current session is kept alive: we
+// immediately re-issue a fresh token/cookie carrying the new pwv, so the
+// caller is never logged out of the session that requested this.
+router.post("/auth/sign-out-other-sessions", async (req, res): Promise<void> => {
+  const userId = req.user?.userId;
+  if (userId === undefined) {
+    res.status(401).json({ error: "Authentication required." });
+    return;
+  }
+
+  const [updated] = await db
+    .update(usersTable)
+    .set({ passwordVersion: sql`${usersTable.passwordVersion} + 1` })
+    .where(eq(usersTable.id, userId))
+    .returning();
+  if (!updated) {
+    res.status(404).json({ error: "User not found." });
+    return;
+  }
+
+  const org = orgForRole(updated.role);
+  const token = signToken({
+    userId: updated.id,
+    role: updated.role,
+    org,
+    pwv: updated.passwordVersion,
+    mustChangePassword: updated.mustChangePassword,
+  });
+
+  res.cookie(COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: IS_PRODUCTION,
+    sameSite: "lax",
+    maxAge: COOKIE_MAX_AGE_MS,
+    path: "/",
+  });
+
+  logAudit(req, "user.sessions_revoked", { entityType: "user", entityId: updated.id, details: { selfService: true } });
+  logger.info({ userId: updated.id }, "User signed out of their other active sessions");
+
+  res.json({ message: "All other active sessions have been signed out." });
 });
 
 // ── POST /api/auth/logout ────────────────────────────────────────────────────

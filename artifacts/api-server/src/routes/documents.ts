@@ -9,7 +9,7 @@ import {
   GetDocumentParams,
   DeleteDocumentParams,
 } from "@workspace/api-zod";
-import { requireAnyRole, requireSupervisorOrOwner } from "../middlewares/roleAuth";
+import { requireOperationalRole, requirePermission, requireSupervisorOrOwner } from "../middlewares/roleAuth";
 import { logAudit } from "../middlewares/auditLog";
 import { cache, TTL } from "../lib/cache";
 
@@ -89,7 +89,7 @@ async function extractContent(filePath: string, ext: string): Promise<string | n
 }
 
 // GET /documents
-router.get("/documents", requireAnyRole, async (req, res): Promise<void> => {
+router.get("/documents", requireOperationalRole, async (req, res): Promise<void> => {
   const parsed = ListDocumentsQueryParams.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -121,7 +121,7 @@ router.get("/documents", requireAnyRole, async (req, res): Promise<void> => {
 });
 
 // GET /documents/stats
-router.get("/documents/stats", requireAnyRole, async (_req, res): Promise<void> => {
+router.get("/documents/stats", requireOperationalRole, async (_req, res): Promise<void> => {
   const cached = cache.get<unknown>("documents:stats");
   if (cached) {
     res.json(cached);
@@ -154,7 +154,7 @@ router.get("/documents/stats", requireAnyRole, async (_req, res): Promise<void> 
 });
 
 // GET /documents/:id
-router.get("/documents/:id", requireAnyRole, async (req, res): Promise<void> => {
+router.get("/documents/:id", requireOperationalRole, async (req, res): Promise<void> => {
   const params = GetDocumentParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -197,7 +197,7 @@ router.delete("/documents/:id", requireSupervisorOrOwner, async (req, res): Prom
 });
 
 // POST /documents/upload
-router.post("/documents/upload", requireSupervisorOrOwner, upload.single("file"), async (req, res): Promise<void> => {
+router.post("/documents/upload", requirePermission("canUpload"), upload.single("file"), async (req, res): Promise<void> => {
   const file = req.file;
   if (!file) {
     res.status(400).json({ error: "No file provided" });

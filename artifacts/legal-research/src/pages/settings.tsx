@@ -3,7 +3,8 @@ import { AppLayout } from '@/components/layout/app-layout';
 import { useGetSettings, useUpdateSettings, getGetSettingsQueryKey } from '@workspace/api-client-react';
 import { useUserContext } from '@/lib/user-context';
 import { apiFetch } from '@/lib/api-fetch';
-import { ShieldAlert, Save, KeyRound, CheckCircle2, XCircle, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { ShieldAlert, Save, KeyRound, CheckCircle2, XCircle, Eye, EyeOff, Loader2, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Link } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -147,6 +148,22 @@ export default function Settings() {
           </div>
         ) : (
           <>
+            {/* ── Role Permissions ──────────────────────────────────── */}
+            <Card>
+              <CardContent className="p-4 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <ShieldCheck className="w-5 h-5 text-primary shrink-0" />
+                  <div>
+                    <h4 className="font-medium text-foreground">Role Permissions</h4>
+                    <p className="text-sm text-muted-foreground">Fine-tune what each role can do — no code change required.</p>
+                  </div>
+                </div>
+                <Link href="/settings/roles" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline shrink-0">
+                  Manage <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </CardContent>
+            </Card>
+
             {/* ── API Providers ─────────────────────────────────────── */}
             <Card>
               <CardHeader>

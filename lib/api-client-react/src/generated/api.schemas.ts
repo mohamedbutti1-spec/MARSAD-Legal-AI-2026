@@ -161,46 +161,63 @@ export const UserRole = {
   owner: 'owner',
   supervisor: 'supervisor',
   viewer: 'viewer',
+  minister: 'minister',
+  undersecretary: 'undersecretary',
+  assistant_undersecretary: 'assistant_undersecretary',
+  director_general: 'director_general',
+  department_director: 'department_director',
+  legal_department: 'legal_department',
+  constitutional_reviewer: 'constitutional_reviewer',
+  internal_auditor: 'internal_auditor',
+  external_auditor: 'external_auditor',
+  judge: 'judge',
+  citizen: 'citizen',
+  admin: 'admin',
+  professional_user: 'professional_user',
+  prosecutor: 'prosecutor',
+  lawyer: 'lawyer',
+  researcher: 'researcher',
+  student: 'student',
+  guest: 'guest',
 } as const;
 
 export interface User {
   id: number;
   name: string;
   email: string;
-  role: UserRole;
+  /** @nullable */
+  username?: string | null;
+  /** One of the built-in UserRole values, or a custom role key created by an owner via /rbac/roles. */
+  role: string;
+  isActive?: boolean;
+  authProvider?: string;
+  /** TRUE when the current password is an admin-issued temporary one (new account or admin password reset); the user must set their own password before continuing. */
+  mustChangePassword?: boolean;
   createdAt: string;
 }
-
-export type UserInputRole = typeof UserInputRole[keyof typeof UserInputRole];
-
-
-export const UserInputRole = {
-  owner: 'owner',
-  supervisor: 'supervisor',
-  viewer: 'viewer',
-} as const;
 
 export interface UserInput {
   /** @minLength 1 */
   name: string;
   email: string;
-  role: UserInputRole;
+  /** @minLength 1 */
+  username?: string;
+  /** One of the built-in UserRole values, or a custom role key created by an owner via /rbac/roles. */
+  role: string;
+  /** @minLength 8 */
+  password?: string;
+  isActive?: boolean;
 }
-
-export type UserUpdateRole = typeof UserUpdateRole[keyof typeof UserUpdateRole];
-
-
-export const UserUpdateRole = {
-  owner: 'owner',
-  supervisor: 'supervisor',
-  viewer: 'viewer',
-} as const;
 
 export interface UserUpdate {
   /** @minLength 1 */
   name?: string;
   email?: string;
-  role?: UserUpdateRole;
+  /** One of the built-in UserRole values, or a custom role key created by an owner via /rbac/roles. */
+  role?: string;
+  /** @minLength 8 */
+  password?: string;
+  isActive?: boolean;
 }
 
 export interface Settings {
@@ -217,6 +234,63 @@ export interface SettingsUpdate {
   maxUploadSizeMb?: number;
   allowedFileTypes?: string;
   maintenanceMode?: boolean;
+}
+
+export interface RbacRole {
+  key: string;
+  labelAr: string;
+  labelEn: string;
+  tier: string;
+  isGovernance: boolean;
+  /** True for an owner-created role; false for one of the built-in roles, which can never be renamed or deleted. */
+  isCustom: boolean;
+}
+
+export interface RbacPermission {
+  key: string;
+  description?: string | null;
+}
+
+export interface RolePermissionGrant {
+  roleKey: string;
+  permissionKey: string;
+  allowed: boolean;
+}
+
+export interface RolesPermissionsMatrix {
+  roles: RbacRole[];
+  permissions: RbacPermission[];
+  grants: RolePermissionGrant[];
+}
+
+export interface RoleCreateInput {
+  /**
+     * Stable machine key, e.g. "regional_coordinator" (lowercase letters, digits, underscores).
+     * @minLength 2
+     * @maxLength 40
+     */
+  key: string;
+  /** @minLength 1 */
+  labelAr: string;
+  /** @minLength 1 */
+  labelEn: string;
+  /** @minLength 1 */
+  tier: string;
+}
+
+export interface RoleRenameInput {
+  /** @minLength 1 */
+  labelAr?: string;
+  /** @minLength 1 */
+  labelEn?: string;
+  /** @minLength 1 */
+  tier?: string;
+}
+
+export interface RolePermissionUpdate {
+  roleKey: string;
+  permissionKey: string;
+  allowed: boolean;
 }
 
 export type ExportInputType = typeof ExportInputType[keyof typeof ExportInputType];
@@ -248,5 +322,14 @@ uploadedBy?: number;
 
 export type ListCommentsParams = {
 documentId: number;
+};
+
+export type CreateUser201 = User & {
+  /** Only present when the request did not supply a password; shown once so the admin can relay it to the new user. */
+  temporaryPassword?: string;
+};
+
+export type DeleteRole200 = {
+  success: boolean;
 };
 

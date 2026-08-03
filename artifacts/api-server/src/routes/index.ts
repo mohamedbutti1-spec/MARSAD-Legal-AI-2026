@@ -9,6 +9,7 @@ import comparisonsRouter   from "./comparisons";
 import commentsRouter      from "./comments";
 import usersRouter         from "./users";
 import settingsRouter      from "./settings";
+import rbacRouter          from "./rbac";
 import exportRouter        from "./export";
 import auditRouter         from "./audit";
 import backupRouter        from "./backup";
@@ -76,6 +77,7 @@ router.use(comparisonsRouter);
 router.use(commentsRouter);
 router.use(usersRouter);
 router.use(settingsRouter);
+router.use(rbacRouter);
 router.use(exportRouter);
 router.use(auditRouter);
 router.use(backupRouter);
@@ -116,6 +118,12 @@ router.use(courtRouter);
 // apply requireAnyRole globally, which would intercept /beta/* paths and
 // return 403 for the citizen role before betaRouter is ever reached)
 router.use(betaRouter);
+// PCS — Professional Case Simulator (registered before workspace/adkg/kb for the
+// same reason as betaRouter above — those routers apply requireAnyRole /
+// requireOperationalRole globally with no path prefix, which bleeds into every
+// router mounted after them and would 403 the "student" role — granted on PCS
+// via requireSimulationRole — before pcsRouter's own routes are ever reached)
+router.use(pcsRouter);
 // Phase 57 — Legal Research Workspace
 router.use(workspaceRouter);
 // Phase 58 — Administrative Decision Knowledge Graph
@@ -130,7 +138,5 @@ router.use(jdcRouter);
 router.use(spgRouter);
 // PGF — Professional Guidance Framework
 router.use(pgfRouter);
-// PCS — Professional Case Simulator
-router.use(pcsRouter);
 
 export default router;

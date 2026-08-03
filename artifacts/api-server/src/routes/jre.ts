@@ -11,7 +11,7 @@
 import { Router, type IRouter } from "express";
 import { eq, desc, and } from "drizzle-orm";
 import { db, jreSessionsTable } from "@workspace/db";
-import { requireAnyRole, requireWriteRole, isShamsiFrameworkEnabled } from "../middlewares/roleAuth";
+import { requireOperationalRole, requireOperationalWriteRole, isShamsiFrameworkEnabled } from "../middlewares/roleAuth";
 import { sanitizeTheoryLensId } from "../utils/theory-lenses.js";
 import { aiRouter, TaskType } from "../ai";
 import { parseModelJson } from "../ai/providers/interface";
@@ -23,7 +23,7 @@ import { aiSessionLimit, aiAnalysisLimit } from "../middlewares/rateLimits.js";
 const router: IRouter = Router();
 
 // ─── GET /jre/sessions ─────────────────────────────────────────────────────────
-router.get("/jre/sessions", requireAnyRole, async (req, res): Promise<void> => {
+router.get("/jre/sessions", requireOperationalRole, async (req, res): Promise<void> => {
   const uid = getUserId(req);
   const sessions = await db
     .select({
@@ -48,7 +48,7 @@ router.get("/jre/sessions", requireAnyRole, async (req, res): Promise<void> => {
 });
 
 // ─── GET /jre/sessions/:id ─────────────────────────────────────────────────────
-router.get("/jre/sessions/:id", requireAnyRole, async (req, res): Promise<void> => {
+router.get("/jre/sessions/:id", requireOperationalRole, async (req, res): Promise<void> => {
   const id  = parseInt(req.params.id as string, 10);
   const uid = getUserId(req);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid session id" }); return; }
@@ -72,7 +72,7 @@ router.get("/jre/sessions/:id", requireAnyRole, async (req, res): Promise<void> 
 });
 
 // ─── POST /jre/sessions ────────────────────────────────────────────────────────
-router.post("/jre/sessions", requireWriteRole, aiSessionLimit, async (req, res): Promise<void> => {
+router.post("/jre/sessions", requireOperationalWriteRole, aiSessionLimit, async (req, res): Promise<void> => {
   const uid = getUserId(req);
   const {
     title,
@@ -180,7 +180,7 @@ router.post("/jre/sessions", requireWriteRole, aiSessionLimit, async (req, res):
 });
 
 // ─── POST /jre/sessions/:id/follow-up ─────────────────────────────────────────
-router.post("/jre/sessions/:id/follow-up", requireWriteRole, aiAnalysisLimit, async (req, res): Promise<void> => {
+router.post("/jre/sessions/:id/follow-up", requireOperationalWriteRole, aiAnalysisLimit, async (req, res): Promise<void> => {
   const id      = parseInt(req.params.id as string, 10);
   const uid     = getUserId(req);
   const { message } = req.body as { message?: string };
@@ -235,7 +235,7 @@ ${JSON.stringify(judgment, null, 2)}
 });
 
 // ─── DELETE /jre/sessions/:id ──────────────────────────────────────────────────
-router.delete("/jre/sessions/:id", requireWriteRole, async (req, res): Promise<void> => {
+router.delete("/jre/sessions/:id", requireOperationalWriteRole, async (req, res): Promise<void> => {
   const id  = parseInt(req.params.id as string, 10);
   const uid = getUserId(req);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid session id" }); return; }

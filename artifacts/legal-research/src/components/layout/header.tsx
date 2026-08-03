@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useUserContext, type UserRole, ROLE_META } from '@/lib/user-context';
 import { Menu, Scale, Globe, LogOut, User } from 'lucide-react';
+import { Bell, Menu, Scale, Globe, LogOut, User, Settings as SettingsIcon } from 'lucide-react';
+import { Link } from 'wouter';
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -118,6 +120,18 @@ export function Header({ onMenuClick }: HeaderProps) {
                       ? 'هويتك مؤكدة بواسطة JWT موقّع. لا يمكن تغيير الدور.'
                       : 'Identity verified by signed JWT. Role cannot be changed.'}
                   </p>
+                </div>
+
+                {/* Account settings */}
+                <div className="p-2 border-b border-border">
+                  <Link
+                    href="/account"
+                    onClick={() => setUserMenuOpen(false)}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted/50 rounded-lg transition-colors"
+                  >
+                    <SettingsIcon className="w-4 h-4" />
+                    <span>{isAr ? 'إعدادات الحساب' : 'Account Settings'}</span>
+                  </Link>
                 </div>
 
                 {/* Logout */}

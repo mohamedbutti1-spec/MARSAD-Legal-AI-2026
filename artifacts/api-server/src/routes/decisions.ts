@@ -1422,6 +1422,15 @@ router.get("/decisions/:id/replay", requirePermission("canReplayDecision"), asyn
         confidenceScore = (100 - jr.constitutionalRiskScore) / 100;
       }
 
+      // The replay_09_alshamsi_engine stage IS the Al-Shamsi Theory engine —
+      // its raw `outputs`/`inputs` (sourced from the constitutional_validation
+      // stage's stageData/aiAnalysis) contain the same principleResults data
+      // as `alShamsiDimensions`, just under different keys. Nulling only
+      // `alShamsiDimensions` above is not sufficient: the fields below must be
+      // redacted too for non-owners, or the theory data leaks through them.
+      const isShamsiStage = rsk === "replay_09_alshamsi_engine";
+      const redactShamsiStage = isShamsiStage && !includeShamsi;
+
       return {
         replayStageKey: rsk,
         stageNumber: idx + 1,
@@ -1435,28 +1444,30 @@ router.get("/decisions/:id/replay", requirePermission("canReplayDecision"), asyn
         actor: replayEvent?.actor ?? (sourceStage ? String(sourceStage.validatedBy ?? "") : null),
         actorRole: replayEvent?.actorRole ?? null,
         confidenceScore,
-        inputs: replayEvent ? inputs : virtualInputs,
-        outputs: replayEvent ? outputs : virtualOutputs,
-        evidenceUsed: replayEvent?.evidenceSnapshot as unknown[] ?? evidenceRows.slice(0, 10),
-        legalArticles: (replayEvent?.legalReferences as string[]) ?? [],
+        inputs: redactShamsiStage ? null : (replayEvent ? inputs : virtualInputs),
+        outputs: redactShamsiStage ? null : (replayEvent ? outputs : virtualOutputs),
+        evidenceUsed: redactShamsiStage ? [] : (replayEvent?.evidenceSnapshot as unknown[] ?? evidenceRows.slice(0, 10)),
+        legalArticles: redactShamsiStage ? [] : ((replayEvent?.legalReferences as string[]) ?? []),
         caselaw: [],
-        constitutionalReferences: (replayEvent?.constitutionalReferences as string[]) ?? [],
-        adminLawReferences: (replayEvent?.adminLawReferences as string[]) ?? [],
-        reasoningNarrative: replayEvent?.reasoningNarrative
-          ?? (outputs ? (outputs.stageSummary as string) ?? (outputs.aiContribution as string) ?? null : null),
-        appliedLegalWeight: replayEvent?.appliedLegalWeight ?? null,
+        constitutionalReferences: redactShamsiStage ? [] : ((replayEvent?.constitutionalReferences as string[]) ?? []),
+        adminLawReferences: redactShamsiStage ? [] : ((replayEvent?.adminLawReferences as string[]) ?? []),
+        reasoningNarrative: redactShamsiStage
+          ? null
+          : (replayEvent?.reasoningNarrative
+              ?? (outputs ? (outputs.stageSummary as string) ?? (outputs.aiContribution as string) ?? null : null)),
+        appliedLegalWeight: redactShamsiStage ? null : (replayEvent?.appliedLegalWeight ?? null),
         alShamsiDimensions,
-        riskIndicators: (replayEvent?.riskIndicators as string[]) ?? [],
-        humanInterventionRecord: replayEvent?.humanInterventionRecord as Record<string, unknown> | null ?? null,
-        auditLogEntries: allAuditLogs.filter((l) =>
+        riskIndicators: redactShamsiStage ? [] : ((replayEvent?.riskIndicators as string[]) ?? []),
+        humanInterventionRecord: redactShamsiStage ? null : (replayEvent?.humanInterventionRecord as Record<string, unknown> | null ?? null),
+        auditLogEntries: redactShamsiStage ? [] : allAuditLogs.filter((l) =>
           sourceStageKey
             ? l.action?.includes(sourceStageKey) || l.action?.includes("stage")
             : false,
         ).slice(0, 10),
-        aiModelName: replayEvent?.aiModelName ?? null,
-        promptHash: replayEvent?.promptHash ?? null,
-        auditHash: replayEvent?.auditHash ?? null,
-        immutableLogId: replayEvent?.immutableLogId ?? null,
+        aiModelName: redactShamsiStage ? null : (replayEvent?.aiModelName ?? null),
+        promptHash: redactShamsiStage ? null : (replayEvent?.promptHash ?? null),
+        auditHash: redactShamsiStage ? null : (replayEvent?.auditHash ?? null),
+        immutableLogId: redactShamsiStage ? null : (replayEvent?.immutableLogId ?? null),
       };
     });
 

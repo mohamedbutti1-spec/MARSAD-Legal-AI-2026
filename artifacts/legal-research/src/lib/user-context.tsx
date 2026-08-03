@@ -25,6 +25,7 @@ interface SessionPayload {
   userId: number;
   role: string;
   org: string;
+  mustChangePassword: boolean;
 }
 
 export interface UserContextType {
@@ -32,6 +33,8 @@ export interface UserContextType {
   isLoaded: boolean;
   /** True when a valid JWT session exists */
   isAuthenticated: boolean;
+  /** True when the user logged in with an admin-issued temporary password and must set their own before continuing */
+  mustChangePassword: boolean;
   role: UserRole;
   userId: number;
   /** Organisation string for org-scoped roles; '' for others */
@@ -102,6 +105,7 @@ function buildContext(session: SessionPayload | null, lang: AppLanguage): UserCo
   return {
     isLoaded: true,
     isAuthenticated: session !== null,
+    mustChangePassword: session?.mustChangePassword ?? false,
     role,
     userId,
     userOrg,
@@ -110,12 +114,12 @@ function buildContext(session: SessionPayload | null, lang: AppLanguage): UserCo
     setLang: () => { /* handled by provider */ },
     refreshSession: async () => { /* handled by provider */ },
     permissions,
-    canUpload: role === 'owner' || role === 'supervisor',
-    canCreateDecision: role === 'owner' || role === 'supervisor',
-    canUseAi: role !== 'citizen',
-    canManageUsers: role === 'owner',
-    canManageSettings: role === 'owner',
-    canComment: role === 'owner' || role === 'supervisor',
+    canUpload: permissions.canUpload,
+    canCreateDecision: permissions.canCreateDecision,
+    canUseAi: permissions.canUseAi,
+    canManageUsers: permissions.canManageUsers,
+    canManageSettings: permissions.canManageSettings,
+    canComment: permissions.canComment,
     canViewAudit: permissions.canReadAuditLog,
     isGovernanceRole,
     canViewGovernanceDashboard:      permissions.canViewGovernanceDashboard,

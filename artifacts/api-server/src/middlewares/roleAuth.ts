@@ -6,7 +6,7 @@
  * headers — those are ignored entirely on the backend.
  */
 import type { Request, Response, NextFunction } from "express";
-import { ALL_ROLES, getPermissions } from "@workspace/db/permissions";
+import { ALL_ROLES, getPermissions, isKnownRole } from "@workspace/db/permissions";
 import { logAudit } from "./auditLog.js";
 
 export type UserRole = (typeof ALL_ROLES)[number];
@@ -18,7 +18,12 @@ export function requireRole(...allowedRoles: UserRole[]) {
       return;
     }
     const role = req.user.role as UserRole;
-    if (!ALL_ROLES.includes(role)) {
+    // Accept any built-in role OR any owner-created custom role (present in
+    // the DB-backed permissions cache) — a custom role isn't "invalid", it
+    // just won't match a specific allowedRoles list below unless a developer
+    // adds it there. Routes gated purely by requirePermission() work for
+    // custom roles automatically; these requireRole()-based allowlists do not.
+    if (!isKnownRole(role)) {
       res.status(401).json({ error: "Invalid role in session token." });
       return;
     }
@@ -55,14 +60,47 @@ export const requireOwner             = requireRole("owner");
 export const requireSupervisorOrOwner = requireRole("owner", "supervisor");
 
 /**
- * requireAnyRole — any valid platform professional (13 roles, citizen excluded).
+ * requireUserManagementRole — owner (full control) or admin (the new
+ * access-tier role added for production RBAC; can manage users but not
+ * settings/API keys/owner panel — see lib/db/permissions.ts canManageUsers).
+ * Replaces requireOwner on the /users router.
+ */
+export const requireUserManagementRole = requireRole("owner", "admin");
+
+/**
+ * requireAnyRole — any valid platform professional with governance-read
+ * access (citizen/student/guest excluded): the original 13 governance/legacy
+ * roles, plus "admin" (production RBAC access tier), plus the legal-workflow
+ * roles "prosecutor", "lawyer", "researcher" (MARSAD legal role mapping —
+ * none of these three are governance seats, i.e. excluded from
+ * GOVERNANCE_ROLES; they're granted governance-read here because their
+ * workflows genuinely need to view decision records). None of them get
+ * write access here (see requireWriteRole).
  */
 export const requireAnyRole = requireRole(
   "owner", "supervisor", "viewer",
   "minister", "undersecretary", "assistant_undersecretary",
   "director_general", "department_director", "legal_department",
   "constitutional_reviewer", "internal_auditor", "external_auditor",
-  "judge",
+  "judge", "admin",
+  "prosecutor", "lawyer", "researcher",
+);
+
+/**
+ * requireOperationalRole — requireAnyRole's role set, plus "professional_user"
+ * (the new access-tier role for outside professionals). Use on GET routes for
+ * the operational tool surfaces professional_user is scoped to: research
+ * workspace, JRE, PGF, AI assistant, and document listing/upload. Do NOT use
+ * this on governance/decision/risk/CIL/NAIP/JDT/KB/ADKG routes — those stay on
+ * requireAnyRole so professional_user (and citizen) remain excluded.
+ */
+export const requireOperationalRole = requireRole(
+  "owner", "supervisor", "viewer",
+  "minister", "undersecretary", "assistant_undersecretary",
+  "director_general", "department_director", "legal_department",
+  "constitutional_reviewer", "internal_auditor", "external_auditor",
+  "judge", "admin", "professional_user",
+  "prosecutor", "lawyer", "researcher",
 );
 
 /**
@@ -85,11 +123,56 @@ export const requireWriteRole = requireRole(
   "director_general", "department_director", "legal_department",
   "constitutional_reviewer", "internal_auditor", "external_auditor",
   "judge",
+  "prosecutor", "lawyer", "researcher",
 );
 
 /**
- * requireWriteRoleOrGuestDemo — requireWriteRole, plus a narrow exception
- * letting "viewer" through.
+ * requireOperationalWriteRole — requireWriteRole's role set, plus
+ * "professional_user" only ("admin" is deliberately excluded — admin's
+ * access to operational surfaces is read-only, per its permission profile).
+ * Use on write routes (create/update/delete) within the operational tool
+ * surfaces: research workspace, JRE, PGF, AI assistant, document upload.
+ */
+export const requireOperationalWriteRole = requireRole(
+  "owner", "supervisor",
+  "minister", "undersecretary", "assistant_undersecretary",
+  "director_general", "department_director", "legal_department",
+  "constitutional_reviewer", "internal_auditor", "external_auditor",
+  "judge", "professional_user",
+  "prosecutor", "lawyer", "researcher",
+);
+
+/**
+ * requireSimulationRole / requireSimulationWriteRole — requireAnyRole /
+ * requireWriteRole's role sets, plus "student".
+ *
+ * Use ONLY on the Professional Case Simulator (pcs.ts) routes: PCS scenarios
+ * are entirely synthetic (no real decision/case data), so "student" can be
+ * granted access there without joining requireAnyRole/requireOperationalRole
+ * — which stay scoped to real governance data and must never include
+ * "student" (per its "educational simulations only" permission profile).
+ */
+export const requireSimulationRole = requireRole(
+  "owner", "supervisor", "viewer",
+  "minister", "undersecretary", "assistant_undersecretary",
+  "director_general", "department_director", "legal_department",
+  "constitutional_reviewer", "internal_auditor", "external_auditor",
+  "judge", "admin",
+  "prosecutor", "lawyer", "researcher", "student",
+);
+
+export const requireSimulationWriteRole = requireRole(
+  "owner", "supervisor",
+  "minister", "undersecretary", "assistant_undersecretary",
+  "director_general", "department_director", "legal_department",
+  "constitutional_reviewer", "internal_auditor", "external_auditor",
+  "judge",
+  "prosecutor", "lawyer", "researcher", "student",
+);
+
+/**
+ * requireWriteRoleOrGuestDemo — requireOperationalWriteRole, plus a narrow
+ * exception letting "viewer" through.
  *
  * This exists ONLY to support the public "تجربة المنصة / Demo Access" guest
  * flow: invited evaluators sign into the shared read-only reviewer account
@@ -111,7 +194,7 @@ export function requireWriteRoleOrGuestDemo(
     next();
     return;
   }
-  requireWriteRole(req, res, next);
+  requireOperationalWriteRole(req, res, next);
 }
 
 /**

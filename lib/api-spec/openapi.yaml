@@ -23,6 +23,8 @@ tags:
     description: Document comments
   - name: settings
     description: Admin settings
+  - name: rbac
+    description: Owner-managed role/permission grants (production RBAC)
 
 paths:
   /healthz:
@@ -393,7 +395,15 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
+                allOf:
+                  - $ref: "#/components/schemas/User"
+                  - type: object
+                    properties:
+                      temporaryPassword:
+                        type: string
+                        description: >-
+                          Only present when the request did not supply a password;
+                          shown once so the admin can relay it to the new user.
 
   /users/{id}:
     get:
@@ -485,6 +495,103 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Settings"
+
+  /rbac/roles-permissions:
+    get:
+      operationId: getRolesPermissions
+      tags: [rbac]
+      summary: List all roles, all permission keys, and the current grant matrix (owner only)
+      responses:
+        "200":
+          description: Roles, permissions, and grants
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RolesPermissionsMatrix"
+
+  /rbac/role-permissions:
+    patch:
+      operationId: updateRolePermission
+      tags: [rbac]
+      summary: Toggle a single role's grant for a single permission (owner only). Reloads the in-memory permissions cache immediately.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RolePermissionUpdate"
+      responses:
+        "200":
+          description: Updated grant
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RolePermissionGrant"
+
+  /rbac/roles:
+    post:
+      operationId: createRole
+      tags: [rbac]
+      summary: Create a new custom role (owner only). Starts with every permission unchecked (deny-by-default).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoleCreateInput"
+      responses:
+        "200":
+          description: Created role
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RbacRole"
+
+  /rbac/roles/{key}:
+    patch:
+      operationId: updateRole
+      tags: [rbac]
+      summary: Rename a custom role's labels/tier (owner only). Built-in roles cannot be renamed.
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoleRenameInput"
+      responses:
+        "200":
+          description: Updated role
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RbacRole"
+    delete:
+      operationId: deleteRole
+      tags: [rbac]
+      summary: Delete a custom role (owner only). Built-in roles cannot be deleted, nor can a role still assigned to any user.
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success]
+                properties:
+                  success:
+                    type: boolean
 
   /export:
     post:
@@ -783,6 +890,31 @@ components:
           type: string
           minLength: 1
 
+    UserRole:
+      type: string
+      enum:
+        - owner
+        - supervisor
+        - viewer
+        - minister
+        - undersecretary
+        - assistant_undersecretary
+        - director_general
+        - department_director
+        - legal_department
+        - constitutional_reviewer
+        - internal_auditor
+        - external_auditor
+        - judge
+        - citizen
+        - admin
+        - professional_user
+        - prosecutor
+        - lawyer
+        - researcher
+        - student
+        - guest
+
     User:
       type: object
       required: [id, name, email, role, createdAt]
@@ -793,9 +925,23 @@ components:
           type: string
         email:
           type: string
+        username:
+          type: ["string", "null"]
         role:
           type: string
-          enum: [owner, supervisor, viewer]
+          description: >-
+            One of the built-in UserRole values, or a custom role key created
+            by an owner via /rbac/roles.
+        isActive:
+          type: boolean
+        authProvider:
+          type: string
+        mustChangePassword:
+          type: boolean
+          description: >-
+            TRUE when the current password is an admin-issued temporary one
+            (new account or admin password reset); the user must set their
+            own password before continuing.
         createdAt:
           type: string
           format: date-time
@@ -809,9 +955,19 @@ components:
           minLength: 1
         email:
           type: string
+        username:
+          type: string
+          minLength: 1
         role:
           type: string
-          enum: [owner, supervisor, viewer]
+          description: >-
+            One of the built-in UserRole values, or a custom role key created
+            by an owner via /rbac/roles.
+        password:
+          type: string
+          minLength: 8
+        isActive:
+          type: boolean
 
     UserUpdate:
       type: object
@@ -823,7 +979,14 @@ components:
           type: string
         role:
           type: string
-          enum: [owner, supervisor, viewer]
+          description: >-
+            One of the built-in UserRole values, or a custom role key created
+            by an owner via /rbac/roles.
+        password:
+          type: string
+          minLength: 8
+        isActive:
+          type: boolean
 
     Settings:
       type: object
@@ -853,6 +1016,106 @@ components:
         allowedFileTypes:
           type: string
         maintenanceMode:
+          type: boolean
+
+    RbacRole:
+      type: object
+      required: [key, labelAr, labelEn, tier, isGovernance, isCustom]
+      properties:
+        key:
+          type: string
+        labelAr:
+          type: string
+        labelEn:
+          type: string
+        tier:
+          type: string
+        isGovernance:
+          type: boolean
+        isCustom:
+          type: boolean
+          description: True for an owner-created role; false for one of the built-in roles, which can never be renamed or deleted.
+
+
+    RbacPermission:
+      type: object
+      required: [key]
+      properties:
+        key:
+          type: string
+        description:
+          type: string
+          nullable: true
+
+    RolePermissionGrant:
+      type: object
+      required: [roleKey, permissionKey, allowed]
+      properties:
+        roleKey:
+          type: string
+        permissionKey:
+          type: string
+        allowed:
+          type: boolean
+
+    RolesPermissionsMatrix:
+      type: object
+      required: [roles, permissions, grants]
+      properties:
+        roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/RbacRole"
+        permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/RbacPermission"
+        grants:
+          type: array
+          items:
+            $ref: "#/components/schemas/RolePermissionGrant"
+
+    RoleCreateInput:
+      type: object
+      required: [key, labelAr, labelEn, tier]
+      properties:
+        key:
+          type: string
+          description: Stable machine key, e.g. "regional_coordinator" (lowercase letters, digits, underscores).
+          minLength: 2
+          maxLength: 40
+        labelAr:
+          type: string
+          minLength: 1
+        labelEn:
+          type: string
+          minLength: 1
+        tier:
+          type: string
+          minLength: 1
+
+    RoleRenameInput:
+      type: object
+      properties:
+        labelAr:
+          type: string
+          minLength: 1
+        labelEn:
+          type: string
+          minLength: 1
+        tier:
+          type: string
+          minLength: 1
+
+    RolePermissionUpdate:
+      type: object
+      required: [roleKey, permissionKey, allowed]
+      properties:
+        roleKey:
+          type: string
+        permissionKey:
+          type: string
+        allowed:
           type: boolean
 
     ExportInput:

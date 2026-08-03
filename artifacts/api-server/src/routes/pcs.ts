@@ -17,7 +17,7 @@ import { eq, and, desc }        from "drizzle-orm";
 import {
   db, pcsSessionsTable, pcsSessionStepsTable,
 } from "@workspace/db";
-import { requireAnyRole, requireWriteRole }  from "../middlewares/roleAuth.js";
+import { requireSimulationRole, requireSimulationWriteRole }  from "../middlewares/roleAuth.js";
 import { findScenario }                      from "../pcs/config.js";
 import { evaluateStep, buildFinalReport }    from "../pcs/ai-evaluator.js";
 import { migratePcs }                        from "../pcs/migration.js";
@@ -36,7 +36,7 @@ async function ensureMigrated() {
 // ─── GET /pcs/scenarios/:sectorId/:professionId ───────────────────────────────
 router.get(
   "/pcs/scenarios/:sectorId/:professionId",
-  requireAnyRole,
+  requireSimulationRole,
   (req, res): void => {
     const { sectorId, professionId } = req.params as Record<string, string>;
     const scenario = findScenario(sectorId, professionId);
@@ -64,7 +64,7 @@ router.get(
 // ─── POST /pcs/sessions ───────────────────────────────────────────────────────
 router.post(
   "/pcs/sessions",
-  requireWriteRole,
+  requireSimulationWriteRole,
   async (req, res): Promise<void> => {
     await ensureMigrated();
     const uid = getUserId(req);
@@ -118,7 +118,7 @@ router.post(
 // ─── GET /pcs/sessions ────────────────────────────────────────────────────────
 router.get(
   "/pcs/sessions",
-  requireAnyRole,
+  requireSimulationRole,
   async (req, res): Promise<void> => {
     await ensureMigrated();
     const uid = getUserId(req);
@@ -150,7 +150,7 @@ router.get(
 // ─── GET /pcs/sessions/:id ────────────────────────────────────────────────────
 router.get(
   "/pcs/sessions/:id",
-  requireAnyRole,
+  requireSimulationRole,
   async (req, res): Promise<void> => {
     const uid = getUserId(req);
     const id  = parseInt(String(req.params.id), 10);
@@ -203,7 +203,7 @@ router.get(
 // ─── POST /pcs/sessions/:id/answer ───────────────────────────────────────────
 router.post(
   "/pcs/sessions/:id/answer",
-  requireWriteRole,
+  requireSimulationWriteRole,
   async (req, res): Promise<void> => {
     const uid = getUserId(req);
     const id  = parseInt(String(req.params.id), 10);
@@ -306,7 +306,7 @@ router.post(
 // ─── GET /pcs/sessions/:id/report ────────────────────────────────────────────
 router.get(
   "/pcs/sessions/:id/report",
-  requireAnyRole,
+  requireSimulationRole,
   async (req, res): Promise<void> => {
     const uid = getUserId(req);
     const id  = parseInt(String(req.params.id), 10);

@@ -28,7 +28,47 @@ export type GovernanceRole =
   | 'judge'
   | 'citizen';
 
-export type UserRole = LegacyRole | GovernanceRole;
+/**
+ * Access-tier roles (added for the Production RBAC system).
+ * These are NOT governance seats — they carry no place in the 14-role
+ * governance decision lifecycle and must never be added to GOVERNANCE_ROLES.
+ *
+ * - admin: platform operator. Manages users and can view (read-only) all
+ *   operational pages, but cannot manage system settings, API keys, the
+ *   owner panel, or Al-Shamsi/experimental surfaces — those stay owner-only.
+ * - professional_user: non-governance-seat account for outside professionals.
+ *   Access to research tools, the AI assistant, legal forms (PGF), and file
+ *   upload — no governance dashboards, no org scoping, no decision writes.
+ */
+export type AccessTierRole = 'admin' | 'professional_user';
+
+/**
+ * Legal-professional / academic / demo roles (added to map MARSAD's legal
+ * workflows onto the Production RBAC system).
+ *
+ * Like admin/professional_user, none of these are governance seats — they
+ * are NOT added to GOVERNANCE_ROLES and carry no place in the frozen 14-role
+ * governance decision lifecycle.
+ *
+ * - prosecutor: investigation and prosecution outputs — governance-read
+ *   access (decision list/detail/stages, JDP litigation-strategy artifact,
+ *   DCI, constitutional gates) plus case-number search and uploads, but no
+ *   audit log, no CAR, no settings/user management.
+ * - lawyer: legal memoranda and appeals — same governance-read shape as
+ *   prosecutor plus CAR (referenced when drafting an appeal).
+ * - researcher: comparative studies and academic outputs — broad read
+ *   access restricted to sealed (finalized) decisions only; no JDP
+ *   (litigation strategy is not an academic concern), no write actions.
+ * - student: educational simulations only — zero access to real decision
+ *   data or governance dashboards. Granted access to the Professional Case
+ *   Simulator (PCS) ONLY, via a dedicated middleware in pcs.ts (not via
+ *   requireAnyRole/requireOperationalRole, which stay scoped to real data).
+ * - guest: restricted public demo access — same shape as citizen minus CAR
+ *   lookup; sees only the always-public reference pages.
+ */
+export type LegalProfessionalRole = 'prosecutor' | 'lawyer' | 'researcher' | 'student' | 'guest';
+
+export type UserRole = LegacyRole | GovernanceRole | AccessTierRole | LegalProfessionalRole;
 
 export const ALL_ROLES: UserRole[] = [
   'owner', 'supervisor', 'viewer',
@@ -36,6 +76,8 @@ export const ALL_ROLES: UserRole[] = [
   'director_general', 'department_director', 'legal_department',
   'constitutional_reviewer', 'internal_auditor', 'external_auditor',
   'judge', 'citizen',
+  'admin', 'professional_user',
+  'prosecutor', 'lawyer', 'researcher', 'student', 'guest',
 ];
 
 export const GOVERNANCE_ROLES: GovernanceRole[] = [
@@ -127,12 +169,37 @@ export interface RolePermissions {
   canViewNaipSearch: boolean;
 
   // ── JDT — Judicial Digital Twin (Phase 44) ────────────────────────────────
-  /** View the JDT simulation result for a decision */
+  /** Read Judicial Digital Twin simulations for decisions */
   canViewJdtSimulation: boolean;
-  /** Trigger or re-run a JDT simulation (AI-powered) */
+  /** Trigger a new JDT simulation (AI-powered judicial review simulation) */
   canRunJdtSimulation: boolean;
   /** Owner-only: Al-Shamsi Theory / Framework (admin-os, court simulation, shamsi-analysis, dimension displays) */
   canUseShamsiFramework: boolean;
+
+  // ── Legacy convenience flags (mirror the frontend's former hardcoded
+  //    role === 'owner' / 'supervisor' checks; now matrix-driven so new
+  //    access-tier roles can be scoped without touching every call site) ──
+  /** Upload documents */
+  canUpload: boolean;
+  /** Create a new Module 1 administrative decision */
+  canCreateDecision: boolean;
+  /** Use any AI-powered feature (assistant, JRE, PGF, etc.) */
+  canUseAi: boolean;
+  /** Access the User Management admin page and its API */
+  canManageUsers: boolean;
+  /** Access the Settings page (AI provider keys, system toggles, upload limits) */
+  canManageSettings: boolean;
+  /** Post comments */
+  canComment: boolean;
+
+  // ── Sensitive admin-only surfaces — owner-only, never granted to
+  //    admin/professional_user regardless of canManageUsers ─────────────────
+  /** Manage AI provider API keys */
+  canManageApiKeys: boolean;
+  /** Access the owner panel (admin-os) */
+  canAccessOwnerPanel: boolean;
+  /** Access experimental/secret sections (Al-Shamsi, etc.) */
+  canAccessSecretSections: boolean;
 }
 
 // ─── Permission Matrix ────────────────────────────────────────────────────────
@@ -156,6 +223,9 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canAcknowledgeCilWarnings: true, canViewCilDashboard: true,
     canViewNaipDashboard: true, canViewNaipSearch: true,
     canViewJdtSimulation: true, canRunJdtSimulation: true, canUseShamsiFramework: true,
+    canUpload: true, canCreateDecision: true, canUseAi: true,
+    canManageUsers: true, canManageSettings: true, canComment: true,
+    canManageApiKeys: true, canAccessOwnerPanel: true, canAccessSecretSections: true,
   },
   supervisor: {
     canReadDecisionList: true, canReadDecisionDetail: true,
@@ -173,6 +243,9 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canAcknowledgeCilWarnings: true, canViewCilDashboard: true,
     canViewNaipDashboard: true, canViewNaipSearch: true,
     canViewJdtSimulation: true, canRunJdtSimulation: true, canUseShamsiFramework: false,
+    canUpload: true, canCreateDecision: true, canUseAi: true,
+    canManageUsers: false, canManageSettings: false, canComment: true,
+    canManageApiKeys: false, canAccessOwnerPanel: false, canAccessSecretSections: false,
   },
   viewer: {
     canReadDecisionList: true, canReadDecisionDetail: true,
@@ -190,6 +263,9 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canAcknowledgeCilWarnings: false, canViewCilDashboard: false,
     canViewNaipDashboard: true, canViewNaipSearch: true,
     canViewJdtSimulation: false, canRunJdtSimulation: false, canUseShamsiFramework: false,
+    canUpload: false, canCreateDecision: false, canUseAi: true,
+    canManageUsers: false, canManageSettings: false, canComment: false,
+    canManageApiKeys: false, canAccessOwnerPanel: false, canAccessSecretSections: false,
   },
 
   // ── 1. Minister — executive summary only ──────────────────────────────────
@@ -202,13 +278,16 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canDelegateDecision: false, canRunHashVerification: false,
     seeOwnOrgOnly: false, sealedOnly: false,
     canSearchByCaseNumber: false, canViewGovernanceDashboard: true,
-    canReplayDecision: false,
+    canReplayDecision: false,  // Ministers see executive summary + dashboard only; full replay is operational detail
     canReadRiskAssessment: true, canWriteRiskTreatment: false,
     canRecalculateRisk: false, canViewRiskDashboard: true,
     canReadConstitutionalAssessment: true, canRunCilAssessment: false,
     canAcknowledgeCilWarnings: false, canViewCilDashboard: true,
     canViewNaipDashboard: true, canViewNaipSearch: true,
     canViewJdtSimulation: true, canRunJdtSimulation: true, canUseShamsiFramework: false,
+    canUpload: false, canCreateDecision: false, canUseAi: true,
+    canManageUsers: false, canManageSettings: false, canComment: false,
+    canManageApiKeys: false, canAccessOwnerPanel: false, canAccessSecretSections: false,
   },
 
   // ── 2. Undersecretary — decisions + delegation ────────────────────────────
@@ -228,6 +307,9 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canAcknowledgeCilWarnings: false, canViewCilDashboard: true,
     canViewNaipDashboard: true, canViewNaipSearch: true,
     canViewJdtSimulation: true, canRunJdtSimulation: true, canUseShamsiFramework: false,
+    canUpload: false, canCreateDecision: false, canUseAi: true,
+    canManageUsers: false, canManageSettings: false, canComment: false,
+    canManageApiKeys: false, canAccessOwnerPanel: false, canAccessSecretSections: false,
   },
 
   // ── 3. Assistant Undersecretary — full stages + JDP, no CAR/audit ─────────
@@ -247,6 +329,9 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canAcknowledgeCilWarnings: false, canViewCilDashboard: true,
     canViewNaipDashboard: true, canViewNaipSearch: true,
     canViewJdtSimulation: true, canRunJdtSimulation: true, canUseShamsiFramework: false,
+    canUpload: false, canCreateDecision: false, canUseAi: true,
+    canManageUsers: false, canManageSettings: false, canComment: false,
+    canManageApiKeys: false, canAccessOwnerPanel: false, canAccessSecretSections: false,
   },
 
   // ── 4. Director General — org-scoped, constitutional gates only ───────────
@@ -266,6 +351,9 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canAcknowledgeCilWarnings: false, canViewCilDashboard: true,
     canViewNaipDashboard: true, canViewNaipSearch: true,
     canViewJdtSimulation: true, canRunJdtSimulation: false, canUseShamsiFramework: false,
+    canUpload: false, canCreateDecision: false, canUseAi: true,
+    canManageUsers: false, canManageSettings: false, canComment: false,
+    canManageApiKeys: false, canAccessOwnerPanel: false, canAccessSecretSections: false,
   },
 
   // ── 5. Department Director — own dept, stage status only ─────────────────
@@ -285,6 +373,9 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canAcknowledgeCilWarnings: false, canViewCilDashboard: false,
     canViewNaipDashboard: true, canViewNaipSearch: true,
     canViewJdtSimulation: false, canRunJdtSimulation: false, canUseShamsiFramework: false,
+    canUpload: false, canCreateDecision: false, canUseAi: true,
+    canManageUsers: false, canManageSettings: false, canComment: false,
+    canManageApiKeys: false, canAccessOwnerPanel: false, canAccessSecretSections: false,
   },
 
   // ── 6. Legal Department — legal basis + full JDP ─────────────────────────
@@ -304,6 +395,9 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canAcknowledgeCilWarnings: false, canViewCilDashboard: true,
     canViewNaipDashboard: true, canViewNaipSearch: true,
     canViewJdtSimulation: true, canRunJdtSimulation: true, canUseShamsiFramework: false,
+    canUpload: false, canCreateDecision: false, canUseAi: true,
+    canManageUsers: false, canManageSettings: false, canComment: false,
+    canManageApiKeys: false, canAccessOwnerPanel: false, canAccessSecretSections: false,
   },
 
   // ── 7. Constitutional Reviewer — all constitutional data + JDP + QVA/LSI ──
@@ -323,6 +417,9 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canAcknowledgeCilWarnings: true, canViewCilDashboard: true,
     canViewNaipDashboard: true, canViewNaipSearch: true,
     canViewJdtSimulation: true, canRunJdtSimulation: true, canUseShamsiFramework: false,
+    canUpload: false, canCreateDecision: false, canUseAi: true,
+    canManageUsers: false, canManageSettings: false, canComment: false,
+    canManageApiKeys: false, canAccessOwnerPanel: false, canAccessSecretSections: false,
   },
 
   // ── 8. Internal Auditor — full read, no JDP strategy ─────────────────────
@@ -342,6 +439,9 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canAcknowledgeCilWarnings: false, canViewCilDashboard: true,
     canViewNaipDashboard: true, canViewNaipSearch: true,
     canViewJdtSimulation: true, canRunJdtSimulation: false, canUseShamsiFramework: false,
+    canUpload: false, canCreateDecision: false, canUseAi: true,
+    canManageUsers: false, canManageSettings: false, canComment: false,
+    canManageApiKeys: false, canAccessOwnerPanel: false, canAccessSecretSections: false,
   },
 
   // ── 9. External Auditor — sealed decisions only + hash verification ───────
@@ -361,6 +461,9 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canAcknowledgeCilWarnings: false, canViewCilDashboard: true,
     canViewNaipDashboard: true, canViewNaipSearch: true,
     canViewJdtSimulation: true, canRunJdtSimulation: false, canUseShamsiFramework: false,
+    canUpload: false, canCreateDecision: false, canUseAi: true,
+    canManageUsers: false, canManageSettings: false, canComment: false,
+    canManageApiKeys: false, canAccessOwnerPanel: false, canAccessSecretSections: false,
   },
 
   // ── 10. Judge — complete record except QVA raw ────────────────────────────
@@ -380,6 +483,9 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canAcknowledgeCilWarnings: true, canViewCilDashboard: true,
     canViewNaipDashboard: true, canViewNaipSearch: true,
     canViewJdtSimulation: true, canRunJdtSimulation: true, canUseShamsiFramework: false,
+    canUpload: false, canCreateDecision: false, canUseAi: true,
+    canManageUsers: false, canManageSettings: false, canComment: false,
+    canManageApiKeys: false, canAccessOwnerPanel: false, canAccessSecretSections: false,
   },
 
   // ── 11. Citizen — CAR lookup by case number only ──────────────────────────
@@ -399,19 +505,223 @@ export const PERMISSIONS: Record<UserRole, RolePermissions> = {
     canAcknowledgeCilWarnings: false, canViewCilDashboard: false,
     canViewNaipDashboard: false, canViewNaipSearch: false,
     canViewJdtSimulation: false, canRunJdtSimulation: false, canUseShamsiFramework: false,
+    canUpload: false, canCreateDecision: false, canUseAi: false,
+    canManageUsers: false, canManageSettings: false, canComment: false,
+    canManageApiKeys: false, canAccessOwnerPanel: false, canAccessSecretSections: false,
+  },
+
+  // ── 12. Admin — platform operator: manages users, broad read access ──────
+  // NOT a governance seat (excluded from GOVERNANCE_ROLES). Cannot manage
+  // settings/API keys, cannot access the owner panel or Al-Shamsi framework.
+  admin: {
+    canReadDecisionList: true, canReadDecisionDetail: true,
+    canReadStageData: true, canReadAiAnalysis: true,
+    canReadJdp: true, canReadDci: true, canReadCar: true,
+    canReadAuditLog: true, canReadAuditHashes: true,
+    canReadQvaRaw: false, canReadHii: true, canReadConstitutionalGates: true,
+    canDelegateDecision: false, canRunHashVerification: false,
+    seeOwnOrgOnly: false, sealedOnly: false,
+    canSearchByCaseNumber: false, canViewGovernanceDashboard: true,
+    canReplayDecision: true,
+    canReadRiskAssessment: true, canWriteRiskTreatment: false,
+    canRecalculateRisk: false, canViewRiskDashboard: true,
+    canReadConstitutionalAssessment: true, canRunCilAssessment: false,
+    canAcknowledgeCilWarnings: false, canViewCilDashboard: true,
+    canViewNaipDashboard: true, canViewNaipSearch: true,
+    canViewJdtSimulation: true, canRunJdtSimulation: false, canUseShamsiFramework: false,
+    canUpload: false, canCreateDecision: false, canUseAi: true,
+    canManageUsers: true, canManageSettings: false, canComment: false,
+    canManageApiKeys: false, canAccessOwnerPanel: false, canAccessSecretSections: false,
+  },
+
+  // ── 13. Professional User — outside-professional account: research tools,
+  //        AI assistant, legal forms (PGF), file upload. No governance access.
+  professional_user: {
+    canReadDecisionList: false, canReadDecisionDetail: false,
+    canReadStageData: false, canReadAiAnalysis: false,
+    canReadJdp: false, canReadDci: false, canReadCar: false,
+    canReadAuditLog: false, canReadAuditHashes: false,
+    canReadQvaRaw: false, canReadHii: false, canReadConstitutionalGates: false,
+    canDelegateDecision: false, canRunHashVerification: false,
+    seeOwnOrgOnly: false, sealedOnly: false,
+    canSearchByCaseNumber: false, canViewGovernanceDashboard: false,
+    canReplayDecision: false,
+    canReadRiskAssessment: false, canWriteRiskTreatment: false,
+    canRecalculateRisk: false, canViewRiskDashboard: false,
+    canReadConstitutionalAssessment: false, canRunCilAssessment: false,
+    canAcknowledgeCilWarnings: false, canViewCilDashboard: false,
+    canViewNaipDashboard: false, canViewNaipSearch: false,
+    canViewJdtSimulation: false, canRunJdtSimulation: false, canUseShamsiFramework: false,
+    canUpload: true, canCreateDecision: false, canUseAi: true,
+    canManageUsers: false, canManageSettings: false, canComment: false,
+    canManageApiKeys: false, canAccessOwnerPanel: false, canAccessSecretSections: false,
+  },
+
+  // ── 14. Prosecutor — investigation and prosecution outputs ────────────────
+  // Governance-read professional: decision record, litigation-strategy (JDP),
+  // constitutional gates, case-number search. No audit log, no CAR, no
+  // settings/user management.
+  prosecutor: {
+    canReadDecisionList: true, canReadDecisionDetail: true,
+    canReadStageData: true, canReadAiAnalysis: true,
+    canReadJdp: true, canReadDci: true, canReadCar: false,
+    canReadAuditLog: false, canReadAuditHashes: false,
+    canReadQvaRaw: false, canReadHii: false, canReadConstitutionalGates: true,
+    canDelegateDecision: false, canRunHashVerification: false,
+    seeOwnOrgOnly: false, sealedOnly: false,
+    canSearchByCaseNumber: true, canViewGovernanceDashboard: true,
+    canReplayDecision: true,
+    canReadRiskAssessment: true, canWriteRiskTreatment: false,
+    canRecalculateRisk: false, canViewRiskDashboard: true,
+    canReadConstitutionalAssessment: true, canRunCilAssessment: false,
+    canAcknowledgeCilWarnings: false, canViewCilDashboard: true,
+    canViewNaipDashboard: true, canViewNaipSearch: true,
+    canViewJdtSimulation: true, canRunJdtSimulation: true, canUseShamsiFramework: false,
+    canUpload: true, canCreateDecision: false, canUseAi: true,
+    canManageUsers: false, canManageSettings: false, canComment: true,
+    canManageApiKeys: false, canAccessOwnerPanel: false, canAccessSecretSections: false,
+  },
+
+  // ── 15. Lawyer — legal memoranda and appeals ───────────────────────────────
+  // Same governance-read shape as prosecutor, plus CAR (the citizen-facing
+  // transparency record referenced when drafting an appeal).
+  lawyer: {
+    canReadDecisionList: true, canReadDecisionDetail: true,
+    canReadStageData: true, canReadAiAnalysis: true,
+    canReadJdp: true, canReadDci: true, canReadCar: true,
+    canReadAuditLog: false, canReadAuditHashes: false,
+    canReadQvaRaw: false, canReadHii: false, canReadConstitutionalGates: true,
+    canDelegateDecision: false, canRunHashVerification: false,
+    seeOwnOrgOnly: false, sealedOnly: false,
+    canSearchByCaseNumber: true, canViewGovernanceDashboard: true,
+    canReplayDecision: true,
+    canReadRiskAssessment: true, canWriteRiskTreatment: false,
+    canRecalculateRisk: false, canViewRiskDashboard: true,
+    canReadConstitutionalAssessment: true, canRunCilAssessment: false,
+    canAcknowledgeCilWarnings: false, canViewCilDashboard: true,
+    canViewNaipDashboard: true, canViewNaipSearch: true,
+    canViewJdtSimulation: true, canRunJdtSimulation: true, canUseShamsiFramework: false,
+    canUpload: true, canCreateDecision: false, canUseAi: true,
+    canManageUsers: false, canManageSettings: false, canComment: true,
+    canManageApiKeys: false, canAccessOwnerPanel: false, canAccessSecretSections: false,
+  },
+
+  // ── 16. Researcher — comparative studies and academic outputs ─────────────
+  // Broad read access, restricted to sealed (finalized) decisions only — no
+  // litigation-strategy (JDP) or write actions; purely academic study.
+  researcher: {
+    canReadDecisionList: true, canReadDecisionDetail: true,
+    canReadStageData: true, canReadAiAnalysis: true,
+    canReadJdp: false, canReadDci: true, canReadCar: true,
+    canReadAuditLog: false, canReadAuditHashes: false,
+    canReadQvaRaw: false, canReadHii: false, canReadConstitutionalGates: false,
+    canDelegateDecision: false, canRunHashVerification: false,
+    seeOwnOrgOnly: false, sealedOnly: true,
+    canSearchByCaseNumber: false, canViewGovernanceDashboard: true,
+    canReplayDecision: true,
+    canReadRiskAssessment: true, canWriteRiskTreatment: false,
+    canRecalculateRisk: false, canViewRiskDashboard: true,
+    canReadConstitutionalAssessment: true, canRunCilAssessment: false,
+    canAcknowledgeCilWarnings: false, canViewCilDashboard: true,
+    canViewNaipDashboard: true, canViewNaipSearch: true,
+    canViewJdtSimulation: true, canRunJdtSimulation: false, canUseShamsiFramework: false,
+    canUpload: true, canCreateDecision: false, canUseAi: true,
+    canManageUsers: false, canManageSettings: false, canComment: true,
+    canManageApiKeys: false, canAccessOwnerPanel: false, canAccessSecretSections: false,
+  },
+
+  // ── 17. Student — educational simulations only ────────────────────────────
+  // No access to real decision/governance data whatsoever. Access to the
+  // Professional Case Simulator (synthetic scenarios, no real case data) is
+  // granted via a dedicated role check in pcs.ts, not through any flag here.
+  student: {
+    canReadDecisionList: false, canReadDecisionDetail: false,
+    canReadStageData: false, canReadAiAnalysis: false,
+    canReadJdp: false, canReadDci: false, canReadCar: false,
+    canReadAuditLog: false, canReadAuditHashes: false,
+    canReadQvaRaw: false, canReadHii: false, canReadConstitutionalGates: false,
+    canDelegateDecision: false, canRunHashVerification: false,
+    seeOwnOrgOnly: false, sealedOnly: false,
+    canSearchByCaseNumber: false, canViewGovernanceDashboard: false,
+    canReplayDecision: false,
+    canReadRiskAssessment: false, canWriteRiskTreatment: false,
+    canRecalculateRisk: false, canViewRiskDashboard: false,
+    canReadConstitutionalAssessment: false, canRunCilAssessment: false,
+    canAcknowledgeCilWarnings: false, canViewCilDashboard: false,
+    canViewNaipDashboard: false, canViewNaipSearch: false,
+    canViewJdtSimulation: false, canRunJdtSimulation: false, canUseShamsiFramework: false,
+    canUpload: false, canCreateDecision: false, canUseAi: false,
+    canManageUsers: false, canManageSettings: false, canComment: false,
+    canManageApiKeys: false, canAccessOwnerPanel: false, canAccessSecretSections: false,
+  },
+
+  // ── 18. Guest — restricted public demo access ──────────────────────────────
+  // Same shape as citizen minus CAR lookup; sees only the always-public
+  // reference pages. Distinct from the password-less "Guest Login" flow
+  // (which signs into the permanent Reviewer/viewer account) — this role is
+  // for genuinely new, unauthenticated-adjacent demo accounts.
+  guest: {
+    canReadDecisionList: false, canReadDecisionDetail: false,
+    canReadStageData: false, canReadAiAnalysis: false,
+    canReadJdp: false, canReadDci: false, canReadCar: false,
+    canReadAuditLog: false, canReadAuditHashes: false,
+    canReadQvaRaw: false, canReadHii: false, canReadConstitutionalGates: false,
+    canDelegateDecision: false, canRunHashVerification: false,
+    seeOwnOrgOnly: false, sealedOnly: true,
+    canSearchByCaseNumber: false, canViewGovernanceDashboard: false,
+    canReplayDecision: false,
+    canReadRiskAssessment: false, canWriteRiskTreatment: false,
+    canRecalculateRisk: false, canViewRiskDashboard: false,
+    canReadConstitutionalAssessment: false, canRunCilAssessment: false,
+    canAcknowledgeCilWarnings: false, canViewCilDashboard: false,
+    canViewNaipDashboard: false, canViewNaipSearch: false,
+    canViewJdtSimulation: false, canRunJdtSimulation: false, canUseShamsiFramework: false,
+    canUpload: false, canCreateDecision: false, canUseAi: false,
+    canManageUsers: false, canManageSettings: false, canComment: false,
+    canManageApiKeys: false, canAccessOwnerPanel: false, canAccessSecretSections: false,
   },
 };
 
+/**
+ * Mutable in-memory cache, seeded from the constants above.
+ *
+ * At boot, the API server loads role_permissions rows from the database and
+ * calls setPermissionsCache() to overlay them here — this file stays a pure
+ * constants module (no drizzle/pg imports, safe for the Vite frontend), while
+ * the actual source of truth for the running server becomes the DB. Every
+ * lookup (getPermissions) reads from this cache, never the DB, so there is
+ * no per-request query latency.
+ */
+let permissionsCache: Record<string, RolePermissions> = { ...PERMISSIONS };
+
 /** Convenience: get permissions for a role (safe fallback to citizen) */
 export function getPermissions(role: string): RolePermissions {
-  return PERMISSIONS[role as UserRole] ?? PERMISSIONS.citizen;
+  return permissionsCache[role] ?? permissionsCache.citizen ?? PERMISSIONS.citizen;
 }
 
+/**
+ * Replace the in-memory permissions cache wholesale (called by the API
+ * server's rbac-service after loading role_permissions from the database,
+ * and again whenever an admin edits a role's permissions).
+ */
+export function setPermissionsCache(next: Record<string, RolePermissions>): void {
+  permissionsCache = { ...next };
+}
+
+/** Read-only snapshot of the current cache (used by admin UIs / debugging). */
+export function getPermissionsCacheSnapshot(): Record<string, RolePermissions> {
+  return { ...permissionsCache };
+}
+
+/** All permission flag keys, derived at runtime (used to seed the `permissions` table). */
+export const PERMISSION_KEYS: (keyof RolePermissions)[] =
+  Object.keys(PERMISSIONS.owner) as (keyof RolePermissions)[];
+
 /** Role display metadata */
-export const ROLE_META: Record<UserRole, { ar: string; en: string; tier: 'legacy' | 'executive' | 'oversight' | 'judicial' | 'public' }> = {
-  owner:                    { ar: 'مالك المنصة',          en: 'Platform Owner',          tier: 'legacy' },
+export const ROLE_META: Record<UserRole, { ar: string; en: string; tier: 'legacy' | 'executive' | 'oversight' | 'judicial' | 'public' | 'access-tier' | 'legal-professional' | 'academic' | 'demo' }> = {
+  owner:                    { ar: 'مالك المنصة',          en: 'Owner',                    tier: 'legacy' },
   supervisor:               { ar: 'مشرف',                  en: 'Supervisor',               tier: 'legacy' },
-  viewer:                   { ar: 'مشاهد',                 en: 'Viewer',                   tier: 'legacy' },
+  viewer:                   { ar: 'مراجع',                 en: 'Reviewer',                 tier: 'legacy' },
   minister:                 { ar: 'وزير',                  en: 'Minister',                 tier: 'executive' },
   undersecretary:           { ar: 'وكيل الوزارة',          en: 'Undersecretary',           tier: 'executive' },
   assistant_undersecretary: { ar: 'وكيل وزارة مساعد',     en: 'Asst. Undersecretary',     tier: 'executive' },
@@ -422,5 +732,12 @@ export const ROLE_META: Record<UserRole, { ar: string; en: string; tier: 'legacy
   internal_auditor:         { ar: 'المدقق الداخلي',        en: 'Internal Auditor',         tier: 'oversight' },
   external_auditor:         { ar: 'المدقق الخارجي',        en: 'External Auditor',         tier: 'oversight' },
   judge:                    { ar: 'القاضي',                en: 'Judge',                    tier: 'judicial' },
-  citizen:                  { ar: 'المواطن / الطرف المتأثر', en: 'Citizen / Affected Party', tier: 'public' },
+  citizen:                  { ar: 'المستخدم العام',        en: 'Public User',              tier: 'public' },
+  admin:                    { ar: 'مسؤول النظام',          en: 'Admin',                    tier: 'access-tier' },
+  professional_user:        { ar: 'مستخدم تنفيذي',        en: 'Executive User',           tier: 'access-tier' },
+  prosecutor:               { ar: 'النيابة العامة',        en: 'Prosecutor',               tier: 'legal-professional' },
+  lawyer:                   { ar: 'محامٍ',                 en: 'Lawyer',                   tier: 'legal-professional' },
+  researcher:               { ar: 'باحث',                  en: 'Researcher',               tier: 'academic' },
+  student:                  { ar: 'طالب',                  en: 'Student',                  tier: 'academic' },
+  guest:                    { ar: 'زائر',                  en: 'Guest',                    tier: 'demo' },
 };

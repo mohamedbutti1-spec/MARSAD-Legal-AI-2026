@@ -32,13 +32,13 @@ import {
 } from "../utils/research-export.js";
 import { logAudit } from "../middlewares/auditLog.js";
 import { getUserId } from "../lib/route-helpers.js";
-import { requireAnyRole, requireWriteRole } from "../middlewares/roleAuth.js";
+import { requireOperationalRole, requireOperationalWriteRole } from "../middlewares/roleAuth.js";
 
 const router: IRouter = Router();
 
 // All workspace routes require at minimum supervisor-level access (mirrors canUseAi frontend gate).
 // All authenticated platform users can access their own workspace items (data is ownerId-scoped)
-router.use(requireAnyRole);
+router.use(requireOperationalRole);
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -106,7 +106,7 @@ router.get("/research/workspace/projects", async (req: Request, res: Response): 
 });
 
 /** POST /research/workspace/projects */
-router.post("/research/workspace/projects", requireWriteRole, async (req: Request, res: Response): Promise<void> => {
+router.post("/research/workspace/projects", requireOperationalWriteRole, async (req: Request, res: Response): Promise<void> => {
   const userId = getUserId(req);
   const { title, description } = req.body as { title?: string; description?: string };
 
@@ -154,7 +154,7 @@ router.get("/research/workspace/projects/:projectId", async (req: Request, res: 
 });
 
 /** PUT /research/workspace/projects/:projectId */
-router.put("/research/workspace/projects/:projectId", requireWriteRole, async (req: Request, res: Response): Promise<void> => {
+router.put("/research/workspace/projects/:projectId", requireOperationalWriteRole, async (req: Request, res: Response): Promise<void> => {
   const userId    = getUserId(req);
   const projectId = parseInt(String(req.params.projectId), 10);
   if (!await assertProjectOwner(projectId, userId, res)) return;
@@ -175,7 +175,7 @@ router.put("/research/workspace/projects/:projectId", requireWriteRole, async (r
 });
 
 /** DELETE /research/workspace/projects/:projectId */
-router.delete("/research/workspace/projects/:projectId", requireWriteRole, async (req: Request, res: Response): Promise<void> => {
+router.delete("/research/workspace/projects/:projectId", requireOperationalWriteRole, async (req: Request, res: Response): Promise<void> => {
   const userId    = getUserId(req);
   const projectId = parseInt(String(req.params.projectId), 10);
   if (!await assertProjectOwner(projectId, userId, res)) return;
@@ -188,7 +188,7 @@ router.delete("/research/workspace/projects/:projectId", requireWriteRole, async
 // ─── Folders ──────────────────────────────────────────────────────────────────
 
 /** POST /research/workspace/projects/:projectId/folders */
-router.post("/research/workspace/projects/:projectId/folders", requireWriteRole, async (req: Request, res: Response): Promise<void> => {
+router.post("/research/workspace/projects/:projectId/folders", requireOperationalWriteRole, async (req: Request, res: Response): Promise<void> => {
   const userId    = getUserId(req);
   const projectId = parseInt(String(req.params.projectId), 10);
   if (!await assertProjectOwner(projectId, userId, res)) return;
@@ -205,7 +205,7 @@ router.post("/research/workspace/projects/:projectId/folders", requireWriteRole,
 });
 
 /** PUT /research/workspace/projects/:projectId/folders/:folderId */
-router.put("/research/workspace/projects/:projectId/folders/:folderId", requireWriteRole, async (req: Request, res: Response): Promise<void> => {
+router.put("/research/workspace/projects/:projectId/folders/:folderId", requireOperationalWriteRole, async (req: Request, res: Response): Promise<void> => {
   const userId    = getUserId(req);
   const projectId = parseInt(String(req.params.projectId), 10);
   const folderId  = parseInt(String(req.params.folderId), 10);
@@ -227,7 +227,7 @@ router.put("/research/workspace/projects/:projectId/folders/:folderId", requireW
 });
 
 /** DELETE /research/workspace/projects/:projectId/folders/:folderId */
-router.delete("/research/workspace/projects/:projectId/folders/:folderId", requireWriteRole, async (req: Request, res: Response): Promise<void> => {
+router.delete("/research/workspace/projects/:projectId/folders/:folderId", requireOperationalWriteRole, async (req: Request, res: Response): Promise<void> => {
   const userId    = getUserId(req);
   const projectId = parseInt(String(req.params.projectId), 10);
   const folderId  = parseInt(String(req.params.folderId), 10);
@@ -268,7 +268,7 @@ router.get("/research/workspace/projects/:projectId/items", async (req: Request,
 });
 
 /** POST /research/workspace/projects/:projectId/items */
-router.post("/research/workspace/projects/:projectId/items", requireWriteRole, async (req: Request, res: Response): Promise<void> => {
+router.post("/research/workspace/projects/:projectId/items", requireOperationalWriteRole, async (req: Request, res: Response): Promise<void> => {
   const userId    = getUserId(req);
   const projectId = parseInt(String(req.params.projectId), 10);
   if (!await assertProjectOwner(projectId, userId, res)) return;
@@ -391,7 +391,7 @@ router.get("/research/workspace/projects/:projectId/items/:itemId", async (req: 
 });
 
 /** PUT /research/workspace/projects/:projectId/items/:itemId */
-router.put("/research/workspace/projects/:projectId/items/:itemId", requireWriteRole, async (req: Request, res: Response): Promise<void> => {
+router.put("/research/workspace/projects/:projectId/items/:itemId", requireOperationalWriteRole, async (req: Request, res: Response): Promise<void> => {
   const userId    = getUserId(req);
   const projectId = parseInt(String(req.params.projectId), 10);
   const itemId    = parseInt(String(req.params.itemId), 10);
@@ -439,7 +439,7 @@ router.put("/research/workspace/projects/:projectId/items/:itemId", requireWrite
 });
 
 /** DELETE /research/workspace/projects/:projectId/items/:itemId */
-router.delete("/research/workspace/projects/:projectId/items/:itemId", requireWriteRole, async (req: Request, res: Response): Promise<void> => {
+router.delete("/research/workspace/projects/:projectId/items/:itemId", requireOperationalWriteRole, async (req: Request, res: Response): Promise<void> => {
   const userId    = getUserId(req);
   const projectId = parseInt(String(req.params.projectId), 10);
   const itemId    = parseInt(String(req.params.itemId), 10);
@@ -477,7 +477,7 @@ router.get("/research/workspace/projects/:projectId/items/:itemId/versions", asy
 });
 
 /** POST /research/workspace/projects/:projectId/items/:itemId/review — mark stale citation as reviewed */
-router.post("/research/workspace/projects/:projectId/items/:itemId/review", requireWriteRole, async (req: Request, res: Response): Promise<void> => {
+router.post("/research/workspace/projects/:projectId/items/:itemId/review", requireOperationalWriteRole, async (req: Request, res: Response): Promise<void> => {
   const userId    = getUserId(req);
   const projectId = parseInt(String(req.params.projectId), 10);
   const itemId    = parseInt(String(req.params.itemId), 10);
