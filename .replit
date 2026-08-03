@@ -34,7 +34,7 @@ externalPort = 3001
 [userenv]
 
 [userenv.production]
-ALLOWED_ORIGIN = "https://marsadmlos.com,https://legal-ai-assistant-mohamedbutti1.replit.app"
+ALLOWED_ORIGIN = "https://marsadmlos.com,https://www.marsadmlos.com,https://legal-ai-assistant-mohamedbutti1.replit.app"
 
 [nix]
 channel = "stable-25_05"
