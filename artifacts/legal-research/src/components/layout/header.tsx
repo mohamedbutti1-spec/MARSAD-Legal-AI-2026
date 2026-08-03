@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useUserContext, type UserRole, ROLE_META } from '@/lib/user-context';
-import { Menu, Scale, Globe, LogOut, User } from 'lucide-react';
 import { Bell, Menu, Scale, Globe, LogOut, User, Settings as SettingsIcon } from 'lucide-react';
 import { Link } from 'wouter';
 
