@@ -68,10 +68,19 @@ export default defineConfig({
     fs: {
       strict: true,
     },
+    // Prevent browsers from caching the service worker and manifest —
+    // they must always be fetched fresh so cache-version bumps take effect
+    // immediately on all devices including iOS standalone mode.
+    headers: {
+      'Cache-Control': 'no-store',
+    },
   },
   preview: {
     port,
     host: '0.0.0.0',
     allowedHosts: true,
+    headers: {
+      'Cache-Control': 'no-store',
+    },
   },
 });

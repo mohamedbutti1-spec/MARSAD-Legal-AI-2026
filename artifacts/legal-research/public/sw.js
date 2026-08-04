@@ -12,7 +12,9 @@
 //    or unreachable by a new build, never "subtly stale".
 //
 // Bump CACHE_VERSION on structural changes to this file's caching strategy.
-const CACHE_VERSION = 'marsad-shell-v1';
+// v3 — forced update Aug 2026: clears all old v1/v2 caches on all devices,
+// resolves iOS standalone-mode serving stale build assets after republish.
+const CACHE_VERSION = 'marsad-shell-v3';
 const OFFLINE_URL = '/offline.html';
 
 const PRECACHE_URLS = [
