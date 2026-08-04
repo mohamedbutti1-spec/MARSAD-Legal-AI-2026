@@ -5,10 +5,23 @@ import { apiFetch } from '@/lib/api-fetch';
 import { Upload, X, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+type Category = 'protocol' | 'thesis' | 'marsad' | 'presentations' | 'research' | 'uncategorized';
+
+const CATEGORIES: { value: Category; labelEn: string; labelAr: string }[] = [
+  { value: 'uncategorized',  labelEn: 'Uncategorized',  labelAr: 'غير مصنف' },
+  { value: 'protocol',       labelEn: 'Protocol',       labelAr: 'بروتوكول' },
+  { value: 'thesis',         labelEn: 'Thesis',         labelAr: 'رسالة' },
+  { value: 'marsad',         labelEn: 'MARSAD',         labelAr: 'مرصد' },
+  { value: 'presentations',  labelEn: 'Presentations',  labelAr: 'عروض' },
+  { value: 'research',       labelEn: 'Research',       labelAr: 'بحث' },
+];
 
 export default function UploadPage() {
   const { canUpload } = useUserContext();
   const [file, setFile] = useState<File | null>(null);
+  const [category, setCategory] = useState<Category>('uncategorized');
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -66,9 +79,9 @@ export default function UploadPage() {
 
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('category', category);
 
     try {
-      // Simulate progress
       const interval = setInterval(() => {
         setProgress(p => Math.min(p + 15, 90));
       }, 500);
@@ -90,6 +103,7 @@ export default function UploadPage() {
 
       setStatus('success');
       setFile(null);
+      setCategory('uncategorized');
       if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (err: any) {
       setStatus('error');
@@ -103,11 +117,14 @@ export default function UploadPage() {
     <AppLayout>
       <div className="space-y-6 max-w-3xl mx-auto" dir="auto">
         <div>
-          <h1 className="text-3xl font-serif font-bold text-foreground">Upload Document <span className="text-muted-foreground font-sans font-normal text-xl ml-2">/ رفع ملف</span></h1>
+          <h1 className="text-3xl font-serif font-bold text-foreground">
+            Upload Document{' '}
+            <span className="text-muted-foreground font-sans font-normal text-xl ml-2">/ رفع ملف</span>
+          </h1>
           <p className="text-muted-foreground mt-2 font-serif">Add new material to the private library for AI processing.</p>
         </div>
 
-        <div 
+        <div
           className={`border-2 border-dashed rounded-xl p-12 text-center transition-colors ${
             isDragging ? 'border-primary bg-primary/5' : 'border-border bg-card hover:bg-muted/10'
           }`}
@@ -115,14 +132,14 @@ export default function UploadPage() {
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
         >
-          <input 
-            type="file" 
-            className="hidden" 
+          <input
+            type="file"
+            className="hidden"
             ref={fileInputRef}
             onChange={(e) => e.target.files && handleFileSelection(e.target.files[0])}
             accept=".pdf,.docx,.txt"
           />
-          
+
           <div className="w-16 h-16 bg-secondary text-secondary-foreground rounded-full flex items-center justify-center mx-auto mb-6">
             <Upload className="w-8 h-8" />
           </div>
@@ -132,6 +149,30 @@ export default function UploadPage() {
             Browse Files
           </Button>
         </div>
+
+        {/* Category selector — always visible before upload */}
+        {status !== 'success' && (
+          <div className="bg-card border rounded-md p-4">
+            <label className="block text-sm font-semibold text-foreground mb-2">
+              Category <span className="text-muted-foreground font-normal">/ التصنيف</span>
+            </label>
+            <Select value={category} onValueChange={(v) => setCategory(v as Category)}>
+              <SelectTrigger className="w-full md:w-72">
+                <SelectValue placeholder="Select a category" />
+              </SelectTrigger>
+              <SelectContent>
+                {CATEGORIES.map(cat => (
+                  <SelectItem key={cat.value} value={cat.value}>
+                    {cat.labelEn} — {cat.labelAr}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground mt-1.5">
+              Choose the category that best describes this document. You can change it later.
+            </p>
+          </div>
+        )}
 
         {file && !uploading && status !== 'success' && (
           <div className="bg-card border rounded-md p-4 flex items-center justify-between">
@@ -167,8 +208,16 @@ export default function UploadPage() {
           <div className="bg-heading/10 dark:bg-heading/30 border border-heading/25 dark:border-heading/85 rounded-md p-6 text-center">
             <CheckCircle2 className="w-12 h-12 text-heading dark:text-heading mx-auto mb-3" />
             <h3 className="text-lg font-bold text-heading/75 dark:text-heading/80 mb-1">Upload Successful</h3>
-            <p className="text-heading/80 dark:text-heading/80 mb-4">Your document has been added to the library and is ready for AI processing.</p>
-            <Button variant="outline" onClick={() => setStatus('idle')} className="border-heading/40 text-heading hover:bg-heading/15">Upload Another</Button>
+            <p className="text-heading/80 dark:text-heading/80 mb-4">
+              Your document has been added to the library and is ready for AI processing.
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => setStatus('idle')}
+              className="border-heading/40 text-heading hover:bg-heading/15"
+            >
+              Upload Another
+            </Button>
           </div>
         )}
 

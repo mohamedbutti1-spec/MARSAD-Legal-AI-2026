@@ -5,9 +5,11 @@
  * Legal Research Platform API with AI capabilities
  * OpenAPI spec version: 0.1.0
  */
+import type { ListDocumentsCategory } from './listDocumentsCategory';
 
 export type ListDocumentsParams = {
 search?: string;
 type?: string;
 uploadedBy?: number;
+category?: ListDocumentsCategory;
 };

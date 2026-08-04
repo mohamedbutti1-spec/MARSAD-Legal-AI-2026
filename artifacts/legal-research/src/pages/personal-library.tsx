@@ -10,6 +10,21 @@ import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingGrid } from '@/components/ui/loading-card';
 
+type DocCategory = 'protocol' | 'thesis' | 'marsad' | 'presentations' | 'research' | 'uncategorized';
+
+const CATEGORIES: { value: DocCategory; labelEn: string; labelAr: string; color: string }[] = [
+  { value: 'protocol',       labelEn: 'Protocol',       labelAr: 'بروتوكول',  color: 'bg-blue-100 text-blue-800 border-blue-200' },
+  { value: 'thesis',         labelEn: 'Thesis',         labelAr: 'رسالة',     color: 'bg-purple-100 text-purple-800 border-purple-200' },
+  { value: 'marsad',         labelEn: 'MARSAD',         labelAr: 'مرصد',      color: 'bg-amber-100 text-amber-800 border-amber-200' },
+  { value: 'presentations',  labelEn: 'Presentations',  labelAr: 'عروض',      color: 'bg-green-100 text-green-800 border-green-200' },
+  { value: 'research',       labelEn: 'Research',       labelAr: 'بحث',       color: 'bg-rose-100 text-rose-800 border-rose-200' },
+  { value: 'uncategorized',  labelEn: 'Uncategorized',  labelAr: 'غير مصنف', color: 'bg-muted text-muted-foreground border-border' },
+];
+
+function getCategoryMeta(value: string) {
+  return CATEGORIES.find(c => c.value === value) ?? CATEGORIES[CATEGORIES.length - 1];
+}
+
 interface LibraryItem {
   id: number;
   userId: number;
@@ -24,6 +39,7 @@ interface LibraryItem {
     originalName?: string;
     fileType?: string;
     fileSize?: number;
+    category?: string;
     title?: string;
     jurisdiction?: string;
     docType?: string;
@@ -41,6 +57,7 @@ export default function PersonalLibrary() {
   const [items, setItems] = useState<LibraryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'documents' | 'sources'>('all');
+  const [activeCategory, setActiveCategory] = useState<DocCategory | 'all'>('all');
   const [search, setSearch] = useState('');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editNotes, setEditNotes] = useState('');
@@ -77,6 +94,11 @@ export default function PersonalLibrary() {
   const filtered = items.filter(item => {
     if (activeTab === 'documents' && item.sourceType !== 'document') return false;
     if (activeTab === 'sources' && item.sourceType !== 'legal_source') return false;
+    // Category filter applies to documents only
+    if (activeCategory !== 'all' && item.sourceType === 'document') {
+      const docCat = item.sourceMeta?.category ?? 'uncategorized';
+      if (docCat !== activeCategory) return false;
+    }
     if (search) {
       const q = search.toLowerCase();
       const name = item.sourceMeta?.originalName ?? item.sourceMeta?.title ?? '';
@@ -87,6 +109,22 @@ export default function PersonalLibrary() {
 
   const docCount = items.filter(i => i.sourceType === 'document').length;
   const srcCount = items.filter(i => i.sourceType === 'legal_source').length;
+
+  // Per-category counts for documents in the library
+  const categoryCounts = React.useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const cat of CATEGORIES) counts[cat.value] = 0;
+    for (const item of items) {
+      if (item.sourceType === 'document') {
+        const cat = item.sourceMeta?.category ?? 'uncategorized';
+        if (counts[cat] !== undefined) counts[cat]++;
+        else counts['uncategorized']++;
+      }
+    }
+    return counts;
+  }, [items]);
+
+  const showCategoryFilter = activeTab !== 'sources';
 
   return (
     <AppLayout>
@@ -145,7 +183,7 @@ export default function PersonalLibrary() {
             <button
               key={tab.key}
               type="button"
-              onClick={() => setActiveTab(tab.key)}
+              onClick={() => { setActiveTab(tab.key); setActiveCategory('all'); }}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${activeTab === tab.key ? 'bg-primary text-primary-foreground' : 'bg-muted/40 text-muted-foreground hover:bg-muted/60'}`}
             >
               {t(tab.labelAr, tab.labelEn)}
@@ -162,6 +200,41 @@ export default function PersonalLibrary() {
             />
           </div>
         </div>
+
+        {/* Category filter — only for document tabs */}
+        {showCategoryFilter && (
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              type="button"
+              onClick={() => setActiveCategory('all')}
+              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors border ${
+                activeCategory === 'all'
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-muted/40 text-muted-foreground border-transparent hover:bg-muted/60'
+              }`}
+            >
+              {t('كل التصنيفات', 'All Categories')} ({docCount})
+            </button>
+            {CATEGORIES.map(cat => {
+              const count = categoryCounts[cat.value] ?? 0;
+              if (count === 0 && activeCategory !== cat.value) return null;
+              return (
+                <button
+                  key={cat.value}
+                  type="button"
+                  onClick={() => setActiveCategory(cat.value)}
+                  className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors border ${
+                    activeCategory === cat.value
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-muted/40 text-muted-foreground border-transparent hover:bg-muted/60'
+                  }`}
+                >
+                  {t(cat.labelAr, cat.labelEn)} ({count})
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Items grid */}
         {loading || docsLoading ? (
@@ -197,6 +270,8 @@ export default function PersonalLibrary() {
               const sub = isDoc
                 ? `${item.sourceMeta?.fileType?.toUpperCase() ?? ''} · ${((item.sourceMeta?.fileSize ?? 0) / 1024).toFixed(0)} KB`
                 : `${item.sourceMeta?.jurisdiction ?? ''} · ${item.sourceMeta?.year ?? ''}`;
+              const docCategory = isDoc ? (item.sourceMeta?.category ?? 'uncategorized') : null;
+              const catMeta = docCategory ? getCategoryMeta(docCategory) : null;
 
               return (
                 <Card key={item.id} className="border-border hover:shadow-sm transition-shadow">
@@ -210,6 +285,13 @@ export default function PersonalLibrary() {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-foreground truncate">{title}</p>
                         <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>
+                        {/* Category badge for documents */}
+                        {catMeta && (
+                          <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider border rounded px-1.5 py-0.5 mt-1 ${catMeta.color}`}>
+                            <Tag className="w-2.5 h-2.5" />
+                            {t(catMeta.labelAr, catMeta.labelEn)}
+                          </span>
+                        )}
                         {tags.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-1.5">
                             {tags.map(tag => (
@@ -257,29 +339,41 @@ export default function PersonalLibrary() {
             })}
 
             {/* Uploaded documents not in library */}
-            {activeTab !== 'sources' && documents && documents.filter(d => !items.some(i => i.documentId === d.id)).map(doc => (
-              <Card key={`upload-${doc.id}`} className="border-border border-dashed opacity-70 hover:opacity-100 hover:shadow-sm transition-all">
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                      <FileText className="w-4 h-4 text-muted-foreground" aria-hidden />
+            {activeTab !== 'sources' && documents && documents.filter(d => !items.some(i => i.documentId === d.id)).map(doc => {
+              const docCat = (doc as any).category ?? 'uncategorized';
+              const catMeta = getCategoryMeta(docCat);
+              // Filter by active category
+              if (activeCategory !== 'all' && docCat !== activeCategory) return null;
+              // Filter by search
+              if (search && !((doc.originalName ?? doc.filename).toLowerCase().includes(search.toLowerCase()))) return null;
+              return (
+                <Card key={`upload-${doc.id}`} className="border-border border-dashed opacity-70 hover:opacity-100 hover:shadow-sm transition-all">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                        <FileText className="w-4 h-4 text-muted-foreground" aria-hidden />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-muted-foreground truncate">{doc.originalName ?? doc.filename}</p>
+                        <p className="text-xs text-muted-foreground/70">{doc.fileType.toUpperCase()} · {(doc.fileSize / 1024).toFixed(0)} KB</p>
+                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider border rounded px-1.5 py-0.5 mt-1 ${catMeta.color}`}>
+                          <Tag className="w-2.5 h-2.5" />
+                          {t(catMeta.labelAr, catMeta.labelEn)}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-muted-foreground truncate">{doc.originalName}</p>
-                      <p className="text-xs text-muted-foreground/70">{doc.fileType.toUpperCase()} · {(doc.fileSize / 1024).toFixed(0)} KB</p>
-                    </div>
-                  </div>
-                  <button type="button"
-                    onClick={async () => {
-                      const r = await apiFetch('/api/library', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sourceType: 'document', documentId: doc.id }) });
-                      if (r.ok) { fetchItems(); toast({ title: t('تمت الإضافة', 'Added') }); }
-                    }}
-                    className="mt-3 w-full flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border rounded-lg py-1.5 hover:bg-muted/20 transition-colors">
-                    <Bookmark className="w-3 h-3" />{t('إضافة إلى مكتبتي', 'Add to my library')}
-                  </button>
-                </CardContent>
-              </Card>
-            ))}
+                    <button type="button"
+                      onClick={async () => {
+                        const r = await apiFetch('/api/library', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sourceType: 'document', documentId: doc.id }) });
+                        if (r.ok) { fetchItems(); toast({ title: t('تمت الإضافة', 'Added') }); }
+                      }}
+                      className="mt-3 w-full flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border rounded-lg py-1.5 hover:bg-muted/20 transition-colors">
+                      <Bookmark className="w-3 h-3" />{t('إضافة إلى مكتبتي', 'Add to my library')}
+                    </button>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>

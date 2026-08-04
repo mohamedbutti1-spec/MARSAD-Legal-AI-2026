@@ -8,7 +8,10 @@ import {
   ListDocumentsQueryParams,
   GetDocumentParams,
   DeleteDocumentParams,
+  UpdateDocumentParams,
+  UpdateDocumentBody,
 } from "@workspace/api-zod";
+import { DOCUMENT_CATEGORIES } from "@workspace/db";
 import { requireOperationalRole, requirePermission, requireSupervisorOrOwner } from "../middlewares/roleAuth";
 import { logAudit } from "../middlewares/auditLog";
 import { cache, TTL } from "../lib/cache";
@@ -95,10 +98,10 @@ router.get("/documents", requireOperationalRole, async (req, res): Promise<void>
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const { search, type } = parsed.data;
+  const { search, type, category } = parsed.data;
 
   // Only cache when no filters applied
-  if (!search && !type) {
+  if (!search && !type && !category) {
     const cached = cache.get<unknown[]>("documents:all");
     if (cached) {
       res.json(cached);
@@ -107,8 +110,13 @@ router.get("/documents", requireOperationalRole, async (req, res): Promise<void>
   }
 
   const conditions: SQL[] = [];
-  if (search) conditions.push(like(documentsTable.originalName, `%${search}%`));
+  if (search) {
+    conditions.push(
+      like(documentsTable.originalName, `%${search}%`)
+    );
+  }
   if (type) conditions.push(eq(documentsTable.fileType, type));
+  if (category) conditions.push(eq(documentsTable.category, category));
 
   const docs = await db
     .select()
@@ -116,7 +124,7 @@ router.get("/documents", requireOperationalRole, async (req, res): Promise<void>
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(desc(documentsTable.uploadedAt));
 
-  if (!search && !type) cache.set("documents:all", docs, TTL.MED);
+  if (!search && !type && !category) cache.set("documents:all", docs, TTL.MED);
   res.json(docs);
 });
 
@@ -171,6 +179,37 @@ router.get("/documents/:id", requireOperationalRole, async (req, res): Promise<v
   res.json(doc);
 });
 
+// PATCH /documents/:id — update category (requires upload permission)
+router.patch("/documents/:id", requirePermission("canUpload"), async (req, res): Promise<void> => {
+  const params = UpdateDocumentParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+  const body = UpdateDocumentBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ error: body.error.message });
+    return;
+  }
+  const { category } = body.data;
+  if (category && !DOCUMENT_CATEGORIES.includes(category as typeof DOCUMENT_CATEGORIES[number])) {
+    res.status(400).json({ error: "Invalid category" });
+    return;
+  }
+  const [doc] = await db
+    .update(documentsTable)
+    .set({ ...(category ? { category } : {}) })
+    .where(eq(documentsTable.id, params.data.id))
+    .returning();
+  if (!doc) {
+    res.status(404).json({ error: "Document not found" });
+    return;
+  }
+  cache.delPattern("documents:");
+  logAudit(req, "document.update", { entityType: "document", entityId: doc.id, details: { category } });
+  res.json(doc);
+});
+
 // DELETE /documents/:id
 router.delete("/documents/:id", requireSupervisorOrOwner, async (req, res): Promise<void> => {
   const params = DeleteDocumentParams.safeParse(req.params);
@@ -206,6 +245,10 @@ router.post("/documents/upload", requirePermission("canUpload"), upload.single("
 
   const ext = path.extname(file.originalname).toLowerCase().replace(".", "");
   const uploadedById = req.body.uploadedById ? parseInt(req.body.uploadedById, 10) : null;
+  const rawCategory = req.body.category as string | undefined;
+  const category = rawCategory && DOCUMENT_CATEGORIES.includes(rawCategory as typeof DOCUMENT_CATEGORIES[number])
+    ? rawCategory
+    : "uncategorized";
 
   // Real content extraction for all supported types
   const content = await extractContent(file.path, ext);
@@ -221,6 +264,7 @@ router.post("/documents/upload", requirePermission("canUpload"), upload.single("
       content,
       keywords,
       uploadedById,
+      category,
     })
     .returning();
 

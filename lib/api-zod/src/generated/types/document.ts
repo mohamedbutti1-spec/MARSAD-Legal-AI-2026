@@ -5,6 +5,7 @@
  * Legal Research Platform API with AI capabilities
  * OpenAPI spec version: 0.1.0
  */
+import type { DocumentCategoryProperty } from './documentCategoryProperty';
 
 export interface Document {
   id: number;
@@ -18,6 +19,7 @@ export interface Document {
   keywords?: string | null;
   /** @nullable */
   uploadedById?: number | null;
+  category?: DocumentCategoryProperty;
   uploadedAt: Date;
   updatedAt?: Date;
 }

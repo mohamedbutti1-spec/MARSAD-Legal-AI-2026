@@ -331,6 +331,12 @@ export async function seedDatabase() {
   );
   logger.info("Beta feedback table ready");
 
+  // ─── Documents: category column (additive, idempotent) ───────────────────────
+  // Added after initial schema deployment; existing rows receive the default 'uncategorized'.
+  await pool.query(
+    `ALTER TABLE documents ADD COLUMN IF NOT EXISTS category TEXT NOT NULL DEFAULT 'uncategorized'`,
+  ).catch((err) => logger.warn({ err }, "Documents category column migration failed (non-fatal)"));
+
   // ─── Users ──────────────────────────────────────────────────────────────────
   // All 14 demo accounts are handled by migrateAuth() above.
   // This block is kept only to seed the comparisons table which references user id=1.

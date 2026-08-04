@@ -2,6 +2,9 @@ import { pgTable, text, serial, timestamp, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
+export const DOCUMENT_CATEGORIES = ['protocol', 'thesis', 'marsad', 'presentations', 'research', 'uncategorized'] as const;
+export type DocumentCategory = typeof DOCUMENT_CATEGORIES[number];
+
 export const documentsTable = pgTable("documents", {
   id: serial("id").primaryKey(),
   filename: text("filename").notNull(),
@@ -11,6 +14,7 @@ export const documentsTable = pgTable("documents", {
   content: text("content"),
   keywords: text("keywords"),
   uploadedById: integer("uploaded_by_id"),
+  category: text("category").notNull().default("uncategorized"),
   uploadedAt: timestamp("uploaded_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

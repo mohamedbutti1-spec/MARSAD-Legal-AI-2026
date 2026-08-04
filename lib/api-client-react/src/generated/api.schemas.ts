@@ -13,6 +13,30 @@ export interface ErrorResponse {
   error: string;
 }
 
+export type DocumentCategory = typeof DocumentCategory[keyof typeof DocumentCategory];
+
+
+export const DocumentCategory = {
+  protocol: 'protocol',
+  thesis: 'thesis',
+  marsad: 'marsad',
+  presentations: 'presentations',
+  research: 'research',
+  uncategorized: 'uncategorized',
+} as const;
+
+export type DocumentCategoryProperty = typeof DocumentCategoryProperty[keyof typeof DocumentCategoryProperty];
+
+
+export const DocumentCategoryProperty = {
+  protocol: 'protocol',
+  thesis: 'thesis',
+  marsad: 'marsad',
+  presentations: 'presentations',
+  research: 'research',
+  uncategorized: 'uncategorized',
+} as const;
+
 export interface Document {
   id: number;
   filename: string;
@@ -25,8 +49,25 @@ export interface Document {
   keywords?: string | null;
   /** @nullable */
   uploadedById?: number | null;
+  category?: DocumentCategoryProperty;
   uploadedAt: string;
   updatedAt?: string;
+}
+
+export type DocumentUpdateCategory = typeof DocumentUpdateCategory[keyof typeof DocumentUpdateCategory];
+
+
+export const DocumentUpdateCategory = {
+  protocol: 'protocol',
+  thesis: 'thesis',
+  marsad: 'marsad',
+  presentations: 'presentations',
+  research: 'research',
+  uncategorized: 'uncategorized',
+} as const;
+
+export interface DocumentUpdate {
+  category?: DocumentUpdateCategory;
 }
 
 export type DocumentStatsByTypeItem = {
@@ -318,7 +359,20 @@ export type ListDocumentsParams = {
 search?: string;
 type?: string;
 uploadedBy?: number;
+category?: ListDocumentsCategory;
 };
+
+export type ListDocumentsCategory = typeof ListDocumentsCategory[keyof typeof ListDocumentsCategory];
+
+
+export const ListDocumentsCategory = {
+  protocol: 'protocol',
+  thesis: 'thesis',
+  marsad: 'marsad',
+  presentations: 'presentations',
+  research: 'research',
+  uncategorized: 'uncategorized',
+} as const;
 
 export type ListCommentsParams = {
 documentId: number;

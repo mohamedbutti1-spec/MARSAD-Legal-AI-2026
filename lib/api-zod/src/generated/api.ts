@@ -22,8 +22,11 @@ export const HealthCheckResponse = zod.object({
 export const ListDocumentsQueryParams = zod.object({
   "search": zod.coerce.string().optional(),
   "type": zod.coerce.string().optional(),
-  "uploadedBy": zod.coerce.number().optional()
+  "uploadedBy": zod.coerce.number().optional(),
+  "category": zod.enum(['protocol', 'thesis', 'marsad', 'presentations', 'research', 'uncategorized']).optional()
 })
+
+export const listDocumentsResponseCategoryDefault = `uncategorized`;
 
 export const ListDocumentsResponseItem = zod.object({
   "id": zod.number(),
@@ -34,6 +37,7 @@ export const ListDocumentsResponseItem = zod.object({
   "content": zod.string().nullish(),
   "keywords": zod.string().nullish(),
   "uploadedById": zod.number().nullish(),
+  "category": zod.enum(['protocol', 'thesis', 'marsad', 'presentations', 'research', 'uncategorized']).default(listDocumentsResponseCategoryDefault),
   "uploadedAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date().optional()
 })
@@ -61,6 +65,8 @@ export const GetDocumentParams = zod.object({
   "id": zod.coerce.number()
 })
 
+export const getDocumentResponseCategoryDefault = `uncategorized`;
+
 export const GetDocumentResponse = zod.object({
   "id": zod.number(),
   "filename": zod.string(),
@@ -70,6 +76,35 @@ export const GetDocumentResponse = zod.object({
   "content": zod.string().nullish(),
   "keywords": zod.string().nullish(),
   "uploadedById": zod.number().nullish(),
+  "category": zod.enum(['protocol', 'thesis', 'marsad', 'presentations', 'research', 'uncategorized']).default(getDocumentResponseCategoryDefault),
+  "uploadedAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().optional()
+})
+
+
+/**
+ * @summary Update a document's category
+ */
+export const UpdateDocumentParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateDocumentBody = zod.object({
+  "category": zod.enum(['protocol', 'thesis', 'marsad', 'presentations', 'research', 'uncategorized']).optional()
+})
+
+export const updateDocumentResponseCategoryDefault = `uncategorized`;
+
+export const UpdateDocumentResponse = zod.object({
+  "id": zod.number(),
+  "filename": zod.string(),
+  "originalName": zod.string().optional(),
+  "fileType": zod.string(),
+  "fileSize": zod.number(),
+  "content": zod.string().nullish(),
+  "keywords": zod.string().nullish(),
+  "uploadedById": zod.number().nullish(),
+  "category": zod.enum(['protocol', 'thesis', 'marsad', 'presentations', 'research', 'uncategorized']).default(updateDocumentResponseCategoryDefault),
   "uploadedAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date().optional()
 })

@@ -58,6 +58,11 @@ paths:
           in: query
           schema:
             type: integer
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [protocol, thesis, marsad, presentations, research, uncategorized]
       responses:
         "200":
           description: List of documents
@@ -95,6 +100,35 @@ paths:
       responses:
         "200":
           description: Document
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateDocument
+      tags: [documents]
+      summary: Update a document's category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocumentUpdate"
+      responses:
+        "200":
+          description: Updated document
           content:
             application/json:
               schema:
@@ -628,6 +662,10 @@ components:
         error:
           type: string
 
+    DocumentCategory:
+      type: string
+      enum: [protocol, thesis, marsad, presentations, research, uncategorized]
+
     Document:
       type: object
       required: [id, filename, fileType, fileSize, uploadedAt]
@@ -648,12 +686,23 @@ components:
           type: ["string", "null"]
         uploadedById:
           type: ["integer", "null"]
+        category:
+          type: string
+          enum: [protocol, thesis, marsad, presentations, research, uncategorized]
+          default: uncategorized
         uploadedAt:
           type: string
           format: date-time
         updatedAt:
           type: string
           format: date-time
+
+    DocumentUpdate:
+      type: object
+      properties:
+        category:
+          type: string
+          enum: [protocol, thesis, marsad, presentations, research, uncategorized]
 
     DocumentStats:
       type: object

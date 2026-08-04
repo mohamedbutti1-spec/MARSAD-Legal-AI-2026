@@ -44,7 +44,7 @@ router.get("/library", requireAnyRole, async (req, res): Promise<void> => {
   const enriched = await Promise.all(items.map(async (item) => {
     let sourceMeta: Record<string, unknown> | null = null;
     if (item.sourceType === "document" && item.documentId) {
-      const [doc] = await db.select({ id: documentsTable.id, originalName: documentsTable.originalName, fileType: documentsTable.fileType, fileSize: documentsTable.fileSize })
+      const [doc] = await db.select({ id: documentsTable.id, originalName: documentsTable.originalName, fileType: documentsTable.fileType, fileSize: documentsTable.fileSize, category: documentsTable.category })
         .from(documentsTable).where(eq(documentsTable.id, item.documentId));
       sourceMeta = doc ?? null;
     } else if (item.sourceType === "legal_source" && item.legalSourceId) {
@@ -135,7 +135,7 @@ router.get("/library/export", requireAnyRole, async (req, res): Promise<void> =>
   const enriched = await Promise.all(items.map(async (item) => {
     let sourceMeta: Record<string, unknown> | null = null;
     if (item.sourceType === "document" && item.documentId) {
-      const [doc] = await db.select({ id: documentsTable.id, originalName: documentsTable.originalName, fileType: documentsTable.fileType })
+      const [doc] = await db.select({ id: documentsTable.id, originalName: documentsTable.originalName, fileType: documentsTable.fileType, category: documentsTable.category })
         .from(documentsTable).where(eq(documentsTable.id, item.documentId));
       sourceMeta = doc ?? null;
     } else if (item.sourceType === "legal_source" && item.legalSourceId) {
