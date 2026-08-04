@@ -47,23 +47,83 @@ function clientIp(req: import("express").Request): string {
   return req.socket?.remoteAddress ?? "unknown";
 }
 
+// ── Guaranteed table initialisation ──────────────────────────────────────────
+// user_sessions must exist before any createSession() call. This module-level
+// promise runs ONCE when auth.ts is first imported (at server startup) and
+// creates the table if the startup seed migration silently failed.
+//
+// Why this is needed:
+//   seed.ts creates the table via pool.query() inside migrateAuth(). In
+//   production the error is caught and only emitted through pino's async
+//   transport — which can lose messages during the first ~2 s of startup before
+//   the worker thread is ready. The result is a missing table with no visible
+//   log. This promise is a belt-and-suspenders guarantee: db.execute() uses
+//   drizzle's own connection (same SSL config), and failures are surfaced via
+//   console.error which writes synchronously to stdout and is always captured
+//   by the deployment log collector.
+const _userSessionsTableReady: Promise<void> = (async () => {
+  try {
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS "user_sessions" (
+        "id"           serial PRIMARY KEY,
+        "user_id"      integer NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+        "sid"          text    NOT NULL UNIQUE,
+        "user_agent"   text,
+        "ip"           text,
+        "created_at"   timestamp with time zone NOT NULL DEFAULT now(),
+        "last_seen_at" timestamp with time zone NOT NULL DEFAULT now(),
+        "expires_at"   timestamp with time zone NOT NULL
+      )
+    `);
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS user_sessions_user_id_idx
+        ON "user_sessions"("user_id")
+    `);
+    // Use console.log (not logger) so this startup confirmation is always
+    // captured synchronously, regardless of pino worker flush timing.
+    console.log('[auth] user_sessions table ready');
+  } catch (err) {
+    // console.error bypasses pino's async transport — always reaches the
+    // deployment log collector even when pino workers haven't initialised yet.
+    console.error(
+      '[auth] CRITICAL: user_sessions table initialisation failed — ' +
+      'login will return 500 until this is resolved:',
+      err,
+    );
+  }
+})();
+
 /**
  * Create a session row in user_sessions and return the generated sid.
  * Called after every successful login/guest-login.
+ *
+ * Awaits _userSessionsTableReady so the table is guaranteed to exist before
+ * the INSERT — handles the edge case where the startup migration failed
+ * silently in production.
  */
 async function createSession(
   userId: number,
   req: import("express").Request,
 ): Promise<string> {
+  // Wait for table to be ready (no-op if already initialised)
+  await _userSessionsTableReady;
+
   const sid = randomUUID();
   const expiresAt = new Date(Date.now() + TOKEN_EXPIRY_MS);
-  await db.insert(userSessionsTable).values({
-    userId,
-    sid,
-    userAgent: req.headers["user-agent"]?.slice(0, 300) ?? null,
-    ip: clientIp(req),
-    expiresAt,
-  });
+  try {
+    await db.insert(userSessionsTable).values({
+      userId,
+      sid,
+      userAgent: req.headers["user-agent"]?.slice(0, 300) ?? null,
+      ip: clientIp(req),
+      expiresAt,
+    });
+  } catch (err) {
+    // Log the raw DB error so it is always visible in deployment logs,
+    // independently of pino's async transport flush state.
+    console.error('[auth] createSession INSERT failed:', err);
+    throw err;
+  }
   return sid;
 }
 

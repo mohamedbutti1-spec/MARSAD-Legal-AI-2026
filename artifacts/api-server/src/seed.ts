@@ -131,27 +131,34 @@ async function migrateAuth() {
     `CREATE UNIQUE INDEX IF NOT EXISTS users_username_uix ON users(username) WHERE username IS NOT NULL`,
   );
 
-  // ── Session registry (Task #97 — added after initial schema was deployed) ──
+  // ── Session registry (added after initial schema was deployed) ───────────────
   // user_sessions tracks every active login so the UI can list devices and let
-  // users sign out individual sessions. CREATE TABLE IF NOT EXISTS is idempotent
-  // and safe to run on every restart — it's a no-op when the table already exists.
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS "user_sessions" (
-      "id"           serial PRIMARY KEY,
-      "user_id"      integer NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
-      "sid"          text    NOT NULL UNIQUE,
-      "user_agent"   text,
-      "ip"           text,
-      "created_at"   timestamp with time zone NOT NULL DEFAULT now(),
-      "last_seen_at" timestamp with time zone NOT NULL DEFAULT now(),
-      "expires_at"   timestamp with time zone NOT NULL
-    )
-  `);
-  // Index on user_id so per-user session queries (list active sessions,
-  // sign-out-other-sessions) don't require a full table scan.
-  await pool.query(
-    `CREATE INDEX IF NOT EXISTS user_sessions_user_id_idx ON "user_sessions"("user_id")`,
-  );
+  // users sign out individual sessions. CREATE TABLE IF NOT EXISTS is idempotent.
+  // console.error is used alongside logger so failures are always visible in
+  // production deployment logs even if pino's async transport hasn't flushed yet.
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS "user_sessions" (
+        "id"           serial PRIMARY KEY,
+        "user_id"      integer NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+        "sid"          text    NOT NULL UNIQUE,
+        "user_agent"   text,
+        "ip"           text,
+        "created_at"   timestamp with time zone NOT NULL DEFAULT now(),
+        "last_seen_at" timestamp with time zone NOT NULL DEFAULT now(),
+        "expires_at"   timestamp with time zone NOT NULL
+      )
+    `);
+    // Index on user_id so per-user session queries don't require a full scan.
+    await pool.query(
+      `CREATE INDEX IF NOT EXISTS user_sessions_user_id_idx ON "user_sessions"("user_id")`,
+    );
+    console.log('[seed] user_sessions table ready');
+  } catch (err) {
+    console.error('[seed] CRITICAL: user_sessions table creation failed:', err);
+    logger.error({ err }, 'user_sessions table creation failed in migrateAuth');
+    throw err; // re-throw so seedDatabase .catch() also logs it
+  }
 
   // ── Demo accounts ─────────────────────────────────────────────────────────
   // No plaintext passwords in source. Requires DEMO_SEED_SECRET to be set;

@@ -58,3 +58,4 @@
 - [Forced password change after admin reset](forced-password-change.md) — must_change_password gate enforced server-side in authenticate.ts, not just a frontend redirect
 - [Custom roles vs. two-layer RBAC gating](custom-roles-rbac.md) — permission-flag routes support custom roles automatically; static requireAnyRole allowlists don't; orval body-schema naming collision fix
 - [Shamsi replay endpoint field-strip gap](shamsi-replay-field-strip-gap.md) — nulling the named sensitive field isn't enough if sibling fields (inputs/outputs/hash) carry the same raw data under different keys
+- [Pino async log loss at startup](pino-async-log-loss.md) — pino async transport drops logs in first ~2 s; use console.error for critical startup messages; create required tables as module-level promises in the route file
