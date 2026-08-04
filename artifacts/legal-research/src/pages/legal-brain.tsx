@@ -1065,7 +1065,7 @@ export default function LegalBrain() {
             <div>
               <h1 className="font-black text-xl text-foreground">الدماغ القانوني الذكي</h1>
               <p className="text-[12px] text-muted-foreground mt-0.5">
-                منصة الاستدلال القانوني المتقدم — ٦ محركات تحليل متكاملة · الإمارات · فرنسا · الاتحاد الأوروبي
+                منصة الاستدلال القانوني المتقدم — 6 محركات تحليل متكاملة · الإمارات · فرنسا · الاتحاد الأوروبي
               </p>
             </div>
             <div className="mr-auto flex items-center gap-1.5 shrink-0">
