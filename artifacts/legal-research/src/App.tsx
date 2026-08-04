@@ -102,6 +102,7 @@ const UserManagement = React.lazy(() => import('@/pages/user-management'));
 const Settings = React.lazy(() => import('@/pages/settings'));
 
 const Account = React.lazy(() => import('@/pages/account'));
+const Pricing = React.lazy(() => import('@/pages/pricing'));
 
 const RolePermissions = React.lazy(() => import('@/pages/role-permissions'));
 const AdminLegalOS = React.lazy(() => import('@/pages/admin-legal-os'));
@@ -304,6 +305,9 @@ function Router() {
         </Route>
         <Route path="/account">
           <Account />
+        </Route>
+        <Route path="/pricing">
+          <Pricing />
         </Route>
         <Route path="/settings/roles">
           <RouteGuard allow={canManageSettings}>

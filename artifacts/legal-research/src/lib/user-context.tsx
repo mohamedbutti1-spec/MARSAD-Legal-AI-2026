@@ -27,11 +27,15 @@ interface SessionPayload {
   role: string;
   org: string;
   mustChangePassword: boolean;
+  /** Subscription plan tier — defaults to 'free' if not present in JWT */
+  plan?: string;
 }
 
 export interface UserContextType {
   /** True once the session check has resolved (success or failure) */
   isLoaded: boolean;
+  /** Subscription plan tier ('free' | 'professional' | 'expert' | 'enterprise') */
+  plan: string;
   /** True when a valid JWT session exists */
   isAuthenticated: boolean;
   /** True when the user logged in with an admin-issued temporary password and must set their own before continuing */
@@ -138,6 +142,7 @@ function buildContext(
     role,
     userId,
     userOrg,
+    plan: session?.plan ?? 'free',
     lang,
     dir: lang === 'ar' ? 'rtl' : 'ltr',
     setLang: () => { /* handled by provider */ },

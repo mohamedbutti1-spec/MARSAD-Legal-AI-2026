@@ -127,6 +127,14 @@ async function migrateAuth() {
   // account or admin "Reset password" action) — the user must set their own
   // before using the app. See authenticate.ts and POST /auth/change-password.
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT FALSE`);
+  // Subscription plan tier — added after initial schema deployment.
+  // Default 'free' for all users; bumped to 'professional'/'expert'/'enterprise'
+  // when a subscription is activated. owner-role accounts are seeded to 'expert'
+  // so they are not blocked by plan gates during development.
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS plan text NOT NULL DEFAULT 'free'`);
+  // Upgrade permanent accounts (owner role) to 'expert' plan so owner-role
+  // users are not gated by plan checks during development/testing.
+  await pool.query(`UPDATE users SET plan = 'expert' WHERE role = 'owner' AND plan = 'free'`);
   await pool.query(
     `CREATE UNIQUE INDEX IF NOT EXISTS users_username_uix ON users(username) WHERE username IS NOT NULL`,
   );

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'wouter';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useUserContext, ROLE_META, type UserRole } from '@/lib/user-context';
 import { apiFetch } from '@/lib/api-fetch';
@@ -10,7 +11,9 @@ import { useToast } from '@/hooks/use-toast';
 import {
   KeyRound, Lock, ShieldOff, Loader2, User,
   Monitor, Smartphone, Globe, Clock, Wifi,
+  Sparkles, Check, ArrowLeft,
 } from 'lucide-react';
+import { PLANS, type PlanId, planNameAr } from '@/lib/plan-config';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 interface SessionRow {
@@ -99,7 +102,8 @@ function relativeTime(iso: string, isAr: boolean): string {
  * other active sessions (e.g. a shared/public computer left signed in).
  */
 export default function Account() {
-  const { role, lang, refreshSession } = useUserContext();
+  const { role, lang, refreshSession, plan: rawPlan, isOwner } = useUserContext() as ReturnType<typeof useUserContext> & { plan?: string; isOwner?: boolean };
+  const [, navigate] = useLocation();
   const { toast } = useToast();
   const isAr = lang === 'ar';
   const meta = ROLE_META[role as UserRole];
@@ -209,6 +213,117 @@ export default function Account() {
             </div>
           </CardContent>
         </Card>
+
+        {/* ── Subscription plan ─────────────────────────────────────────── */}
+        {(() => {
+          const effectivePlan = (isOwner ? 'expert' : (rawPlan ?? 'free')) as PlanId;
+          const planData = PLANS.find(p => p.id === effectivePlan) ?? PLANS[0];
+          const nextPlan  = PLANS[PLANS.findIndex(p => p.id === effectivePlan) + 1];
+          return (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-gold" />
+                  {isAr ? 'اشتراكي وخطتي' : 'My Subscription'}
+                </CardTitle>
+                <CardDescription>
+                  {isAr ? 'خطتك الحالية ومعلومات الاشتراك' : 'Your current plan and subscription details'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                {/* Current plan badge */}
+                <div className="flex items-center justify-between rounded-xl border border-gold/20 bg-gold/5 px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-gold/15 border border-gold/25 flex items-center justify-center">
+                      <Check className="w-4 h-4 text-gold" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">
+                        {isAr ? planData.nameAr : planData.nameEn}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {isAr ? 'خطتك الحالية' : 'Current plan'}
+                        {effectivePlan === 'free' && (isAr ? ' — مجاني' : ' — Free')}
+                        {effectivePlan !== 'free' && effectivePlan !== 'enterprise' && (
+                          isAr
+                            ? ` — ${planData.priceMonthly} درهم / شهر`
+                            : ` — ${planData.priceMonthly} AED / month`
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold text-gold bg-gold/10 border border-gold/20 px-2 py-1 rounded-full uppercase tracking-wide">
+                    {effectivePlan === 'free' ? (isAr ? 'مجاني' : 'Free')
+                     : effectivePlan === 'professional' ? (isAr ? 'مهني' : 'Pro')
+                     : effectivePlan === 'expert' ? (isAr ? 'خبير' : 'Expert')
+                     : (isAr ? 'مؤسسي' : 'Enterprise')}
+                  </span>
+                </div>
+
+                {/* Limits summary */}
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { ar: 'أسئلة شهريًا', en: 'Questions/mo', val: planData.limits.questionsPerMonth },
+                    { ar: 'فحوصات شهريًا', en: 'Checks/mo',   val: planData.limits.checksPerMonth },
+                    { ar: 'تقارير PDF',   en: 'PDF reports',  val: planData.limits.pdfReportsPerMonth },
+                    { ar: 'أعضاء الفريق', en: 'Team seats',   val: planData.limits.teamMembers },
+                  ].map(item => (
+                    <div key={item.en} className="rounded-lg border border-border/50 bg-muted/20 px-3 py-2">
+                      <p className="text-[10px] text-muted-foreground">{isAr ? item.ar : item.en}</p>
+                      <p className="text-sm font-semibold text-foreground mt-0.5">
+                        {item.val === null
+                          ? (isAr ? 'غير محدود' : 'Unlimited')
+                          : item.val === 0
+                          ? (isAr ? 'غير متاح' : 'Not included')
+                          : String(item.val)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Upgrade CTA or coming-soon note */}
+                {effectivePlan === 'free' ? (
+                  <div className="space-y-3">
+                    <button
+                      type="button"
+                      onClick={() => navigate('/pricing')}
+                      className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-gold text-background text-sm font-bold hover:opacity-90 transition-opacity"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      {isAr ? 'ترقية إلى المهني — 49 درهم / شهر' : 'Upgrade to Professional — 49 AED/mo'}
+                    </button>
+                    <p className="text-[11px] text-muted-foreground text-center">
+                      {isAr
+                        ? 'بوابة الدفع تحت الإعداد · ستُفعَّل قريبًا · Apple Pay · Google Pay'
+                        : 'Payment gateway in setup · Coming soon · Apple Pay · Google Pay'}
+                    </p>
+                  </div>
+                ) : nextPlan ? (
+                  <button
+                    type="button"
+                    onClick={() => navigate('/pricing')}
+                    className="w-full py-2.5 rounded-xl border border-gold/30 text-gold text-sm font-semibold hover:bg-gold/10 transition-colors"
+                  >
+                    {isAr ? `الترقية إلى ${nextPlan.nameAr}` : `Upgrade to ${nextPlan.nameEn}`}
+                  </button>
+                ) : (
+                  <div className="text-center text-xs text-muted-foreground py-2">
+                    {isAr ? 'أنت على أعلى خطة متاحة' : 'You are on the highest available plan'}
+                  </div>
+                )}
+
+                {/* View all plans link */}
+                <button
+                  type="button"
+                  onClick={() => navigate('/pricing')}
+                  className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors text-center"
+                >
+                  {isAr ? 'عرض جميع الخطط والأسعار ←' : '← View all plans & pricing'}
+                </button>
+              </CardContent>
+            </Card>
+          );
+        })()}
 
         {/* ── Change password ──────────────────────────────────────────── */}
         <Card>

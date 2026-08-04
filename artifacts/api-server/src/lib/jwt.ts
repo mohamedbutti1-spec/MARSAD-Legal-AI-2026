@@ -22,6 +22,12 @@ export interface JwtPayload {
   /** Organisation string for org-scoped roles; empty string otherwise */
   org: string;
   /**
+   * Subscription plan tier. Defaults to 'free' for users who have not
+   * subscribed. The owner role always bypasses plan gates regardless of
+   * this value, but it is still stored for audit and display purposes.
+   */
+  plan: string;
+  /**
    * Stable session identifier (UUID v4) generated at login and stored in
    * the user_sessions table. Lets the authenticate middleware update
    * last_seen_at and lets sign-out-other-sessions delete every other row
@@ -72,6 +78,7 @@ export function verifyToken(token: string): JwtPayload {
     userId: decoded.userId,
     role: decoded.role,
     org: decoded.org ?? "",
+    plan: decoded.plan ?? "free",
     pwv: decoded.pwv ?? 0,
     mustChangePassword: decoded.mustChangePassword ?? false,
     sid: decoded.sid ?? "",

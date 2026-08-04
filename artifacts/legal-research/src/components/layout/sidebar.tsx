@@ -129,6 +129,14 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           icon: <Bot className="w-4.5 h-4.5" />,
           show: canUseAi,
         },
+        {
+          href: '/pricing',
+          labelAr: 'الاشتراكات والأسعار',
+          labelEn: 'Subscriptions & Pricing',
+          icon: <Sparkles className="w-4.5 h-4.5" />,
+          show: true,
+          badge: 'جديد',
+        },
       ],
     },
     // ── المرجعية القانونية — legal reference material ───────────────────────

@@ -173,10 +173,23 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   const org = orgForRole(user.role);
   const sid = await createSession(user.id, req);
 
+  // Read the user's subscription plan — graceful fallback to 'free' if the
+  // plan column hasn't been migrated yet (safe first-deploy window).
+  let userPlan = "free";
+  try {
+    const planRows = await db.execute<{ plan: string }>(
+      sql`SELECT COALESCE(plan, 'free') AS plan FROM users WHERE id = ${user.id}`,
+    );
+    userPlan = (planRows[0] as { plan?: string })?.plan ?? "free";
+  } catch {
+    // plan column not yet added — default to 'free'
+  }
+
   const token = signToken({
     userId: user.id,
     role: user.role,
     org,
+    plan: userPlan,
     pwv: user.passwordVersion,
     mustChangePassword: user.mustChangePassword,
     sid,
@@ -247,6 +260,7 @@ router.post("/auth/guest-login", async (req, res): Promise<void> => {
     userId: user.id,
     role: user.role,
     org,
+    plan: "free", // guest/reviewer accounts are always on the free plan
     pwv: user.passwordVersion,
     mustChangePassword: user.mustChangePassword,
     sid,
