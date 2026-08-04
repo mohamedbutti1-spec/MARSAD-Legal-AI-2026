@@ -4,6 +4,7 @@
  * Flagship entry point for all NAIP platform executives.
  * Phase 43 · نظرية الشامسي™ · MARSAD NAIP v1.0
  */
+import { apiFetch } from '@/lib/api-fetch';
 import React from 'react';
 import { Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
@@ -134,7 +135,7 @@ export default function NaipHome() {
   const { data: overview, isLoading } = useQuery<NaipOverview>({
     queryKey: ['naip-overview'],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.BASE_URL}api/naip/overview`, { headers });
+      const res = await apiFetch(`${import.meta.env.BASE_URL}api/naip/overview`, { headers });
       if (!res.ok) throw new Error('Failed to load NAIP overview');
       return res.json();
     },

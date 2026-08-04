@@ -10,6 +10,7 @@ import React, { useState } from 'react';
 import { Link } from 'wouter';
 import { Scale, Search, ChevronRight, AlertTriangle, Shield, FileText, PhoneCall, ArrowLeft, Hash, CheckCircle2, XCircle, Link2 } from 'lucide-react';
 import { Gavel } from '@/components/icons/gavel';
+import { apiFetch as libApiFetch } from '@/lib/api-fetch';
 
 // ─── API helper (no auth header needed for citizen endpoint) ──────────────────
 
@@ -29,7 +30,7 @@ interface CarResult {
 
 function fetchCar(caseNumber: string) {
   const base = (import.meta.env.BASE_URL ?? '').replace(/\/$/, '');
-  return fetch(`${base}/api/governance/citizen/car?caseNumber=${encodeURIComponent(caseNumber)}`)
+  return libApiFetch(`${base}/api/governance/citizen/car?caseNumber=${encodeURIComponent(caseNumber)}`)
     .then(async (r) => {
       const data = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error((data as { error?: string }).error || r.statusText);

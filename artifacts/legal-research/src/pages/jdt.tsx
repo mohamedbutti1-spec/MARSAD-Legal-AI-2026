@@ -6,6 +6,7 @@
  *
  * Al-Shamsi Judicial Digital Twin™ · MARSAD JDT v44.0
  */
+import { apiFetch } from '@/lib/api-fetch';
 import { useState } from 'react'
 import { useParams, Link } from 'wouter'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -463,7 +464,7 @@ export default function JdtPage() {
   } = useQuery<JdtSimulation>({
     queryKey: ['jdt', decisionId],
     queryFn: async () => {
-      const res = await fetch(`/api/jdt/${decisionId}`, { headers })
+      const res = await apiFetch(`/api/jdt/${decisionId}`, { headers })
       if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`)
       return res.json()
     },
@@ -477,7 +478,7 @@ export default function JdtPage() {
 
   const runMutation = useMutation<JdtSimulation, Error, void>({
     mutationFn: async () => {
-      const res = await fetch(`/api/jdt/simulate/${decisionId}`, {
+      const res = await apiFetch(`/api/jdt/simulate/${decisionId}`, {
         method: 'POST',
         headers,
       })

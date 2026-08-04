@@ -59,7 +59,10 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
 
     if (current && current.passwordVersion !== user.pwv) {
       res.clearCookie(COOKIE_NAME, { path: "/" });
-      res.status(401).json({ error: "Session expired or invalid. Please log in again." });
+      res.status(401).json({
+        error: "Your session was ended. Please log in again.",
+        code: "SESSION_REVOKED",
+      });
       return;
     }
 

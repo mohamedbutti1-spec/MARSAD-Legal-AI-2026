@@ -4,6 +4,7 @@
  * Analytics nerve center: UAE-wide, by Ministry, by Emirate, by Organization.
  * Phase 43 · نظرية الشامسي™ · MARSAD NAIP v1.0
  */
+import { apiFetch } from '@/lib/api-fetch';
 import React, { useState, useMemo } from 'react';
 import { Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
@@ -145,7 +146,7 @@ function UaeWideTab({ headers }: { headers: Record<string, string> }) {
   const { data, isLoading } = useQuery<UaeStats>({
     queryKey: ['naip-stats-uae'],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.BASE_URL}api/naip/stats/uae`, { headers });
+      const res = await apiFetch(`${import.meta.env.BASE_URL}api/naip/stats/uae`, { headers });
       if (!res.ok) throw new Error('Failed to load UAE stats');
       return res.json();
     },
@@ -286,7 +287,7 @@ function GroupedTableTab({
   const { data, isLoading } = useQuery<GroupedData>({
     queryKey: ['naip-stats', endpoint],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.BASE_URL}api/naip/stats/${endpoint}`, { headers });
+      const res = await apiFetch(`${import.meta.env.BASE_URL}api/naip/stats/${endpoint}`, { headers });
       if (!res.ok) throw new Error(`Failed to load ${endpoint} stats`);
       return res.json();
     },

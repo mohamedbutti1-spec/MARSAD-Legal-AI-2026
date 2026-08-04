@@ -7,6 +7,7 @@
  */
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiFetch as libApiFetch } from '@/lib/api-fetch';
 import { Link } from 'wouter';
 import {
   BarChart3,
@@ -59,7 +60,7 @@ function apiFetch(method: string, path: string, body?: unknown) {
   const userId  = localStorage.getItem('userId')   || '1';
   const userOrg = localStorage.getItem('userOrg')  || '';
   const base = (import.meta.env.BASE_URL ?? '').replace(/\/$/, '');
-  return fetch(`${base}${path}`, {
+  return libApiFetch(`${base}${path}`, {
     method,
     headers: {
       'Content-Type': 'application/json',

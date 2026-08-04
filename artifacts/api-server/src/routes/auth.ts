@@ -213,7 +213,12 @@ router.post("/auth/guest-login", async (req, res): Promise<void> => {
 });
 
 // ── GET /api/auth/me ─────────────────────────────────────────────────────────
-router.get("/auth/me", (req, res): void => {
+// Unlike other protected routes, this endpoint is NOT behind the `authenticate`
+// middleware (it is the route that establishes whether a valid session exists).
+// It therefore performs its own password-version check so that a revoked JWT
+// (from a remote sign-out or admin password reset) is detected immediately on
+// page load, not only when the first downstream protected request fires.
+router.get("/auth/me", async (req, res): Promise<void> => {
   const cookies = req.cookies as Record<string, string> | undefined;
   const token = cookies?.[COOKIE_NAME];
 
@@ -234,9 +239,9 @@ router.get("/auth/me", (req, res): void => {
     return;
   }
 
+  let payload;
   try {
-    const payload = verifyToken(token);
-    res.json(payload);
+    payload = verifyToken(token);
   } catch (err) {
     logger.warn(
       { err: String(err), ua: req.headers["user-agent"]?.slice(0, 120) },
@@ -244,7 +249,33 @@ router.get("/auth/me", (req, res): void => {
     );
     res.clearCookie(COOKIE_NAME, { path: "/" });
     res.status(401).json({ error: "Session expired." });
+    return;
   }
+
+  // ── Password-reset session invalidation (mirrors authenticate.ts) ─────────
+  // Check the live password_version so a token issued before a reset/revoke is
+  // rejected here, before the UI settles on an "authenticated" state.
+  // If the row cannot be found (deleted account, synthetic ID), fall through
+  // and trust the JWT — consistent with the authenticate middleware policy.
+  try {
+    const [current] = await db
+      .select({ passwordVersion: usersTable.passwordVersion })
+      .from(usersTable)
+      .where(eq(usersTable.id, payload.userId));
+
+    if (current && current.passwordVersion !== payload.pwv) {
+      res.clearCookie(COOKIE_NAME, { path: "/" });
+      res.status(401).json({
+        error: "Your session was ended. Please log in again.",
+        code: "SESSION_REVOKED",
+      });
+      return;
+    }
+  } catch {
+    // DB lookup failure is non-fatal — fall through and trust the JWT
+  }
+
+  res.json(payload);
 });
 
 // ── GET /api/auth/sessions ───────────────────────────────────────────────────

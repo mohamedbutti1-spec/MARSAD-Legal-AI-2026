@@ -3,7 +3,7 @@ import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Lock, User, AlertCircle, ChevronDown, Eye } from 'lucide-react';
+import { Lock, User, AlertCircle, ChevronDown, Eye, ShieldOff } from 'lucide-react';
 import { useUserContext } from '@/lib/user-context';
 import { MarsadEmblem } from '@/components/icons/marsad-emblem';
 
@@ -57,7 +57,7 @@ const DEMO_ACCOUNTS = [
 
 export default function Login() {
   const [, navigate] = useLocation();
-  const { refreshSession } = useUserContext();
+  const { refreshSession, sessionRevoked } = useUserContext();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -150,6 +150,27 @@ export default function Login() {
             <span>⚖️ معايير مهنية</span>
           </div>
         </div>
+
+        {/* Session-revoked notice — shown when this device's session was ended
+            remotely (another device signed out, or an admin reset the password) */}
+        {sessionRevoked && (
+          <div className="mb-4 flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
+            <ShieldOff className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
+            <div>
+              <p className="text-sm font-semibold text-amber-600 dark:text-amber-400">
+                تم إنهاء جلستك — Session Ended
+              </p>
+              <p className="mt-0.5 text-xs text-amber-700/80 dark:text-amber-300/80" dir="rtl">
+                تم تسجيل خروجك تلقائياً لأن جلستك أُنهيت من جهاز آخر أو بواسطة المسؤول.
+                يرجى تسجيل الدخول مجدداً للمتابعة.
+              </p>
+              <p className="mt-1 text-xs text-amber-700/80 dark:text-amber-300/80">
+                You were signed out because your session was ended on another device or by an administrator.
+                Please log in again to continue.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Login card */}
         <div className="bg-card border border-border rounded-2xl shadow-xl p-8">

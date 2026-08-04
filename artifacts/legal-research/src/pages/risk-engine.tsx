@@ -5,6 +5,7 @@
  * Accessible to roles with canViewRiskDashboard = true.
  * M. Al-Shamsi Constitutional Framework™ · MARSAD NRME v1.0
  */
+import { apiFetch } from '@/lib/api-fetch';
 import React, { useState } from 'react';
 import { Link } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -175,7 +176,7 @@ export default function RiskEngine() {
   const { data, isLoading, isError, refetch, isFetching } = useQuery<DashboardData>({
     queryKey: ['risk-dashboard', role, userOrg],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.BASE_URL}api/risk/dashboard`, { headers });
+      const res = await apiFetch(`${import.meta.env.BASE_URL}api/risk/dashboard`, { headers });
       if (!res.ok) throw new Error(await res.text());
       return res.json();
     },

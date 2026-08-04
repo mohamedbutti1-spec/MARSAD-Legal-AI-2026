@@ -6,6 +6,7 @@
  *
  * MARSAD NAIP · Risk Officer Dashboard
  */
+import { apiFetch } from '@/lib/api-fetch';
 import React from 'react';
 import { Link, useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
@@ -142,7 +143,7 @@ export default function NaipRiskOfficer() {
   const { data, isLoading, isError } = useQuery<RiskOfficerData>({
     queryKey: ['naip-risk-officer', role, userOrg],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.BASE_URL}api/naip/executive-data/risk_officer`, { headers });
+      const res = await apiFetch(`${import.meta.env.BASE_URL}api/naip/executive-data/risk_officer`, { headers });
       if (!res.ok) throw new Error(await res.text());
       return res.json();
     },
@@ -153,7 +154,7 @@ export default function NaipRiskOfficer() {
   const { data: kpiData } = useQuery<KpiData>({
     queryKey: ['naip-kpi', role, userOrg],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.BASE_URL}api/naip/kpi`, { headers });
+      const res = await apiFetch(`${import.meta.env.BASE_URL}api/naip/kpi`, { headers });
       if (!res.ok) throw new Error(await res.text());
       return res.json();
     },

@@ -3,6 +3,7 @@
  * Constitutional administrative decision creation — 11 sequential legal stages.
  * M. Al-Shamsi Framework™ · MARSAD Constitutional Standard v1.0
  */
+import { apiFetch as libApiFetch } from '@/lib/api-fetch';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useLocation } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -1391,7 +1392,9 @@ const JURISDICTION_LABELS: Record<string, string> = {
 
 function apiFetch(method: string, path: string, body?: unknown) {
   const role = localStorage.getItem('userRole') || 'owner';
-  return fetch(path, {
+  // Route through the shared libApiFetch so that SESSION_REVOKED 401 responses
+  // are intercepted by the global auth-error handler in UserProvider.
+  return libApiFetch(path, {
     method,
     headers: { 'Content-Type': 'application/json', 'X-User-Role': role },
     body: body != null ? JSON.stringify(body) : undefined,
@@ -1977,7 +1980,7 @@ function CilWarningsPanel({ decisionId }: { decisionId: number }) {
   const { data, isLoading } = useQuery({
     queryKey: ['cil-warnings-workspace', decisionId],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.BASE_URL}api/cil/warnings/${decisionId}`, { headers });
+      const res = await libApiFetch(`${import.meta.env.BASE_URL}api/cil/warnings/${decisionId}`, { headers });
       if (!res.ok) return null;
       return res.json();
     },
@@ -2191,7 +2194,7 @@ export default function DecisionWorkspace() {
       const role = localStorage.getItem('userRole') || 'owner';
       const org  = localStorage.getItem('userOrg')  || '';
       const userId = localStorage.getItem('userId') || '1';
-      const res = await fetch(`/api/decisions/${decisionId}/adp/export`, {
+      const res = await libApiFetch(`/api/decisions/${decisionId}/adp/export`, {
         method: 'GET',
         headers: {
           'X-User-Role': role,

@@ -7,6 +7,7 @@ import { Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useUserContext } from '@/lib/user-context';
+import { apiFetch as libApiFetch } from '@/lib/api-fetch';
 import {
   Plus, FileText, Clock, CheckCircle2, XCircle, AlertTriangle,
   ChevronLeft, Scale, CalendarDays, Building2,
@@ -89,7 +90,7 @@ const STATUS_CONFIG: Record<string, { label: string; icon: React.ReactNode; clas
 
 function apiFetch(path: string) {
   const role = localStorage.getItem('userRole') || 'owner';
-  return fetch(path, { headers: { 'X-User-Role': role } }).then(async (r) => {
+  return libApiFetch(path, { headers: { 'X-User-Role': role } }).then(async (r) => {
     if (!r.ok) throw new Error(await r.text());
     return r.json();
   });

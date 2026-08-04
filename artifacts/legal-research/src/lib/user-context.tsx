@@ -17,6 +17,7 @@ import {
   ROLE_META,
   getPermissions,
 } from '@/lib/permissions';
+import { setAuthErrorHandler } from '@/lib/api-fetch';
 
 export type { UserRole, GovernanceRole };
 export type AppLanguage = 'ar' | 'en';
@@ -35,6 +36,12 @@ export interface UserContextType {
   isAuthenticated: boolean;
   /** True when the user logged in with an admin-issued temporary password and must set their own before continuing */
   mustChangePassword: boolean;
+  /**
+   * True when the session was explicitly revoked from another device or by an
+   * admin password reset. Used to show a targeted "signed out remotely" message
+   * on the login screen instead of a generic unauthenticated state.
+   */
+  sessionRevoked: boolean;
   role: UserRole;
   userId: number;
   /** Organisation string for org-scoped roles; '' for others */
@@ -80,19 +87,40 @@ export interface UserContextType {
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
 
-async function fetchSession(): Promise<SessionPayload | null> {
+interface FetchSessionResult {
+  payload: SessionPayload | null;
+  revoked: boolean;
+}
+
+async function fetchSession(): Promise<FetchSessionResult> {
   try {
     const res = await fetch(`${BASE}/api/auth/me`, {
       credentials: 'include',
     });
-    if (!res.ok) return null;
-    return (await res.json()) as SessionPayload;
+    if (!res.ok) {
+      // Check whether the server explicitly revoked this session (password
+      // version mismatch) vs. a regular unauthenticated / expired token.
+      if (res.status === 401) {
+        try {
+          const body = await res.json() as { code?: string };
+          if (body.code === 'SESSION_REVOKED') {
+            return { payload: null, revoked: true };
+          }
+        } catch { /* non-JSON 401 */ }
+      }
+      return { payload: null, revoked: false };
+    }
+    return { payload: (await res.json()) as SessionPayload, revoked: false };
   } catch {
-    return null;
+    return { payload: null, revoked: false };
   }
 }
 
-function buildContext(session: SessionPayload | null, lang: AppLanguage): UserContextType {
+function buildContext(
+  session: SessionPayload | null,
+  lang: AppLanguage,
+  sessionRevoked = false,
+): UserContextType {
   const role = (
     session && ALL_ROLES.includes(session.role as UserRole) ? session.role : 'citizen'
   ) as UserRole;
@@ -106,6 +134,7 @@ function buildContext(session: SessionPayload | null, lang: AppLanguage): UserCo
     isLoaded: true,
     isAuthenticated: session !== null,
     mustChangePassword: session?.mustChangePassword ?? false,
+    sessionRevoked,
     role,
     userId,
     userOrg,
@@ -145,19 +174,35 @@ const DEFAULT_LANG: AppLanguage = 'ar';
 const UserContext = createContext<UserContextType>({
   ...buildContext(null, DEFAULT_LANG),
   isLoaded: false,
+  sessionRevoked: false,
 });
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession]     = useState<SessionPayload | null>(null);
-  const [isLoaded, setIsLoaded]   = useState(false);
-  const [lang, setLangState]      = useState<AppLanguage>(() => {
+  const [session, setSession]         = useState<SessionPayload | null>(null);
+  const [isLoaded, setIsLoaded]       = useState(false);
+  const [sessionRevoked, setSessionRevoked] = useState(false);
+  const [lang, setLangState]          = useState<AppLanguage>(() => {
     const saved = localStorage.getItem('appLang') as AppLanguage | null;
     return saved === 'ar' || saved === 'en' ? saved : DEFAULT_LANG;
   });
 
+  // Register a global interceptor so any apiFetch() call that receives a
+  // SESSION_REVOKED 401 immediately clears the session and sets the revoked
+  // flag. This covers mid-session revocations without waiting for the next
+  // explicit refreshSession() call.
+  useEffect(() => {
+    setAuthErrorHandler((code) => {
+      if (code === 'SESSION_REVOKED') {
+        setSessionRevoked(true);
+        setSession(null);
+      }
+    });
+  }, []);
+
   const loadSession = useCallback(async () => {
-    const payload = await fetchSession();
+    const { payload, revoked } = await fetchSession();
     setSession(payload);
+    if (revoked) setSessionRevoked(true);
     setIsLoaded(true);
   }, []);
 
@@ -176,12 +221,18 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refreshSession = useCallback(async () => {
-    const payload = await fetchSession();
+    const { payload, revoked } = await fetchSession();
     setSession(payload);
+    if (revoked) {
+      setSessionRevoked(true);
+    } else if (payload) {
+      // A successful re-auth (e.g. user logs back in) clears the revoked flag
+      setSessionRevoked(false);
+    }
   }, []);
 
   const value: UserContextType = {
-    ...buildContext(session, lang),
+    ...buildContext(session, lang, sessionRevoked),
     isLoaded,
     setLang,
     refreshSession,

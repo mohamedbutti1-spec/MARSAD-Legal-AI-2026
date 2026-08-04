@@ -7,6 +7,7 @@
 import React, { useState } from 'react';
 import { useLocation } from 'wouter';
 import { useUserContext } from '@/lib/user-context';
+import { apiFetch } from '@/lib/api-fetch';
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
 
@@ -51,9 +52,8 @@ export function BetaFeedbackWidget() {
     setSub(true);
     setError('');
     try {
-      const res = await fetch(`${BASE}/api/beta/feedback`, {
+      const res = await apiFetch(`${BASE}/api/beta/feedback`, {
         method:      'POST',
-        credentials: 'include',
         headers:     { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           pagePath:    location,
@@ -231,7 +231,7 @@ export function BetaFeedbackWidget() {
                       href="#"
                       onClick={async e => {
                         e.preventDefault();
-                        const r = await fetch(`${BASE}/api/beta/feedback/stats`, { credentials: 'include' });
+                        const r = await apiFetch(`${BASE}/api/beta/feedback/stats`);
                         const d = await r.json() as { total: number; bySeverity: { severity: string; count: number }[] };
                         alert(
                           `Total: ${d.total}\n` +

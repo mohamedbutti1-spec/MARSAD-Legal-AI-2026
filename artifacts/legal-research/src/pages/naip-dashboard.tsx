@@ -4,6 +4,7 @@
  * Executive overview of all NAIP modules and national KPIs.
  * Phase 43 · نظرية الشامسي™ · MARSAD NAIP v1.0
  */
+import { apiFetch } from '@/lib/api-fetch';
 import React from 'react';
 import { Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
@@ -185,7 +186,7 @@ export default function NaipDashboard() {
   const { data: kpi, isLoading } = useQuery<NaipKpi>({
     queryKey: ['naip-kpi'],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.BASE_URL}api/naip/kpi`, { headers });
+      const res = await apiFetch(`${import.meta.env.BASE_URL}api/naip/kpi`, { headers });
       if (!res.ok) throw new Error('Failed to load NAIP KPI');
       return res.json();
     },

@@ -4,6 +4,7 @@
  * Unified search across all NAIP platform domains.
  * Phase 43 · نظرية الشامسي™ · MARSAD NAIP v1.0
  */
+import { apiFetch } from '@/lib/api-fetch';
 import React, { useState, useRef, useCallback } from 'react';
 import { Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
@@ -208,7 +209,7 @@ export default function NaipSearch() {
     queryKey: ['naip-search', submittedQuery, domain],
     queryFn: async () => {
       const params = new URLSearchParams({ q: submittedQuery, domain });
-      const res = await fetch(`${import.meta.env.BASE_URL}api/naip/global-search?${params}`, { headers });
+      const res = await apiFetch(`${import.meta.env.BASE_URL}api/naip/global-search?${params}`, { headers });
       if (!res.ok) throw new Error('Search failed');
       return res.json();
     },

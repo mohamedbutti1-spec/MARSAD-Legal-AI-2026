@@ -5,6 +5,7 @@
  *
  * MARSAD NAIP · Director General Dashboard
  */
+import { apiFetch } from '@/lib/api-fetch';
 import React from 'react';
 import { Link, useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
@@ -141,7 +142,7 @@ export default function NaipDirectorGeneral() {
   const { data, isLoading, isError } = useQuery<DgData>({
     queryKey: ['naip-director-general', role, userOrg],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.BASE_URL}api/naip/executive-data/director_general`, { headers });
+      const res = await apiFetch(`${import.meta.env.BASE_URL}api/naip/executive-data/director_general`, { headers });
       if (!res.ok) throw new Error(await res.text());
       return res.json();
     },
@@ -152,7 +153,7 @@ export default function NaipDirectorGeneral() {
   const { data: orgStats } = useQuery<OrgStatsData>({
     queryKey: ['naip-org-stats', role, userOrg],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.BASE_URL}api/naip/stats/org`, { headers });
+      const res = await apiFetch(`${import.meta.env.BASE_URL}api/naip/stats/org`, { headers });
       if (!res.ok) throw new Error(await res.text());
       return res.json();
     },

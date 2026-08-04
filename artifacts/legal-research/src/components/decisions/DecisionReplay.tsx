@@ -6,6 +6,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useUserContext } from '@/lib/user-context';
+import { apiFetch as libApiFetch } from '@/lib/api-fetch';
 import {
   Play, ChevronUp, ChevronDown, Check, Clock, AlertTriangle,
   Shield, FileText, Users, Scale, Sparkles, Hash, Link2,
@@ -55,7 +56,9 @@ interface ReplayTimeline {
 
 function apiFetch(path: string) {
   const role = localStorage.getItem('userRole') || 'owner';
-  return fetch(path, {
+  // Route through libApiFetch so SESSION_REVOKED 401 responses are intercepted
+  // by the global auth-error handler and immediately surface the login screen.
+  return libApiFetch(path, {
     headers: { 'Content-Type': 'application/json', 'X-User-Role': role },
   }).then(async (r) => {
     if (!r.ok) {

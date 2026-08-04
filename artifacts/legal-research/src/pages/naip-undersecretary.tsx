@@ -5,6 +5,7 @@
  *
  * MARSAD NAIP · Undersecretary Dashboard
  */
+import { apiFetch } from '@/lib/api-fetch';
 import React from 'react';
 import { Link, useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
@@ -150,7 +151,7 @@ export default function NaipUndersecretary() {
   const { data, isLoading, isError } = useQuery<UndersecretaryData>({
     queryKey: ['naip-undersecretary', role, userOrg],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.BASE_URL}api/naip/executive-data/undersecretary`, { headers });
+      const res = await apiFetch(`${import.meta.env.BASE_URL}api/naip/executive-data/undersecretary`, { headers });
       if (!res.ok) throw new Error(await res.text());
       return res.json();
     },
@@ -161,7 +162,7 @@ export default function NaipUndersecretary() {
   const { data: overview } = useQuery<OverviewData>({
     queryKey: ['naip-overview', role, userOrg],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.BASE_URL}api/naip/overview`, { headers });
+      const res = await apiFetch(`${import.meta.env.BASE_URL}api/naip/overview`, { headers });
       if (!res.ok) throw new Error(await res.text());
       return res.json();
     },

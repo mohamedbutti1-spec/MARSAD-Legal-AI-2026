@@ -6,6 +6,7 @@
  *
  * MARSAD NAIP · Minister Executive Dashboard
  */
+import { apiFetch } from '@/lib/api-fetch';
 import React from 'react';
 import { Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
@@ -143,7 +144,7 @@ export default function NaipMinister() {
   const { data, isLoading, isError } = useQuery<MinisterData>({
     queryKey: ['naip-minister', role, userOrg],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.BASE_URL}api/naip/executive-data/minister`, { headers });
+      const res = await apiFetch(`${import.meta.env.BASE_URL}api/naip/executive-data/minister`, { headers });
       if (!res.ok) throw new Error(await res.text());
       return res.json();
     },
@@ -154,7 +155,7 @@ export default function NaipMinister() {
   const { data: overview } = useQuery<OverviewData>({
     queryKey: ['naip-overview', role, userOrg],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.BASE_URL}api/naip/overview`, { headers });
+      const res = await apiFetch(`${import.meta.env.BASE_URL}api/naip/overview`, { headers });
       if (!res.ok) throw new Error(await res.text());
       return res.json();
     },

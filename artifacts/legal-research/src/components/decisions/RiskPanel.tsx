@@ -11,6 +11,7 @@ import {
   Plus, Trash2, ShieldAlert, Scale, Target, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import { useUserContext } from '@/lib/user-context';
+import { apiFetch as libApiFetch } from '@/lib/api-fetch';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -153,7 +154,7 @@ export function RiskPanel({ decisionId }: { decisionId: number }) {
   const { data, isLoading, isError, refetch } = useQuery<RiskData>({
     queryKey: ['risk-assessment', decisionId],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.BASE_URL}api/risk/assessment/${decisionId}`, { headers });
+      const res = await libApiFetch(`${import.meta.env.BASE_URL}api/risk/assessment/${decisionId}`, { headers });
       if (!res.ok) throw new Error(await res.text());
       return res.json();
     },
@@ -165,7 +166,7 @@ export function RiskPanel({ decisionId }: { decisionId: number }) {
 
   const recalcMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`${import.meta.env.BASE_URL}api/risk/assessment/${decisionId}/recalculate`, {
+      const res = await libApiFetch(`${import.meta.env.BASE_URL}api/risk/assessment/${decisionId}/recalculate`, {
         method: 'POST',
         headers,
       });
@@ -179,7 +180,7 @@ export function RiskPanel({ decisionId }: { decisionId: number }) {
 
   const deleteTreatmentMutation = useMutation({
     mutationFn: async (treatmentId: number) => {
-      const res = await fetch(`${import.meta.env.BASE_URL}api/risk/treatment/${treatmentId}`, {
+      const res = await libApiFetch(`${import.meta.env.BASE_URL}api/risk/treatment/${treatmentId}`, {
         method: 'DELETE',
         headers,
       });
@@ -196,7 +197,7 @@ export function RiskPanel({ decisionId }: { decisionId: number }) {
 
   const addTreatmentMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`${import.meta.env.BASE_URL}api/risk/treatment`, {
+      const res = await libApiFetch(`${import.meta.env.BASE_URL}api/risk/treatment`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ decisionId, ...treatmentForm }),

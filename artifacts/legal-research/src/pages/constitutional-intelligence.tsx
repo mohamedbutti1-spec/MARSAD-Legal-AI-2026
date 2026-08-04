@@ -7,6 +7,7 @@
  *
  * Al-Shamsi Constitutional Intelligence Layer™ · MARSAD CIL v42.0
  */
+import { apiFetch } from '@/lib/api-fetch';
 import React, { useState } from 'react';
 import { Link } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -399,7 +400,7 @@ function DecisionAssessmentView({
   const { data: assessData, isLoading } = useQuery({
     queryKey: ['cil-assessment', decisionId],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.BASE_URL}api/cil/assess/${decisionId}`, { headers });
+      const res = await apiFetch(`${import.meta.env.BASE_URL}api/cil/assess/${decisionId}`, { headers });
       if (!res.ok) throw new Error('Failed to fetch assessment');
       return res.json() as Promise<{ assessment: ConstitutionalAssessment | null; status: string }>;
     },
@@ -409,7 +410,7 @@ function DecisionAssessmentView({
   const { data: warningsData } = useQuery({
     queryKey: ['cil-warnings', decisionId],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.BASE_URL}api/cil/warnings/${decisionId}`, { headers });
+      const res = await apiFetch(`${import.meta.env.BASE_URL}api/cil/warnings/${decisionId}`, { headers });
       if (!res.ok) throw new Error('Failed to fetch warnings');
       return res.json();
     },
@@ -418,7 +419,7 @@ function DecisionAssessmentView({
 
   const triggerMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`${import.meta.env.BASE_URL}api/cil/assess/${decisionId}`, {
+      const res = await apiFetch(`${import.meta.env.BASE_URL}api/cil/assess/${decisionId}`, {
         method: 'POST', headers,
       });
       if (!res.ok) throw new Error('Failed to trigger assessment');
@@ -429,7 +430,7 @@ function DecisionAssessmentView({
 
   const acknowledgeMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`${import.meta.env.BASE_URL}api/cil/assess/${decisionId}/acknowledge`, {
+      const res = await apiFetch(`${import.meta.env.BASE_URL}api/cil/assess/${decisionId}/acknowledge`, {
         method: 'POST', headers,
       });
       if (!res.ok) throw new Error('Failed to acknowledge');
@@ -715,7 +716,7 @@ export default function ConstitutionalIntelligence() {
   const { data: dashStats, isLoading: statsLoading } = useQuery({
     queryKey: ['cil-dashboard'],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.BASE_URL}api/cil/dashboard`, { headers });
+      const res = await apiFetch(`${import.meta.env.BASE_URL}api/cil/dashboard`, { headers });
       if (!res.ok) throw new Error('Failed to load CIL dashboard');
       return res.json() as Promise<DashboardStats>;
     },
@@ -726,7 +727,7 @@ export default function ConstitutionalIntelligence() {
   const { data: decisionsData, isLoading: decisionsLoading } = useQuery({
     queryKey: ['cil-decisions'],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.BASE_URL}api/cil/decisions`, { headers });
+      const res = await apiFetch(`${import.meta.env.BASE_URL}api/cil/decisions`, { headers });
       if (!res.ok) throw new Error('Failed to load decisions');
       return res.json() as Promise<{ decisions: DecisionRow[]; total: number }>;
     },

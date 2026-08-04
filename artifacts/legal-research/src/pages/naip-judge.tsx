@@ -6,6 +6,7 @@
  *
  * MARSAD NAIP · Judge Dashboard
  */
+import { apiFetch } from '@/lib/api-fetch';
 import React from 'react';
 import { Link, useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
@@ -219,7 +220,7 @@ export default function NaipJudge() {
   const { data, isLoading, isError } = useQuery<JudgeData>({
     queryKey: ['naip-judge', role, userOrg],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.BASE_URL}api/naip/executive-data/judge`, { headers });
+      const res = await apiFetch(`${import.meta.env.BASE_URL}api/naip/executive-data/judge`, { headers });
       if (!res.ok) throw new Error(await res.text());
       return res.json();
     },
@@ -230,7 +231,7 @@ export default function NaipJudge() {
   const { data: kpiData } = useQuery<KpiData>({
     queryKey: ['naip-kpi', role, userOrg],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.BASE_URL}api/naip/kpi`, { headers });
+      const res = await apiFetch(`${import.meta.env.BASE_URL}api/naip/kpi`, { headers });
       if (!res.ok) throw new Error(await res.text());
       return res.json();
     },
