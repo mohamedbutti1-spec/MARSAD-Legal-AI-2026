@@ -86,10 +86,13 @@ export default function JourneyHome() {
         {canUseShamsiFramework && (
         <section>
           <SectionTitle>نظرية الشامسي — الميزان الأساسي في القرارات الذكية</SectionTitle>
-          <div className="moj-card rounded-xl border border-border p-5 sm:p-6 relative overflow-hidden">
-            <span className="absolute top-3 left-3 inline-flex items-center gap-1 text-[10px] font-bold text-gold bg-gold/10 px-2 py-1 rounded-full">
-              <Lock className="w-3 h-3" /> خاص — للمصرح لهم فقط
-            </span>
+          <div className="moj-card rounded-xl border border-border p-5 sm:p-6">
+            {/* شارة الصلاحية — أعلى البطاقة جهة اليمين، ضمن التدفق الطبيعي لمنع التداخل */}
+            <div className="flex justify-end mb-3">
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-gold bg-gold/10 px-2.5 py-1 rounded-full border border-gold/20">
+                <Lock className="w-3 h-3" /> خاص — للمصرح لهم فقط
+              </span>
+            </div>
             <p className="text-sm text-muted-foreground leading-relaxed mb-5 max-w-3xl">
               نظرية الشامسي — الميزان العلمي الذي يُقيّم مدى مشروعية القرار الإداري الرقمي الذكي وفق سبعة
               أركان أساسية لضمان العدالة التقنية والشفافية والمساءلة القانونية.
