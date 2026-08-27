@@ -1,13 +1,15 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useUserContext } from '@/lib/user-context';
+import { apiFetch } from '@/lib/api-fetch';
 import {
   BrainCircuit,
   ChevronLeft,
   FileSearch,
   FileText,
   Gauge,
+  Loader2,
   Lock,
   Scale,
   Search,
@@ -127,22 +129,107 @@ function StepHeader({ number, title, subtitle }: { number: number; title: string
   );
 }
 
+function choiceLabel(items: Choice[], id: string) {
+  return items.find((item) => item.id === id)?.label ?? id;
+}
+
 export default function JourneyHome() {
-  const { canUseShamsiFramework } = useUserContext();
+  const { canUseShamsiFramework, canUpload } = useUserContext();
   const [, navigate] = useLocation();
   const [jurisdiction, setJurisdiction] = useState('uae');
   const [answerMode, setAnswerMode] = useState('analysis');
   const [framework, setFramework] = useState(canUseShamsiFramework ? 'shamsi' : 'uae');
   const [service, setService] = useState('decision');
   const [output, setOutput] = useState('analysis');
-  const [attachmentName, setAttachmentName] = useState('');
+  const [taskText, setTaskText] = useState('');
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const [starting, setStarting] = useState(false);
+  const [startError, setStartError] = useState('');
 
-  const startHref = useMemo(() => {
-    const params = new URLSearchParams({ jurisdiction, mode: answerMode, framework, output });
-    if (service === 'decision') return `/decisions/new?${params.toString()}`;
-    if (service === 'memo') return `/assistant?service=memo&${params.toString()}`;
-    return `/assistant?service=consultation&${params.toString()}`;
-  }, [jurisdiction, answerMode, framework, output, service]);
+  async function startAnalysis() {
+    const trimmedTask = taskText.trim();
+    if (!trimmedTask) {
+      setStartError('اكتب السؤال أو صف القرار/الواقعة أولاً.');
+      return;
+    }
+
+    setStarting(true);
+    setStartError('');
+    let uploadedDocument: { id?: number; title?: string; filename?: string } | null = null;
+
+    try {
+      if (attachment) {
+        if (!canUpload) {
+          throw new Error('حسابك لا يملك صلاحية رفع الملفات إلى مكتبة مرصد.');
+        }
+        const formData = new FormData();
+        formData.append('file', attachment);
+        formData.append('category', 'marsad');
+        const uploadRes = await apiFetch('/api/documents/upload', { method: 'POST', body: formData });
+        if (!uploadRes.ok) {
+          const data = await uploadRes.json().catch(() => ({}));
+          throw new Error(data?.error || 'تعذر رفع المستند إلى مكتبة مرصد.');
+        }
+        uploadedDocument = await uploadRes.json().catch(() => ({ filename: attachment.name }));
+      }
+
+      const legalReference = framework === 'shamsi'
+        ? 'shamsi'
+        : jurisdiction === 'france'
+          ? 'france'
+          : jurisdiction === 'comparative'
+            ? 'comparative'
+            : 'uae';
+
+      const answerStyle = answerMode === 'quick' ? 'quick' : answerMode === 'analysis' ? 'detailed' : 'standard';
+      const config = {
+        userCategory: 'general_user',
+        userType: 'unspecified',
+        answerStyle,
+        legalReference,
+        legalBranch: 'admin',
+        trainingMode: false,
+      };
+
+      const documentName = uploadedDocument?.title || uploadedDocument?.filename || attachment?.name || '';
+      const prompt = [
+        'مهمة جديدة من واجهة مرصد الموحدة.',
+        `الخدمة: ${choiceLabel(SERVICES, service)}.`,
+        `المرجعية القانونية: ${choiceLabel(JURISDICTIONS, jurisdiction)}.`,
+        `إطار التحليل: ${choiceLabel(FRAMEWORKS, framework)}.`,
+        `أسلوب الإجابة: ${choiceLabel(ANSWER_MODES, answerMode)}.`,
+        `المخرج المطلوب: ${choiceLabel(OUTPUTS, output)}.`,
+        framework === 'shamsi'
+          ? 'طبّق نظرية الشامسي بصيغتها المعتمدة: اختبار العناصر السبعة، سلم المساهمة الأربع، X/Y/S، مبدأ التناسب الرقابي، وسجل تكوين القرار، مع عدم افتراض إرادة قانونية للآلة أو ركن سادس.'
+          : '',
+        service === 'decision'
+          ? 'نفّذ MARSAD Intelligence ثم MARSAD Audit ثم MARSAD Score: حلّل القرار، دقّق المشروعية والإجراءات والتفسير والتوثيق، ثم قدّر مستوى المساهمة الخوارزمية والرقابة المطلوبة.'
+          : service === 'memo'
+            ? 'ابنِ المذكرة على وقائع واضحة، مسائل قانونية، تحليل معلل، مراجع، ثم نتيجة وتوصيات.'
+            : 'قدّم استشارة عملية معللة مع البدائل والمخاطر والخطوة التالية.',
+        documentName ? `تم رفع مستند إلى مكتبة مرصد باسم: ${documentName}. استخدمه ضمن التحليل متى كان متاحاً في سياق المستندات.` : '',
+        '',
+        'نص المستخدم:',
+        trimmedTask,
+      ].filter(Boolean).join('\n');
+
+      sessionStorage.setItem('pendingAssistantQuery', prompt);
+      sessionStorage.setItem('pendingAssistantConfig', JSON.stringify(config));
+      sessionStorage.setItem('marsadUnifiedTask', JSON.stringify({
+        jurisdiction,
+        answerMode,
+        framework,
+        service,
+        output,
+        documentName,
+      }));
+      navigate('/assistant');
+    } catch (error) {
+      setStartError(error instanceof Error ? error.message : 'تعذر بدء التحليل.');
+    } finally {
+      setStarting(false);
+    }
+  }
 
   return (
     <AppLayout>
@@ -178,7 +265,7 @@ export default function JourneyHome() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-border/60 pb-4">
             <div>
               <h2 className="text-xl font-black text-heading">ابدأ مهمة جديدة</h2>
-              <p className="text-xs text-muted-foreground mt-1">اختر العناصر التالية ثم ابدأ التحليل. لا تحتاج إلى التنقل بين صفحات كثيرة.</p>
+              <p className="text-xs text-muted-foreground mt-1">اختر العناصر التالية ثم ابدأ التحليل. تنتقل الخيارات تلقائياً إلى محرك مرصد.</p>
             </div>
             <Link href="/search">
               <span className="inline-flex items-center gap-2 text-xs font-bold text-gold cursor-pointer hover:underline">
@@ -241,25 +328,36 @@ export default function JourneyHome() {
           </div>
 
           <div>
-            <StepHeader number={5} title="أرفق مستندًا عند الحاجة" subtitle="قرار، مذكرة، تقرير، أو مستند داعم" />
+            <StepHeader number={5} title="اكتب السؤال أو صف القرار" subtitle="هذا النص هو الذي سيبدأ به محرك مرصد المهمة" />
+            <textarea
+              value={taskText}
+              onChange={(event) => {
+                setTaskText(event.target.value);
+                if (startError) setStartError('');
+              }}
+              rows={5}
+              placeholder="مثال: لدي قرار إداري استُخدم في إعداده نظام ذكاء اصطناعي لترتيب المرشحين، وأريد فحص مشروعيته ومدى كفاية التدخل البشري..."
+              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm leading-7 outline-none focus:border-gold/60 focus:ring-2 focus:ring-gold/10 resize-y"
+            />
+          </div>
+
+          <div>
+            <StepHeader number={6} title="أرفق مستندًا واختر المخرج" subtitle="يرفع المستند فعلياً إلى مكتبة مرصد قبل بدء المهمة، إذا كانت لديك صلاحية الرفع" />
             <label className="rounded-xl border border-dashed border-gold/30 bg-gold/5 p-5 flex flex-col sm:flex-row items-center justify-center gap-3 cursor-pointer hover:bg-gold/10 transition-colors text-center sm:text-right">
               <UploadCloud className="w-6 h-6 text-gold" aria-hidden />
               <div>
-                <p className="text-sm font-bold text-heading">{attachmentName || 'اختر ملفًا من جهازك'}</p>
-                <p className="text-[11px] text-muted-foreground mt-1">يمكن البدء بدون مرفق، وإضافة الملف لاحقًا داخل مساحة العمل.</p>
+                <p className="text-sm font-bold text-heading">{attachment?.name || 'اختر ملفًا من جهازك — اختياري'}</p>
+                <p className="text-[11px] text-muted-foreground mt-1">PDF أو DOCX أو TXT. سيُصنّف تلقائياً ضمن ملفات مرصد.</p>
               </div>
               <input
                 type="file"
                 className="hidden"
-                accept=".pdf,.doc,.docx,.txt"
-                onChange={(event) => setAttachmentName(event.target.files?.[0]?.name ?? '')}
+                accept=".pdf,.docx,.txt"
+                onChange={(event) => setAttachment(event.target.files?.[0] ?? null)}
               />
             </label>
-          </div>
 
-          <div>
-            <StepHeader number={6} title="اختر المخرج" subtitle="حدد الشكل النهائي الذي تريد الوصول إليه" />
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 mt-3">
               {OUTPUTS.map((item) => (
                 <button
                   key={item.id}
@@ -275,24 +373,31 @@ export default function JourneyHome() {
             </div>
           </div>
 
+          {startError && (
+            <div className="rounded-xl border border-destructive/25 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+              {startError}
+            </div>
+          )}
+
           <div className="rounded-2xl border border-gold/25 bg-gold/5 p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex gap-3 items-start">
               <Scale className="w-6 h-6 text-gold shrink-0" aria-hidden />
               <div>
                 <p className="font-extrabold text-heading">جاهز للبدء</p>
                 <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                  سيحافظ مرصد على الفصل بين كفاءة الذكاء الاصطناعي والإسناد القانوني للإدارة، مع رفع مستوى الرقابة بقدر أثر المساهمة الخوارزمية.
+                  عند فحص القرار ينفذ مرصد Intelligence ثم Audit ثم Score، مع إبقاء الإسناد القانوني للإدارة ورفع الرقابة بقدر أثر المساهمة الخوارزمية.
                 </p>
               </div>
             </div>
             <button
               type="button"
-              onClick={() => navigate(startHref)}
-              className="gold-hover-glow inline-flex items-center justify-center gap-2 rounded-xl bg-gold text-background px-6 py-3 text-sm font-black hover:opacity-90 transition-all shrink-0"
+              disabled={starting}
+              onClick={startAnalysis}
+              className="gold-hover-glow inline-flex items-center justify-center gap-2 rounded-xl bg-gold text-background px-6 py-3 text-sm font-black hover:opacity-90 transition-all shrink-0 disabled:opacity-60"
             >
-              <FileSearch className="w-4 h-4" aria-hidden />
-              ابدأ التحليل
-              <ChevronLeft className="w-4 h-4" aria-hidden />
+              {starting ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden /> : <FileSearch className="w-4 h-4" aria-hidden />}
+              {starting ? 'جارٍ تجهيز المهمة' : 'ابدأ التحليل'}
+              {!starting && <ChevronLeft className="w-4 h-4" aria-hidden />}
             </button>
           </div>
         </section>
