@@ -1,1015 +1,182 @@
-/**
- * نظرية الشامسي — Al-Shamsi Theory
- * Official scientific reference page for the Marsad platform.
- * Premium institutional-grade knowledge portal, Arabic-first, fully RTL.
- */
-import React, { useState, useRef } from 'react';
-import { motion, useInView, AnimatePresence, type Variants } from 'framer-motion';
+import React from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import {
-  Building2, FileQuestion, FileText, ListChecks, Target, Flag,
-  ShieldCheck, Scale, Brain, Shield, Eye, BookCheck,
-  ChevronDown, AlertTriangle, Zap, Clock, Users, GitMerge,
-  BookOpen, Milestone, Star, Sparkles,
-  BarChart2, ScrollText, FlaskConical,
+  Activity,
+  Archive,
+  BrainCircuit,
+  FileClock,
+  Gauge,
+  GitBranch,
+  Scale,
+  ShieldCheck,
+  UserCheck,
 } from 'lucide-react';
 
-// ─── Shared animation primitives ─────────────────────────────────────────────
-
-const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 36 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.65, ease: 'easeOut' as const } },
-};
-
-const stagger: Variants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.08 } },
-};
-
-function Section({
-  children,
-  className = '',
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: '-60px' });
-  return (
-    <motion.div
-      ref={ref}
-      variants={fadeUp}
-      initial="hidden"
-      animate={inView ? 'visible' : 'hidden'}
-      className={className}
-    >
-      {children}
-    </motion.div>
-  );
-}
-
-function SectionHeader({
-  badge,
-  titleAr,
-  subtitleAr,
-  light = false,
-}: {
-  badge: string;
-  titleAr: string;
-  subtitleAr?: string;
-  light?: boolean;
-}) {
-  return (
-    <div className="mb-10 text-center" dir="rtl">
-      <div
-        className={`inline-flex items-center gap-2 mb-3 px-4 py-1.5 rounded-full text-sm font-medium border ${
-          light
-            ? 'bg-white/10 border-white/20 text-white/80'
-            : 'bg-[#C9A84C]/10 border-[#C9A84C]/25 text-[#C9A84C]'
-        }`}
-      >
-        <div className={`w-1.5 h-1.5 rounded-full ${light ? 'bg-white/60' : 'bg-[#C9A84C]'}`} />
-        {badge}
-      </div>
-      <h2
-        className={`text-3xl lg:text-4xl font-black mb-3 tracking-tight ${
-          light ? 'text-white' : 'text-[#1B2A4A]'
-        }`}
-      >
-        {titleAr}
-      </h2>
-      {subtitleAr && (
-        <p
-          className={`max-w-2xl mx-auto leading-relaxed text-base ${
-            light ? 'text-white/70' : 'text-muted-foreground'
-          }`}
-        >
-          {subtitleAr}
-        </p>
-      )}
-      <div
-        className={`mt-5 mx-auto w-20 h-0.5 bg-gradient-to-l from-transparent to-transparent ${
-          light ? 'via-white/40' : 'via-[#C9A84C]'
-        }`}
-      />
-    </div>
-  );
-}
-
-// ─── 12 Dimensions data ───────────────────────────────────────────────────────
-
-const DIMENSIONS = [
-  {
-    id: 1,
-    nameAr: 'الاختصاص',
-    icon: Building2,
-    hue: 'blue',
-    descAr:
-      'صلاحية الجهة الإدارية لإصدار القرار في حدود اختصاصها القانوني والتنظيمي المحدد بموجب القانون الاتحادي أو المحلي.',
-    criteriaAr:
-      'يُقيَّم من خلال: سند التفويض القانوني، والتراتبية الإدارية، وحدود الاختصاص المكاني والموضوعي والزماني.',
-  },
-  {
-    id: 2,
-    nameAr: 'السبب',
-    icon: FileQuestion,
-    hue: 'violet',
-    descAr:
-      'الوقائع القانونية والمادية الثابتة التي تبرر إصدار القرار الإداري وتمثل ركيزته الموضوعية.',
-    criteriaAr:
-      'يُقيَّم من خلال: صحة الوقائع، وكفاية الأسباب الموجبة، وانتفاء عيب السبب بصوره المختلفة.',
-  },
-  {
-    id: 3,
-    nameAr: 'الشكل',
-    icon: FileText,
-    hue: 'sky',
-    descAr:
-      'الشكليات الإجرائية المطلوبة لصحة القرار من تسبيب إلزامي وكتابة رسمية وتوقيع معتمد وختم مؤسسي.',
-    criteriaAr:
-      'يُقيَّم من خلال: استيفاء نموذج القرار الرسمي، وصحة التوقيعات، والتسبيب الكافي والمفصل.',
-  },
-  {
-    id: 4,
-    nameAr: 'الإجراءات',
-    icon: ListChecks,
-    hue: 'teal',
-    descAr:
-      'المسار الإجرائي المتبع قبل وأثناء وبعد إصدار القرار بما يشمل الإخطار والتشاور والطعن.',
-    criteriaAr:
-      'يُقيَّم من خلال: مراحل الإجراء المسبق، ومدى إتاحة حق الدفاع، واستيفاء مواعيد الطعن الإداري.',
-  },
-  {
-    id: 5,
-    nameAr: 'المحل',
-    icon: Target,
-    hue: 'amber',
-    descAr:
-      'الأثر القانوني المباشر للقرار وانعكاسه على المراكز القانونية الذاتية للأشخاص المعنيين.',
-    criteriaAr:
-      'يُقيَّم من خلال: ممكنية التنفيذ، وعدم مخالفة النظام العام، وتحديد موضوع القرار بدقة كافية.',
-  },
-  {
-    id: 6,
-    nameAr: 'الغاية',
-    icon: Flag,
-    hue: 'rose',
-    descAr:
-      'الهدف المشروع الذي يسعى القرار إلى تحقيقه في إطار المصلحة العامة مع انتفاء عيب الانحراف.',
-    criteriaAr:
-      'يُقيَّم من خلال: التطابق مع المصلحة العامة المُعلنة، وانتفاء الغاية الشخصية أو الانتقامية.',
-  },
-  {
-    id: 7,
-    nameAr: 'المشروعية الرقمية',
-    icon: ShieldCheck,
-    hue: 'emerald',
-    descAr:
-      'مدى امتثال القرار المُنتج رقمياً أو بمساعدة الذكاء الاصطناعي للمعايير القانونية والأخلاقية الحاكمة.',
-    criteriaAr:
-      'يُقيَّم من خلال: الامتثال لمبادئ الذكاء الاصطناعي المسؤول، وقابلية التفسير، وانتفاء التحيز الخوارزمي.',
-  },
-  {
-    id: 8,
-    nameAr: 'الأثر القانوني',
-    icon: Scale,
-    hue: 'indigo',
-    descAr:
-      'تداعيات القرار على الحقوق والالتزامات والمراكز القانونية ومدى التناسب مع حجم التدخل الإداري.',
-    criteriaAr:
-      'يُقيَّم من خلال: التناسب مع المصلحة العامة، ومبدأ عدم الإضرار غير المبرر، وضمان التعويض العادل.',
-  },
-  {
-    id: 9,
-    nameAr: 'الإرادة الإدارية',
-    icon: Brain,
-    hue: 'purple',
-    descAr:
-      'قياس عنصر الإرادة البشرية الواعية في صنع القرار مقابل درجة الاعتماد على التوليد الرقمي الآلي.',
-    criteriaAr:
-      'يُقيَّم من خلال: نسبة مشاركة المسؤول البشري، ومراحل المراجعة الإنسانية، وتوثيق قرارات التجاوز.',
-  },
-  {
-    id: 10,
-    nameAr: 'الحماية القانونية',
-    icon: Shield,
-    hue: 'cyan',
-    descAr:
-      'مدى توافر ضمانات حماية الحقوق الأساسية للأشخاص المتأثرين بالقرار الإداري في كافة مراحله.',
-    criteriaAr:
-      'يُقيَّم من خلال: الإخطار المسبق، وحق الاطلاع على الأسباب، وإتاحة سبل التظلم الفعالة.',
-  },
-  {
-    id: 11,
-    nameAr: 'الرقابة القضائية',
-    icon: Eye,
-    hue: 'orange',
-    descAr:
-      'قابلية القرار للطعن القضائي ومعايير رقابة القضاء الإداري على مشروعيته وملاءمته.',
-    criteriaAr:
-      'يُقيَّم من خلال: توافر أسباب الإلغاء القضائي، ومدى قابلية مراجعة الخوارزمية، وتوثيق مسار الاستئناف.',
-  },
-  {
-    id: 12,
-    nameAr: 'الامتثال التشريعي',
-    icon: BookCheck,
-    hue: 'lime',
-    descAr:
-      'مدى توافق القرار مع منظومة التشريعات الوطنية والاتحادية والدولية المعمول بها في وقت إصداره.',
-    criteriaAr:
-      'يُقيَّم من خلال: المرجعية التشريعية المُستند إليها، وغياب التعارض مع قواعد دستورية أو آمرة.',
-  },
+const TEST_ELEMENTS = [
+  { id: 'function', label: 'الوظيفة الخوارزمية', desc: 'ما الدور الذي أدته المعالجة الخوارزمية داخل عملية تكوين القرار؟' },
+  { id: 'contribution', label: 'درجة المساهمة', desc: 'هل كانت المساهمة معلوماتية أم استشارية أم مؤثرة أم حاسمة/شبه آلية؟' },
+  { id: 'effect', label: 'الأثر في النتيجة', desc: 'إلى أي حد غيّرت المخرجات الخوارزمية مضمون القرار أو اتجاهه؟' },
+  { id: 'human', label: 'التدخل البشري', desc: 'هل كانت المراجعة البشرية حقيقية وواعية وقابلة لمخالفة مخرج النظام؟' },
+  { id: 'override', label: 'قابلية المخالفة', desc: 'هل يستطيع المسؤول البشري رفض التوصية الخوارزمية أو تعديلها فعليًا؟' },
+  { id: 'record', label: 'التوثيق والتفسير', desc: 'هل يمكن إعادة بناء مسار التكوين وبيان أسباب الاعتماد على المخرج الخوارزمي؟' },
+  { id: 'severity', label: 'جسامة الأثر', desc: 'ما مقدار الأثر القانوني أو الحقوقي أو الأمني الواقع على الشخص أو المصلحة العامة؟' },
 ];
 
-const HUE_CLASSES: Record<string, { bg: string; icon: string; ring: string; badge: string }> = {
-  blue:    { bg: 'bg-blue-50',    icon: 'text-blue-600',    ring: 'border-blue-200',   badge: 'bg-blue-100 text-blue-700' },
-  violet:  { bg: 'bg-violet-50',  icon: 'text-violet-600',  ring: 'border-violet-200', badge: 'bg-violet-100 text-violet-700' },
-  sky:     { bg: 'bg-sky-50',     icon: 'text-sky-600',     ring: 'border-sky-200',    badge: 'bg-sky-100 text-sky-700' },
-  teal:    { bg: 'bg-teal-50',    icon: 'text-teal-600',    ring: 'border-teal-200',   badge: 'bg-teal-100 text-teal-700' },
-  amber:   { bg: 'bg-gold/10',   icon: 'text-gold',   ring: 'border-gold/25',  badge: 'bg-gold/15 text-gold' },
-  rose:    { bg: 'bg-rose-50',    icon: 'text-rose-600',    ring: 'border-rose-200',   badge: 'bg-rose-100 text-rose-700' },
-  emerald: { bg: 'bg-emerald-50', icon: 'text-emerald-600', ring: 'border-emerald-200',badge: 'bg-emerald-100 text-emerald-700' },
-  indigo:  { bg: 'bg-indigo-50',  icon: 'text-indigo-600',  ring: 'border-indigo-200', badge: 'bg-indigo-100 text-indigo-700' },
-  purple:  { bg: 'bg-purple-50',  icon: 'text-purple-600',  ring: 'border-purple-200', badge: 'bg-purple-100 text-purple-700' },
-  cyan:    { bg: 'bg-cyan-50',    icon: 'text-cyan-600',    ring: 'border-cyan-200',   badge: 'bg-cyan-100 text-cyan-700' },
-  orange:  { bg: 'bg-gold/10',  icon: 'text-gold',  ring: 'border-gold/25', badge: 'bg-gold/15 text-gold' },
-  lime:    { bg: 'bg-lime-50',    icon: 'text-lime-600',    ring: 'border-lime-200',   badge: 'bg-lime-100 text-lime-700' },
-};
+const LEVELS = [
+  { level: '1', title: 'معلوماتية', desc: 'النظام يجمع أو يرتب أو يعرض معلومات دون ترجيح مؤثر في النتيجة.' },
+  { level: '2', title: 'استشارية', desc: 'النظام يقدم توصية أو توقعًا، مع بقاء مساحة بشرية حقيقية ومستقلة للتقدير.' },
+  { level: '3', title: 'مؤثرة', desc: 'المخرج الخوارزمي يوجّه النتيجة بصورة ملموسة ويحتاج إلى رقابة وتوثيق مشددين.' },
+  { level: '4', title: 'حاسمة / شبه آلية', desc: 'المخرج يحدد النتيجة أو يكاد يحددها، فتبلغ الحاجة للرقابة والتفسير أقصاها.' },
+];
 
-// ─── ASLI Gauge (SVG) ─────────────────────────────────────────────────────────
+const MODEL = [
+  { key: 'X', title: 'مساهمة جوهرية', desc: 'بلوغ المساهمة الخوارزمية درجة تؤثر جوهريًا في تكوين القرار.' },
+  { key: 'Y', title: 'قصور التدخل البشري', desc: 'ضعف المراجعة الإنسانية أو تحولها إلى اعتماد شكلي غير قادر على المخالفة.' },
+  { key: 'S', title: 'أثر جسيم', desc: 'ترتب أثر قانوني أو حقوقي أو أمني مرتفع الجسامة.' },
+];
 
-function AsliGauge({ score = 78 }: { score?: number }) {
-  const R = 80;
-  const cx = 110;
-  const cy = 110;
-  const startAngle = 210; // degrees, 0=12-o'clock, clockwise
-  const sweep = 300;      // total arc span in degrees
-
-  // Convert "clock" angle to SVG x,y (0° = 12-o'clock, clockwise)
-  function polar(angleDeg: number) {
-    const rad = ((angleDeg - 90) * Math.PI) / 180;
-    return { x: cx + R * Math.cos(rad), y: cy + R * Math.sin(rad) };
-  }
-
-  // Build an SVG arc path from one angle to another (clockwise)
-  function arcPath(from: number, to: number) {
-    const s = polar(from);
-    const e = polar(to);
-    const largeArc = to - from > 180 ? 1 : 0;
-    return `M ${s.x.toFixed(4)} ${s.y.toFixed(4)} A ${R} ${R} 0 ${largeArc} 1 ${e.x.toFixed(4)} ${e.y.toFixed(4)}`;
-  }
-
-  // Arc length for strokeDasharray animation — avoids interpolating SVG path flags
-  const totalArcLen = (sweep / 360) * 2 * Math.PI * R; // ≈ 418.9
-  const scoreArcLen = (score / 100) * totalArcLen;
-  const fullArcPath = arcPath(startAngle, startAngle + sweep);
-
-  // Needle rotation: needle line points straight up (negative-y) from centre,
-  // then we rotate the <g> by the score angle around the centre pivot.
-  const scoreAngleDeg = startAngle + (score / 100) * sweep;
-
-  const bands = [
-    { from: startAngle,               to: startAngle + sweep * 0.40, color: '#EF4444' },
-    { from: startAngle + sweep * 0.40, to: startAngle + sweep * 0.70, color: '#F59E0B' },
-    { from: startAngle + sweep * 0.70, to: startAngle + sweep * 0.85, color: '#84CC16' },
-    { from: startAngle + sweep * 0.85, to: startAngle + sweep,        color: '#22C55E' },
-  ];
-
-  return (
-    <div className="flex flex-col items-center gap-4">
-      <svg width="220" height="160" viewBox="0 0 220 160">
-        {/* Grey track */}
-        <path d={fullArcPath} fill="none" stroke="#E2E8F0" strokeWidth="14" strokeLinecap="round" />
-
-        {/* Colour bands */}
-        {bands.map((b, i) => (
-          <path
-            key={i}
-            d={arcPath(b.from, b.to)}
-            fill="none"
-            stroke={b.color}
-            strokeWidth="14"
-            strokeLinecap={i === 0 || i === bands.length - 1 ? 'round' : 'butt'}
-            opacity={0.9}
-          />
-        ))}
-
-        {/* Score arc overlay — animated via strokeDashoffset (no d-attribute morphing) */}
-        <motion.path
-          d={fullArcPath}
-          fill="none"
-          stroke="#1B2A4A"
-          strokeWidth="4"
-          strokeLinecap="round"
-          strokeDasharray={totalArcLen}
-          initial={{ strokeDashoffset: totalArcLen }}
-          animate={{ strokeDashoffset: totalArcLen - scoreArcLen }}
-          transition={{ duration: 1.2, ease: 'easeOut', delay: 0.3 }}
-        />
-
-        {/* Needle — rotated g so no SVG coordinate interpolation */}
-        <g transform={`translate(${cx}, ${cy})`}>
-          <motion.g
-            initial={{ rotate: startAngle }}
-            animate={{ rotate: scoreAngleDeg }}
-            transition={{ duration: 1.2, ease: 'easeOut', delay: 0.3 }}
-          >
-            <line x1={0} y1={0} x2={0} y2={-(R - 12)}
-              stroke="#1B2A4A" strokeWidth="3" strokeLinecap="round" />
-          </motion.g>
-        </g>
-        <circle cx={cx} cy={cy} r="6" fill="#1B2A4A" />
-
-        {/* Score text */}
-        <text x={cx} y={cy + 36} textAnchor="middle" fontSize="28" fontWeight="900" fill="#1B2A4A">
-          {score}
-        </text>
-        <text x={cx} y={cy + 52} textAnchor="middle" fontSize="10" fill="#64748B">
-          من 100
-        </text>
-        {/* Range labels */}
-        <text x="22"  y="148" fontSize="9" fill="#EF4444" textAnchor="middle">0</text>
-        <text x="198" y="148" fontSize="9" fill="#22C55E" textAnchor="middle">100</text>
-      </svg>
-
-      {/* Legend */}
-      <div className="grid grid-cols-2 gap-2 text-xs w-full max-w-xs" dir="rtl">
-        {[
-          { label: 'خطر شديد', range: '0 – 40', color: 'bg-red-500' },
-          { label: 'امتثال جزئي', range: '41 – 70', color: 'bg-gold' },
-          { label: 'مشروع مشروط', range: '71 – 85', color: 'bg-lime-500' },
-          { label: 'مشروع تام', range: '86 – 100', color: 'bg-heading' },
-        ].map((item) => (
-          <div key={item.label} className="flex items-center gap-1.5">
-            <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${item.color}`} />
-            <span className="text-muted-foreground">{item.label}</span>
-            <span className="text-[#1B2A4A] font-semibold ms-auto">{item.range}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  return <div className={`moj-card rounded-2xl border border-border p-5 sm:p-6 ${className}`}>{children}</div>;
 }
-
-// ─── Workflow Timeline ────────────────────────────────────────────────────────
-
-const WORKFLOW_STEPS = [
-  { icon: ScrollText, titleAr: 'استقبال القضية وتحديد النطاق', descAr: 'يُقدَّم الطلب مع تحديد نوع القرار الإداري ونطاقه القانوني والجهة الجغرافية المختصة.' },
-  { icon: Users,      titleAr: 'تصنيف الدور الوظيفي والصلاحيات', descAr: 'يُحدَّد دور مقدم الطلب (مدير عام / مسؤول تنفيذي / محامٍ...) لضبط معايير التقييم الملائمة.' },
-  { icon: GitMerge,   titleAr: 'التحليل المزدوج الإماراتي-الفرنسي', descAr: 'تُطبَّق مبادئ القانون الإداري الإماراتي جنباً إلى جنب مع مبادئ القانون الإداري الفرنسي الكلاسيكية.' },
-  { icon: BarChart2,  titleAr: 'قياس الأبعاد الاثني عشر', descAr: 'يُقيَّم القرار تفصيلياً وفق الأبعاد الاثني عشر لنظرية الشامسي عبر محادثة تفاعلية ذكية.' },
-  { icon: FlaskConical, titleAr: 'احتساب مؤشر الشرعية ASLI', descAr: 'تُجمَع درجات الأبعاد وتُرجَّح وفق خوارزمية الشامسي لإنتاج مؤشر الشرعية الإدارية الرقمية.' },
-  { icon: BookOpen,   titleAr: 'صياغة الموجز القانوني القضائي', descAr: 'يُولَّد تلقائياً موجز قانوني ثنائي اللغة يتضمن الحكم والأسانيد والتوصيات والسوابق القضائية.' },
-  { icon: ShieldCheck, titleAr: 'التوثيق في سجل المراجعة التدقيقية', descAr: 'يُسجَّل القرار وبصمته الرقمية SHA-256 في سجل مراجعة غير قابل للتعديل لضمان النزاهة المؤسسية.' },
-];
-
-// ─── Future Vision Timeline ───────────────────────────────────────────────────
-
-const VISION_MILESTONES = [
-  { year: '2025', titleAr: 'الإطار التشريعي الوطني', descAr: 'إصدار أول إطار تشريعي وطني يضبط صحة القرارات الإدارية الرقمية وشروط المسؤولية.' },
-  { year: '2027', titleAr: 'اعتماد معادلة الشامسي قضائياً', descAr: 'توظيف مؤشر الشرعية ASLI مرجعاً معتمداً في أحكام المحاكم الإدارية الاتحادية.' },
-  { year: '2030', titleAr: 'تكامل رؤية الإمارات الذكية', descAr: 'اندماج النظرية مع منظومة الحكومة الذكية ومبادرات رؤية الإمارات 2031 للتحول الرقمي.' },
-  { year: '2035', titleAr: 'معيار خليجي وعربي موحد', descAr: 'تبنّي دول مجلس التعاون منهجية الشامسي معياراً مرجعياً للتشريع الإداري الرقمي المشترك.' },
-  { year: '2040', titleAr: 'الإطار الدولي للذكاء الاصطناعي الإداري', descAr: 'مساهمة نظرية الشامسي في صياغة المعايير الأممية لأخلاقيات الذكاء الاصطناعي في الإدارة العامة.' },
-];
-
-// ─── Main page component ──────────────────────────────────────────────────────
 
 export default function ShamsiTheory() {
-  const [openDimension, setOpenDimension] = useState<number | null>(null);
-
   return (
     <AppLayout>
-      <div dir="rtl" className="min-h-screen bg-[#F5F6FA] overflow-x-hidden">
-
-        {/* ══════════════════════════════════════════════════════════════
-            SECTION 1 — HERO
-        ══════════════════════════════════════════════════════════════ */}
-        <section className="relative overflow-hidden bg-[#1B2A4A] text-white">
-          {/* Geometric background pattern */}
-          <div className="absolute inset-0 opacity-5 pointer-events-none"
-               style={{ backgroundImage: 'repeating-linear-gradient(45deg, #C9A84C 0, #C9A84C 1px, transparent 0, transparent 50%)', backgroundSize: '30px 30px' }} />
-          {/* Gold gradient overlay top */}
-          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#C9A84C] to-transparent opacity-60" />
-
-          <div className="relative max-w-5xl mx-auto px-6 py-20 lg:py-28">
-            <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.9, ease: 'easeOut' }}
-              className="text-center"
-            >
-              {/* Platform badge */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.85 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.2, duration: 0.5 }}
-                className="inline-flex items-center gap-2 mb-6 px-5 py-2 rounded-full bg-[#C9A84C]/15 border border-[#C9A84C]/30 text-[#C9A84C] text-sm font-semibold"
-              >
-                <Star className="w-3.5 h-3.5" />
-                المرجع العلمي الرسمي · منصة مرصد
-                <Star className="w-3.5 h-3.5" />
-              </motion.div>
-
-              {/* Main title */}
-              <motion.h1
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3, duration: 0.8 }}
-                className="text-5xl lg:text-7xl font-black tracking-tight mb-4 leading-tight"
-                style={{ fontFamily: "'Amiri', 'IBM Plex Sans Arabic', serif" }}
-              >
-                نظرية{' '}
-                <span className="text-[#C9A84C]">الشامسي</span>
-              </motion.h1>
-
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5, duration: 0.7 }}
-                className="text-base text-[#C9A84C]/80 font-medium tracking-widest mb-8 uppercase"
-              >
-                Al-Shamsi Theory of Administrative Decision Legitimacy
-              </motion.p>
-
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.7, duration: 0.8 }}
-                className="max-w-3xl mx-auto text-white/75 text-lg leading-loose"
-              >
-                إطار قانوني أكاديمي متكامل لتقييم مشروعية القرارات الإدارية في عصر الذكاء الاصطناعي،
-                يجمع بين مبادئ القانون الإداري الإماراتي والفرنسي عبر ثلاثة عشر بُعدًا تحليليًا
-                مترابطًا تُقيسها خوارزمية مؤشر الشامسي للشرعية الإدارية الرقمية{' '}
-                <span className="text-[#C9A84C] font-semibold">(ASLI)</span>.
-              </motion.div>
-
-              {/* Stats row */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.9, duration: 0.6 }}
-                className="mt-12 grid grid-cols-3 gap-6 max-w-lg mx-auto"
-              >
-                {[
-                  { value: '13', label: 'بُعدًا تحليليًا' },
-                  { value: '2', label: 'منظومتان قانونيتان' },
-                  { value: 'ASLI', label: 'مؤشر الشامسي للشرعية الإدارية الرقمية' },
-                ].map((stat) => (
-                  <div key={stat.label} className="text-center">
-                    <div className="text-3xl font-black text-[#C9A84C]">{stat.value}</div>
-                    <div className="text-xs text-white/50 mt-1">{stat.label}</div>
-                  </div>
-                ))}
-              </motion.div>
-            </motion.div>
+      <div className="max-w-6xl mx-auto px-4 py-8 sm:py-10 space-y-8" dir="rtl">
+        <section className="text-center space-y-4">
+          <div className="inline-flex items-center gap-2 rounded-full border border-gold/25 bg-gold/5 px-3 py-1.5 text-xs font-bold text-gold">
+            <BrainCircuit className="w-4 h-4" aria-hidden />
+            M-Shamsi Framework
           </div>
-
-          {/* Bottom wave */}
-          <div className="absolute bottom-0 inset-x-0 h-12 bg-[#F5F6FA]"
-               style={{ clipPath: 'ellipse(55% 100% at 50% 100%)' }} />
+          <h1 className="text-3xl sm:text-4xl font-black text-heading" style={{ fontFamily: 'var(--app-font-serif)' }}>
+            نظرية الشامسي للقرار الإداري الخوارزمي المركب
+          </h1>
+          <p className="text-sm sm:text-base text-muted-foreground max-w-4xl mx-auto leading-8">
+            نموذج تحليلي قانوني لتحديد درجة المساهمة الخوارزمية في تكوين القرار الإداري، وفعالية التدخل البشري، ثم مواءمة مستوى الرقابة والتفسير والتوثيق مع مقدار التأثير والخطر.
+          </p>
+          <div className="max-w-4xl mx-auto rounded-xl border border-gold/20 bg-gold/5 px-4 py-3 text-sm text-heading leading-7">
+            لا تفترض النظرية إرادة قانونية للآلة ولا تضيف ركنًا سادسًا للقرار الإداري؛ الإسناد القانوني يبقى للإدارة، بينما تُفحص المساهمة الخوارزمية داخل عملية تكوين القرار وآثار عيوبها على عناصر المشروعية بحسب طبيعة الخلل.
+          </div>
         </section>
 
-        {/* ══════════════════════════════════════════════════════════════
-            SECTION 2 — WHY TRADITIONAL MODEL FAILS
-        ══════════════════════════════════════════════════════════════ */}
-        <section className="max-w-6xl mx-auto px-6 py-20">
-          <Section>
-            <SectionHeader
-              badge="القسم الأول"
-              titleAr="لماذا لم يعد النموذج التقليدي كافياً؟"
-              subtitleAr="في عصر الذكاء الاصطناعي، باتت القرارات الإدارية تُصدَر بسرعة وبأثر واسع دون أن يواكبها إطار قانوني يقيس مشروعيتها الرقمية."
-            />
-          </Section>
-
-          <motion.div
-            variants={stagger}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-60px' }}
-            className="grid grid-cols-1 md:grid-cols-2 gap-5"
-          >
-            {[
-              {
-                icon: Zap,
-                titleAr: 'سرعة إصدار القرار الرقمي',
-                descAr: 'تُنتج الأنظمة الرقمية قرارات إدارية في أجزاء من الثانية، مما يجعل آليات الرقابة التقليدية عاجزة عن مواكبة الوتيرة أو تقييم المشروعية في الوقت الفعلي.',
-                color: 'border-gold/40 bg-gold/10',
-                iconColor: 'text-gold bg-gold/15',
-              },
-              {
-                icon: AlertTriangle,
-                titleAr: 'غياب معيار قياس الإرادة',
-                descAr: 'لا يوجد في التشريع التقليدي معيار قانوني واضح يحدد متى تكون الإرادة في القرار الإداري بشرية كافية مقارنةً بما تنتجه الخوارزميات.',
-                color: 'border-red-300 bg-red-50',
-                iconColor: 'text-red-600 bg-red-100',
-              },
-              {
-                icon: Eye,
-                titleAr: 'ضعف قابلية المراجعة القضائية',
-                descAr: 'المحاكم الإدارية التقليدية لا تملك أدوات تقنية لفحص القرارات المُنتجة رقمياً والتحقق من سلامة النموذج الخوارزمي الذي أنتجها.',
-                color: 'border-blue-300 bg-blue-50',
-                iconColor: 'text-blue-600 bg-blue-100',
-              },
-              {
-                icon: Clock,
-                titleAr: 'تأخر التشريع عن التقنية',
-                descAr: 'دورة إصدار التشريعات تقاس بالسنوات، في حين تتطور قدرات الذكاء الاصطناعي بمعدلات أسية، مما يخلق فجوة تنظيمية تتسع باستمرار.',
-                color: 'border-violet-300 bg-violet-50',
-                iconColor: 'text-violet-600 bg-violet-100',
-              },
-            ].map((card) => {
-              const Icon = card.icon;
-              return (
-                <motion.div
-                  key={card.titleAr}
-                  variants={fadeUp}
-                  className={`rounded-2xl border-2 p-6 ${card.color} flex gap-4`}
-                >
-                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${card.iconColor}`}>
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-[#1B2A4A] text-base mb-1.5">{card.titleAr}</h3>
-                    <p className="text-muted-foreground text-sm leading-relaxed">{card.descAr}</p>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </motion.div>
-        </section>
-
-        {/* ══════════════════════════════════════════════════════════════
-            SECTION 3 — HUMAN WILL vs DIGITAL WILL
-        ══════════════════════════════════════════════════════════════ */}
-        <section className="bg-[#1B2A4A] py-20 relative overflow-hidden">
-          <div className="absolute inset-0 opacity-5 pointer-events-none"
-               style={{ backgroundImage: 'radial-gradient(circle at 30% 50%, #C9A84C 0, transparent 60%), radial-gradient(circle at 70% 50%, #C9A84C 0, transparent 60%)' }} />
-
-          <div className="max-w-6xl mx-auto px-6 relative">
-            <Section>
-              <SectionHeader
-                badge="القسم الثاني"
-                titleAr="الإرادة البشرية مقابل الإرادة الرقمية"
-                subtitleAr="أحد المحاور المركزية في نظرية الشامسي: تحديد الحد الفاصل بين القرار الذي تصنعه إرادة بشرية واعية والقرار الذي تنتجه خوارزمية رقمية."
-                light
-              />
-            </Section>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
-              {/* Human Will */}
-              <motion.div
-                initial={{ opacity: 0, x: 40 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.7 }}
-                className="bg-white/8 border border-white/15 rounded-2xl p-7 backdrop-blur-sm"
-              >
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-10 rounded-xl bg-[#C9A84C]/20 border border-[#C9A84C]/30 flex items-center justify-center">
-                    <Users className="w-5 h-5 text-[#C9A84C]" />
-                  </div>
-                  <div>
-                    <h3 className="font-black text-white text-lg">الإرادة البشرية</h3>
-                    <p className="text-white/40 text-xs">Human Will Formation</p>
-                  </div>
-                </div>
-                <ul className="space-y-3">
-                  {[
-                    'تصدر عن تفكير واعٍ يستحضر السياق الكامل للقضية',
-                    'تحمل عنصر المسؤولية الأخلاقية والقانونية الشخصية',
-                    'قابلة للنقاش والإقناع والمراجعة في ضوء حجج جديدة',
-                    'تتضمن بُعداً تقديرياً يستوعب استثناءات العدالة',
-                    'يمكن استجواب صاحبها قضائياً عن دوافعها وأسبابها',
-                  ].map((item) => (
-                    <li key={item} className="flex items-start gap-2.5 text-sm text-white/70">
-                      <span className="mt-1 w-1.5 h-1.5 rounded-full bg-[#C9A84C] flex-shrink-0" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </motion.div>
-
-              {/* Divider */}
-              <div className="hidden lg:flex flex-col items-center justify-center absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 mt-10">
-                <div className="h-32 w-px bg-gradient-to-b from-transparent via-[#C9A84C] to-transparent" />
-                <div className="w-10 h-10 rounded-full bg-[#1B2A4A] border-2 border-[#C9A84C] flex items-center justify-center text-[#C9A84C] text-xs font-bold my-2">
-                  VS
-                </div>
-                <div className="h-32 w-px bg-gradient-to-b from-transparent via-[#C9A84C] to-transparent" />
-              </div>
-
-              {/* Digital Will */}
-              <motion.div
-                initial={{ opacity: 0, x: -40 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.7 }}
-                className="bg-white/8 border border-white/15 rounded-2xl p-7 backdrop-blur-sm"
-              >
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center">
-                    <Brain className="w-5 h-5 text-blue-300" />
-                  </div>
-                  <div>
-                    <h3 className="font-black text-white text-lg">الإرادة الرقمية</h3>
-                    <p className="text-white/40 text-xs">Digital Will Formation</p>
-                  </div>
-                </div>
-                <ul className="space-y-3">
-                  {[
-                    'تصدر عن نموذج إحصائي مدرَّب على بيانات تاريخية',
-                    'تفتقر إلى المسؤولية الذاتية وقد تحمل تحيزات مضمنة',
-                    'تُنتج الخروج ذاته لأي مدخل متماثل دون مرونة',
-                    'لا تعي السياق الاجتماعي أو الاستثناءات الإنسانية',
-                    'صعبة المساءلة القضائية بسبب غموض الصندوق الأسود',
-                  ].map((item) => (
-                    <li key={item} className="flex items-start gap-2.5 text-sm text-white/70">
-                      <span className="mt-1 w-1.5 h-1.5 rounded-full bg-blue-400 flex-shrink-0" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </motion.div>
+        <section>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-gold/10 border border-gold/20 flex items-center justify-center">
+              <ShieldCheck className="w-5 h-5 text-gold" aria-hidden />
             </div>
-
-            {/* Bridge note */}
-            <Section className="mt-8">
-              <div className="bg-[#C9A84C]/10 border border-[#C9A84C]/25 rounded-xl px-6 py-4 text-center text-[#C9A84C] text-sm leading-relaxed">
-                <span className="font-bold">مبدأ الشامسي في المزاوجة: </span>
-                تشترط النظرية أن لا يقل مؤشر الإرادة البشرية عن 40% في أي قرار إداري رقمي يمس حقوقاً أساسية،
-                وأن يتمتع المسؤول البشري بصلاحية التجاوز الفعلي لأي مخرجات خوارزمية.
-              </div>
-            </Section>
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black text-heading">اختبار الشامسي — سبعة عناصر</h2>
+              <p className="text-xs text-muted-foreground mt-1">أداة الفحص الأساسية قبل تقدير مستوى الرقابة القضائية والإدارية.</p>
+            </div>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {TEST_ELEMENTS.map((item, index) => (
+              <Card key={item.id} className={index === 6 ? 'lg:col-start-2' : ''}>
+                <div className="flex items-start gap-3">
+                  <span className="w-8 h-8 rounded-lg bg-gold text-background flex items-center justify-center text-xs font-black shrink-0">{index + 1}</span>
+                  <div>
+                    <h3 className="font-black text-heading text-sm">{item.label}</h3>
+                    <p className="text-xs text-muted-foreground leading-6 mt-1.5">{item.desc}</p>
+                  </div>
+                </div>
+              </Card>
+            ))}
           </div>
         </section>
 
-        {/* ══════════════════════════════════════════════════════════════
-            SECTION 4 — THE 16 DIMENSIONS (12 foundational + 4 CJI)
-        ══════════════════════════════════════════════════════════════ */}
-        <section className="max-w-6xl mx-auto px-6 py-20">
-          <Section>
-            <SectionHeader
-              badge="القسم الثالث"
-              titleAr="أبعاد نظرية الشامسي — الإطار السبعة عشر"
-              subtitleAr="تُرسي النظرية ثلاثة عشر بُعدًا للمشروعية الإدارية. يُضيف محرك الذكاء القضائي الدستوري (CJI) أربعةً أبعاداً رقمية تكميلية، ليبلغ إجمالي الأبعاد القابلة للقياس في منصة مرصد سبعةَ عشر بُعدًا."
-            />
-            <div className="mb-8 flex items-start gap-3 bg-[#C9A84C]/10 border border-[#C9A84C]/25 rounded-xl px-5 py-3.5 text-sm text-[#1B2A4A]" dir="rtl">
-              <span className="shrink-0 mt-0.5">ℹ️</span>
+        <section>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-gold/10 border border-gold/20 flex items-center justify-center">
+              <Gauge className="w-5 h-5 text-gold" aria-hidden />
+            </div>
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black text-heading">سُلّم الشامسي — أربع درجات للمساهمة</h2>
+              <p className="text-xs text-muted-foreground mt-1">درجة المساهمة ليست هي الوزن القانوني تلقائيًا، لكنها نقطة البداية في تقديره.</p>
+            </div>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {LEVELS.map((item) => (
+              <Card key={item.level}>
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <span className="text-2xl font-black text-gold">{item.level}</span>
+                  <Activity className="w-5 h-5 text-gold/70" aria-hidden />
+                </div>
+                <h3 className="font-black text-heading">{item.title}</h3>
+                <p className="text-xs text-muted-foreground leading-6 mt-2">{item.desc}</p>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        <section className="grid lg:grid-cols-2 gap-4">
+          <Card>
+            <div className="flex items-center gap-3 mb-5">
+              <GitBranch className="w-6 h-6 text-gold" aria-hidden />
               <div>
-                <strong>ملاحظة إصدار:</strong> الأبعاد 1–13 هي الأبعاد التأسيسية لنظرية الشامسي. أضاف محرك الذكاء القضائي الدستوري (CJI — الإصدار 5) أربعةً أبعاداً رقمية تكميلية: <em>التحيز الخوارزمي، والإجراءات القانونية الواجبة، والمساواة، والحقوق الأساسية</em> — وذلك لاستيعاب المتطلبات الخاصة بالقرارات المدعومة بالذكاء الاصطناعي وفق الإطار القانوني الإماراتي لعام 2026.
+                <h2 className="text-xl font-black text-heading">نموذج X / Y / S</h2>
+                <p className="text-xs text-muted-foreground mt-1">قاعدة تشغيلية لتحديد الحالات التي تستدعي رقابة مشددة.</p>
               </div>
             </div>
-          </Section>
-
-          <motion.div
-            variants={stagger}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-40px' }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-          >
-            {DIMENSIONS.map((dim) => {
-              const Icon = dim.icon;
-              const hue = HUE_CLASSES[dim.hue];
-              const isOpen = openDimension === dim.id;
-              return (
-                <motion.div
-                  key={dim.id}
-                  variants={fadeUp}
-                  className={`rounded-2xl border bg-white shadow-sm overflow-hidden cursor-pointer transition-shadow duration-200 hover:shadow-md ${hue.ring}`}
-                  onClick={() => setOpenDimension(isOpen ? null : dim.id)}
-                >
-                  <div className="p-5">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${hue.bg}`}>
-                        <Icon className={`w-5 h-5 ${hue.icon}`} />
-                      </div>
-                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${hue.badge}`}>
-                        بُعد {dim.id}
-                      </span>
-                    </div>
-                    <h3 className="font-black text-[#1B2A4A] text-lg mb-1">{dim.nameAr}</h3>
-                    <p className="text-muted-foreground text-sm leading-relaxed line-clamp-2">
-                      {dim.descAr}
-                    </p>
-                    <div className={`mt-3 flex items-center gap-1 text-xs font-medium ${hue.icon}`}>
-                      <ChevronDown
-                        className={`w-3.5 h-3.5 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
-                      />
-                      {isOpen ? 'إخفاء التفاصيل' : 'عرض معايير التقييم'}
-                    </div>
+            <div className="space-y-3">
+              {MODEL.map((item) => (
+                <div key={item.key} className="rounded-xl border border-border bg-muted/15 p-4 flex gap-3 items-start">
+                  <span className="w-9 h-9 rounded-xl bg-gold text-background flex items-center justify-center font-black shrink-0" dir="ltr">{item.key}</span>
+                  <div>
+                    <p className="font-black text-heading text-sm">{item.title}</p>
+                    <p className="text-xs text-muted-foreground leading-6 mt-1">{item.desc}</p>
                   </div>
-
-                  <AnimatePresence>
-                    {isOpen && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3, ease: 'easeInOut' }}
-                        className="overflow-hidden"
-                      >
-                        <div className={`px-5 pb-5 pt-2 border-t ${hue.ring} ${hue.bg}`}>
-                          <p className="text-xs text-[#1B2A4A] font-semibold mb-1.5">معايير التقييم:</p>
-                          <p className="text-xs text-muted-foreground leading-relaxed">{dim.criteriaAr}</p>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
-              );
-            })}
-          </motion.div>
-
-          <Section className="mt-4">
-            <div className="bg-[#1B2A4A]/5 border border-[#1B2A4A]/10 rounded-xl px-6 py-4 text-center text-sm text-muted-foreground">
-              💡 انقر على أي بُعد لعرض معايير تقييمه التفصيلية. تُوزَّع الدرجة الكلية مئة نقطة وفق أوزان مرجَّحة تراعي طبيعة القرار. تُقيَّم الأبعاد 1–12 وفق منهجية الشامسي، وتُقيَّم الأبعاد 13–16 وفق محرك الذكاء القضائي الدستوري (CJI).
-            </div>
-          </Section>
-        </section>
-
-        {/* ══════════════════════════════════════════════════════════════
-            SECTION 5 — EMIRATI LAW & FRENCH ADMINISTRATIVE LAW
-        ══════════════════════════════════════════════════════════════ */}
-        <section className="bg-white py-20 border-y border-border/40">
-          <div className="max-w-6xl mx-auto px-6">
-            <Section>
-              <SectionHeader
-                badge="القسم الرابع"
-                titleAr="العلاقة بين القانون الإماراتي والقانون الإداري الفرنسي"
-                subtitleAr="نظرية الشامسي لا تنشأ في فراغ؛ بل تستمد روافدها من منظومتين قانونيتين راسختين تتلاقيان في بناء معيار المشروعية الإدارية."
-              />
-            </Section>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
-              {[
-                {
-                  flag: '🇦🇪',
-                  titleAr: 'القانون الإداري الإماراتي',
-                  subtitleAr: 'Federal Administrative Law',
-                  color: 'border-emerald-300 bg-emerald-50',
-                  headerColor: 'bg-emerald-600',
-                  items: [
-                    { ref: 'المرسوم بقانون اتحادي رقم 19 لسنة 2022', descAr: 'قانون المعاملات الإدارية ومعايير جودة الخدمات الحكومية' },
-                    { ref: 'القانون الاتحادي رقم 15 لسنة 2023', descAr: 'تنظيم الذكاء الاصطناعي في القطاع العام' },
-                    { ref: 'مرسوم رقم 56 لسنة 2020', descAr: 'إستراتيجية الإمارات للذكاء الاصطناعي 2031' },
-                    { ref: 'نظام الشكاوى والتظلمات الحكومية', descAr: 'ضمانات الطعن الإداري وآليات الانتصاف' },
-                  ],
-                },
-                {
-                  flag: '🇫🇷',
-                  titleAr: 'القانون الإداري الفرنسي',
-                  subtitleAr: 'Droit Administratif Français',
-                  color: 'border-blue-300 bg-blue-50',
-                  headerColor: 'bg-blue-700',
-                  items: [
-                    { ref: 'حكم Blanco 1873', descAr: 'أساس استقلالية القانون الإداري وقضاء مجلس الدولة' },
-                    { ref: 'نظرية الانحراف بالسلطة (Détournement)', descAr: 'حظر استخدام السلطة لأغراض مغايرة للمصلحة العامة' },
-                    { ref: 'Code des relations avec le public 2015', descAr: 'مبدأ الشفافية ووجوب تسبيب القرارات الإدارية' },
-                    { ref: 'Loi pour une République numérique 2016', descAr: 'حقوق المواطنين في مواجهة القرارات الخوارزمية' },
-                  ],
-                },
-              ].map((col) => (
-                <motion.div
-                  key={col.titleAr}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6 }}
-                  className={`rounded-2xl border-2 overflow-hidden ${col.color}`}
-                >
-                  <div className={`${col.headerColor} text-white px-6 py-4 flex items-center gap-3`}>
-                    <span className="text-2xl">{col.flag}</span>
-                    <div>
-                      <h3 className="font-black text-base">{col.titleAr}</h3>
-                      <p className="text-white/60 text-xs">{col.subtitleAr}</p>
-                    </div>
-                  </div>
-                  <div className="p-5 space-y-3">
-                    {col.items.map((item) => (
-                      <div key={item.ref} className="bg-white/70 rounded-xl p-3.5 border border-white/60">
-                        <p className="font-bold text-[#1B2A4A] text-sm mb-1">{item.ref}</p>
-                        <p className="text-muted-foreground text-xs">{item.descAr}</p>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
+                </div>
               ))}
             </div>
+            <div className="mt-4 rounded-xl border border-gold/25 bg-gold/5 p-4 text-center">
+              <p className="text-xs text-muted-foreground mb-1">قاعدة الشامسي للرقابة المشددة</p>
+              <p className="font-black text-xl text-heading" dir="ltr">E = S ∨ (X ∧ Y)</p>
+              <p className="text-xs text-muted-foreground leading-6 mt-2">
+                تتحقق الحاجة إلى الرقابة المشددة عند وجود أثر جسيم، أو عند اجتماع المساهمة الجوهرية مع قصور التدخل البشري.
+              </p>
+            </div>
+          </Card>
 
-            {/* Shared principles */}
-            <Section>
-              <div className="rounded-2xl bg-gradient-to-l from-blue-50 via-white to-emerald-50 border border-border/40 p-6">
-                <h3 className="font-black text-[#1B2A4A] text-center text-base mb-5">
-                  المبادئ المشتركة التي تستمدها نظرية الشامسي من المنظومتين
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {[
-                    'مبدأ المشروعية',
-                    'وجوب التسبيب',
-                    'التناسب',
-                    'حق الدفاع',
-                    'عدم الانحراف',
-                    'الرقابة القضائية',
-                    'الشفافية الخوارزمية',
-                    'حماية الحقوق',
-                  ].map((p) => (
-                    <div key={p}
-                      className="flex items-center justify-center text-center text-xs font-semibold text-[#1B2A4A] py-2.5 px-3 rounded-lg bg-white border border-[#C9A84C]/30 shadow-sm">
-                      {p}
-                    </div>
-                  ))}
+          <Card>
+            <div className="flex items-center gap-3 mb-5">
+              <Scale className="w-6 h-6 text-gold" aria-hidden />
+              <div>
+                <h2 className="text-xl font-black text-heading">مبدأ التناسب الرقابي</h2>
+                <p className="text-xs text-muted-foreground mt-1">كلما ارتفع التأثير والخطر، ارتفعت متطلبات الرقابة والتفسير.</p>
+              </div>
+            </div>
+            <div className="space-y-3 text-sm">
+              <div className="rounded-xl border border-border p-4 flex items-start gap-3">
+                <UserCheck className="w-5 h-5 text-gold shrink-0 mt-0.5" aria-hidden />
+                <div>
+                  <p className="font-bold text-heading">تدخل بشري فعّال</p>
+                  <p className="text-xs text-muted-foreground leading-6 mt-1">لا يكفي وجود توقيع بشري شكلي؛ يجب أن تكون المراجعة واعية وقادرة على المخالفة ومثبتة في السجل.</p>
                 </div>
               </div>
-            </Section>
-          </div>
-        </section>
-
-        {/* ══════════════════════════════════════════════════════════════
-            SECTION 6 — PRACTICAL EVALUATION WORKFLOW
-        ══════════════════════════════════════════════════════════════ */}
-        <section className="max-w-4xl mx-auto px-6 py-20">
-          <Section>
-            <SectionHeader
-              badge="القسم الخامس"
-              titleAr="مسار التقييم العملي"
-              subtitleAr="سبع مراحل متسلسلة تضمن تقييماً شاملاً ومنهجياً لكل قرار إداري وفق أحكام نظرية الشامسي."
-            />
-          </Section>
-
-          <div className="relative">
-            {/* Vertical spine */}
-            <div className="absolute right-7 top-4 bottom-4 w-0.5 bg-gradient-to-b from-[#C9A84C] via-[#C9A84C]/40 to-transparent hidden sm:block" />
-
-            <div className="space-y-5">
-              {WORKFLOW_STEPS.map((step, idx) => {
-                const Icon = step.icon;
-                return (
-                  <motion.div
-                    key={step.titleAr}
-                    initial={{ opacity: 0, x: 30 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true, margin: '-30px' }}
-                    transition={{ duration: 0.5, delay: idx * 0.07 }}
-                    className="flex gap-5 items-start relative"
-                  >
-                    {/* Step circle */}
-                    <div className="relative z-10 flex-shrink-0 w-14 h-14 rounded-2xl bg-[#1B2A4A] border-2 border-[#C9A84C]/40 flex flex-col items-center justify-center shadow-sm">
-                      <Icon className="w-5 h-5 text-[#C9A84C]" />
-                      <span className="text-[9px] text-white/40 mt-0.5">{idx + 1}</span>
-                    </div>
-                    {/* Content */}
-                    <div className="flex-1 bg-white rounded-2xl border border-border/50 shadow-sm p-4 pt-3.5">
-                      <h3 className="font-bold text-[#1B2A4A] text-base mb-1">{step.titleAr}</h3>
-                      <p className="text-muted-foreground text-sm leading-relaxed">{step.descAr}</p>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        {/* ══════════════════════════════════════════════════════════════
-            SECTION 7 — ASLI INDEX
-        ══════════════════════════════════════════════════════════════ */}
-        <section className="bg-[#1B2A4A] py-20 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#C9A84C]/3 to-transparent pointer-events-none" />
-          <div className="max-w-6xl mx-auto px-6 relative">
-            <Section>
-              <SectionHeader
-                badge="القسم السادس"
-                titleAr="مؤشر الشرعية الإدارية الرقمية"
-                subtitleAr="Al-Shamsi Legitimacy Index — ASLI"
-                light
-              />
-            </Section>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-              {/* Gauge */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.7 }}
-                className="bg-white rounded-3xl p-8 flex flex-col items-center shadow-xl"
-              >
-                <p className="text-[#1B2A4A] font-black text-base mb-1">نموذج توضيحي</p>
-                <p className="text-muted-foreground text-xs mb-6">درجة تمثيلية لقرار بدرجة عالية من الامتثال</p>
-                <AsliGauge score={78} />
-                <div className="mt-6 text-center">
-                  <span className="inline-flex items-center gap-2 bg-lime-100 text-lime-700 font-bold text-sm px-4 py-2 rounded-full">
-                    <span className="w-2 h-2 rounded-full bg-lime-500" />
-                    مشروع مشروط — يُصدَر بقيود تحسينية
-                  </span>
+              <div className="rounded-xl border border-border p-4 flex items-start gap-3">
+                <FileClock className="w-5 h-5 text-gold shrink-0 mt-0.5" aria-hidden />
+                <div>
+                  <p className="font-bold text-heading">قابلية التفسير وإعادة البناء</p>
+                  <p className="text-xs text-muted-foreground leading-6 mt-1">يجب أن يستطيع المراجع أو القاضي فهم المراحل المؤثرة في النتيجة دون اشتراط كشف تقني غير لازم عن كامل النظام.</p>
                 </div>
-              </motion.div>
-
-              {/* Explanation */}
-              <div className="space-y-5">
-                {[
-                  {
-                    titleAr: 'كيف يُحسَب المؤشر؟',
-                    descAr: 'تُعطى كل قضية درجةً من صفر إلى مئة لكل بُعد من الأبعاد الثلاثة عشر. ثم تُجمع هذه الدرجات مرجَّحةً بمعاملات تعكس أهمية كل بُعد في سياق نوع القرار والولاية القضائية.',
-                    icon: BarChart2,
-                  },
-                  {
-                    titleAr: 'ما الذي يُقدمه ASLI؟',
-                    descAr: 'مؤشر موحد قابل للمقارنة عبر القضايا والجهات والأنواع، يُمكّن القضاء الإداري من اعتماد معيار موضوعي لتصنيف مشروعية القرارات بدل الاجتهاد الفردي المتذبذب.',
-                    icon: Scale,
-                  },
-                  {
-                    titleAr: 'الأثر القانوني للنتيجة',
-                    descAr: 'الدرجة أقل من 40: تُوصَى باتخاذ القرار موقوفاً وإعادة تقييمه. 41–70: إصدار مشروط بضمانات إضافية. 71–85: مشروع مع توصيات تحسينية. 86–100: مشروع تام بلا قيود.',
-                    icon: BookCheck,
-                  },
-                ].map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <motion.div
-                      key={item.titleAr}
-                      initial={{ opacity: 0, x: -20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.5 }}
-                      className="flex gap-4 bg-white/8 border border-white/12 rounded-2xl p-5"
-                    >
-                      <div className="w-9 h-9 rounded-xl bg-[#C9A84C]/15 flex items-center justify-center flex-shrink-0">
-                        <Icon className="w-4.5 h-4.5 text-[#C9A84C]" />
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-white text-sm mb-1.5">{item.titleAr}</h4>
-                        <p className="text-white/60 text-xs leading-relaxed">{item.descAr}</p>
-                      </div>
-                    </motion.div>
-                  );
-                })}
+              </div>
+              <div className="rounded-xl border border-border p-4 flex items-start gap-3">
+                <Archive className="w-5 h-5 text-gold shrink-0 mt-0.5" aria-hidden />
+                <div>
+                  <p className="font-bold text-heading">سجل تكوين القرار</p>
+                  <p className="text-xs text-muted-foreground leading-6 mt-1">يوثق المدخلات المرجعية، المخرجات المؤثرة، مراجعات الموظف، أسباب الاعتماد أو الرفض، والتعديلات التي سبقت اعتماد القرار.</p>
+                </div>
               </div>
             </div>
-          </div>
+          </Card>
         </section>
 
-        {/* ══════════════════════════════════════════════════════════════
-            SECTION 8 — FUTURE LEGISLATIVE VISION
-        ══════════════════════════════════════════════════════════════ */}
-        <section className="max-w-5xl mx-auto px-6 py-20">
-          <Section>
-            <SectionHeader
-              badge="القسم السابع"
-              titleAr="الرؤية التشريعية المستقبلية"
-              subtitleAr="نظرية الشامسي ليست نتاج تحليل الحاضر فحسب، بل خارطة طريق لبناء منظومة تشريعية عربية متقدمة تواكب مستقبل الذكاء الاصطناعي في الإدارة العامة."
-            />
-          </Section>
-
-          {/* Horizontal timeline */}
-          <div className="relative">
-            {/* Spine */}
-            <div className="hidden md:block absolute top-9 left-0 right-0 h-0.5 bg-gradient-to-l from-transparent via-[#C9A84C]/50 to-transparent" />
-
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-              {VISION_MILESTONES.map((m, idx) => (
-                <motion.div
-                  key={m.year}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: '-30px' }}
-                  transition={{ duration: 0.5, delay: idx * 0.1 }}
-                  className="flex flex-col items-center text-center"
-                >
-                  {/* Year bubble */}
-                  <div className="relative z-10 w-[4.5rem] h-[4.5rem] rounded-full bg-[#1B2A4A] border-4 border-[#C9A84C]/40 flex flex-col items-center justify-center shadow-md mb-4">
-                    <Milestone className="w-3.5 h-3.5 text-[#C9A84C] mb-0.5" />
-                    <span className="text-[#C9A84C] font-black text-sm">{m.year}</span>
-                  </div>
-                  <h4 className="font-black text-[#1B2A4A] text-sm mb-2 leading-snug">{m.titleAr}</h4>
-                  <p className="text-muted-foreground text-xs leading-relaxed">{m.descAr}</p>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-
-          {/* Closing statement */}
-          <Section className="mt-16">
-            <div className="relative rounded-3xl bg-gradient-to-l from-[#1B2A4A] to-[#243b6a] p-8 text-center text-white overflow-hidden">
-              <div className="absolute inset-0 opacity-5"
-                   style={{ backgroundImage: 'repeating-linear-gradient(45deg, #C9A84C 0, #C9A84C 1px, transparent 0, transparent 50%)', backgroundSize: '20px 20px' }} />
-              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#C9A84C] to-transparent opacity-60" />
-              <div className="relative">
-                <Sparkles className="w-8 h-8 text-[#C9A84C] mx-auto mb-4" />
-                <h3 className="text-2xl font-black mb-3" style={{ fontFamily: "'Amiri', serif" }}>
-                  نحو إدارة عامة عادلة وشفافة ومساءلة
-                </h3>
-                <p className="text-white/70 max-w-2xl mx-auto leading-loose text-sm">
-                  نظرية الشامسي هي مساهمة قانونية عربية أصيلة في الحوار العالمي حول حوكمة الذكاء الاصطناعي.
-                  إنها دعوة إلى بناء دولة قانون رقمية تحترم الإرادة الإنسانية وتُحاسب الخوارزمية وتصون كرامة المواطن
-                  في كل قرار إداري يمسّ حياته.
-                </p>
-              </div>
-            </div>
-          </Section>
+        <section className="rounded-2xl border border-gold/30 bg-gold/5 p-5 sm:p-6 text-center">
+          <p className="font-black text-heading text-lg">النتيجة التي يستخدمها مرصد</p>
+          <p className="text-sm text-muted-foreground leading-7 max-w-4xl mx-auto mt-2">
+            لا يكتفي مرصد بالسؤال: هل استُخدم الذكاء الاصطناعي؟ بل يحدد أين تدخل، وكم كان تأثيره، وهل كانت المراجعة البشرية حقيقية، وما مقدار الأثر؛ ثم يحدد متطلبات المشروعية والتوثيق والتفسير والرقابة المناسبة لكل حالة.
+          </p>
         </section>
-
       </div>
     </AppLayout>
   );
