@@ -1,27 +1,16 @@
 import React from 'react';
 import { Link, useLocation } from 'wouter';
 import {
-  Bot,
-  BookOpenText,
   ChevronLeft,
   ChevronRight,
-  FileSearch,
-  FolderOpen,
-  Gavel,
-  GitCompareArrows,
-  Library,
-  Quote,
-  Scale,
-  Search,
-  Settings,
-  ShieldCheck,
-  Sparkles,
-  Users,
-  X,
-  Archive,
+  Files,
+  GraduationCap,
   History,
-  BarChart3,
-  LifeBuoy,
+  Home,
+  Library,
+  Scale,
+  Settings,
+  X,
 } from 'lucide-react';
 import { useUserContext } from '@/lib/user-context';
 
@@ -38,177 +27,54 @@ interface NavItem {
   labelEn: string;
   icon: React.ReactNode;
   show: boolean;
-  badge?: string;
-}
-
-interface NavSection {
-  id: string;
-  titleAr: string;
-  titleEn: string;
-  items: NavItem[];
 }
 
 export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: SidebarProps) {
   const [location] = useLocation();
-  const {
-    role,
-    lang,
-    canManageUsers,
-    canManageSettings,
-    canUseAi,
-    canUseShamsiFramework,
-  } = useUserContext();
+  const { role, lang, canManageSettings, canUseAi } = useUserContext();
 
-  const isOwner = role === 'owner';
-
-  const sections: NavSection[] = [
+  const items: NavItem[] = [
     {
-      id: 'core',
-      titleAr: 'مرصد',
-      titleEn: 'MARSAD',
-      items: [
-        {
-          href: '/',
-          labelAr: 'مساحة مرصد',
-          labelEn: 'MARSAD Workspace',
-          icon: <Scale className="w-4.5 h-4.5" />,
-          show: true,
-        },
-        {
-          href: '/assistant',
-          labelAr: 'التحليل الذكي',
-          labelEn: 'Intelligent Analysis',
-          icon: <Bot className="w-4.5 h-4.5" />,
-          show: canUseAi,
-        },
-        {
-          href: '/search',
-          labelAr: 'البحث القانوني',
-          labelEn: 'Legal Search',
-          icon: <Search className="w-4.5 h-4.5" />,
-          show: canUseAi,
-        },
-        {
-          href: '/decisions',
-          labelAr: 'القرارات الإدارية',
-          labelEn: 'Administrative Decisions',
-          icon: <Gavel className="w-4.5 h-4.5" />,
-          show: canUseAi,
-        },
-        {
-          href: '/library',
-          labelAr: 'المكتبة والسجل',
-          labelEn: 'Library & Record',
-          icon: <Library className="w-4.5 h-4.5" />,
-          show: true,
-        },
-      ],
+      href: '/',
+      labelAr: 'الرئيسية',
+      labelEn: 'Home',
+      icon: <Home className="w-4.5 h-4.5" />,
+      show: true,
     },
     {
-      id: 'tools',
-      titleAr: 'الأدوات',
-      titleEn: 'Tools',
-      items: [
-        {
-          href: '/journey-services',
-          labelAr: 'الخدمات المتخصصة',
-          labelEn: 'Specialized Services',
-          icon: <FileSearch className="w-4.5 h-4.5" />,
-          show: true,
-        },
-        {
-          href: '/workspace',
-          labelAr: 'مساحة البحث',
-          labelEn: 'Research Workspace',
-          icon: <FolderOpen className="w-4.5 h-4.5" />,
-          show: canUseAi,
-        },
-        {
-          href: '/comparison',
-          labelAr: 'مقارنة المستندات',
-          labelEn: 'Document Comparison',
-          icon: <GitCompareArrows className="w-4.5 h-4.5" />,
-          show: true,
-        },
-        {
-          href: '/citations',
-          labelAr: 'الاستشهادات',
-          labelEn: 'Citations',
-          icon: <Quote className="w-4.5 h-4.5" />,
-          show: true,
-        },
-        {
-          href: '/literature-review',
-          labelAr: 'مراجعة الأدبيات',
-          labelEn: 'Literature Review',
-          icon: <BookOpenText className="w-4.5 h-4.5" />,
-          show: canUseAi,
-        },
-        {
-          href: '/archive',
-          labelAr: 'الأرشيف',
-          labelEn: 'Archive',
-          icon: <Archive className="w-4.5 h-4.5" />,
-          show: canUseAi,
-        },
-        {
-          href: '/previous-requests',
-          labelAr: 'الطلبات السابقة',
-          labelEn: 'Previous Requests',
-          icon: <History className="w-4.5 h-4.5" />,
-          show: canUseAi,
-        },
-        {
-          href: '/reports',
-          labelAr: 'التقارير والإحصاءات',
-          labelEn: 'Reports & Statistics',
-          icon: <BarChart3 className="w-4.5 h-4.5" />,
-          show: canUseAi,
-        },
-        {
-          href: '/support',
-          labelAr: 'الدعم',
-          labelEn: 'Support',
-          icon: <LifeBuoy className="w-4.5 h-4.5" />,
-          show: true,
-        },
-      ],
+      href: '/previous-requests',
+      labelAr: 'الطلبات السابقة',
+      labelEn: 'Previous Requests',
+      icon: <History className="w-4.5 h-4.5" />,
+      show: canUseAi,
     },
     {
-      id: 'private',
-      titleAr: 'خاص',
-      titleEn: 'Private',
-      items: [
-        {
-          href: '/shamsi-theory',
-          labelAr: 'نظرية الشامسي',
-          labelEn: 'Al-Shamsi Theory',
-          icon: <Sparkles className="w-4.5 h-4.5" />,
-          show: canUseShamsiFramework,
-          badge: 'خاص',
-        },
-        {
-          href: '/admin/users',
-          labelAr: 'إدارة المستخدمين',
-          labelEn: 'User Management',
-          icon: <Users className="w-4.5 h-4.5" />,
-          show: canManageUsers,
-        },
-        {
-          href: '/settings',
-          labelAr: 'الإعدادات',
-          labelEn: 'Settings',
-          icon: <Settings className="w-4.5 h-4.5" />,
-          show: canManageSettings,
-        },
-        {
-          href: '/settings/roles',
-          labelAr: 'صلاحيات الأدوار',
-          labelEn: 'Role Permissions',
-          icon: <ShieldCheck className="w-4.5 h-4.5" />,
-          show: canManageSettings,
-        },
-      ],
+      href: '/workspace',
+      labelAr: 'ملفاتي',
+      labelEn: 'My Files',
+      icon: <Files className="w-4.5 h-4.5" />,
+      show: canUseAi,
+    },
+    {
+      href: '/library',
+      labelAr: 'مكتبتي',
+      labelEn: 'My Library',
+      icon: <Library className="w-4.5 h-4.5" />,
+      show: true,
+    },
+    {
+      href: '/pgf',
+      labelAr: 'التدريب',
+      labelEn: 'Training',
+      icon: <GraduationCap className="w-4.5 h-4.5" />,
+      show: canUseAi,
+    },
+    {
+      href: '/settings',
+      labelAr: 'الإعدادات',
+      labelEn: 'Settings',
+      icon: <Settings className="w-4.5 h-4.5" />,
+      show: canManageSettings,
     },
   ];
 
@@ -237,7 +103,7 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
   return (
     <aside
       className={`bg-sidebar flex flex-col h-full transition-all duration-300 border-e border-sidebar-border ${
-        collapsed ? 'w-[4.5rem]' : 'w-72'
+        collapsed ? 'w-[4.5rem]' : 'w-64'
       }`}
     >
       <div
@@ -273,6 +139,7 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
               type="button"
               onClick={() => setMobileOpen?.(false)}
               className="lg:hidden text-sidebar-foreground/40 hover:text-sidebar-foreground p-1.5 rounded"
+              aria-label={lang === 'ar' ? 'إغلاق القائمة' : 'Close menu'}
             >
               <X className="w-4 h-4" />
             </button>
@@ -281,59 +148,38 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
             type="button"
             onClick={() => setCollapsed(!collapsed)}
             className="hidden lg:flex text-sidebar-foreground/40 hover:text-sidebar-foreground p-1.5 rounded hover:bg-white/5 transition-colors"
+            aria-label={lang === 'ar' ? 'طي القائمة' : 'Collapse sidebar'}
           >
             {collapsed ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
           </button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto py-3 space-y-4">
-        {sections.map((section) => {
-          const visibleItems = section.items.filter((item) => item.show);
-          if (!visibleItems.length) return null;
+      <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1" aria-label={lang === 'ar' ? 'التنقل الرئيسي' : 'Main navigation'}>
+        {items.filter((item) => item.show).map((item) => {
+          const active = isActive(item.href);
           return (
-            <div key={section.id}>
-              {!collapsed && (
-                <div className="px-5 pb-1.5 text-[10px] font-black uppercase tracking-widest text-sidebar-foreground/35">
-                  {lang === 'ar' ? section.titleAr : section.titleEn}
-                </div>
-              )}
-              <div className="px-2 space-y-0.5">
-                {visibleItems.map((item) => {
-                  const active = isActive(item.href);
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={handleLinkClick}
-                      title={collapsed ? (lang === 'ar' ? item.labelAr : item.labelEn) : undefined}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-md transition-all duration-150 relative group ${
-                        active ? 'nav-item-active' : 'text-sidebar-foreground/60 hover:nav-item-hover'
-                      }`}
-                    >
-                      <div className={`shrink-0 ${active ? 'text-white' : 'text-sidebar-foreground/50 group-hover:text-sidebar-foreground/80'}`}>
-                        {item.icon}
-                      </div>
-                      {!collapsed && (
-                        <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
-                          <span className={`text-sm font-medium truncate ${active ? 'text-white' : ''}`}>
-                            {lang === 'ar' ? item.labelAr : item.labelEn}
-                          </span>
-                          {item.badge && (
-                            <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded border border-gold/30 bg-gold/10 text-gold">
-                              {item.badge}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </Link>
-                  );
-                })}
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={handleLinkClick}
+              title={collapsed ? (lang === 'ar' ? item.labelAr : item.labelEn) : undefined}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-md transition-all duration-150 group ${
+                active ? 'nav-item-active' : 'text-sidebar-foreground/60 hover:nav-item-hover'
+              }`}
+            >
+              <div className={`shrink-0 ${active ? 'text-white' : 'text-sidebar-foreground/50 group-hover:text-sidebar-foreground/80'}`}>
+                {item.icon}
               </div>
-            </div>
+              {!collapsed && (
+                <span className={`text-sm font-medium truncate ${active ? 'text-white' : ''}`}>
+                  {lang === 'ar' ? item.labelAr : item.labelEn}
+                </span>
+              )}
+            </Link>
           );
         })}
-      </div>
+      </nav>
 
       <div className="p-3 border-t border-sidebar-border shrink-0">
         <div className={`flex items-center gap-3 ${collapsed ? 'justify-center' : ''}`}>
@@ -342,9 +188,7 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           </div>
           {!collapsed && (
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold text-sidebar-foreground truncate leading-tight">
-                مرصد
-              </div>
+              <div className="text-sm font-semibold text-sidebar-foreground truncate leading-tight">مرصد</div>
               <span className={`inline-flex items-center mt-0.5 px-1.5 py-0.5 text-[10px] font-semibold rounded border ${roleConf.color}`}>
                 {lang === 'ar' ? roleConf.labelAr : roleConf.labelEn}
               </span>
