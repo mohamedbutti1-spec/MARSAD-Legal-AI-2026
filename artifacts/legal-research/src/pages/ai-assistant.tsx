@@ -3018,15 +3018,15 @@ function PreAnalysisPanel({
         {/* ── MLOS identity header ───────────────────────────────────────── */}
         <div className="text-center mb-6">
           <div className="inline-flex flex-col items-center gap-1 mb-4">
-            <div className="inline-flex items-center gap-2.5 bg-primary/8 border border-primary/20 rounded-xl px-4 py-2 mb-1">
-              <Scale className="w-5 h-5 text-primary/80" aria-hidden />
-              <span className="text-2xl font-black tracking-[0.12em] text-primary">MLOS</span>
+            <div className="inline-flex flex-col items-center gap-0.5 bg-primary/8 border border-primary/20 rounded-xl px-5 py-2.5 mb-1">
+              <span className="inline-flex items-center gap-2.5">
+                <Scale className="w-5 h-5 text-primary/80" aria-hidden />
+                <span className="text-2xl font-black tracking-[0.12em] text-primary" dir="ltr">MARSAD</span>
+              </span>
+              <span className="text-lg font-bold text-primary/85" dir="rtl">مرصد</span>
             </div>
-            <span className="text-sm font-semibold text-foreground/80 tracking-wide">
-              Marsad Legal Operating System
-            </span>
             <span className="text-sm font-medium text-muted-foreground" dir="rtl">
-              نظام مرصد للتشغيل القانوني الذكي
+              نظام مرصد للتشغيل القانوني الذكي (MLOS)
             </span>
             <span className="text-[11px] text-primary/50 tracking-widest mt-0.5">نرصد · نحلل · نحكم</span>
           </div>
@@ -4288,7 +4288,7 @@ export default function AiAssistant() {
           userType: (cfg.userType as UserType) ?? DEFAULT_SESSION_CONFIG.userType,
           answerMode: cfg.answerStyle === 'quick' ? 'quick' : 'standard',
           depth: cfg.answerStyle === 'detailed' ? 'comprehensive' : cfg.answerStyle === 'standard' ? 'detailed' : DEFAULT_SESSION_CONFIG.depth,
-          jurisdiction: cfg.legalReference === 'france' ? 'france' : cfg.legalReference === 'comparative' ? 'comparative' : 'uae',
+          jurisdiction: cfg.legalReference === 'france' ? 'france' : cfg.legalReference === 'eu' ? 'eu' : cfg.legalReference === 'comparative' ? 'comparative' : 'uae',
           comparativeMode: cfg.legalReference === 'comparative',
           // Al-Shamsi is owner-only — ignore this selection for anyone else, even
           // if it was injected directly into sessionStorage.

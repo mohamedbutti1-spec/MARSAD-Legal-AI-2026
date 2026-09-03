@@ -1,4 +1,28 @@
 /**
+ * ══════════════════════════════════════════════════════════════════════════
+ * DOCTRINAL LOCK — Al-Shamsi Framework — DO NOT CHANGE WITHOUT EXPLICIT
+ * OWNER APPROVAL.
+ * ══════════════════════════════════════════════════════════════════════════
+ * The algorithm has no independent legal will, is not a legal person, and
+ * never constitutes a sixth element of the administrative decision.
+ * Algorithmic contribution is assessed within the legally recognized process
+ * of forming the administrative decision, with responsibility remaining
+ * attributable to the competent administrative authority.
+ *
+ * The 6 "Traditional Administrative Law Pillars" below ARE the classical
+ * elements of administrative legality (competence, form, cause, subject,
+ * purpose — plus jurisdiction). The 10 "AI / Digital Decision Pillars" are a
+ * separate analytical layer assessing the algorithm's contribution to that
+ * process; they are never a substitute for, or an addition to, the classical
+ * elements themselves.
+ *
+ * Canonical terminology (product-facing text, any language): do not label a
+ * decision's legality shortfalls as "administrative vulnerabilities" —
+ * use "Administrative Legality Risks" / "مخاطر المشروعية الإدارية". When the
+ * context specifically concerns litigation/annulment exposure, use
+ * "Judicial Exposure" / "مخاطر التعرض القضائي" instead.
+ * ══════════════════════════════════════════════════════════════════════════
+ *
  * Al-Shamsi 16-Pillar Administrative Decision Evaluator
  *
  * Builds the AI prompt, validates the structured response, and

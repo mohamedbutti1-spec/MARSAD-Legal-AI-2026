@@ -47,3 +47,11 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# MCP config (contains API key)
+.mcp.json
+
+# Local AI tooling config (not part of the app)
+.claude/
+.codex/
+.agents/

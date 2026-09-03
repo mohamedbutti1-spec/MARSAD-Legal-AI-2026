@@ -27,6 +27,13 @@ const JourneyResult        = React.lazy(() => import('@/pages/journey-result'));
 const NafePage             = React.lazy(() => import('@/pages/nafe'));
 const CommunityPage        = React.lazy(() => import('@/pages/community'));
 
+// AI-assistant session support pages (result / archive / history / reports / support)
+const ResultPage = React.lazy(() => import('@/pages/result'));
+const ArchivePage = React.lazy(() => import('@/pages/archive'));
+const PreviousRequestsPage = React.lazy(() => import('@/pages/previous-requests'));
+const ReportsPage = React.lazy(() => import('@/pages/reports'));
+const SupportPage = React.lazy(() => import('@/pages/support'));
+
 // Research Tools
 const LegalResearch = React.lazy(() => import('@/pages/legal-research'));
 const AiAssistant = React.lazy(() => import('@/pages/ai-assistant'));
@@ -162,6 +169,30 @@ function Router() {
         {/* ── خدمة نافع + المجتمع المهني ─────────────────────────────── */}
         <Route path="/nafe" component={NafePage} />
         <Route path="/community" component={CommunityPage} />
+
+        {/* ── AI-assistant session support pages ──────────────────── */}
+        <Route path="/result/:sessionId">
+          <RouteGuard allow={canUseAi}>
+            <ResultPage />
+          </RouteGuard>
+        </Route>
+        <Route path="/archive">
+          <RouteGuard allow={canUseAi}>
+            <ArchivePage />
+          </RouteGuard>
+        </Route>
+        <Route path="/previous-requests">
+          <RouteGuard allow={canUseAi}>
+            <PreviousRequestsPage />
+          </RouteGuard>
+        </Route>
+        <Route path="/reports">
+          <RouteGuard allow={canUseAi}>
+            <ReportsPage />
+          </RouteGuard>
+        </Route>
+        <Route path="/support" component={SupportPage} />
+
         <Route path="/shamsi-theory">
           <RouteGuard allow={canUseShamsiFramework}>
             <ShamsiTheory />

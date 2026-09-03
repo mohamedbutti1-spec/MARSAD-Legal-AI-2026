@@ -18,6 +18,10 @@ import {
   Sparkles,
   Users,
   X,
+  Archive,
+  History,
+  BarChart3,
+  LifeBuoy,
 } from 'lucide-react';
 import { useUserContext } from '@/lib/user-context';
 
@@ -139,6 +143,34 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: 
           labelEn: 'Literature Review',
           icon: <BookOpenText className="w-4.5 h-4.5" />,
           show: canUseAi,
+        },
+        {
+          href: '/archive',
+          labelAr: 'الأرشيف',
+          labelEn: 'Archive',
+          icon: <Archive className="w-4.5 h-4.5" />,
+          show: canUseAi,
+        },
+        {
+          href: '/previous-requests',
+          labelAr: 'الطلبات السابقة',
+          labelEn: 'Previous Requests',
+          icon: <History className="w-4.5 h-4.5" />,
+          show: canUseAi,
+        },
+        {
+          href: '/reports',
+          labelAr: 'التقارير والإحصاءات',
+          labelEn: 'Reports & Statistics',
+          icon: <BarChart3 className="w-4.5 h-4.5" />,
+          show: canUseAi,
+        },
+        {
+          href: '/support',
+          labelAr: 'الدعم',
+          labelEn: 'Support',
+          icon: <LifeBuoy className="w-4.5 h-4.5" />,
+          show: true,
         },
       ],
     },

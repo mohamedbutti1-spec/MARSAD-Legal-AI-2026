@@ -33,22 +33,22 @@ export function AppLayout({ children, variant = 'default', hideDemoBanner = fals
 
   return (
     <div className="flex h-[100dvh] w-full overflow-hidden bg-background" dir={dir}>
-      {/* Desktop sidebar */}
-      <div className="hidden lg:flex shrink-0">
+      {/* Desktop sidebar — visible from the "md" breakpoint up (tablet + desktop) */}
+      <div className="hidden md:flex shrink-0">
         <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
       </div>
 
-      {/* Mobile sidebar backdrop */}
+      {/* Mobile sidebar backdrop — phone widths only */}
       {mobileOpen && (
         <div
-          className="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+          className="md:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
-      {/* Mobile sidebar — slides in from the start edge */}
+      {/* Mobile sidebar — slides in from the start edge, phone widths only */}
       <div
-        className={`lg:hidden fixed inset-y-0 start-0 z-50 transition-transform duration-300 ${
+        className={`md:hidden fixed inset-y-0 start-0 z-50 transition-transform duration-300 ${
           mobileOpen ? 'translate-x-0' : dir === 'rtl' ? 'translate-x-full' : '-translate-x-full'
         }`}
       >
@@ -61,18 +61,19 @@ export function AppLayout({ children, variant = 'default', hideDemoBanner = fals
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* P0-1: Demo mode banner — role selector is scaffolding only, not production auth */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+        {/* P0-1: Demo mode badge — role selector is scaffolding only, not production auth.
+            Dev-only (IS_DEMO_MODE), never shown in a production build. Compact badge
+            instead of a full-width bar so it doesn't eat vertical page space. */}
         {IS_DEMO_MODE && !hideDemoBanner && (
           <div
-            className="shrink-0 bg-gold text-white text-[11px] font-semibold text-center py-1 px-4 flex items-center justify-center gap-2"
-            role="banner"
+            className="absolute top-2 start-1/2 -translate-x-1/2 rtl:translate-x-1/2 z-30 inline-flex items-center gap-1 bg-gold text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm cursor-default"
+            role="status"
             aria-label="Demo mode notice"
-            dir="ltr"
+            title="DEMO MODE — Role selection is scaffolding only. Production deployment requires UAE Pass or enterprise SSO."
           >
-            <span>⚠️</span>
-            <span>DEMO MODE — Role selection is scaffolding only. Production deployment requires UAE Pass or enterprise SSO.</span>
-            <span>⚠️</span>
+            <span aria-hidden>⚠️</span>
+            <span>{'وضع تجريبي'}</span>
           </div>
         )}
         <Header onMenuClick={() => setMobileOpen(true)} />
@@ -91,7 +92,7 @@ export function AppLayout({ children, variant = 'default', hideDemoBanner = fals
             {/* Platform footer */}
             <footer className="border-t border-border/40 px-4 sm:px-6 lg:px-8 py-3">
               <p className="text-[10px] text-muted-foreground/40 text-center tracking-wide select-none" dir="ltr">
-                مرصد (MARSAD) · منصة القرارات الإدارية الذكية · إطار الشامسي الدستوري™ Alpha 1.0
+                MARSAD (مرصد) · منصة القرارات الإدارية الذكية · إطار الشامسي الدستوري™ Alpha 1.0
               </p>
             </footer>
           </main>

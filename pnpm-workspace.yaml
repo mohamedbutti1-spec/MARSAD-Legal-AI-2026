@@ -4,6 +4,13 @@ packages:
   - lib/integrations/*
   - scripts
 
+allowBuilds:
+  '@google/genai': true
+  core-js: true
+  esbuild: true
+  protobufjs: true
+  puppeteer: true
+
 autoInstallPeers: false
 
 catalog:

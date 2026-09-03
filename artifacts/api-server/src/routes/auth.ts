@@ -286,6 +286,72 @@ router.post("/auth/guest-login", async (req, res): Promise<void> => {
   });
 });
 
+// ── POST /api/auth/demo-login ────────────────────────────────────────────────
+// Password-less entry into a named demo account, for the login page's demo
+// panel. Replaces the old approach of shipping every demo account's plaintext
+// password in the frontend bundle (extractable by anyone who downloads the
+// JS). The client sends only a username; the server looks the account up,
+// verifies it is a real is_demo=TRUE row, and issues the session cookie
+// directly — no password ever needs to exist client-side. Blocked in
+// production by the same is_demo + IS_PRODUCTION gate as regular login.
+router.post("/auth/demo-login", async (req, res): Promise<void> => {
+  if (IS_PRODUCTION) {
+    res.status(403).json({ error: "Demo accounts are not available in this environment." });
+    return;
+  }
+
+  const { username } = req.body as { username?: unknown };
+  if (typeof username !== "string" || !username.trim()) {
+    res.status(400).json({ error: "Username is required." });
+    return;
+  }
+
+  const [user] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.username, username.trim().toLowerCase()));
+
+  // Hard invariant: only ever sign a token for a genuine, currently-active
+  // demo account. Refuses rather than silently granting access if the
+  // username doesn't exist, isn't marked is_demo, or has been deactivated.
+  if (!user || !user.isDemo || !user.isActive) {
+    res.status(403).json({ error: "Unknown or unavailable demo account." });
+    return;
+  }
+
+  const org = orgForRole(user.role);
+  const sid = await createSession(user.id, req);
+
+  const token = signToken({
+    userId: user.id,
+    role: user.role,
+    org,
+    plan: "free", // demo accounts are always on the free plan
+    pwv: user.passwordVersion,
+    mustChangePassword: user.mustChangePassword,
+    sid,
+  });
+
+  res.cookie(COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: IS_PRODUCTION,
+    sameSite: "lax",
+    maxAge: COOKIE_MAX_AGE_MS,
+    path: "/",
+  });
+
+  logger.info({ userId: user.id, role: user.role, sid }, "Demo account session started");
+
+  res.json({
+    userId: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    org,
+    mustChangePassword: user.mustChangePassword,
+  });
+});
+
 // ── GET /api/auth/me ─────────────────────────────────────────────────────────
 // Unlike other protected routes, this endpoint is NOT behind the `authenticate`
 // middleware (it is the route that establishes whether a valid session exists).

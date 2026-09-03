@@ -215,6 +215,11 @@ export function isShamsiFrameworkEnabled(): boolean {
  * auth, or the framework being disabled — is logged to the audit trail and
  * returns a generic 403 so the response never reveals that a Shamsi-specific
  * feature exists behind the gate.
+ *
+ * Doctrinal note (see the full lock in utils/admin-os-evaluator.ts): the
+ * algorithm gated behind this function has no independent legal will, is not
+ * a legal person, and never constitutes a sixth element of the administrative
+ * decision. Do not widen this gate's role scope without explicit owner approval.
  */
 export function requireShamsiOwner(req: Request, res: Response, next: NextFunction): void {
   const deny = (reason: string) => {

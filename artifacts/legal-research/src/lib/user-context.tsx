@@ -18,6 +18,7 @@ import {
   getPermissions,
 } from '@/lib/permissions';
 import { setAuthErrorHandler } from '@/lib/api-fetch';
+import { setStorageUserId } from '@/lib/marsad-local-store';
 
 export type { UserRole, GovernanceRole };
 export type AppLanguage = 'ar' | 'en';
@@ -208,6 +209,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const { payload, revoked } = await fetchSession();
     setSession(payload);
     if (revoked) setSessionRevoked(true);
+    setStorageUserId(payload?.userId ?? null);
     setIsLoaded(true);
   }, []);
 
@@ -234,6 +236,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       // A successful re-auth (e.g. user logs back in) clears the revoked flag
       setSessionRevoked(false);
     }
+    setStorageUserId(payload?.userId ?? null);
   }, []);
 
   const value: UserContextType = {
