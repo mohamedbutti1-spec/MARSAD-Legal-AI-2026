@@ -11,6 +11,7 @@ WORKDIR /app
 COPY . .
 
 RUN pnpm install --frozen-lockfile
+RUN pnpm --filter @workspace/legal-research run build
 RUN pnpm --filter @workspace/api-server run build
 
 ENV NODE_ENV=production
