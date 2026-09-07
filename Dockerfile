@@ -16,4 +16,4 @@ RUN pnpm --filter @workspace/api-server run build
 
 ENV NODE_ENV=production
 
-CMD ["sh", "-lc", "pnpm --filter @workspace/db run push && node --enable-source-maps ./artifacts/api-server/dist/index.mjs"]
+CMD ["sh", "-lc", "pnpm --filter @workspace/db run push-force && node --enable-source-maps ./artifacts/api-server/dist/index.mjs"]
