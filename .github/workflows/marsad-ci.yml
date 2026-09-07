@@ -18,21 +18,27 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
+    env:
+      # The build never reaches the browser download, and the runner has no
+      # need for a Chromium binary.
+      PUPPETEER_SKIP_DOWNLOAD: 'true'
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      # pnpm must exist before setup-node runs, otherwise `cache: 'pnpm'`
+      # fails while resolving the store path. The version comes from the
+      # packageManager field in package.json, so CI, Docker and local
+      # development all resolve to the same pnpm.
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
 
       - name: Set up Node.js 24
         uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: 'pnpm'
-
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Install pnpm
-        run: corepack prepare pnpm@9 --activate
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
