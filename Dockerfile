@@ -16,4 +16,4 @@ RUN pnpm --filter @workspace/api-server run build
 
 ENV NODE_ENV=production
 
-CMD ["pnpm", "--filter", "@workspace/api-server", "run", "start"]
+CMD ["node", "--enable-source-maps", "./artifacts/api-server/dist/index.mjs"]
