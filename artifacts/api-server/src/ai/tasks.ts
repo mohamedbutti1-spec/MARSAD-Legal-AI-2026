@@ -31,72 +31,56 @@ export enum TaskType {
   /** Legal news and commentary from the open web. */
   LEGAL_NEWS = "legal_news",
 
-  // ─── Mixed (Claude + Perplexity) tasks ────────────────────────────────────
+  // ─── Multi-provider tasks ─────────────────────────────────────────────────
   /** Hybrid analysis: private library context (Claude) + live web (Perplexity). */
   MIXED = "mixed",
+  /** Side-by-side second opinion from OpenAI + Claude for the same legal question. */
+  DUAL_REVIEW = "dual_review",
 }
 
 /** Provider names that can be returned by the router. */
 export type ProviderName = "claude" | "gemini" | "perplexity" | "openai";
 
-/**
- * Canonical routing table: each task type maps to one or more providers.
- * For MIXED tasks the router returns all listed providers in order.
- *
- * Claude vs. Gemini split (added alongside Claude — Claude's existing
- * routing for RAG/assessment/review/compare is unchanged and keeps working
- * exactly as before):
- *  - Gemini is primary for fast, low-latency tasks: quick citation
- *    generation and document search lookups.
- *  - Claude stays primary for long-form output and heavy analysis: the main
- *    RAG assistant chat (long legal opinions), the 12-principle
- *    constitutional assessment, literature review over large documents, and
- *    side-by-side document comparison.
- * See FALLBACK_PROVIDER below for automatic cross-provider failover.
- */
+/** Canonical routing table: each task type maps to one or more providers. */
 export const TASK_ROUTING: Record<TaskType, ProviderName[]> = {
   // Claude — long-form / heavy analysis
-  [TaskType.CONSTITUTIONAL_ASSESSMENT]:["claude"],
-  [TaskType.RAG]:                ["claude"],
-  [TaskType.LITERATURE_REVIEW]:  ["claude"],
-  [TaskType.DOCUMENT_COMPARE]:   ["claude"],
+  [TaskType.CONSTITUTIONAL_ASSESSMENT]: ["claude"],
+  [TaskType.RAG]:                       ["claude"],
+  [TaskType.LITERATURE_REVIEW]:         ["claude"],
+  [TaskType.DOCUMENT_COMPARE]:          ["claude"],
   // Gemini — fast / instant tasks
-  [TaskType.DOCUMENT_SEARCH]:    ["gemini"],
-  [TaskType.CITATION]:           ["gemini"],
+  [TaskType.DOCUMENT_SEARCH]:           ["gemini"],
+  [TaskType.CITATION]:                  ["gemini"],
   // Perplexity
-  [TaskType.LIVE_WEB_SEARCH]:    ["perplexity"],
-  [TaskType.LATEST_LEGISLATION]: ["perplexity"],
-  [TaskType.COURT_DECISIONS]:    ["perplexity"],
-  [TaskType.LEGAL_NEWS]:         ["perplexity"],
-  // Mixed
-  [TaskType.MIXED]:              ["claude", "perplexity"],
+  [TaskType.LIVE_WEB_SEARCH]:           ["perplexity"],
+  [TaskType.LATEST_LEGISLATION]:        ["perplexity"],
+  [TaskType.COURT_DECISIONS]:           ["perplexity"],
+  [TaskType.LEGAL_NEWS]:                ["perplexity"],
+  // Multi-provider
+  [TaskType.MIXED]:                     ["claude", "perplexity"],
+  [TaskType.DUAL_REVIEW]:               ["openai", "claude"],
 };
 
-/**
- * Automatic cross-provider failover map. When a single-provider task's
- * primary provider throws, AIRouter.routeWithFallback() resolves this
- * partner provider so callers can retry once on a different account/vendor
- * before giving up. Perplexity/OpenAI have no configured partner yet (both
- * remain placeholders) so they map to null.
- */
+/** Automatic cross-provider failover map for single-provider tasks. */
 export const FALLBACK_PROVIDER: Record<ProviderName, ProviderName | null> = {
   claude: "gemini",
   gemini: "claude",
   perplexity: null,
-  openai: null,
+  openai: "claude",
 };
 
 /** Human-readable descriptions for the UI. */
 export const TASK_DESCRIPTIONS: Record<TaskType, string> = {
-  [TaskType.DOCUMENT_SEARCH]:          "Private document search (RAG)",
-  [TaskType.CONSTITUTIONAL_ASSESSMENT]:"Constitutional Intelligence Layer (12-principle AI assessment)",
-  [TaskType.RAG]:                "Retrieval-Augmented Generation",
-  [TaskType.LITERATURE_REVIEW]:  "Thesis / literature review",
-  [TaskType.CITATION]:           "Citation generation",
-  [TaskType.DOCUMENT_COMPARE]:   "Document comparison",
-  [TaskType.LIVE_WEB_SEARCH]:    "Live web search",
-  [TaskType.LATEST_LEGISLATION]: "Latest legislation",
-  [TaskType.COURT_DECISIONS]:    "Recent court decisions",
-  [TaskType.LEGAL_NEWS]:         "Legal news",
-  [TaskType.MIXED]:              "Hybrid: private library + live web",
+  [TaskType.DOCUMENT_SEARCH]:           "Private document search (RAG)",
+  [TaskType.CONSTITUTIONAL_ASSESSMENT]: "Constitutional Intelligence Layer (12-principle AI assessment)",
+  [TaskType.RAG]:                       "Retrieval-Augmented Generation",
+  [TaskType.LITERATURE_REVIEW]:         "Thesis / literature review",
+  [TaskType.CITATION]:                  "Citation generation",
+  [TaskType.DOCUMENT_COMPARE]:          "Document comparison",
+  [TaskType.LIVE_WEB_SEARCH]:           "Live web search",
+  [TaskType.LATEST_LEGISLATION]:        "Latest legislation",
+  [TaskType.COURT_DECISIONS]:           "Recent court decisions",
+  [TaskType.LEGAL_NEWS]:                "Legal news",
+  [TaskType.MIXED]:                     "Hybrid: private library + live web",
+  [TaskType.DUAL_REVIEW]:               "Dual legal review: OpenAI + Claude",
 };
