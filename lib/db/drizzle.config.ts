@@ -6,12 +6,14 @@ if (!process.env.DATABASE_URL) {
 }
 
 // In development the URL carries ?sslmode=disable (local helium DB).
-// In production Replit's PostgreSQL requires SSL; rejectUnauthorized:false
-// is needed because the server uses a self-signed cert.
+// In production Railway/PostgreSQL may require SSL; rejectUnauthorized:false
+// supports managed/self-signed certificates.
 const sslDisabled = process.env.DATABASE_URL.includes("sslmode=disable");
 
 export default defineConfig({
-  schema: path.join(__dirname, "./src/schema/index.ts"),
+  // Point Drizzle directly at every schema module. This avoids relying on
+  // re-export discovery through index.ts in non-interactive production builds.
+  schema: path.join(__dirname, "./src/schema/*.ts"),
   dialect: "postgresql",
   dbCredentials: {
     url: process.env.DATABASE_URL,
