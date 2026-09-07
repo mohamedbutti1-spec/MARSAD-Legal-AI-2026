@@ -7,6 +7,7 @@ import compression from "compression";
 import rateLimit from "express-rate-limit";
 import cookieParser from "cookie-parser";
 import router from "./routes";
+import { railwayGuestLogin } from "./routes/guestFallback";
 import { logger } from "./lib/logger";
 import { auditMiddleware } from "./middlewares/auditLog";
 import { authenticate } from "./middlewares/authenticate";
@@ -184,6 +185,12 @@ app.use("/api", (req: Request, res: Response, next: NextFunction) => {
   }
   return authenticate(req, res, next);
 });
+
+// ── Railway-safe guest evaluation login ─────────────────────────────────────
+// This route is intentionally registered before the main router so preview
+// deployments can recover from legacy/missing session-registry state without
+// changing production authentication semantics for normal user accounts.
+app.post("/api/auth/guest-login", railwayGuestLogin);
 
 // ── API routes ───────────────────────────────────────────────────────────────
 app.use("/api", router);
