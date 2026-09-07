@@ -1,4 +1,5 @@
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
+import path from "node:path";
 import cors from "cors";
 import pinoHttp from "pino-http";
 import helmet from "helmet";
@@ -16,16 +17,9 @@ const app: Express = express();
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
 // ── Allowed CORS origins ─────────────────────────────────────────────────────
-// Production:  set ALLOWED_ORIGIN env var to the deployment URL.
-//              Comma-separate multiple values for staging + production.
-//              *.replit.app is always allowed in production as a safety net
-//              (Replit deployments are same-domain; this never widens exposure
-//              beyond what the JWT cookie already enforces).
-// Development: localhost, *.replit.dev, *.repl.co are automatically allowed.
 const ALLOWED_ORIGINS: (string | RegExp)[] = [];
 
 if (process.env.ALLOWED_ORIGIN) {
-  // Support comma-separated list: "https://a.replit.app,https://b.replit.app"
   process.env.ALLOWED_ORIGIN.split(",").forEach((o) => {
     const trimmed = o.trim();
     if (trimmed) ALLOWED_ORIGINS.push(trimmed);
@@ -33,12 +27,8 @@ if (process.env.ALLOWED_ORIGIN) {
 }
 
 if (IS_PRODUCTION && ALLOWED_ORIGINS.length === 0) {
-  // ALLOWED_ORIGIN env var is required in production. Log a warning — do NOT
-  // add a wildcard fallback; that would let any sibling *.replit.app subdomain
-  // make credentialed cross-origin requests against this API.
   logger.warn(
-    "ALLOWED_ORIGIN is not set in production. All cross-origin requests will be rejected. " +
-    "Set ALLOWED_ORIGIN to the exact deployment URL (e.g. https://your-app.replit.app).",
+    "ALLOWED_ORIGIN is not set in production. Cross-origin requests will be rejected, while same-origin Railway requests remain allowed.",
   );
 }
 
@@ -54,15 +44,19 @@ if (!IS_PRODUCTION) {
 }
 
 // ── Security headers (Helmet) ────────────────────────────────────────────────
+// The production service now serves the Vite frontend and API from the same
+// origin, so self-hosted scripts/styles/assets must be permitted.
 app.use(
   helmet({
     contentSecurityPolicy: {
       directives: {
-        defaultSrc:     ["'none'"],
-        scriptSrc:      ["'none'"],
-        styleSrc:       ["'none'"],
-        imgSrc:         ["'none'"],
+        defaultSrc:     ["'self'"],
+        scriptSrc:      ["'self'"],
+        styleSrc:       ["'self'", "'unsafe-inline'"],
+        imgSrc:         ["'self'", "data:", "blob:"],
+        fontSrc:        ["'self'", "data:"],
         connectSrc:     ["'self'"],
+        workerSrc:      ["'self'", "blob:"],
         frameAncestors: ["'none'"],
       },
     },
@@ -71,11 +65,6 @@ app.use(
 );
 
 // ── Compression ──────────────────────────────────────────────────────────────
-// Skip compression on NDJSON streaming responses (assistant chat, court
-// simulation). The compression middleware buffers output until it has enough
-// bytes to make compression worthwhile, which delays/batches chunks instead
-// of flushing them immediately — on iOS Safari over a mobile connection this
-// reads as a dead connection and the stream is dropped before it completes.
 app.use(
   compression({
     filter: (req, res) => {
@@ -101,33 +90,37 @@ app.use(
   }),
 );
 
-// No no-origin gate: same-origin browser requests (Safari, PWA standalone)
-// legitimately omit the Origin header. Blocking on its absence only hurts
-// iOS Safari / installed PWAs — it does not prevent any real attack because
-// cross-origin requests always include Origin (handled by CORS below) and
-// unauthenticated same-origin requests are rejected by the JWT middleware.
-
 // ── CORS ─────────────────────────────────────────────────────────────────────
-// Credentials mode: the session cookie is sent on every API request.
-// On CORS rejection the origin callback throws; the error handler returns 403.
-app.use(
-  cors({
-    origin: (origin, cb) => {
-      // No Origin header = same-origin browser request (Safari, PWA standalone,
-      // mobile fetch). Same-origin requests are inherently safe — the cookie is
-      // HttpOnly + SameSite=Lax, and cross-origin attacks always include Origin.
-      // Rejecting no-origin requests breaks iOS Safari's GET /api/auth/me call.
-      if (!origin) return cb(null, true);
+// Same-origin requests from the Railway-hosted frontend are always accepted.
+// Cross-origin requests must still match ALLOWED_ORIGIN.
+const corsMiddleware = cors({
+  origin: (origin, cb) => {
+    if (!origin) return cb(null, true);
 
-      const allowed = ALLOWED_ORIGINS.some((o) =>
-        typeof o === "string" ? o === origin : o.test(origin),
-      );
-      if (allowed) return cb(null, true);
-      return cb(new Error(`CORS_REJECTED:${origin}`));
-    },
-    credentials: true,
-  }),
-);
+    const allowed = ALLOWED_ORIGINS.some((o) =>
+      typeof o === "string" ? o === origin : o.test(origin),
+    );
+    if (allowed) return cb(null, true);
+    return cb(new Error(`CORS_REJECTED:${origin}`));
+  },
+  credentials: true,
+});
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const origin = req.get("origin");
+  if (origin) {
+    try {
+      const originUrl = new URL(origin);
+      const requestHost = req.get("host");
+      if (requestHost && originUrl.host === requestHost) {
+        return next();
+      }
+    } catch {
+      // Invalid Origin is handled by the normal CORS rejection path below.
+    }
+  }
+  return corsMiddleware(req, res, next);
+});
 
 // ── Body parsers ─────────────────────────────────────────────────────────────
 app.use(express.json({ limit: "256kb" }));
@@ -137,10 +130,6 @@ app.use(express.urlencoded({ extended: true, limit: "256kb" }));
 app.use(cookieParser());
 
 // ── Strip spoofable identity headers ─────────────────────────────────────────
-// Attackers can send x-user-role / x-user-id / x-user-org to try to assume
-// another identity. We remove them here so no route handler ever sees a
-// caller-supplied value. The authenticate middleware below re-injects the
-// correct values from the verified JWT payload after token verification.
 app.use((req: Request, _res: Response, next: NextFunction) => {
   delete req.headers["x-user-role"];
   delete req.headers["x-user-id"];
@@ -149,7 +138,6 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 });
 
 // ── Rate limiting ─────────────────────────────────────────────────────────────
-// H1 Fix: trust proxy so real client IP is used (not reverse-proxy IP)
 app.set("trust proxy", 1);
 
 const globalLimiter = rateLimit({
@@ -161,7 +149,6 @@ const globalLimiter = rateLimit({
 });
 app.use(globalLimiter);
 
-// Stricter limiter for AI endpoints (costly API calls)
 const aiLimiter = rateLimit({
   windowMs: 60_000,
   max: 15,
@@ -171,9 +158,8 @@ const aiLimiter = rateLimit({
 });
 app.use("/api/ai", aiLimiter);
 
-// Brute-force protection for login endpoint
 const loginLimiter = rateLimit({
-  windowMs: 15 * 60_000, // 15 minutes
+  windowMs: 15 * 60_000,
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
@@ -186,9 +172,6 @@ app.use("/api/auth/guest-login", loginLimiter);
 app.use(auditMiddleware);
 
 // ── JWT Authentication ───────────────────────────────────────────────────────
-// Applied to ALL /api/* routes EXCEPT:
-//   /api/healthz    — health check (no auth required for load balancers)
-//   /api/auth/…     — login / logout / session check (establishes auth)
 app.use("/api", (req: Request, res: Response, next: NextFunction) => {
   if (req.path === "/healthz") return next();
   if (
@@ -205,6 +188,30 @@ app.use("/api", (req: Request, res: Response, next: NextFunction) => {
 // ── API routes ───────────────────────────────────────────────────────────────
 app.use("/api", router);
 
+// ── MARSAD web application ───────────────────────────────────────────────────
+// Railway runs one Node service. The Docker image builds the Vite application
+// into artifacts/legal-research/dist/public; serve that build from the API
+// process and fall back to index.html for client-side routes such as /assistant.
+const frontendDist = path.resolve(
+  process.cwd(),
+  "artifacts/legal-research/dist/public",
+);
+
+app.use(
+  express.static(frontendDist, {
+    index: false,
+    maxAge: IS_PRODUCTION ? "1h" : 0,
+  }),
+);
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+  if (req.method !== "GET" || req.path.startsWith("/api/")) return next();
+
+  res.sendFile(path.join(frontendDist, "index.html"), (err) => {
+    if (err) next(err);
+  });
+});
+
 // ── 404 ──────────────────────────────────────────────────────────────────────
 app.use((_req: Request, res: Response) => {
   res.status(404).json({ error: "Not found" });
@@ -212,7 +219,6 @@ app.use((_req: Request, res: Response) => {
 
 // ── Global error handler ─────────────────────────────────────────────────────
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-  // CORS rejections → 403 (not 500)
   if (err.message?.startsWith("CORS_")) {
     res.status(403).json({ error: "CORS: this origin is not permitted." });
     return;
