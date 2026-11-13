@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Scale, BookOpen, BrainCircuit, ShieldCheck } from 'lucide-react';
 import { useUserContext, useT } from '@/lib/user-context';
 import { useLocation } from 'wouter';
 
@@ -24,8 +24,11 @@ export default function Dashboard() {
   const t = useT();
   const [, navigate] = useLocation();
   const [visible, setVisible] = useState(false);
+  const [quietMotion, setQuietMotion] = useState(false);
 
   useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setQuietMotion(media.matches);
     const raf = requestAnimationFrame(() => setVisible(true));
     return () => cancelAnimationFrame(raf);
   }, []);
@@ -42,9 +45,9 @@ export default function Dashboard() {
           <div
             className="w-full max-w-2xl moj-card rounded-2xl px-6 py-12 sm:px-14 sm:py-16 text-center"
             style={{
-              opacity: visible ? 1 : 0,
-              transform: visible ? 'translateY(0)' : 'translateY(16px)',
-              transition: 'opacity 350ms ease-out, transform 350ms ease-out',
+              opacity: visible || quietMotion ? 1 : 0,
+              transform: visible || quietMotion ? 'none' : 'translateY(16px)',
+              transition: quietMotion ? 'none' : 'opacity 350ms ease-out, transform 350ms ease-out',
             }}
           >
             <div className="flex items-center justify-center gap-2 mb-5">
@@ -77,6 +80,20 @@ export default function Dashboard() {
               {t('ابدأ الرحلة معنا من هنا', 'Start your journey here')}
               <ArrowIcon className="w-5 h-5" aria-hidden />
             </button>
+            <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-3 text-start" aria-label={t('مسارات العمل القانوني', 'Legal workspaces')}>
+              {[
+                { icon: BrainCircuit, ar: 'المساعد القانوني', en: 'Legal assistant', path: '/assistant' },
+                { icon: BookOpen, ar: 'البحث القانوني', en: 'Legal research', path: '/research' },
+                { icon: Scale, ar: 'المقارنات القانونية', en: 'Legal comparison', path: '/comparisons' },
+              ].map((item) => {
+                const Icon = item.icon;
+                return <button key={item.path} type="button" onClick={() => navigate(item.path)} className="group flex items-center justify-between gap-2 rounded-xl border border-border/70 bg-card/60 p-4 text-sm text-foreground transition-colors hover:border-gold/60 hover:bg-gold/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold">
+                  <span className="flex items-center gap-2"><Icon className="h-4 w-4 text-gold" aria-hidden="true" />{t(item.ar, item.en)}</span>
+                  <ArrowIcon className="h-4 w-4 opacity-50 group-hover:opacity-100" aria-hidden="true" />
+                </button>;
+              })}
+            </div>
+            <p className="mt-5 flex items-center justify-center gap-2 text-xs text-muted-foreground"><ShieldCheck className="h-4 w-4" aria-hidden="true" />{t('النتائج القانونية تتطلب مراجعة المصادر الأصلية', 'Verify legal conclusions against original sources')}</p>
           </div>
         </div>
       </div>

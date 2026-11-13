@@ -402,29 +402,30 @@ export default function JourneyHome() {
           </div>
         </section>
 
-        <section className="grid sm:grid-cols-3 gap-3">
+        <section aria-label="مسارات مرصد السريعة" className="grid grid-cols-1 sm:grid-cols-3 gap-3 motion-reduce:scroll-auto">
           <Link href="/journey-services">
-            <div className="moj-card rounded-xl border border-border p-4 cursor-pointer hover:border-gold/40 transition-colors h-full">
+            <div className="moj-card rounded-2xl border border-border p-5 cursor-pointer hover:border-gold/50 hover:bg-gold/5 focus-within:ring-2 focus-within:ring-gold transition-colors h-full">
               <FileText className="w-5 h-5 text-gold mb-2" aria-hidden />
               <p className="font-bold text-heading text-sm">الخدمات المتخصصة</p>
               <p className="text-xs text-muted-foreground mt-1">الوصول إلى وحدات مرصد ومسارات العمل التفصيلية القائمة.</p>
             </div>
           </Link>
           <Link href="/research">
-            <div className="moj-card rounded-xl border border-border p-4 cursor-pointer hover:border-gold/40 transition-colors h-full">
+            <div className="moj-card rounded-2xl border border-border p-5 cursor-pointer hover:border-gold/50 hover:bg-gold/5 focus-within:ring-2 focus-within:ring-gold transition-colors h-full">
               <BrainCircuit className="w-5 h-5 text-gold mb-2" aria-hidden />
               <p className="font-bold text-heading text-sm">البحث والتحليل المتقدم</p>
               <p className="text-xs text-muted-foreground mt-1">مساحة البحث القانوني، الاستدلال، والمصادر المساندة.</p>
             </div>
           </Link>
           <Link href="/library">
-            <div className="moj-card rounded-xl border border-border p-4 cursor-pointer hover:border-gold/40 transition-colors h-full">
+            <div className="moj-card rounded-2xl border border-border p-5 cursor-pointer hover:border-gold/50 hover:bg-gold/5 focus-within:ring-2 focus-within:ring-gold transition-colors h-full">
               <ShieldCheck className="w-5 h-5 text-gold mb-2" aria-hidden />
               <p className="font-bold text-heading text-sm">المكتبة والسجل</p>
               <p className="text-xs text-muted-foreground mt-1">الملفات والمراجع والتقارير السابقة في مكان واحد.</p>
             </div>
           </Link>
         </section>
+        <p className="text-xs text-muted-foreground text-center" role="note">للاستخدام البحثي: يجب مراجعة النصوص التشريعية والأحكام من مصادرها الرسمية قبل اعتماد أي نتيجة قانونية.</p>
       </div>
     </AppLayout>
   );
