@@ -109,7 +109,7 @@ export default function AiSearch() {
         </Card>
 
         {searchMutation.data && (
-          <div className="space-y-6 mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="space-y-6 mt-8 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:duration-500">
             <Card className="bg-card">
               <CardHeader className="bg-primary/5 border-b border-border/50 pb-4">
                 <CardTitle className="font-serif text-xl flex items-center gap-2">
