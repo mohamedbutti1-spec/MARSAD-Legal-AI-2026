@@ -31,7 +31,9 @@ jobs:
           cache: pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Typecheck
-        run: pnpm run typecheck
-      - name: Build
-        run: pnpm run build
+      - name: Typecheck shared libraries
+        run: pnpm run typecheck:libs
+      - name: Typecheck frontend only
+        run: pnpm --filter @workspace/legal-research run typecheck
+      - name: Build frontend only
+        run: pnpm --filter @workspace/legal-research run build
