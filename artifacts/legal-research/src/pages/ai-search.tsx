@@ -4,11 +4,12 @@ import { useAiSearch, useListDocuments } from '@workspace/api-client-react';
 import { BrainCircuit, Search, FileText, ChevronDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useUserContext } from '@/lib/user-context';
+import { useUserContext, useT } from '@/lib/user-context';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 export default function AiSearch() {
-  const { canUseAi } = useUserContext();
+  const { canUseAi, lang } = useUserContext();
+  const t = useT();
   const [query, setQuery] = useState('');
   const [selectedDocs, setSelectedDocs] = useState<number[]>([]);
   
@@ -45,14 +46,14 @@ export default function AiSearch() {
 
   return (
     <AppLayout>
-      <div className="space-y-6 max-w-4xl mx-auto" dir="auto">
-        <div className="text-center mb-8">
+      <div className="space-y-6 max-w-5xl mx-auto px-3 sm:px-5 pb-12" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+        <div className="text-center mb-8 rounded-2xl border border-border/60 bg-card/70 px-5 py-8 shadow-sm">
           <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
             <BrainCircuit className="w-8 h-8 text-primary" />
           </div>
-          <h1 className="text-3xl font-serif font-bold text-foreground">AI Smart Search <span className="text-muted-foreground font-sans font-normal text-xl ml-2">/ بحث ذكي</span></h1>
+          <h1 className="text-3xl font-serif font-bold text-foreground">{t("الباحث القانوني الذكي", "AI Legal Research") }</h1>
           <p className="text-muted-foreground mt-3 font-serif max-w-2xl mx-auto">
-            Interrogate your legal library. The AI will synthesize answers based directly on the documents you specify.
+            {t("ابحث في مكتبتك القانونية واستعرض الإجابات ومقتطفات المصادر المرتبطة بها.", "Search your legal library and examine answers alongside their supporting excerpts.")}
           </p>
         </div>
 
@@ -60,12 +61,12 @@ export default function AiSearch() {
           <CardContent className="p-6">
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-bold text-foreground mb-2">Legal Query</label>
+                <label className="block text-sm font-bold text-foreground mb-2">{t("السؤال القانوني", "Legal query")}</label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-3 text-muted-foreground w-5 h-5" />
+                  <Search className="absolute start-3 top-3 text-muted-foreground w-5 h-5" />
                   <textarea 
-                    className="w-full min-h-[120px] bg-background border border-input rounded-md p-3 pl-10 text-foreground placeholder:text-muted-foreground resize-y focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    placeholder="E.g., What are the conditions for contract termination under UAE Civil Transactions Law vs French Civil Code?"
+                    className="w-full min-h-[120px] bg-background border border-input rounded-md p-3 ps-10 text-foreground placeholder:text-muted-foreground resize-y focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    placeholder={t("مثال: قارن بين شروط إنهاء العقد في القانون الإماراتي والفرنسي", "E.g., Compare contract termination requirements in UAE and French law")}
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                   />
@@ -76,7 +77,7 @@ export default function AiSearch() {
                 <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-muted/30 hover:bg-muted/50 transition-colors">
                   <span className="text-sm font-medium flex items-center gap-2">
                     <FileText className="w-4 h-4" /> 
-                    Target Specific Documents {selectedDocs.length > 0 && <span className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">{selectedDocs.length} selected</span>}
+                    {t("تحديد وثائق البحث", "Target specific documents")} {selectedDocs.length > 0 && <span className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">{selectedDocs.length}</span>}
                   </span>
                   <ChevronDown className="w-4 h-4" />
                 </CollapsibleTrigger>
@@ -92,7 +93,7 @@ export default function AiSearch() {
                       <span className="text-sm text-foreground truncate">{doc.filename}</span>
                     </label>
                   ))}
-                  {documents?.length === 0 && <p className="text-sm text-muted-foreground">No documents available.</p>}
+                  {documents?.length === 0 && <p className="text-sm text-muted-foreground">{t("لا توجد وثائق متاحة.", "No documents available.")}</p>}
                 </CollapsibleContent>
               </Collapsible>
 
@@ -101,7 +102,7 @@ export default function AiSearch() {
                 onClick={handleSearch}
                 disabled={!query.trim() || searchMutation.isPending}
               >
-                {searchMutation.isPending ? 'Analyzing Documents...' : 'Generate Answer'}
+                {searchMutation.isPending ? t('جارٍ تحليل الوثائق...', 'Analyzing documents...') : t('ابحث وحلّل', 'Search and analyze')}
               </Button>
             </div>
           </CardContent>
@@ -112,7 +113,7 @@ export default function AiSearch() {
             <Card className="bg-card">
               <CardHeader className="bg-primary/5 border-b border-border/50 pb-4">
                 <CardTitle className="font-serif text-xl flex items-center gap-2">
-                  <BrainCircuit className="w-5 h-5 text-primary" /> Synthesized Answer
+                  <BrainCircuit className="w-5 h-5 text-primary" /> {t("الإجابة التحليلية", "Synthesized answer")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6">
@@ -122,7 +123,7 @@ export default function AiSearch() {
               </CardContent>
             </Card>
 
-            <h3 className="font-serif font-bold text-lg text-foreground pt-4 border-t">Sourced Excerpts <span className="text-muted-foreground font-sans font-normal text-sm ml-2">/ المصادر</span></h3>
+            <h3 className="font-serif font-bold text-lg text-foreground pt-4 border-t">{t("المقتطفات والمصادر", "Sourced excerpts")}</h3>
             <div className="grid gap-4">
               {searchMutation.data.results.map((hit, idx) => (
                 <Card key={idx} className="bg-muted/10">
@@ -133,10 +134,10 @@ export default function AiSearch() {
                         <span className="font-semibold text-sm">{hit.filename}</span>
                       </div>
                       <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded font-bold tracking-wider">
-                        Score: {(hit.relevance * 100).toFixed(0)}%
+                        {t("الملاءمة", "Relevance")}: {(hit.relevance * 100).toFixed(0)}%
                       </span>
                     </div>
-                    <p className="text-sm text-muted-foreground italic pl-4 border-l-2 border-primary/30">
+                    <p className="text-sm text-muted-foreground italic ps-4 border-s-2 border-primary/30">
                       "{hit.excerpt}"
                     </p>
                   </CardContent>
